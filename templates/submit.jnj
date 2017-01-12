@@ -1,0 +1,112 @@
+
+<style>
+.form_link {
+    font-weight: 200;
+    padding: 3px 10px 3px 10px;
+    font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+    border-radius: 10px;
+    width: 60px;
+    height: 30px;
+    text-align: center;
+    background-color: #008ab8;
+    color: white;
+    cursor: pointer;
+  }
+
+.hvr-fade {
+  display: inline-block;
+  vertical-align: middle;
+  -webkit-transform: perspective(1px) translateZ(0);
+  transform: perspective(1px) translateZ(0);
+  box-shadow: 0 0 1px transparent;
+  overflow: hidden;
+  -webkit-transition-duration: 0.3s;
+  transition-duration: 0.3s;
+  -webkit-transition-property: color, background-color;
+  transition-property: color, background-color;
+  }
+
+  hvr-fade:hover, .hvr-fade:focus, .hvr-fade:active {
+  background-color: #2098D1;
+  color: white;
+  }
+
+  .button {
+
+        text-align: center;
+        -moz-box-shadow:inset 0px 0px 0px 0px #3dc21b;
+	-webkit-box-shadow:inset 0px 0px 0px 0px #3dc21b;
+	box-shadow:inset 0px 0px 0px 0px #3dc21b;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #44c767), color-stop(1, #5cbf2a));
+	background:-moz-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
+	background:-webkit-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
+	background:-o-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
+	background:-ms-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
+	background:linear-gradient(to bottom, #44c767 5%, #5cbf2a 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#44c767', endColorstr='#5cbf2a',GradientType=0);
+	background-color:#44c767;
+	-moz-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;
+	border:2px solid #18ab29;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff !important;
+	font-family:Arial;
+	font-size:22px;
+	padding:12px 29px !important;
+	text-decoration:none;
+	text-shadow:0px 0px 0px #2f6627;
+}
+.button:hover {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #5cbf2a), color-stop(1, #44c767));
+	background:-moz-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
+	background:-webkit-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
+	background:-o-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
+	background:-ms-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
+	background:linear-gradient(to bottom, #5cbf2a 5%, #44c767 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#5cbf2a', endColorstr='#44c767',GradientType=0);
+	background-color:#5cbf2a;
+}
+.button:active {
+	position:relative;
+	top:1px;
+  }
+
+  .button-div {
+  margin: auto;
+  width: 164px;
+  }
+
+</style>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('.form_link').click(function() {
+      window.location.href = '/submit/dataset';
+    });
+  });
+</script>
+
+<div class="content">
+		<!-- InstanceBeginEditable name="contentArea" -->
+			<h2>How to Contribute Your Data</h2>
+			<p>There are two steps to complete your NSF data reporting requirement:
+<br>
+		<h3 style="margin-top: 0; margin-bottom: 0"><a name="step1"><u>Step #1</u>:</a> <b>Deposit</b> your <b>Dataset</b></h3>
+			<p style="text-align:left">Submit your dataset(s) to a long-term repository recognized by the NSF. You may submit to the USAP-DC or to one of these NSF or NOAA funded <a href="/repo_list">disciplinary repositories</a>, if appropriate for your field.
+			  <br/>
+			  <div class="button-div"><a href="/submit/dataset" class="button">Deposit</a></div>
+			  <br/>
+
+			  <p><span style="color:red;">NEW</span> The USAP-DC is now hosting all submissions of Antarctic glaciology and cryospheric data in partnership with NSIDC.
+			  
+			  <h3 style="margin-top: 0;"><a name="step2"><u>Step #2</u>:</a> <b>Register</b> your <b>Project</b></h3>
+			<p style="text-align:left">
+			  You must register your project in the Antarctic Master Directory (AMD). If you fill out the registration form, we'll take care of your registration and create the URL needed for your NSF report.
+			</p>
+
+			<br/>
+			<div class="button-div"><a href="/submit/project" class="button">Register</a></div>
+			<br/>
+</div>

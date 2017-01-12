@@ -1,0 +1,42 @@
+<div class="container">
+  <div id="sidebar-left" class="sidebar">
+    <div class="inner">
+      <div id="block-user-1" class="block block-user">
+	<div>{{name}}</div>
+	<div class="content-menu">
+	  <ul class="menu">
+	    <li class="leaf"><a href="/logout">Log out</a></li>
+	  </ul>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div id="main">
+    <div class="main-inner">
+      <h1 class="title">Examples of Instruments and Devices</h1>
+      <div class="content">
+        <!-- start node.tpl.php -->
+	<div id="node-12" class="node node-page">
+	  <div class="content"><p><strong>Example 1:</strong><br />
+	      Detailed descriptions of instruments and devices are  included in submitted documents (report.pdf)</p>
+	      <p><strong>Example 2:</strong><br />
+		N/A. No new data were collected</p>
+		<p><strong>Example 3:</strong><br />
+		  Pictures were taken using a Canon EOS 100 digital SLR<br />
+		  Location of images were obtained using Garmin GPSMAP 60CX</p>
+		  <p><strong>Example 4:</strong><br />
+		    Egg shells were collected in the field. Locations were  estimated from a topographic map.</p>
+		    <p><strong>Example 5:</strong><br />
+		      Salinity and temperature were measured using a Seabird 100 CTD  system. Depths were measured using a xyz pressure transducer.<br />
+		      Locations were determined using a Seapath 2000 DGPS  navigation system.</p>
+		      <p><strong>Example 6:</strong><br />
+			Snow flow data were acquired using a custom build system  consisting of XYZ wind anemometer and a particle tracking laser system.</p>
+	  </div>
+</div>
+	<!-- end node.tpl.php -->          </div>
+      <!-- END CONTENT -->
+    </div>
+    <!-- END MAIN INNER -->
+  </div>
+  <!-- END MAIN -->
+</div>

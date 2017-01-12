@@ -1,0 +1,197 @@
+<script type="text/javascript">
+  $(document).ready(function() {
+
+    var check = $("#entire_region");
+    var w = $('input[name="west"]');
+    var e = $('input[name="east"]');
+    var s = $('input[name="south"]');
+    var n = $('input[name="north"]');
+    check.on('click', function() {
+      if (check.prop('checked')) {
+        w.val('-180');
+        e.val('180');
+        s.val('-90');
+        n.val('-60');
+      } else {
+        w.val('');
+        e.val('');
+        s.val('');
+        n.val('');
+      }
+    });
+  
+  });
+</script>
+
+
+
+<style>
+
+  .content a {
+  border-bottom: none !important;
+  }
+  
+.content a:hover {
+  text-decoration:none;
+  color:#000000;
+  background-color: rgba(0,0,0,0);
+  }
+
+  .content .ui-state-active a:hover {
+  color: #ffffff !important;
+  }
+
+  input[name="title"] {
+  width: 400px;
+  }
+  
+  .ui-autocomplete {
+  max-height: 300px;
+  overflow: auto;
+  max-width: 500px;
+  }
+  
+</style>
+
+<div class="content">
+  <!-- InstanceBeginEditable name="pageHeader" -->
+  <h2>Search For Data<a name="top"></a></h2>
+  <!-- InstanceEndEditable -->
+  
+  <form method="post" action="/search" id="data_link">
+    <div>
+      <fieldset>
+	<label for="program">Program</label>
+	<select name="program">
+	  <option value="" selected>(All)</option>
+	  {% for p in programs %}
+	    <option value="{{p['id']}}">{{p['id']}}</option>
+	  {% endfor %}
+	</select>
+	<label for="award">Award</label>
+	<select name="award">
+	  <option value="" selected>(All)</option>
+	  {% for grant in nsf_grants %}
+	    {% set s = grant['award'] + " " + grant['name'] %}
+	    <option value="{{s}}">{{s}}</option>
+	  {% endfor %}
+	</select>
+	<label for="person">Person</label>
+	<select name="person">
+	  <option value="" selected>(All)</option>
+	  {% for p in persons %}
+	    <option value="{{p['id']}}">{{p['id']}}</option>
+	  {% endfor %}
+	</select>
+	<!-- <label for="parameter">Parameter</label>
+	<select name="parameter">
+	  <option value="" selected>(All)</option>
+	  {% for p in parameters %}
+	    {% set truncated = ' > '.join(p['id'].split(' > ')[2:]) %}
+	    <option value="{{p['id']}}">{{truncated}}</option>
+	  {% endfor %}
+	</select> -->
+	<label for="title">Title</label>
+	<input name="title"/>
+      </fieldset>
+      <fieldset>
+	<b>Spatial Bounds</b> (Please use decimal degrees, negative values for west and south)
+	<div id="spatial-tabs">
+	  <ul>
+	    <li><a href="#map-input">Select using map</a></li>
+	    <li><a href="#manual-input">Select manually</a></li>
+	  </ul>
+	  <div id="map-input">
+	    <div id="map" style="">
+	      <div id="drawing-buttons">
+		<div id="drag-icon" data-mode="None" class="drawing-button draw-active"><img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
+		</div>
+		<div id="rect-icon" data-mode="Box" class="drawing-button"><img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
+		</div>
+		<div id="polygon-icon" data-mode="Polygon" class="drawing-button"><img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
+		</div>
+	      </div>
+	    </div>
+	    <textarea name="spatial_bounds"></textarea>
+	    <input name="spatial_bounds_interpolated" type="hidden"></input>
+	    <div style="width:100%; height: 10px; float:right;"></div>
+	    <div id="map-footer">
+	      <button type="button" id="clear-polygon">Clear Polygon</button>
+	      <span id="mouse-position"></span>
+	    </div>
+	  </div>
+	  <div id="manual-input">
+	    <table>
+	    <tbody>
+	      <tr>
+		<td align="center">
+		  N: <input type="text" name="north" id="north" size="5" value=""> <br>
+		  W: <input type="text" name="west" id="west" size="6" value=""> &nbsp; &nbsp; &nbsp;
+		  E: <input type="text" name="east" id="east" size="6" value=""> <br>
+		  S: <input type="text" name="south" id="south" size="5" value="">
+		</td>
+		<td>
+		  <span style="margin: 20px">
+		    <input type="checkbox" id="entire_region"> Entire Region</input>
+		  </span>
+		</td>
+	      </tr>
+	    </tbody>
+	  </table>
+	  </div>
+	</div>	
+      </fieldset>
+      <fieldset>
+	<div>
+	  <b>Temporal Bounds</b>
+	  <br/><br/>
+	  <div class="row">
+	    <span class="cell">
+	      <b>Start</b>
+	    </span>
+	    <span class="cell">
+	      <input type="date" name="start"/>
+	    </span>
+	  </div>
+	  <div class="row">
+	    <span class="cell">
+	      <b>End</b>
+	    </span>
+	    <span class="cell">
+	      <input type="date" name="stop"/>
+	    </span>
+	  </div>
+	</div>
+      </fieldset>
+      <!-- <fieldset>
+	<label for="sensor">Sensor</label>
+	<select name="sensor">
+	  <option value="" selected>(All)</option>
+	  {% for s in sensors %}
+	    <option value="{{s['id']}}">{{s['name'] if s['name'] else s['id']}}</option>
+	  {% endfor %}
+	</select> -->
+	<!-- <label for="platform">Platform</label>
+	<select name="platform">
+	  <option value="" selected>(All)</option>
+	  {% for p in platforms %}
+	    <option value="{{p['id']}}">{{p['name'] if p['name'] else p['id']}}</option>
+	  {% endfor %}
+	</select> -->
+	<!-- <label for="location">Location Feature</label>
+	<select name="location">
+	  <option value="" selected>(All)</option>
+	  {% for l in locations %}
+	    <option value="{{l['id']}}">{{l['id']}}</option>
+	  {% endfor %}
+	</select>
+      </fieldset> -->
+      <div class="center">
+	<input type="submit" value="Search">
+	<input type="reset" value="Reset">
+      </div>
+    </div>
+    
+    
+  </form>
+</div>

@@ -1,0 +1,18 @@
+<div class="content">
+		<!-- InstanceBeginEditable name="contentArea" -->
+			<h2>Overview</h2>
+			<p>You have reached the USAP Data Center. The <acronym title="USAP Data Center">Center</acronym> is funded by the <acronym title="National Science Foundation">NSF</acronym> GEO Division of Polar Programs to manage data collected by U.S. funded scientists in Antarctica and the Southern Ocean. It also serves as a National Antarctic Data Centre (NADC) in the framework of <acronym title="Scientific Committee on Antarctic Research">SCAR</acronym>, and represents the U.S. in the SCAR Standing Committee on Antarctic Data Management.</p>
+			<p>The <acronym title="USAP Data Center">Center</acronym>'s goals are to help scientists find Antarctic scientific data of interest and to contribute their data for long-term preservation in accordance with their obligations under the NSF <a class="external" href="http://www.nsf.gov/publications/pub_summ.jsp?ods_key=opp991">Guidelines for Scientific Data</a></p>
+			
+			<h3>Submitting data to the USAP Data Center</h3>
+			            <p style="margin-top: 0;">Data submission involves both the registration of a data description into the Antarctic Master Directory (<acronym title="Antarctic Master Directory">AMD</acronym>) and submission to a recognized national data center as described on the <a href="/contribute.php">Contribute Data</a> page of this site. The data description includes  discovery information  about the data set that will enable users to assess whether a data set is relevant for their research or education needs and are required to be in a  standard format specified by the AMD.</p>
+			<p>The <acronym title="Antarctic Master Directory">AMD</acronym> is a node of the International Directory Network/Global Change Master Directory (<acronym title="International Directory Network">IDN</acronym>/<acronym title="Global Change Master Directory">GCMD</acronym>). The <acronym title="Antarctic Master Directory">AMD</acronym> is a Web-based, searchable directory of thousands of data descriptions and download links submitted by scientists from over 20 countries.</p>
+			
+			<h3>How to access data</h3>
+			<p>Data and information about U.S. funded research programs in Antarctica can be accessed through the <a href=/search.php>Search Data</a> page on this site.</p>
+			<p>Visit the <a class="external" href="http://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory</a> to access data and information submitted by all Antarctic scientists worldwide.  We offer a <a href=AMD.kmz>KMZ file</a> that allows you to browse AMD records (with data download links) in Google Earth: <br /><center><a href=AMD.kmz><img border=0 src="{{url_for('static', filename='imgs/usapdata_thumb.jpg')}}" valign=top></a></center></p>
+			
+			<h3>Treaty agreements on data sharing</h3>
+			<p>The Antarctic Treaty calls on parties to exchange and make freely available scientific observations and results from Antarctica. The Scientific Committee on Antarctic Research (<acronym title="Scientific Committee on Antarctic Research">SCAR</acronym>) has established the Standing Committee on Antarctic Data Management (SC-ADM), comprised of National Antarctic Data Centres (NADCs) linked to an Antarctic Master Directory (<acronym title="Antarctic Master Directory">AMD</acronym>). Researchers from all nations are requested to submit descriptions of their data sets in Directory Interchange Format (<acronym title="Directory Interchange Format">DIF</acronym>).</p>
+		<!-- InstanceEndEditable -->		</div>
+		<!-- content end -->

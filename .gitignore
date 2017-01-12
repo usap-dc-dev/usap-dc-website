@@ -1,2 +1,10 @@
-# stuff that won't get sync'd with other repos
-# secrets file should be in here
+mapfiles/
+www.usap-data.org/
+bower_components/
+uploads/
+*.pyc
+passwords.json
+dataset/
+flask_session/
+insert_keywords/
+insert_keywords.py

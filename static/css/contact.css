@@ -1,0 +1,42 @@
+form#contact, div#thanks{
+	margin-bottom:2em;
+	width:32em;
+	display:block;
+	float:right;
+}
+div#info{
+	float:left;
+	width:25em;
+}
+	form#contact table td{
+		padding:0 0.25em 0.5em 0.25em;
+		vertical-align:top;
+		text-align:right;
+	}
+	form#contact table td.submit{ text-align:center; }
+	form#contact div#err{
+		margin-left:9em;
+		color:#f00;
+		font:bold 0.9em Helvetica, Arial, sans-serif;
+	}	
+	form#contact label{
+		margin:0 0.5em 0 1.5em;
+		text-align:right;
+	}
+	form#contact input.textfield, form#contact textarea{
+		margin-right:1.5em;
+		padding:2px 4px;
+		border:1px inset #999;
+		width:25em;
+		font:0.9em Helvetica, Arial, sans-serif;
+	}
+	form#contact input.submit{
+		margin:2em auto 0 auto;
+		padding:0.15em 0.75em;
+		border:1px outset #999;
+		background-color:#F2F2F2;
+		clear:both;
+	}
+	input:focus, textarea:focus{
+		background:#e9f0ff;
+	}

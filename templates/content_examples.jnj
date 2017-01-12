@@ -1,0 +1,42 @@
+<div class="container">
+<div id="sidebar-left" class="sidebar">
+    <div class="inner">
+      <div id="block-user-1" class="block block-user">
+	<div>{{name}}</div>
+	<div class="content-menu">
+	  <ul class="menu">
+	    <li class="leaf"><a href="/logout">Log out</a></li>
+	  </ul>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div id="main">
+        <div class="main-inner">
+                      <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div>
+                                                              <h1 class="title">Examples of Content and Processing Steps</h1>
+                                        <div class="content">
+            <!-- start node.tpl.php -->
+<div id="node-14" class="node node-page">
+<div class="content"><p><strong>Example 1:</strong><br />
+Detailed descriptions of data content and processing steps are included in submitted documents (report.pdf)</p>
+<p><strong>Example 2: </strong><br />
+Egg shell material was grounded and send to NSF radiocarbon facility for dating. The raw dates were corrected using CALIB 4.1.<br />
+The tables contain location description, sample id, sample material description, uncorrected and corrected radiocarbon dates.<br />
+A subset of the material was grounded, treated with XYZ according to protocol and analyzed in a XYZ nutrient analyzer. The resulting percentage of nitrate (%N) a table.</p>
+<p><strong>Example 3:</strong><br />
+For water sampling protocol, Limnological Methods for the McMurdo Long Term Ecological Research Program which is accessible online from url: <a href="http://www.homepage.montana.edu/~lkbonney/DOCS/LTER%20methods%20web%20page/Method%20_Oct05_AC.pdf">http://www.homepage.montana.edu/~lkbonney/DOCS/LTER%20methods%20web%20page/Method%20_Oct05_AC.pdf</a>.<br />
+Specific methodologies are described in the protocol book listed above and a general description is provided below.<br />
+Field chemical analyses: YSI 30 Sal/Cond/Temp; YSI 58 DO; Licor LI-1000 Data logger with 50 m cable<br />
+Licor LI-193SA spherical quantum sensor; Licor LI-190SA quantum sensor. General chemical analyses: dissolved inorganic nutrients (NH4, NO3- and PO4) were analyzed by Lachat autoanalyzer.  DOC, DIC, and TN run on a Shimadzu TOC-VCPH (combustion catalysis), Ions on a ion chromatograph (Dionex). Absorbance measurements on Shimadzu 1601PC; fluorescence on Fluoromax 3 (Jobin-Yvon), Cary Eclipse, or Perkin Elmer LS50B; HPSEC Agilent 1100 Series HPLC; Primary amines and reducing capacity on Molecular Devices Spectra Max 340 (microplate abs reader).</p>
+<p><strong>Example 4:</strong><br />
+No further processing was applied to the data. The data file contains raw values of time, wind speed, and temperature in 60 s intervals.</p>
+</div>
+</div>
+<!-- end node.tpl.php -->          </div>
+          <!-- END CONTENT -->
+                            </div>
+        <!-- END MAIN INNER -->
+      </div>
+      <!-- END MAIN -->
+          </div>

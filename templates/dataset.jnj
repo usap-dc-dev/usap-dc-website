@@ -1,0 +1,164 @@
+<script type="text/javascript">
+  $(document).ready(function() {
+
+    var check = $('input[name="entire_region"]');
+    var w = $('input[name="geo_w"]');
+    var e = $('input[name="geo_e"]');
+    var s = $('input[name="geo_s"]');
+    var n = $('input[name="geo_n"]');
+    check.on('click', function() {
+      if (check.prop('checked')) {
+        w.val('-180');
+        e.val('180');
+        s.val('-90');
+        n.val('-60');
+      } else {
+        w.val('');
+        e.val('');
+        s.val('');
+        n.val('');
+      }
+    });
+  
+  });
+</script>
+
+<div class="container">
+  <div id="sidebar-left" class="sidebar">
+    <div class="inner">
+      <div id="block-user-1" class="block block-user">
+	<div>{{name}}</div>
+	<div class="content-menu">
+	  <ul class="menu">
+	    <li class="leaf"><a href="/logout">Log out</a></li>
+	  </ul>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div id="main">
+    <div class="main-inner">
+      <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div>
+      <h1 class="title">Submit Your Dataset</h1>
+      <div class="content">
+        <!-- start node.tpl.php -->
+	<div id="node-17" class="node node-restricted">
+	  <div class="content"><script src="/static/js/multifile.js"></script>
+	    <br>
+	    <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+	      <div>
+		<div class="row">
+		  <span class="cell">
+		    <b>Dataset Title</b>
+		  </span>
+		  <span class="cell">
+		    <input type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
+		  </span>
+		</div>
+		<div class="row">
+		  <span class="cell">
+		    <b>Dataset Author</b>
+		  </span>
+		  <span class="cell">
+		    <input type="text" name="author" value="{{dataset_metadata.get('author','')}}"/>
+		  </span>
+		</div>
+	      </div>
+	      <br>
+
+	      <b>Abstract</b>(Describe this specific dataset, not the overall project.)<br>
+	      <textarea name="abstract" rows="3" cols="80">{{dataset_metadata.get('abstract','')}}</textarea><br>
+	      <br>
+
+	      <b>NSF-Grant</b>
+	      <select name="award" id="award">
+		<option value="" selected>(Select Award #)</option>
+		{% for grant in nsf_grants %}
+		  {% set s = grant['award'] + " " + grant['name'] %}
+		  <option value="{{s}}" {% if dataset_metadata.get('award') == s %}selected{% endif %}>{{s}}</option>
+		{% endfor %}
+	      </select><br>
+	      (use same number as for DIF record Entry ID (e.g. NSF-ANT09-94546 = 0994546))
+	      <br/>
+	      <br/>
+
+	      <b>Related Articles</b> (and DOI's where known)<br>
+	      <textarea name="related_articles" rows="3" cols="80">{{dataset_metadata.get('related_articles','')}}</textarea><br>
+	      <br>
+
+	      <b>Related Field Event ID's</b> (e.g. cruise ID or flight #)<br>
+	      <textarea name="related_fields" rows="3" cols="80">{{dataset_metadata.get('related_fields','')}}</textarea><br>
+	      <br>
+
+	      <b>Related Sample ID's</b> (e.g. int'l Geo Sample #, or indicate if given in data files)<br>
+	      <textarea name="related_samples" rows="3" cols="80">{{dataset_metadata.get('related_samples','')}}</textarea><br>
+	      <br>
+
+	      <div>
+		<b>Spatial Bounds</b> (Please use decimal degrees, negative values for west and south)
+		Bounds: &nbsp;<i>(maximum extent of your data)</i><br>
+		<table>
+		  <tbody>
+		    <tr>
+		      <td align="center">
+			N: <input type="text" name="geo_n" id="geo_n" size="5" value=""> <br>
+			W: <input type="text" name="geo_w" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value=""> <br>
+			S: <input type="text" name="geo_s" id="geo_s" size="5" value="">
+		      </td>
+		      <td>
+			<span style="margin: 20px">
+			  <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
+			</span>
+		      </td>
+		    </tr>
+		  </tbody>
+		</table>
+
+		<br>
+	      </div>
+	      <br>
+
+	      <b>Region Feature Name</b> (e.g. Thwaites Glacier, West Antarctica)<br>
+	      <input name="feature_name" value="{{dataset_metadata.get('feature_name','')}}"></input><br>
+	      <br>
+	      
+	      <div>
+		<b>Temporal Bounds</b>
+		<div class="row">
+		  <span class="cell">
+		    <b>Start</b>
+		  </span>
+		  <span class="cell">
+		    <input type="date" name="start" value="{{dataset_metadata.get('start','')}}"/>
+		  </span>
+		</div>
+		<div class="row">
+		  <span class="cell">
+		    <b>End</b>
+		  </span>
+		  <span class="cell">
+		    <input type="date" name="stop" value="{{dataset_metadata.get('stop','')}}"/>
+		  </span>
+		</div>
+	      </div>
+	      <br>
+
+	      <b>List data type(s) and format(s) of file or file bundle:</b><br>
+	      (Excel table, Matlab, jpeg image, GMT grid file, etc.) <br>
+	      <textarea name="datatype" rows="3" cols="80">{{dataset_metadata.get('datatype','')}}</textarea><br>
+
+	      <input type="checkbox" name="agree" {% if dataset_metadata.get('agree') %}checked{% endif %}> I agree these file(s) will be posted online with a DOI.<br><br>
+	      
+	      <button type="submit">Next page</button>
+
+	    </form>
+
+
+	  </div>
+
+
+	</div>
+      </div>
+    </div>
+  </div>
+</div>

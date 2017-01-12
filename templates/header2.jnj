@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/usapdc_home.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+	<title>United States Antarctic Program Data Center (USAP-DC)</title>
+	<meta name="Description" content="United States Antarctic Program Data Center (USAP-DC)" />
+	<meta name="Keywords" content="Antarctic, Antarctica, Polar, science, data sets" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	
+	<meta http-equiv="Content-Language" content="en-us" />
+	<meta name="Copyright" content="Copyright (c)2010-2015 Interdisciplinary Earth Data Alliance" />
+	
+	<meta http-equiv="imagetoolbar" content="no" />
+	
+	<meta name="MSSmartTagsPreventParsing" content="true" />
+	<meta name="google-signin-client_id" content="721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com">
+	  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet">
+	    
+	    <link rel="stylesheet" type="text/css" href="/static/css/print.css" media="print" />
+	<link rel="stylesheet" type="text/css" href="/static/css/main_1.css" media="screen, projection" />
+	<link rel="stylesheet" type="text/css" href="/static/css/contribute.css" media="screen, projection" />
+	{% if cur=='home' %}
+	<link rel="stylesheet" type="text/css" href="/static/css/home.css" media="screen, projection" />
+	{% endif %}
+	{% if cur=='search' %}
+	<link rel="stylesheet" type="text/css" href="/static/css/search.css" media="screen, projection" />
+	{% endif %}
+	{% if cur=='contact' %}
+	<link rel="stylesheet" type="text/css" href="/static/css/contact.css" media="screen, projection" />
+	{% endif %}
+	{% if cur=='submit' or cur=='data_repo' %}
+	<link rel="stylesheet" type="text/css" href="/static/css/contribute.css" media="screen, projection" />
+	{% endif %}
+	{% if cur in ['dataset', 'dataset_error', 'project', 'thank_you'] %}
+	<!--<link rel="stylesheet" type="text/css" href="/static/css/allenfix.css" media="screen, projection" />
+	<link rel="stylesheet" type="text/css" href="/static/css/appearance.css" media="screen, projection" />
+	<link rel="stylesheet" type="text/css" href="/static/css/sky.css" media="screen, projection" />
+	<link rel="stylesheet" type="text/css" href="/static/css/custom.css" media="screen, projection" />-->
+	<link rel="stylesheet" type="text/css" href="/static/css/dataset.css" media="screen, projection" />
+	{% endif %}
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/startbootstrap-bare/css/bootstrap.css')}}"/>
+
+	
+
+
+	
+	<!--<link rel="stylesheet" type="text/css" href="OpenLayers-2.12/theme/default/style.css"></link>
+	    <!-- InstanceEndEditable -->
+	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery/dist/jquery.js') }}"></script>
+	    <script type="text/javascript" src="/static/js/oauth.js"></script>
+	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/proj4/dist/proj4.js')}}"></script>
+	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3/ol-debug.js')}}"></script>
+	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.js')}}"></script>
+	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.js')}}"></script>
+	    <script src="https://apis.google.com/js/platform.js" async defer></script>
+	    <script type="text/javascript" src="{{ url_for('static', filename='js/mapInit.js') }}"></script>
+	    {% if cur == 'project' %}
+	    <script src="{{ url_for('static', filename='js/project.js') }}" type="text/javascript"></script>
+	    {% endif %}
+	    {% if cur == 'thank_you' %}
+	    <script src="{{ url_for('static', filename='js/thank_you.js') }}" type="text/javascript"></script>
+	    {% endif %}
+	    {% if cur == 'landing_page' %}
+	    <script src="{{ url_for('static', filename='js/landing_page.js') }}" type="text/javascript"></script>
+	    {% endif %}
+
+	    {% if cur=='contact' %}
+	    <script src='https://www.google.com/recaptcha/api.js'></script>
+	    {% endif %}
+
+</head>
+  <body>
+    <div id="wrapper">
+      <div id="ieda-header">
+	<h1><a href="http://www.iedadata.org/"><img src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" alt="Interdisciplinary Earth Data Alliance" title="Interdisciplinary Earth Data Alliance" /></a></h1>
+	<a href="http://www.nsf.gov"><img id="NSF" alt="NSFlogo" src="{{url_for('static', filename='imgs/header/nsf1.png')}}" align="right" /></a>
+      </div>
+      <div>
+	<img src="{{url_for('static', filename='imgs/header/menu_top.png')}}"/>
+	</div>
+      <div id="usapdc-header">
+	<div style="position:relative;height:130px">
+	  <div id="ieda-header-banner">
+	    <img src="{{url_for('static', filename='imgs/header/usap_banner' + str(randint(1,6)) + '.jpg') }}" alt="USAP Data Center" />
+	  </div>
+	  <div id="page-header">
+	    <h1><a title="U.S. Antarctic Program Data Center" href="/">U.S. Antarctic Program Data Center</a></h1>
+	  </div>
+	</div>
+	<div style="position:relative;height:22px">
+	  <ul id="menu">
+	    <li id="mn0"><a {% if cur=='home' %} class="cur" {% endif %} title="Go to USAP Data Center Home" href="/index">Home</a></li>
+	    <li id="mn1"><a  {% if cur=='overview' %} class="cur" {% endif %} title="An Overview of the USAP Data Center" href="/overview">Overview</a></li>
+	    <li id="mn2"><a  {% if cur=='submit' %} class="cur" {% endif %} title="How to Contribute Your Data" href="/submit">Contribute Data</a></li>
+	    <li id="mn2a"><a  {% if cur=='register1' %} class="cur" {% endif %} title="Register Your Data Sets" href="/register">Register Your Data Sets</a></li>
+	    <li id="mn2b"><a  {% if cur=='register2' %} class="cur" {% endif %} title="Register Your Data Sets" href="/index">Register Your Data Sets</a></li>
+	    <li id="mn3"><a  {% if cur=='search' %} class="cur" {% endif %} title="Search for Data" href="/search">Search Data</a></li>
+	    <li id="mn4"><a {% if cur=='links' %} class="cur" {% endif %} title="Find Related Web Sites" href="/links">Related Links</a></li>
+	    <li id="mn5"><a  {% if cur=='contact' %} class="cur" {% endif %} title="Contact Us" href="/contact">Contact Us</a></li>
+	    <li id="mn6"><a title="Antarctic Master Directory - External Link" href="http://gcmd.nasa.gov/Data/portals/amd/">AMD</a></li>
+	  </ul>
+	</div>
+      </div>

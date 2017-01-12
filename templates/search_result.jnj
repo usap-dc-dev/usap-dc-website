@@ -1,0 +1,68 @@
+<div class="content">
+  <h2>Search Results</h2>
+  {% if page == 0 %}({{total_count}} total){% endif %}
+  <div style="float:left">
+    {% if page > 1 %}
+      <a href="/search_result?page={{0}}">First</a>
+    {% endif %}
+    {% if page > 0 %}
+      <a href="/search_result?page={{page-1}}">Prev</a>
+    {% endif %}
+  </div>
+  <div style="float:right">
+    {% if end_idx < total_count %}
+      <a href="/search_result?page={{page+1}}">Next</a>
+    {% endif %}
+    {% set num_pages = int(ceil(total_count/50)) %}
+    {% if page < num_pages-2 %}
+      <a href="/search_result?page={{num_pages-1}}">Last</a>
+    {% endif %}
+    </div>
+  <div style="clear:both;"/>
+  {% if len(datasets) > 0 %}
+    <div style="padding: 15px">
+      <ol start={{50*page+1}}>
+	{% for d in datasets %}
+	    <li>
+	      <div>
+		<a href="/view/dataset/{{d['id']}}">{{d['title']}}</a>
+	      </div>
+	      <div>
+		ID: {{d['id']}}
+	      </div>
+	      {% if len(d.get('award',[])) > 0 %}
+		{% set a = d['award'][0] %}
+		<div>
+		  Investigator(s): {{a['name'] + ('<br/>' + a['copi']) if a['copi'] else ''}}
+		</div>
+	      {% endif %}
+	    </li>
+	{% endfor %}
+      </ol>
+    </div>
+  {% else %}
+    Your search returned no results.
+    <br/><br/>
+  {% endif %}
+  <br/><br/>
+  <a href="/search">Search Again</a>
+  <div style="float:left">
+    {% if page > 1 %}
+      <a href="/search_result?page={{0}}">First</a>
+    {% endif %}
+    {% if page > 0 %}
+      <a href="/search_result?page={{page-1}}">Prev</a>
+    {% endif %}
+  </div>
+  <div style="float:right">
+    {% if end_idx < total_count %}
+      <a href="/search_result?page={{page+1}}">Next</a>
+    {% endif %}
+    {% set num_pages = int(ceil(total_count/50)) %}
+    {% if page < num_pages-2 %}
+      <a href="/search_result?page={{num_pages-1}}">Last</a>
+    {% endif %}
+    </div>
+  <div style="clear:both;"/>
+  <br/><br/>
+</div>
