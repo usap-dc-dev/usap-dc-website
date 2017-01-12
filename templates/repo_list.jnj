@@ -1,0 +1,20 @@
+<div class="content">
+<p>
+Long-term disciplinary data repositiories offer data services for the following data types and should be used if appropriate
+for your data set.
+</p>
+
+
+			      <ul>
+				<li><a href="http://www.bco-dmo.org/how-get-started">BCO-DMO</a> for bio/chem oceanographic data
+				<li><a href="https://cchdo.ucsd.edu/submit">CCHDO</a> for hydrographic data
+				<li><a href="http://earthchem.org/data/contribute">EarthChem</a> for geochemical and chronological data
+				<li><a href="https://www.ncbi.nlm.nih.gov/genbank/submit/">GenBank</a> for sequence data
+				<li><a href="http://ds.iris.edu/ds/nodes/dmc/forms/assembled-id/">IRIS</a> for seismological data
+				<li><a href="http://ilikai.soest.hawaii.edu/sadcp/submit.html">JASADCP</a> for ocean current data
+				<li><a href="http://www.marine-geo.org/submit/">MGDS</a> for marine geological/geophysical data
+				<li><a href="https://www.ncdc.noaa.gov/data-access/paleoclimatology-data/contributing">NCEI</a> for paleoclimate data
+				<li><a href="http://www.geosamples.org/getigsn">SESAR</a> for sample information+registration
+				<li><a href="http://www.unavco.org/data/data-help/submission/submission.html">UNAVCO</a> for geodetic data
+			      </ul>
+</div>

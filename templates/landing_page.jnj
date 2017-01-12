@@ -1,0 +1,305 @@
+<style>
+
+  body {
+    font-color: black !important;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #FFFFFF
+  }
+  tr:nth-child(odd) {
+    background-color: #CCCCCC
+  }
+
+  .row {
+  position: relative;
+  min-height: 40px;
+  margin-left: 20px;
+  margin-bottom: 10px;
+  }
+  
+  .field {
+    margin-left: 10px;
+    position: absolute;
+    width: 200px;
+    font-weight: bold;
+  }
+
+  .value {
+    margin-left: 200px;
+  }
+
+  .col1 {
+    margin-left: 10px;
+    position: absolute;
+    width: 300 px;
+    font-weight: bold;
+  }
+
+  .col2 {
+    text-align: center;
+    margin-left: 300px;
+    width: 100px;
+    position: absolute;
+  }
+
+  .col3 {
+    margin-left: 500px;
+    width: 150 px;
+    position: absolute;
+  }
+
+  .col4 {
+    margin-left: 600px;
+    width: 150 px;
+  }
+
+  .header {
+    color: #002783;
+    font-family: Georiga,"Times New Roman",Times,serif;
+    font-size: 1.8em;
+    letter-spacing: -1px;
+    line-height: normal;
+    font-weight: normal;
+    padding: 5px;
+    background-color: #b2dbff;
+    margin: 10px;
+    position: relative;
+  }
+
+  .header.small {
+    font-size: 1.3em;
+  }
+
+  .header .subtitle {
+    margin-left: 15px;
+    font-size: .7em;
+    color: #4e5d82
+  }
+
+  .download {
+    background-color: #008ab8;
+    color: white;
+    font-weight: 200;
+    padding: 3px 10px 3px 10px;
+    font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 0.7em;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  li {
+  display: list-item;
+  list-style: circle;
+  }
+
+  #file-rows {
+  max-height: 400px;
+  overflow: auto;
+  }
+  
+</style>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('.download').click(function() {
+      window.open($(this).attr('data-url'), '_blank');
+    });
+  });
+</script>
+
+<div id="metadata">
+  <div class="header small">
+    Metadata
+  </div>
+  <div class="row">
+    <div class="field">
+      Resource Type
+    </div>
+    <div class="value">
+      Dataset
+    </div>
+  </div>
+  {% if data['doi'] %}
+    <div class="row">
+      <div class="field">
+	Data DOI
+      </div>
+      <div class="value">
+	{{data['doi']}}
+      </div>
+    </div>
+  {% endif %}
+  <div class="row">
+    <div class="field">
+      Repository (current):
+    </div>
+    <div class="value">
+      USAP-DC
+    </div>
+  </div>
+  {% if data.get('superset') == 'nsidc' %}
+    <div class="row">
+      <div class="field">
+	Repository (originating):
+      </div>
+      <div class="value">
+	NSIDC
+      </div>
+    </div>
+  {% endif %}
+  <div class="row">
+    <div class="field">
+      Title
+    </div>
+    <div class="value">
+      {{data['title']}}
+    </div>
+  </div>
+  {% if data.get('abstract') %}
+  <div class="row">
+    <div class="field">
+      Abstract
+    </div>
+    <div class="value">
+      {{data['abstract']}}
+    </div>
+  </div>
+{% endif %}
+{% if data.get('release_date') %}
+  <div class="row">
+    <div class="field">
+      Date Created
+    </div>
+    <div class="value">
+      {{data['release_date']}}
+    </div>
+  </div>
+{% endif %}
+{% if data.get('creator') %}
+  <div class="row">
+    <div class="field">
+      Creator(s)
+    </div>
+    <div class="value">
+      {{data['creator']}}
+      {% if data['creator_orcid'] %}
+	&nbsp&nbsp (<a href="orcid.org/{{data['creator_orcid']}}">ORCID</a>)
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+  {% if data.get('spatial_extents') %}
+    <div class="row">
+      <div class="field">
+	Spatial Extent
+    </div>
+      <div class="value">
+	{% for ex in data['spatial_extents'] %}
+	  {{'<br/>'.join(['West: ' + str(ex['west']), 'East: ' + str(ex['east']), 'South: ' + str(ex['south']), 'North: ' + str(ex['north'])])}}<br/>
+	{% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  {% if data.get('temporal_extents') %}
+    <div class="row">
+      <div class="field">
+	Temporal Extent
+      </div>
+      <div class="value">
+	{% for ex in data['temporal_extents'] %}
+	  Start: {{ex['start_date']}}<br/>
+	  End: {{ex['stop_date']}}<br/>
+	{% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  {% set awards = filter_awards(data['awards']) %}
+  {% if len(awards) > 0 %}
+    <div class="row">
+      <div class="field">
+	Award
+      </div>
+      <div class="value">
+	{% for aw in awards %}
+	  <a target=_new href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{aw['award']}}">NSF {{aw['award']}}</a><br/>
+	{% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  {% if data.get('version') %}
+  <div class="row">
+    <div class="field">
+      Version
+    </div>
+    <div class="value">
+      {{data['version']}}
+    </div>
+  </div>
+{% endif %}
+  <div class="row">
+    <div class="field">
+      Language
+    </div>
+    <div class="value">
+      {{data['language_id']}}
+    </div>
+  </div>
+  {% if len(data['references']) > 0 and len(data['references'][0]['reference'].strip()) > 0 %}
+    <div class="row">
+      <div class="field">
+	References
+      </div>
+      <div class="value">
+	{% set refs = data['references'][0]['reference'].split('\n\n') %}
+	<ol>
+	  {% for r in refs %}
+	    <li>
+	      {{r}}
+	    </li>
+	  {% endfor %}
+	</ol>
+      </div>
+    </div>
+  {% endif %}
+  <div class="header small">
+    Files
+  </div>
+  <div id="file-rows">
+    {% for f in data['files'] %}
+      <div class="row">
+	<div class="col1">
+	{{f['name']}}
+	</div>
+	<div class="col2">
+	  <div class="download" data-url="{{f['url']}}">
+	    {% if f['url'].startswith('http://www.usap-dc.org/') %}
+	      Download
+	    {% else %}
+	      External
+	    {% endif %}
+	  </div>
+	</div>
+	<div class="col3">
+	  {{f['size']}}
+	</div>
+      </div>
+    {% endfor %}
+  </div>
+  <!--
+  <div class="header small">
+    Related Data
+  </div>
+  <div class="row">
+    <div class="field">
+      Awards
+    </div>
+    <div class="value">
+      {{data['title']}}
+    </div>
+  </div>
+-->
+  <!-- <div class="header small">
+    Extended Metadata
+  </div> -->
+</div>

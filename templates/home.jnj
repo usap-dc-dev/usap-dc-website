@@ -1,0 +1,76 @@
+<div class="content">
+  <!-- InstanceBeginEditable name="pageHeading" -->
+  <h2>Welcome</h2>
+  <!-- InstanceEndEditable -->
+  <div id="map" style="width:400px;height:400px;border:1px solid black;float:right"></div>
+  <!-- InstanceBeginEditable name="pageContent" -->
+  <p style="margin-top:0;text-align:left;width:400px;">The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation (<a class="external" href="http://www.nsf.gov/geo/plr/ant/about.jsp">NSF</a>) in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and a partner in the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>).</p> </p>
+<p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT NEWS / ACTIVITIES</p>
+<div class="style4" style="border:solid 1px;padding:4px;width:380px;height:30px;overflow:auto;line-height:150%">
+  <p class="style4" style="margin-top:0;margin-bottom:0;text-align:left">Aug. 2016 - Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers, concurrent with <a href="http://scar2016.com/about.php">OSC</a> (Kuala Lumpur).</p>
+  <p class="style4" style="margin-top:0;margin-bottom:0;text-align:left">Oct. 2015 - Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers, concurrent with <a href="http://www.polar-data-forum.org/">PDF-II</a> (Waterloo).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Aug. 2014 - Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers (Auckland).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jan. 2014 - Launched new <a href="http://www.a2dc.org/">Antarctic &amp; Arctic Data Consortium</a> site.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Oct. 2013 - Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a> annual meeting of Antarctic data managers (Tokyo).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Dec. 2012 - Launched interactive USAP map for exploring data.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Oct. 2012 - LDEO now a branch of the <a href="http://sdls.ogs.trieste.it">Antarctic Seismic Data Library System</a>.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jul. 2012 - Created and launched the U.S. Antarctic Data Consortium <a href="/adc">webpage</a>.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jul. 2012 - Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a> meeting of Antarctic data managers (Portland).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Apr. 2012 - Attended US Antarctic Data Consortium organizational meeting (Minneapolis).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Sep. 2011 - Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a>/<a href="http://www.scar.org/researchgroups/">SC-AGI</a> joint meeting of Antarctic data managers (Palma).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jul. 2011 - Presented results at <a href="http://www.isaes2011.org.uk/">ISAES 2011</a> meeting (Edinburgh).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Aug. 2010 - Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a>/<a href="http://www.scar.org/researchgroups/">SC-AGI</a> joint meeting of Antarctic data managers (Buenos Aires).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jun. 2010 - Attended <a href="http://gcmd.nasa.gov/Aboutus/UWG/uwg.html">GCMD</a> Science User Working Group meeting (Washington).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Mar. 2010 - Added "Recent Data" section to highlight hosted data.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Oct. 2009 - Added search option for <a href="http://ipydis.org/">U.S. IPY</a> data sets.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Sep. 2009 - Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a>/<a href="http://www.scar.org/researchgroups/">SC-AGI</a> joint meeting of Antarctic data managers (Amsterdam).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jun. 2009 - Upgraded <a href="/contribute.php">Contribute Data</a> interface to accept direct data upload/archiving.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Mar. 2009 - New <a href="search.php">Search</a> interface available for searching for data sets within the Antarctic Master Directory</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Nov. 2008 - Posted new <a href="http://www.marine-geo.org/services/cpkmz?search=NBP">KMZ file</a> for accessing R/V <i>Palmer</i> ship tracks in <a href="http://earth.google.com/">Google Earth</a>. Ctrl-click (Win) or Cmd-click (Mac) on a track for details.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Nov. 2008 - Posted new <a href="AMD.kmz">KMZ file</a> to explore AMD data sets (both U.S. and non-U.S.) in <a href="http://earth.google.com/">Google Earth</a>.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Oct. 2008 - Deployed new &quot;<a href="http://www.usap-data.org/register.php">short form</a>&quot; for registering data sets in the Antarctic Master Directory (AMD).</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">May 2008 - Added new WFS map layer for non-U.S. data sets.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Mar. 2008 - Reorganized U.S. data sets per <a href="http://www.nsf.gov/div/index.jsp?div=ANT">NSF OPP</a> programs.</p>
+  <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left">Jan. 2008 - Added <a href="http://lima.usgs.gov/">LIMA</a> basemap via <a href="http://www.agic.umn.edu/">AGIC</a> web service.</p>
+  <p class="style4" style="margin-top: 0;">Dec. 2007 - Launched new Web site at <a href="http://www.agu.org/cgi-bin/wais?jj=IN54A-07">AGU</a> meeting.</p>
+</div> 
+<p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT DATA REGISTERED</p>
+<div class="style4" style="border:solid 1px;padding:4px;width:380px;height:110px;overflow:auto;line-height:150%;">
+  
+  &nbsp; &nbsp; &nbsp; (2016-08-17)&nbsp; <a target=_new href=http://gcmd.nasa.gov/r/d/NSF-ANT12-50208>12-50208</a>&nbsp; A.Friedlaender, D.Nowacek, D.Johnston - Linking the Movement Patterns and Foraging Behavior of Humpback Whales to their Prey<br />
+  &nbsp; &nbsp; &nbsp; (2016-07-28)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43580>10-43580</a>&nbsp; D.Reusch, D.Lampkin - Decoding and  Predicting Antarctic Surface Melt Dynamics<br />
+  &nbsp; &nbsp; &nbsp; (2016-06-10)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-41973>11-41973</a>&nbsp; M.Tedesco - Enhanced Spatial Resolution Surface Melting over the Antarctic Peninsula<br />
+  &nbsp; &nbsp; &nbsp; (2016-06-02)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT09-44282>09-44282</a>&nbsp; S.Hasiotis - Paleoenvironmental and Paleoclimatic Analysis of the Beacon Supergroup, Beardmore Glacier Area<br />
+  &nbsp; &nbsp; &nbsp; (2016-05-31)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-55533>13-55533</a>&nbsp; P.Dayton - A Multi-decadal Record of Antarctic Benthos<br />
+  &nbsp; &nbsp; &nbsp; (2016-05-17)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-39059>08-39059</a>&nbsp; R.Powell, R.Scherer - Lake & Ice Stream Subglacial Access Research Drilling (LISSARD)<br />
+  &nbsp; &nbsp; &nbsp; (2016-05-09)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT12-45821>12-45821</a>&nbsp; E.Brook - Taylor Glacier Horizontal Ice Core: Exploring changes in the Natural Methane Budget<br />
+  &nbsp; &nbsp; &nbsp; (2016-04-18)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-39031>08-39031</a>&nbsp; J.Severinghaus - A "Horizontal Ice Core" for Large-Volume Samples of the Past Atmosphere, Taylor Glacier<br />
+  &nbsp; &nbsp; &nbsp; (2016-03-16)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42162>11-42162</a>&nbsp; J.Stone, H.Conway, D.Winebrenner - Glacial-interglacial History of West Antarctic Nunataks<br />
+  &nbsp; &nbsp; &nbsp; (2016-03-02)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43669>10-43669</a>&nbsp; X.Yuan -  US/Chinese Collaborative Study: Bottom Water Formation in Prydz Bay<br />
+  &nbsp; &nbsp; &nbsp; (2015-12-16)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT09-44659>09-44659</a>&nbsp; R.Kiene - Ecophysiology of DMSP and related compounds in Phaeocystis antarctica<br />
+  &nbsp; &nbsp; &nbsp; (2015-12-15)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43454>10-43454</a>&nbsp; G.Kooyman - Pre and Post Molt Biology of Emperor Penguins - Ross/Amundsen Sea Cruise<br />
+  &nbsp; &nbsp; &nbsp; (2015-12-01)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43572>10-43572</a>&nbsp; K.Licht - East Antarctic Outlet Glacier Contributions to the Ross Sea from Chronology of Detrital Grains<br />
+  &nbsp; &nbsp; &nbsp; (2015-11-23)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT09-44653>09-44653</a>&nbsp; R.Forster - Annual Satellite Era Accumulation Patterns Over WAIS Divide<br />
+  &nbsp; &nbsp; &nbsp; (2015-10-27)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-46399>11-46399</a>&nbsp; C.Sidor - Preparation of Vertebrate Fossils from the Triassic of Antarctica<br />
+  &nbsp; &nbsp; &nbsp; (2015-10-26)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42156>11-42156</a>&nbsp; H.Marschall - Zircon Hf Isotopes and the Continental Evolution of Dronning Maud Land<br />
+  &nbsp; &nbsp; &nbsp; (2015-10-22)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43657>10-43657</a>&nbsp; J.Cassano, S.Palo - Ocean-Ice-Atmosphere Interactions in the Terra Nova Bay Polynya<br />
+  &nbsp; &nbsp; &nbsp; (2015-10-20)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43485>10-43485</a>&nbsp; J.Curtice, M.Kurz - A New Reconstruction of the Last West Antarctic Ice Sheet Deglaciation<br />
+  &nbsp; &nbsp; &nbsp; (2015-10-05)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-43649>13-43649</a>&nbsp; J.Levy - Cryptic Hydrology of the McMurdo Dry Valleys: Water Track Contributions<br />
+  &nbsp; &nbsp; &nbsp; (2015-09-29)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-41936>11-41936</a>&nbsp; C.Foreman - Dissolved Organic Carbon and Microbial Diversity in the WAIS Divide Replicate Core<br />
+  &nbsp; &nbsp; &nbsp; (2015-09-25)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT06-32282>06-32282</a>&nbsp; S.Jacobs - West Antarctic Ice Sheet Stability<br />
+  &nbsp; &nbsp; &nbsp; (2015-09-16)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42174>11-42174</a>&nbsp; W.Smith - Penguin Foraging Reveals Phytoplankton Spatial Structure<br />
+  &nbsp; &nbsp; &nbsp; (2015-08-26)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42065>11-42065</a>&nbsp; G.DiTullio - TRacing the fate of Algal Carbon Export in the Ross Sea (TRACERS)<br />
+  &nbsp; &nbsp; &nbsp; (2015-08-26)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42117>11-42117</a>&nbsp; D.Hansell - TRacing the fate of Algal Carbon Export in the Ross Sea (TRACERS)<br />
+  &nbsp; &nbsp; &nbsp; (2015-06-24)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-32492>13-32492</a>&nbsp; R.Lohmann - Origin of Persistent Organic Pollutants<br />
+  &nbsp; &nbsp; &nbsp; (2015-06-07)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-38773>08-38773</a>&nbsp; J.McClintock - Chemical Ecology of Shallow-water Marine Macroalgae<br />
+  &nbsp; &nbsp; &nbsp; (2015-06-04)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT07-39512>07-39512</a>&nbsp; S.Walker - Linking Modern Benthic Communities to the Stratigraphic Record<br />
+  &nbsp; &nbsp; &nbsp; (2015-06-04)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-21782>13-21782</a>&nbsp; D.Costa - Retrospective Analysis of Antarctic Tracking Data (RAATD)<br />
+  &nbsp; &nbsp; &nbsp; (2015-05-24)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-03896>13-03896</a>&nbsp; J.Kirschvink - Magnetostratigraphy of Cretaceous Sediments<br />
+  &nbsp; &nbsp; &nbsp; (2015-05-21)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-41022>10-41022</a>&nbsp; J.McClintock, R.Angus - Effects of Ocean Acidification on Shallow-water Benthic Organisms<br />
+  &nbsp; &nbsp; &nbsp; (2015-01-17)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-38892>08-38892</a>&nbsp; J.Burns - Weddell Seals as Autonomous Sensors<br />
+</div>
+<p style="line-height:100%"/>
+<div style="width:410px">
+  <p style="margin-top: 0; text-align: left;"><!-- Use the map to find existing data sets.&nbsp;The upper-left buttons control pan and zoom, and the upper-right &quot;+&quot; button selects basemaps and overlays.&nbsp; Click on a red marker to pop up a list of the data set(s) at that location, with links to metadata.--> To start a new submission, choose <a href="/submit">"Contribute Data"</a> from the menu above.</p>
+</div>
+</div>

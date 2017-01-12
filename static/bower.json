@@ -1,0 +1,27 @@
+{
+  "name": "usap-dc",
+  "description": "usap-dc-website",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.0",
+    "OpenLayers": "^3.18.2",
+    "ol3": "ol3-dist#^3.17.1",
+    "proj4": "^2.3.15",
+    "ol3-layerswitcher": "^1.1.0",
+    "ol3-popup": "^1.0.1",
+    "startbootstrap-bare": "https://github.com/BlackrockDigital/startbootstrap-bare.git#^3.3.7",
+    "sprintf": "^1.0.3",
+    "jquery-ui": "^1.12.1",
+    "arc.js": "^0.1.0"
+  }
+}

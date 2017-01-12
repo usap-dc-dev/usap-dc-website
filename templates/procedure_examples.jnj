@@ -1,0 +1,39 @@
+<div class="container">
+  <div id="sidebar-left" class="sidebar">
+    <div class="inner">
+      <div id="block-user-1" class="block block-user">
+	<div>{{name}}</div>
+	<div class="content-menu">
+	  <ul class="menu">
+	    <li class="leaf"><a href="/logout">Log out</a></li>
+	  </ul>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div id="main">
+    <div class="main-inner">
+      <h1 class="title">Examples of Data Acquisition Procedures and Protocols</h1>
+      <div class="content">
+        <!-- start node.tpl.php -->
+	<div id="node-13" class="node node-page">
+	  <div class="content"><p><strong>Example 1:</strong><br />
+	      Detailed descriptions of data acquisition procedures are included in submitted documents (report.pdf)</p>
+	      <p><strong>Example 2:</strong><br />
+		This project uses data from NSIDC data repository.</p>
+		<p><strong>Example 3:</strong><br />
+		  Samples were taken from sediment cores from the Antarctic Marine Geology Research Facility at Florida State University. 10 g of material every 10 cm were sampled from selected sediment cores.</p>
+		  <p><strong>Example 4:</strong><br />
+		    Individual penguins were caught with a net. Length and weight were determined in the field using standard protocols. A 10 ml blood sample was taken and sealed for further analysis.</p>
+		    <p><strong>Example 5:</strong><br />
+		      The cosmic ray detector operated constantly from November 5th 2006 to February 14th 2007. Data were measured and archived every 60 s. Simultaneously temperature, light and wind conditions were recorded every 30 s.</p>
+	  </div>
+	</div>
+	<!-- end node.tpl.php -->
+      </div>
+      <!-- END CONTENT -->
+    </div>
+    <!-- END MAIN INNER -->
+  </div>
+  <!-- END MAIN -->
+</div>

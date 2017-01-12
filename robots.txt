@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /dataset/
+Disallow: /data/
+Disallow: /flask_session/
+Disallow: /static/
+Disallow: /templates/
+Disallow: /uploads/
+
+User-agent: googlebot
+Disallow: *.csi
+
+User-agent: AhrefsBot
+Disallow: /

@@ -1,0 +1,22 @@
+#content iframe#map {
+	margin:0 0.5em 2em 1em ;
+	padding:0;
+	width:456px;
+	height:460px;
+	border:0;
+	position:relative;
+	float:right;
+}
+	
+#content h3{ display:inline; }
+#content ul{ margin-top:1em; }
+
+#map {
+    position: relative;
+}
+
+/*.ol-zoom {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}*/

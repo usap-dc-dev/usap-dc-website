@@ -1,0 +1,41 @@
+<style>
+  #main {
+  margin-left: 250px;
+  padding: 20px;
+  }
+</style>
+
+<div class="container">
+  <div id="left">
+    {% if name %}
+      <div id="sidebar-left" class="sidebar">
+	<div class="inner">
+	<!-- start block.tpl.php -->
+	<div id="block-user-1" class="block block-user">
+	  <div>{{name}}</div>
+	  <div class="content-menu">
+	    <ul class="menu">
+	      <!--<li class="leaf"><a href="/contributedata" title="Contribute Data" class="active">Contribute Data</a></li>-->
+	      <li class="leaf"><a href="/logout">Log out</a></li>
+	    </ul>
+	  </div>
+	</div>
+	<!-- start block.tpl.php -->
+	</div>
+      </div>
+    {% endif %}
+  </div>
+  <!-- END HEADER -->
+  <div id="main">
+    {{error_message}}
+    <br/><br/>
+    <button onclick="goBack()">Go Back</button>
+    <script>
+      function goBack() {
+      window.history.back();
+      }
+    </script>
+    {% if back_url %}
+    {% endif %}
+  </div>
+</div>
