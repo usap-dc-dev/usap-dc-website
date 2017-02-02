@@ -1,3 +1,4 @@
+<script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 <script type="text/javascript">
   $(document).ready(function() {
 
@@ -18,147 +19,142 @@
         s.val('');
         n.val('');
       }
-    });
+  });
+
+  $('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('',''); });
+  $('#datepicker').datepicker({
+    format: "yyyy-mm-dd",
+    startView: 2
+  });
+
+  $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
+
+  $('#award-dropdown').on('show.bs.dropdown', function() {
+  $(this).find('.help-block').hide();
+  });
+
+  $('#award-dropdown').on('hide.bs.dropdown', function() {
+  $(this).find('.help-block').show();
+  });
   
   });
 </script>
 
-<div class="container">
-  <div id="sidebar-left" class="sidebar">
-    <div class="inner">
-      <div id="block-user-1" class="block block-user">
-	<div>{{name}}</div>
-	<div class="content-menu">
-	  <ul class="menu">
-	    <li class="leaf"><a href="/logout">Log out</a></li>
-	  </ul>
+<div class="content">
+
+  <div class="container-fluid">
+    <div class="row">
+      
+      <div id="sidebar" class="col-xs-3 panel panel-default">
+	<div class="panel-heading">You Are</div>
+	<div class="panel-body">
+	  <div>{{name}}</div>
+	  <a href="/logout">Log out</a>
 	</div>
       </div>
-    </div>
-  </div>
-  <div id="main">
-    <div class="main-inner">
-      <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div>
-      <h1 class="title">Submit Your Dataset</h1>
-      <div class="content">
-        <!-- start node.tpl.php -->
-	<div id="node-17" class="node node-restricted">
-	  <div class="content"><script src="/static/js/multifile.js"></script>
-	    <br>
-	    <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
-	      <div>
-		<div class="row">
-		  <span class="cell">
-		    <b>Dataset Title</b>
-		  </span>
-		  <span class="cell">
-		    <input type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
-		  </span>
-		</div>
-		<div class="row">
-		  <span class="cell">
-		    <b>Dataset Author</b>
-		  </span>
-		  <span class="cell">
-		    <input type="text" name="author" value="{{dataset_metadata.get('author','')}}"/>
-		  </span>
-		</div>
-	      </div>
-	      <br>
-
-	      <b>Abstract</b>(Describe this specific dataset, not the overall project.)<br>
-	      <textarea name="abstract" rows="3" cols="80">{{dataset_metadata.get('abstract','')}}</textarea><br>
-	      <br>
-
-	      <b>NSF-Grant</b>
-	      <select name="award" id="award">
-		<option value="" selected>(Select Award #)</option>
-		{% for grant in nsf_grants %}
-		  {% set s = grant['award'] + " " + grant['name'] %}
-		  <option value="{{s}}" {% if dataset_metadata.get('award') == s %}selected{% endif %}>{{s}}</option>
-		{% endfor %}
-	      </select><br>
-	      (use same number as for DIF record Entry ID (e.g. NSF-ANT09-94546 = 0994546))
-	      <br/>
-	      <br/>
-
-	      <b>Related Articles</b> (and DOI's where known)<br>
-	      <textarea name="related_articles" rows="3" cols="80">{{dataset_metadata.get('related_articles','')}}</textarea><br>
-	      <br>
-
-	      <b>Related Field Event ID's</b> (e.g. cruise ID or flight #)<br>
-	      <textarea name="related_fields" rows="3" cols="80">{{dataset_metadata.get('related_fields','')}}</textarea><br>
-	      <br>
-
-	      <b>Related Sample ID's</b> (e.g. int'l Geo Sample #, or indicate if given in data files)<br>
-	      <textarea name="related_samples" rows="3" cols="80">{{dataset_metadata.get('related_samples','')}}</textarea><br>
-	      <br>
-
-	      <div>
-		<b>Spatial Bounds</b> (Please use decimal degrees, negative values for west and south)
-		Bounds: &nbsp;<i>(maximum extent of your data)</i><br>
-		<table>
-		  <tbody>
-		    <tr>
-		      <td align="center">
-			N: <input type="text" name="geo_n" id="geo_n" size="5" value=""> <br>
-			W: <input type="text" name="geo_w" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value=""> <br>
-			S: <input type="text" name="geo_s" id="geo_s" size="5" value="">
-		      </td>
-		      <td>
-			<span style="margin: 20px">
-			  <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
-			</span>
-		      </td>
-		    </tr>
-		  </tbody>
-		</table>
-
-		<br>
-	      </div>
-	      <br>
-
-	      <b>Region Feature Name</b> (e.g. Thwaites Glacier, West Antarctica)<br>
-	      <input name="feature_name" value="{{dataset_metadata.get('feature_name','')}}"></input><br>
-	      <br>
-	      
-	      <div>
-		<b>Temporal Bounds</b>
-		<div class="row">
-		  <span class="cell">
-		    <b>Start</b>
-		  </span>
-		  <span class="cell">
-		    <input type="date" name="start" value="{{dataset_metadata.get('start','')}}"/>
-		  </span>
-		</div>
-		<div class="row">
-		  <span class="cell">
-		    <b>End</b>
-		  </span>
-		  <span class="cell">
-		    <input type="date" name="stop" value="{{dataset_metadata.get('stop','')}}"/>
-		  </span>
-		</div>
-	      </div>
-	      <br>
-
-	      <b>List data type(s) and format(s) of file or file bundle:</b><br>
-	      (Excel table, Matlab, jpeg image, GMT grid file, etc.) <br>
-	      <textarea name="datatype" rows="3" cols="80">{{dataset_metadata.get('datatype','')}}</textarea><br>
-
-	      <input type="checkbox" name="agree" {% if dataset_metadata.get('agree') %}checked{% endif %}> I agree these file(s) will be posted online with a DOI.<br><br>
-	      
-	      <button type="submit">Next page</button>
-
-	    </form>
-
-
+      
+      <div id="main-content" class="col-xs-9">
+	<h2 class="title">Submit Your Dataset</h2>
+	<div class="title" style="font-size: 1em;">Page 1 of &nbsp; 2</div>
+	<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
+	<form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+	  <div class="form-group required">
+	    <label for="title">Dataset Title</label>
+	    <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
+	    <span class="help-block">As the title should appear in a data citation</span>
 	  </div>
-
-
-	</div>
+	  <div class="form-group required">
+	    <label for="author">Dataset Author</label>
+	    <input class="form-control" type="text" name="author" value="{{dataset_metadata.get('author','')}}"/>
+	  </div>
+	  
+	  <div class="form-group">
+	    <label for="abstract">Abstract</label>
+	    <textarea name="abstract" class="form-control">{{dataset_metadata.get('abstract','')}}</textarea>
+	    <span class="help-block">Describe this specific dataset, not the overall project</span>
+	  </div>
+	  
+	  <!-- Award -->
+	  <div class="form-group required">
+	    <label for="award">Award</label>
+	    <div class="dropdown" id="award-dropdown">
+	      <input type="hidden" name="award"/>
+	      <button type="button" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control">
+		All
+		<span class="caret"></span>
+	      </button>
+	      <span class="help-block">Use same number as for DIF record Entry ID (e.g. NSF-ANT09-94546 = 0994546)</span>
+	      
+	      <ul class="dropdown-menu">
+		{% for grant in nsf_grants %}
+		{% set s = grant['award'] + " " + grant['name'] %}
+		<li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
+		{% endfor %}
+	      </ul>
+	    </div>
+	  </div>
+	  
+	  <div class="form-group">
+	    <label for="related_articles">Related Articles</label>
+	    <textarea name="related_articles" class="form-control">{{dataset_metadata.get('related_articles','')}}</textarea>
+	    <span class="help-block">Include DOI's where known</span>
+	  </div>
+	  
+	  <div class="form-group">
+	    <label for="related_fields">Related Field Event ID's</label>
+	    <textarea name="related_fields" class="form-control">{{dataset_metadata.get('related_fields','')}}</textarea>
+	    <span class="help-block">e.g. cruise ID or flight #</span>
+	  </div>
+	  
+	  
+	  <div class="form-group">
+	    <label for="related_samples">Related Sample ID's</label>
+	    <textarea name="related_samples" class="form-control">{{dataset_metadata.get('related_samples','')}}</textarea>
+	    <span class="help-block">e.g. international Geo Sample #</span>
+	  </div>
+	  
+	  <div>
+	    <b>Spatial Bounds of Data</b> (Use decimal degrees. Longitudes must be in 0-360 (degree symbol) range. Example: Ross Sea is between 160 and 210)
+	    Bounds: &nbsp;<i>(maximum extent of your data)</i><br>
+	    <table>
+	      <tbody>
+		<tr>
+		  <td align="center">
+		    N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{dataset_metadata.get('geo_n','')}}"> <br>
+		    W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{dataset_metadata.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{dataset_metadata.get('geo_e','')}}"> <br>
+		    S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{dataset_metadata.get('geo_s','')}}">
+		  </td>
+		  <td>
+		    <span style="margin: 20px">
+		      <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
+		    </span>
+		  </td>
+		</tr>
+	      </tbody>
+	    </table>
+	  </div>
+	  
+	  <div class="form-group">
+	    <label>Temporal Bounds</label>
+	    <div class="input-daterange input-group" id="datepicker">
+	      <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD"/>
+	      <span class="input-group-addon">to</span>
+	      <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD"/>
+	    </div>
+	  </div>
+	  
+	  <div class="form-group">
+	    <label for="feature_name">Region Feature Name</label>
+	    <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
+	  </div>
+	  
+	  <button class="btn btn-default" type="submit">Next page</button>
+	  
+	</form>
+	
       </div>
+      
     </div>
   </div>
+  
 </div>

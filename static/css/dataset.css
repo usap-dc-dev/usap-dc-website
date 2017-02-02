@@ -1,34 +1,25 @@
-#sidebar-left {
-    position: absolute;
-    top:10px; bottom:0; left:0; right:0;
-    width:200px;
-}
-
-#sidebar-left .inner {
-    padding: 10px;
-    background-color: #D3D3D3;
-    border-radius: 4px;
-}
-
-#main {
-    margin-left: 220px;
-    min-height: 300px;
-    padding-top: 10px;
-}
-
-.container {
-    position: relative;
-}
-
-.title {
-    color: #002783;
-    font-family: Georiga,"Times New Roman",Times,serif;
-    font-size: 1.8em;
-    letter-spacing: -1px;
-    line-height: normal;
-    font-weight: normal;
-}
-
 input, textarea {
     background: rgba(255,255,255,1);
+}
+
+.required:before {
+    content:" *";
+    color: red;
+}
+
+.dropdown-menu {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.tooltip {
+    z-index: 10000;
+}
+
+.form-group {
+    width: 75%;
+}
+
+#sidebar {
+    padding: 0px;
 }

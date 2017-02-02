@@ -1,32 +1,196 @@
+<style>
+  .search_param {
+  padding: 5px;
+  background: #DDDDDD;
+  border: 1px solid black;
+  border-radius: 5px;
+  cursor: default;
+  }
+
+  .search_param:hover {
+  background: #DEDEDE
+  }
+
+  
+
+  .list-group.off {
+  display: none;
+  }
+
+  .unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .page-item {
+  cursor: pointer;
+
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  #results {
+  max-height: 800px;
+  overflow: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  }
+
+  .pagination {
+  margin-bottom: 10px;
+  margin-top: 0px;
+  }
+
+  .container {
+  width: 100%;
+  }
+
+  .vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+  }
+
+  #params-list .list-group-item {
+  width: 300px;
+  }
+
+  .list-group-item .param-name {
+    font-weight: bold;
+  }
+
+  .results-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modify_search {
+    cursor: pointer;
+  }
+
+  .list-group .list-group-item .dataset-title {
+
+  }
+  
+</style>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  
+  $('.modify_search').click(function() {
+  window.history.back();
+  });
+
+  var idx = 1;
+  
+  function selector(i) {
+  return "[data-page-idx='"+i+"']";
+  }
+
+  var numPgs = {{len(dataset_grps)}}
+  var prevbtn = $('.pagination .page-item'+selector('prev'));
+  var nextbtn = $('.pagination .page-item'+selector('next'));
+  
+  function pageTo(i) {
+  console.log(i);
+  console.log(idx);
+
+  if (i=='prev') {
+  i = idx-1;
+  } else if (i=='next') {
+  i = idx+1;
+  }
+  
+  $('#results .list-group').addClass('off');
+  $('#results .list-group'+selector(i)).removeClass('off');
+
+  $('.pagination .page-item').removeClass('active');
+  $('.pagination .page-item'+selector(i)).addClass('active');
+  
+  idx = i;
+
+  $('.pagination .page-item').removeClass('disabled');
+  if (idx == 1) {
+    prevbtn.addClass('disabled');
+  } else if (idx == numPgs) {
+    nextbtn.addClass('disabled');
+  }
+
+  $('#results').scrollTop(0);
+  }
+
+  $('.pagination .page-item').click(function() {
+  if (!$(this).hasClass('disabled')) {
+    var page_idx = $(this).data('page-idx');
+    pageTo(page_idx);
+  }
+  });
+
+  pageTo(1);
+  
+  });
+</script>
+
 <div class="content">
-  <h2>Search Results</h2>
-  {% if page == 0 %}({{total_count}} total){% endif %}
+  <h2>Search Results ({{total_count}} total)</h2>
+  <ul class="list-group" id="params-list">
+    {% for k in search_params %}
+      {% if search_params[k] %}
+	<li class="list-group-item">
+	  <div class="param-name">
+	    {{initcap(k)}}
+	  </div>
+	  <div>
+	    {{search_params[k]}}
+	  </div>
+	</li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+  
   <div style="float:left">
-    {% if page > 1 %}
-      <a href="/search_result?page={{0}}">First</a>
-    {% endif %}
-    {% if page > 0 %}
-      <a href="/search_result?page={{page-1}}">Prev</a>
-    {% endif %}
   </div>
-  <div style="float:right">
-    {% if end_idx < total_count %}
-      <a href="/search_result?page={{page+1}}">Next</a>
-    {% endif %}
-    {% set num_pages = int(ceil(total_count/50)) %}
-    {% if page < num_pages-2 %}
-      <a href="/search_result?page={{num_pages-1}}">Last</a>
-    {% endif %}
+
+  {% macro results_header() -%}
+    <div class="results-header">
+      <a class="modify_search" class="btn btn-default">Modify Search</a>
+      <div>
+	{% if len(dataset_grps) > 1 %}
+	  <ul class="pagination">
+	    <li class="page-item" data-page-idx="prev"><a class="page-link">&laquo;</a></li>
+	    {% for i in range(1,len(dataset_grps)+1) %}
+	      <li class="page-item" data-page-idx="{{i}}"><a class="page-link"">{{i}}</a></li>
+	    {% endfor %}
+	    <li class="page-item" data-page-idx="next"><a class="page-link">&raquo;</a></li>
+	  </ul>
+	{% endif %}
+      </div>
     </div>
-  <div style="clear:both;"/>
-  {% if len(datasets) > 0 %}
-    <div style="padding: 15px">
-      <ol start={{50*page+1}}>
-	{% for d in datasets %}
-	    <li>
-	      <div>
+  {%- endmacro %}
+
+  {{results_header()}}
+  
+  <div style="clear:both;"></div>
+  {% if len(dataset_grps) > 0 %}
+    <div id="results" class="rounded">
+      {% for i in range(len(dataset_grps)) %}
+	{% set grp = dataset_grps[i] %}
+	<ul class="list-group off" data-page-idx="{{i+1}}">
+	  {% for d in grp %}
+	    <li class="list-group-item">
+	      <h4 class="dataset-title">
 		<a href="/view/dataset/{{d['id']}}">{{d['title']}}</a>
-	      </div>
+	      </h4>
 	      <div>
 		ID: {{d['id']}}
 	      </div>
@@ -36,33 +200,17 @@
 		  Investigator(s): {{a['name'] + ('<br/>' + a['copi']) if a['copi'] else ''}}
 		</div>
 	      {% endif %}
-	    </li>
-	{% endfor %}
-      </ol>
-    </div>
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+</div>
+
   {% else %}
     Your search returned no results.
     <br/><br/>
   {% endif %}
-  <br/><br/>
-  <a href="/search">Search Again</a>
-  <div style="float:left">
-    {% if page > 1 %}
-      <a href="/search_result?page={{0}}">First</a>
-    {% endif %}
-    {% if page > 0 %}
-      <a href="/search_result?page={{page-1}}">Prev</a>
-    {% endif %}
-  </div>
-  <div style="float:right">
-    {% if end_idx < total_count %}
-      <a href="/search_result?page={{page+1}}">Next</a>
-    {% endif %}
-    {% set num_pages = int(ceil(total_count/50)) %}
-    {% if page < num_pages-2 %}
-      <a href="/search_result?page={{num_pages-1}}">Last</a>
-    {% endif %}
-    </div>
-  <div style="clear:both;"/>
-  <br/><br/>
+
+  {{results_header()}}
+      
 </div>

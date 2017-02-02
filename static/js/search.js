@@ -1,64 +1,130 @@
-function fill_opts($select, opts, selected) {
+function fill_opts(menu_name, opts, selected) {
+    var $select = $('.selectpicker[name='+'"'+menu_name+'"]');
     $select.empty();
-    $select.append("<option value=''>(All)</option>");
-    for (var o of opts) {
-	$select.append('<option value="'+o+'">'+o+'</option>');
+    $select.append('<option value="">All</option>');
+    for (var opt of opts) {
+	$select.append('<option value="'+opt+'">'+opt+'</option>');
     }
-    $select.val(selected);
+    $select.selectpicker('refresh');
+    $select.selectpicker('val', selected);
 }
+
+function updateMenusWithSelected(selected) {
+    selected = selected || {};
+    return $.ajax({
+	method: 'GET',
+	url: 'http://www.usap-dc.org/filter_search_menus',
+	data: selected,
+	success: function(opts) {
+	    for (var menu_name in opts) {
+		fill_opts(menu_name, opts[menu_name], selected[menu_name]);
+	    }
+	    $('#award-group .dropdown-menu ul li a').each(function(i,elem) {
+		var text = $(elem).children('span.text').text();
+		if (text == 'All') {
+		    return;
+		}
+		var award_id = text.split(' ')[0];
+		$(elem).attr('data-toggle', 'tooltip');
+		$(elem).attr('data-placement', 'right');
+		$(elem).attr('title', awards[award_id]['title']);
+	    });
+	    $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+	}
+    });
+}
+
 var mc;
 $(document).ready(function() {
-    $('[name="person"], [name="parameter"], [name="program"], [name="award"], [name="sensor"], [name="platform"], [name="location"]').change(function() {
 
+    var check = $("#entire_region");
+    var w = $('input[name="west"]');
+    var e = $('input[name="east"]');
+    var s = $('input[name="south"]');
+    var n = $('input[name="north"]');
+    check.on('click', function() {
+      if (check.prop('checked')) {
+        w.val('-180');
+        e.val('180');
+        s.val('-90');
+        n.val('-60');
+      } else {
+        w.val('');
+        e.val('');
+        s.val('');
+        n.val('');
+      }
+    });
+
+    
+    
+    $('[name="person"], [name="parameter"], [name="program"], [name="award"]').change(function() {
+	
+	$('[data-toggle="tooltip"]').tooltip('hide');
+	
 	var selected = {
-	    person: $('[name="person"]').val(),
-	    parameter: $('[name="parameter"]').val(),
-	    program: $('[name="program"]').val(),
-	    award: $('[name="award"]').val(),
-	    sensor: $('[name="sensor"]').val(),
-	    platform: $('[name="platform"]').val(),
-	    location: $('[name="location"]').val()
+	    person: $('.selectpicker[name="person"]').val(),
+	    parameter: $('.selectpicker[name="parameter"]').val(),
+	    program: $('.selectpicker[name="program"]').val(),
+	    award: $('.selectpicker[name="award"]').val(),
 	};
 
-	$.ajax({
-	    method: 'GET',
-	    url: 'http://www.usap-dc.org/filter_search_menus',
-	    data: selected,
-	    success: function(opts) {
-		console.log(opts);
-		for (var menu_name in opts) {
-		    fill_opts($('[name="'+menu_name+'"]'),opts[menu_name], selected[menu_name]);
-		}
-	    }
-	});
+	updateMenusWithSelected(selected);
     });
 
     mc = new MapClient();
 
-    $('#spatial-tabs').tabs();
+    //$('#spatial-tabs').tabs();
 
     $('#data_link').submit(function() {
-	var href = $('.ui-tabs-active a').attr('href');
-	if (href == '#map-input') {
-	    $('input[name="north"]').val('');
-	    $('input[name="south"]').val('');
-	    $('input[name="east"]').val('');
-	    $('input[name="west"]').val('');
-
+	var features = mc.vectorSrc.getFeatures();
+	if (features.length > 0) {
 	    var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
 	    var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
-	    console.log(interpCoords);
 	    var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
 	    $('input[name="spatial_bounds_interpolated"]').val(wkt);
-	    //$('input[name="spatial_bounds"]').val('');
 	} else {
-	    $('textarea[name="spatial_bounds"]').val('');
 	    $('input[name="spatial_bounds_interpolated"]').val('');
 	}
     });
 
-    $('[name="title"]').autocomplete({source: 'http://www.usap-dc.org/titles'});
+    /*$('[name="title"]').autocomplete({source: 'http://www.usap-dc.org/titles'});
+      $('[name="parameter"]').autocomplete({source: 'http://www.usap-dc.org/parameter_search'});*/
+
+    function makeAutocompleteSource(wordlist) {
+	return function(term, responseFn) {
+	    var re = new RegExp($.ui.autocomplete.escapeRegex(term),'i');
+	    var ret = wordlist.filter(function(t) {return re.test(t); });
+	    ret.unshift(term);
+	    return responseFn(ret);
+	}
+    };
     
+    $('[name="title"]').typeahead({
+	source: makeAutocompleteSource(titles),
+	autoSelect: false
+    });
+    $('[name="parameter"]').typeahead({
+	source: makeAutocompleteSource(parameters),
+	autoSelect: false
+    });
+
+    $('#datepicker').datepicker({
+	format: "yyyy-mm-dd",
+	startView: 2
+    });
+
+    $('#map-modal').on('shown.bs.modal', function() {
+	mc.map.updateSize();
+    });
+
+    $('.selectpicker').selectpicker({
+	title: 'All',
+	width: 'fit'
+    });
+    updateMenusWithSelected(search_params);
+    
+    //$('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('','All'); });
 });
 
 
@@ -93,6 +159,78 @@ function MapClient() {
 	})
     });
     this.map.addLayer(gmrt);
+
+    var difAeronomyAndAstrophysics = new ol.layer.Tile({
+	title: "Antarctic Astrophysics and Geospace Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Astro-Geo',
+		transparent: true
+	    }
+	})
+    });
+    this.map.addLayer(difAeronomyAndAstrophysics);
+    
+    var difEarthSciences = new ol.layer.Tile({
+	title: "Antarctic Earth Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Earth',
+		transparent: true
+	    }
+	})
+    });
+    this.map.addLayer(difEarthSciences);
+    
+    var difGlaciology = new ol.layer.Tile({
+	title: "Antarctic Glaciology",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Glacier',
+		transparent: true
+	    }
+	})
+    });			  
+    this.map.addLayer(difGlaciology);
+    
+    var difOceanAndAtmosphericSciences = new ol.layer.Tile({
+	title: "Antarctic Ocean and Atmospheric Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Ocean-Atmosphere',
+		transparent: true
+	    }
+	})
+    });							   
+    this.map.addLayer(difOceanAndAtmosphericSciences);
+    
+    var difOrganismsAndEcosystems = new ol.layer.Tile({
+	title: "Antarctic Organisms and Ecosystems",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Bio',
+		transparent: true
+	    }
+	})
+    });
+    this.map.addLayer(difOrganismsAndEcosystems);
+    
+    var difINT = new ol.layer.Tile({
+	title: "Antarctic Integrated System Science",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Integrated',
+		transparent: true
+	    }
+	})
+    });
+
 
 //    var zoomcontrol = new ol.control.Zoom();
     //    map.addControl(zoomcontrol);
@@ -137,6 +275,8 @@ function MapClient() {
 	self.vectorSrc.clear();
     });
 
+    //$('#close-modal')
+    
     /*
     var styles = [
         

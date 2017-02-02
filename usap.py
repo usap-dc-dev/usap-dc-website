@@ -6,7 +6,7 @@ sys.setdefaultencoding("utf-8")
 
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, g, jsonify, flash, send_from_directory, current_app
+from flask import Flask, session, render_template, redirect, url_for, request, g, jsonify, flash, send_from_directory, send_file, current_app
 import random
 from random import randint
 from OpenSSL import SSL
@@ -22,6 +22,7 @@ from email.mime.text import MIMEText
 import psycopg2
 import psycopg2.extras
 import requests
+import re
 import copy
 import datetime
 import csv
@@ -45,7 +46,7 @@ SESSION_FILE_DIR = 'flask_session'
 PERMANENT_SESSION_LIFETIME = 1440
 
 # Relative to the app root
-UPLOAD_FOLDER = 'dataset/uploads'
+UPLOAD_FOLDER = 'upload'
 DATASET_FOLDER = 'dataset'
 
 app = Flask(__name__)
@@ -69,9 +70,9 @@ google = oauth.remote_app('google',
                           consumer_key=GOOGLE_CLIENT_ID,
                           consumer_secret=GOOGLE_CLIENT_SECRET)
 
-context = SSL.Context(SSL.SSLv23_METHOD)
-context.use_privatekey_file('../ssl-cert/www.usap-dc.org.key')
-context.use_certificate_file('../ssl-cert/1504903768/ssl_certificate.crt')
+#context = SSL.Context(SSL.SSLv23_METHOD)
+#context.use_privatekey_file('../ssl-cert/www.usap-dc.org.key')
+#context.use_certificate_file('../ssl-cert/1504903768/ssl_certificate.crt')
 
 passwords = json.loads(open('passwords.json', 'r').read())
 
@@ -85,131 +86,17 @@ def connect_to_db():
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn,cur)
 
-#def get_nsf_grants(columns, award=None):
-#    (conn,cur) = connect_to_db()
-#    query_string = 'SELECT %s FROM award' % ','.join(columns)
-#    if award:
-#        query_string += cur.mogrify(' WHERE award=%s', (award,))
-#    query_string += ' ORDER BY name,award';
-#    cur.execute(query_string)
-#    return cur.fetchall()
-
-def get_nsf_grants(columns, award=None):
+def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn,cur) = connect_to_db()
-    query_string = 'SELECT %s FROM award a WHERE a.award IN (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)ORDER BY name,award' % ','.join(columns)
+    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\'' % ','.join(columns)
+    if only_inhabited:
+        query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
+    query_string +=  ' ORDER BY name,award'
     cur.execute(query_string)
     return cur.fetchall()
 
-
-# def query_dataset_old(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
-#                   sensor=None, west=None,east=None,south=None,north=None, start=None, stop=None, limit=None, offset=None):
-#     (conn,cur) = connect_to_db()
-#     query_string = '''SELECT d.*,
-#                              a.awards,
-#                              k.keywords,
-#                              par.parameters,
-#                              l.locations,
-#                              per.persons,
-#                              pl.platforms,
-#                              sen.sensors,
-#                              ref.references,
-#                              sp.spatial_extents,
-#                              tem.temporal_extents
-#                       FROM
-#                         dataset d
-#                         LEFT JOIN (
-#                             SELECT dam.dataset_id, json_agg(a) awards
-#                             FROM dataset_award_map dam JOIN award a ON (a.award=dam.award_id)
-#                             GROUP BY dam.dataset_id
-#                         ) a ON (d.id = a.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT dkm.dataset_id, json_agg(k) keywords
-#                             FROM dataset_keyword_map dkm JOIN keyword k ON (k.id=dkm.keyword_id)
-#                             GROUP BY dkm.dataset_id
-#                         ) k ON (d.id = k.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT dparm.dataset_id, json_agg(par) parameters
-#                             FROM dataset_parameter_map dparm JOIN parameter par ON (par.id=dparm.parameter_id)
-#                             GROUP BY dparm.dataset_id
-#                         ) par ON (d.id = par.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT dlm.dataset_id, json_agg(l) locations
-#                             FROM dataset_location_map dlm JOIN location l ON (l.id=dlm.location_id)
-#                             GROUP BY dlm.dataset_id
-#                         ) l ON (d.id = l.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT dperm.dataset_id, json_agg(per) persons
-#                             FROM dataset_person_map dperm JOIN person per ON (per.id=dperm.person_id)
-#                             GROUP BY dperm.dataset_id
-#                         ) per ON (d.id = per.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT dplm.dataset_id, json_agg(pl) platforms
-#                             FROM dataset_platform_map dplm JOIN platform pl ON (pl.id=dplm.platform_id)
-#                             GROUP BY dplm.dataset_id
-#                         ) pl ON (d.id = pl.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT dsenm.dataset_id, json_agg(sen) sensors
-#                             FROM dataset_sensor_map dsenm JOIN sensor sen ON (sen.id=dsenm.sensor_id)
-#                             GROUP BY dsenm.dataset_id
-#                         ) sen ON (d.id = sen.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT ref.dataset_id, json_agg(ref) AS references
-#                             FROM dataset_reference_map ref
-#                             GROUP BY ref.dataset_id
-#                         ) ref ON (d.id = ref.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT sp.dataset_id, json_agg(sp) spatial_extents
-#                             FROM dataset_spatial_map sp
-#                             GROUP BY sp.dataset_id
-#                         ) sp ON (d.id = sp.dataset_id)
-#                         LEFT JOIN (
-#                             SELECT tem.dataset_id, json_agg(tem) temporal_extents
-#                             FROM dataset_temporal_map tem
-#                             GROUP BY tem.dataset_id
-#                         ) tem ON (d.id = tem.dataset_id)'''
-#     conds = []
-#     if dataset_id:
-#         conds.append(cur.mogrify('d.id=%s',(dataset_id,)))
-#     if award:
-#         [num, name] = award.split(' ',1)
-#         conds.append(cur.mogrify('award->%s',(num,)))
-#         conds.append(cur.mogrify('a.name=%s',(name,)))
-#     if parameter:
-#         conds.append(cur.mogrify('par.id=%s',(parameter,)))
-#     if location:
-#         conds.append(cur.mogrify('l.id=%s',(location,)))
-#     if person:
-#         conds.append(cur.mogrify('per.id=%s',(person,)))
-#     if platform:
-#         conds.append(cur.mogrify('pl.id=%s',(platform,)))
-#     if sensor:
-#         conds.append(cur.mogrify('sen.id=%s',(sensor,)))
-#     if west:
-#         conds.append(cur.mogrify('%s <= sp.east', (west,)))
-#     if east:
-#         conds.append(cur.mogrify('%s >= sp.west', (east,)))
-#     if north:
-#         conds.append(cur.mogrify('%s >= sp.south', (north,)))
-#     if south:
-#         conds.append(cur.mogrify('%s <= sp.north', (south,)))
-#     if start:
-#         conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
-#     if stop:
-#         conds.append(cur.mogrify('%s >= tem.start_date', (stop,)))
-#     conds = ['(' + c + ')' for c in conds]
-#     if len(conds) > 0:
-#         query_string += ' WHERE ' + ' AND '.join(conds)
-#     query_string += ' ORDER BY d.id '
-#     if limit:
-#         query_string += cur.mogrify(' LIMIT %s ', (limit,))
-#     if offset:
-#         query_string += cur.mogrify(' OFFSET %s ', (offset,))
-#     print(query_string,file=sys.stderr)
-#     cur.execute(query_string)
-#     return cur.fetchall()
-
 def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
-                    sensor=None, west=None,east=None,south=None,north=None, spatial_bounds=None,start=None, stop=None, program=None,
+                    sensor=None, west=None,east=None,south=None,north=None, spatial_bounds=None, spatial_bounds_interpolated=None,start=None, stop=None, program=None,
                     title=None, limit=None, offset=None):
     (conn,cur) = connect_to_db()
     query_string = '''SELECT DISTINCT d.id
@@ -243,7 +130,7 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
         conds.append(cur.mogrify('a.award=%s',(num,)))
         conds.append(cur.mogrify('a.name=%s',(name,)))
     if parameter:
-        conds.append(cur.mogrify('par.id ILIKE %s',('%'+parameter,)))
+        conds.append(cur.mogrify('par.id ILIKE %s',('%'+parameter+'%',)))
     if location:
         conds.append(cur.mogrify('l.id=%s',(location,)))
     if person:
@@ -260,9 +147,9 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
         conds.append(cur.mogrify('%s >= sp.south', (north,)))
     if south:
         conds.append(cur.mogrify('%s <= sp.north', (south,)))
-    if spatial_bounds:
+    if spatial_bounds_interpolated:
         bbox = "st_geomfromewkt('srid=4326;POLYGON ((' || sp.west || ' ' || sp.south || ', ' || sp.west || ' ' || sp.north || ', ' || sp.east || ' ' || sp.north || ', ' || sp.east || ' ' || sp.south || ', ' || sp.west || ' ' || sp.south || '))')"
-        conds.append(cur.mogrify("st_intersects("+bbox+", st_transform(st_geomfromewkt('srid=3031;' || %s),4326))",(spatial_bounds,)))
+        conds.append(cur.mogrify("st_intersects("+bbox+", st_transform(st_geomfromewkt('srid=3031;' || %s),4326))",(spatial_bounds_interpolated,)))
     if start:
         conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
     if stop:
@@ -274,10 +161,8 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
 
-    #raise Exception()
-
     cur.execute(query_string)
-    return cur.fetchall()
+    return [d['id'] for d in cur.fetchall()]
 
 def get_datasets(dataset_ids):
     if len(dataset_ids) == 0:
@@ -302,6 +187,7 @@ def get_datasets(dataset_ids):
                         LEFT JOIN (
                             SELECT dam.dataset_id, json_agg(a) awards
                             FROM dataset_award_map dam JOIN award a ON (a.award=dam.award_id)
+                            WHERE a.award != 'XXXXXXX'
                             GROUP BY dam.dataset_id
                         ) a ON (d.id = a.dataset_id)
                         LEFT JOIN (
@@ -392,6 +278,13 @@ def get_parameters(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT DISTINCT parameter_id AS id FROM dataset_parameter_map'
     query += cur.mogrify(' ORDER BY id')
+    cur.execute(query)
+    return cur.fetchall()
+
+def get_titles(conn=None, cur=None, dataset_id=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT DISTINCT title FROM dataset ORDER BY title'
     cur.execute(query)
     return cur.fetchall()
 
@@ -487,16 +380,14 @@ def dataset():
     if request.method == 'POST':
         if 'dataset_metadata' not in session:
             session['dataset_metadata'] = dict()
-        print(request.form.to_dict())
         session['dataset_metadata'].update(request.form.to_dict())
         session['dataset_metadata']['agree'] = 'agree' in request.form
         flash('test message')
         return redirect('/submit/dataset2')
 
     else:
-        print(str(session.get('dataset_metadata')), file=sys.stderr)
         return '\n'.join([render_template('header.jnj',cur='dataset'),
-                          render_template('dataset.jnj',name=user_info['name'],dataset_metadata=session.get('dataset_metadata',dict()),nsf_grants=get_nsf_grants(['award','name'])),
+                          render_template('dataset.jnj',name=user_info['name'],dataset_metadata=session.get('dataset_metadata',dict()),nsf_grants=get_nsf_grants(['award','name','title'],only_inhabited=False)),
                           render_template('footer.jnj')])
 
 class ExceptionWithRedirect(Exception):
@@ -534,10 +425,10 @@ def oauth_error(e):
                       render_template('footer.jnj')])
 
 #@app.errorhandler(Exception)
-#def general_error(e):
-#    return '\n'.join([render_template('header.jnj',cur='_error'),
-#                      render_template('error.jnj',error_message=str(e)),
-#                      render_template('footer.jnj')])
+def general_error(e):
+    return '\n'.join([render_template('header.jnj',cur='_error'),
+                      render_template('error.jnj',error_message=str(e)),
+                      render_template('footer.jnj')])
 
 @app.route('/thank_you/<submission_type>')
 def thank_you(submission_type):
@@ -561,9 +452,6 @@ def check_dataset_submission(msg_data):
     
     validators = [
         Validator(func=default_func('agree'),msg='You must agree to have your files posted with a DOI.'),
-        Validator(func=default_func('properGeoreferences'),msg='You must confirm that all data have proper georeferences.'),
-        Validator(func=default_func('propertiesExplained'),msg='You must confirm that the data properties are all properly explained.'),
-        Validator(func=default_func('comprehensiveLegends'),msg='You must confirm that all graphs and maps have comprehensive legends.'),
         Validator(func=default_func('filenames'),msg='You must include files in your submission.'),
         Validator(func=default_func('award'),msg='You must select an NSF grant for the submission'),
         Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid")
@@ -609,8 +497,7 @@ def dataset2():
         session['dataset_metadata']['properGeoreferences'] = 'properGeoreferences' in request.form
         session['dataset_metadata']['propertiesExplained'] = 'propertiesExplained' in request.form
         session['dataset_metadata']['comprehensiveLegends'] = 'comprehensiveLegends' in request.form
-        if request.form.get('action') == 'Submit':
-
+        if request.form.get('action') == 'Submit':                    
             msg_data = copy.copy(session['dataset_metadata'])
             msg_data['name'] = session['user_info']['name']
             del msg_data['action']
@@ -654,6 +541,7 @@ def dataset2():
                 
             return redirect('/thank_you/dataset')
         elif request.form.get('action') == 'Previous Page':
+            print("here2", file=sys.stderr)
             return redirect('/submit/dataset')
     else:
         return '\n'.join([render_template('header.jnj',cur='dataset'),
@@ -736,7 +624,7 @@ def project():
         return redirect('thank_you/project')
     else:
         return '\n'.join([render_template('header.jnj',cur='project'),
-                          render_template('project.jnj',name=user_info['name'],nsf_grants=get_nsf_grants(['award','name']), locations=get_location_menu(), parameters=get_parameter_menu()),
+                          render_template('project.jnj',name=user_info['name'],nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu()),
                           render_template('footer.jnj')])
 
 #@app.route('/submit/projectinfo',methods=['GET'])
@@ -835,57 +723,74 @@ def links():
 def search():
     if request.method == 'GET':
         return '\n'.join([render_template('header.jnj',cur='search'),
-                          render_template('search.jnj', nsf_grants=get_nsf_grants(['award','name']), keywords=get_keywords(),
+                          render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
                                           parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
-                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs()),
+                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs(), titles=get_titles()),
                           render_template('footer.jnj')])
     elif request.method == 'POST':
         params = request.form.to_dict()
-        if 'spatial_bounds_interpolated' in params:
-            params['spatial_bounds'] = params['spatial_bounds_interpolated']
-            del params['spatial_bounds_interpolated']
+
+        filtered = filter_datasets(**params)
+
+        del params['spatial_bounds_interpolated']
+        session['filtered_datasets'] = filtered
+        session['search_params'] = params
         
-        session['filtered_datasets'] = [d['id'] for d in filter_datasets(**params)]
-        return redirect('/search_result?page=0')
+        return redirect('/search_result')
 
 @app.route('/filter_search_menus', methods=['GET'])
 def filter_search_menus():
-    ds = filter_datasets(**request.args.to_dict())
-    data = get_datasets([d['id'] for d in ds])
-    persons = set([p['id'] for d in data for p in d['persons'] ])
-    programs = set([p['id'] for d in data for p in d['programs']])
-    parameters = set([' > '.join(p['id'].split(' > ')[2:]) for d in data for p in d['parameters'] ])
-    awards = set([a['award'] for d in data for a in d['awards'] ])
-    sensors = set([s['id'] for d in data for s in d['sensors'] ])
-    platforms = set([p['id'] for d in data for p in d['platforms'] ])
-    location_features = set([lf['id'] for d in data for lf in d['locations'] ])
+    keys = ['person', 'parameter', 'program', 'award', 'title']
+    args = request.args.to_dict()
+
+    person_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'person'})
+    person_dsets = get_datasets(person_ids)
+    persons = set([p['id'] for d in person_dsets for p in d['persons']])
+
+    parameter_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'parameter'})
+    parameter_dsets = get_datasets(parameter_ids)
+    parameters = set([' > '.join(p['id'].split(' > ')[2:]) for d in parameter_dsets for p in d['parameters']])
+
+    program_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'program'})
+    program_dsets = get_datasets(program_ids)
+    programs = set([p['id'] for d in program_dsets for p in d['programs']])
+    
+    award_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'award'})
+    award_dsets = get_datasets(award_ids)
+    awards = set([(p['name'],p['award']) for d in award_dsets for p in d['awards']])
+
     return flask.jsonify({
-        'person': list(persons),
-        'parameter': list(parameters),
-        'program': list(programs),
-        'award': list(awards),
-        'sensor': list(sensors),
-        'platform': list(platforms),
-        'location': list(location_features)
+        'person': sorted(persons),
+        'parameter': sorted(parameters),
+        'program': sorted(programs),
+        'award': [a[1] + ' ' + a[0] for a in sorted(awards)],
     })
     
-
 @app.route('/search_result')
 def search_result():
-    page = int(request.args.get('page', 0))
     if 'filtered_datasets' not in session:
         return redirect('/search')
     filtered_ids = session['filtered_datasets']
-    start = min(page*50,len(filtered_ids))
-    end_idx = min((page+1)*50,len(filtered_ids))
-    datasets = get_datasets(filtered_ids[start:end_idx])
+    
+    datasets = get_datasets(filtered_ids)
+    grp_size = 50
+    dataset_grps = []
+    cur_grp = []
+    for d in datasets:
+        if len(cur_grp) < grp_size:
+            cur_grp.append(d)
+        else:
+            dataset_grps.append(cur_grp)
+            cur_grp = []
+    if len(cur_grp) > 0:
+        dataset_grps.append(cur_grp)
+    
     
     return '\n'.join([render_template('header.jnj',cur='search_result'),
                       render_template('search_result.jnj',
-                                      page=page,
-                                      end_idx=end_idx,
                                       total_count=len(filtered_ids),
-                                      datasets=datasets),
+                                      dataset_grps=dataset_grps,
+                                      search_params=session['search_params']),
                       render_template('footer.jnj')])
         
 
@@ -994,6 +899,9 @@ def landing_page(dataset_id):
     else:
         metadata['files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
+    if metadata.get('url_extra'):
+        metadata['url_extra'] = os.path.basename(metadata['url_extra'])
+        
     creator_orcid = None
     
     for p in metadata['persons'] or []:
@@ -1007,9 +915,18 @@ def landing_page(dataset_id):
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
     directory = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'])
-    resp = send_from_directory(directory, filename)
-    resp.headers['Content-Disposition'] = 'attachment'
-    return resp
+    return send_from_directory(directory, filename, as_attachment=True)
+
+@app.route('/supplement/<dataset_id>')
+def supplement(dataset_id):
+    (conn, cur) = connect_to_db()
+    cur.execute('''SELECT url_extra FROM dataset WHERE id=%s''', (dataset_id,))
+    url_extra = cur.fetchall()[0]['url_extra'][1:]
+    if url_extra.startswith('/'):
+        url_extra = url_extra[1:]
+    return send_file(os.path.join(current_app.root_path, url_extra),
+                     as_attachment=True,
+                     attachment_filename=os.path.basename(url_extra))
 
 @app.route('/mapserver-template.html')
 def mapserver_template():
@@ -1017,7 +934,6 @@ def mapserver_template():
 
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
-    print(str(request.args), file=sys.stderr)
     url = urllib.unquote('http://api.usap-dc.org:81/wfs?' + urllib.urlencode(request.args))
     return requests.get(url).text
 
@@ -1054,8 +970,32 @@ def geometries():
     query = "SELECT st_asgeojson(st_transform(st_geomfromewkt('srid=4326;' || 'POLYGON((' || west || ' ' || south || ', ' || west || ' ' || north || ', ' || east || ' ' || north || ', ' || east || ' ' || south || ', ' || west || ' ' || south || '))'),3031)) as geom FROM dataset_spatial_map;"
     cur.execute(query)
     return flask.jsonify([row['geom'] for row in cur.fetchall()])
-    
 
+@app.route('/parameter_search')
+def parameter_search():
+    (conn,cur) = connect_to_db()
+    expr = '%'+request.args.get('term')+'%'
+    query = cur.mogrify("SELECT id FROM parameter WHERE category ILIKE %s OR topic ILIKE %s OR term ILIKE %s OR varlev1 ILIKE %s OR varlev2 ILIKE %s OR varlev3 ILIKE %s", (expr,expr,expr,expr,expr,expr))
+    cur.execute(query)
+    return flask.jsonify([row['id'] for row in cur.fetchall()])
+
+@app.route('/test_autocomplete')
+def test_autocomplete():
+    return '\n'.join([render_template('header.jnj'),
+                      render_template('test_autocomplete.jnj'),
+                      render_template('footer.jnj')])
+
+@app.route('/dataset_json/<dataset_id>')
+def dataset_json(dataset_id):
+    return flask.jsonify(get_datasets([dataset_id]))
+
+def initcap(s):
+    parts = re.split('( |_|-|>)+',s)
+    return ' '.join([p.lower().capitalize() for p in parts])
+
+
+app.jinja_env.globals.update(map=map)
+app.jinja_env.globals.update(initcap=initcap)
 app.jinja_env.globals.update(randint=randint)
 app.jinja_env.globals.update(str=str)
 app.jinja_env.globals.update(basename=os.path.basename)
@@ -1065,6 +1005,7 @@ app.jinja_env.globals.update(repr=repr)
 app.jinja_env.globals.update(ceil=math.ceil)
 app.jinja_env.globals.update(int=int)
 app.jinja_env.globals.update(filter_awards=lambda awards: [aw for aw in awards if aw['award'] != 'XXXXXXX'])
+app.jinja_env.globals.update(json_dumps=json.dumps)
 
     
 if __name__ == "__main__":

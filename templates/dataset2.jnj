@@ -1,30 +1,23 @@
-<div class="container">
-              <div id="sidebar-left" class="sidebar">
-          <div class="inner">
-            <!-- start block.tpl.php -->
-<div id="block-user-1" class="block block-user">
-  <div>{{name}}</div>
-  <div class="content-menu">
-<ul class="menu">
-<!--<li class="leaf"><a href="/contributedata" title="Contribute Data" class="active">Contribute Data</a></li>-->
-<li class="leaf"><a href="/logout">Log out</a></li>
+<div class="content">
 
-</ul>
-</div>
-</div>
-<!-- start block.tpl.php -->          </div>
-        </div>
-      <!-- END HEADER -->
-            <div id="main">
-        <div class="main-inner">
-                      <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div>
-                                                              <h1 class="title">Submit Your Dataset</h1>
-                                        <div class="content">
-            <!-- start node.tpl.php -->
-<div id="node-17" class="node node-restricted">
-<div class="content"><script src="/static/js/multifile.js"></script>
-<br>
-<form action="/submit/dataset2" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+    <div class="container-fluid">
+	<div class="row">
+	    <div id="sidebar" class="col-xs-3 panel panel-default">
+		<div class="panel-heading">You Are</div>
+		<div class="panel-body">
+		    <div>{{name}}</div>
+		    <a href="/logout">Log out</a>
+		</div>
+	    </div>
+    
+	    <div id="main-content" class="col-xs-9">
+		<h2>Submit Your Dataset</h2>
+		<div class="title" style="font-size: 1em;">Page 2 of &nbsp; 2</div>
+		<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
+
+		<form action="/submit/dataset2" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+  <button class="prev-button" type="submit" name="action" value="Previous Page">Previous Page</button>
+<br/>
 
 <br>
 <b>Brief description of instruments and devices</b><br>
@@ -48,21 +41,39 @@ If this information is included in the data files, write “included in data fil
 <input type="checkbox" name="propertiesExplained" {% if dataset_metadata.get('propertiesExplained') %}checked{% endif %}>The data column, properties, and attributes listed/used in the data files are explained either in the description of content and/or the data files themselves.<br>
 <input type="checkbox" name="comprehensiveLegends" {% if dataset_metadata.get('comprehensiveLegends') %}checked{% endif %}>Graph and Maps (if provided) have comprehensive legends<br>
 <br>
-<b>Files to upload:</b><br>
-(For large number of files, you may bundle using zip, tar, or gz.) [<a href="/how-to-compress-files" target="_new">examples</a>]<br>
-<font color="#ff0000">NOTE: Uploads are limited to 200 MB.  For larger files, please <a href="http://www.usap-data.org/contact.php">contact us</a> to arrange a FTP session.</font><br>
-<b>File or file bundle</b>
 
-<input type=file name="file[]" multiple><br/>
-<br/>
-<button type="submit" name="action" value="Submit">Submit</button><br/>
-<button type="submit" name="action" value="Previous Page">Previous Page</button>
+<div class="required">
+  <b>Files to upload:</b><br>
+   File are uploaded when you click "submit".<br/>
+  For large number of files, you may bundle using zip, tar, or gz.<br>
+  <font color="#ff0000">NOTE: Uploads are limited to 200 MB.  For larger files, please <a href="http://www.usap-data.org/contact.php">contact us</a> to arrange a FTP session.</font>
 
-</form></div>
-<br/>
-
+  <br>
+  <br/>
+  <input type="file" name="file[]" multiple style="font-size: 1em;">
+  <br/>
+  <br/>
 </div>
-          </div>
-                            </div>
-      </div>
-          </div>
+
+<div class="required">
+  <input type="checkbox" name="agree" {% if dataset_metadata.get('agree') %}checked{% endif %}> I agree these file(s) will be posted online with a DOI.
+</div>
+
+<br/>
+
+<button type="submit" name="action" value="Submit">Submit</button><br/>
+<button class="prev-button" type="button" name="action" value="Previous Page">Previous Page</button>
+
+	</form>
+	    </div>
+	</div>
+    </div>
+</div>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  $('button.prev-button').click(function() {
+    window.history.back();
+  });
+  });
+</script>

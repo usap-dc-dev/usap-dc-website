@@ -7,7 +7,7 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	
 	<meta http-equiv="Content-Language" content="en-us" />
-	<meta name="Copyright" content="Copyright (c)2010-2015 Interdisciplinary Earth Data Alliance" />
+	<meta name="Copyright" content="Copyright (c)2010-2017 Interdisciplinary Earth Data Alliance" />
 	
 	<meta http-equiv="imagetoolbar" content="no" />
 	
@@ -17,7 +17,7 @@
 	  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet">
 	    
 	    <link rel="stylesheet" type="text/css" href="/static/css/print.css" media="print" />
-	<link rel="stylesheet" type="text/css" href="/static/css/main_1.css" media="screen, projection" />
+	<link rel="stylesheet" type="text/css" href="/static/css/main.css" media="screen, projection" />
 	{% if cur=='home' %}
 	<link rel="stylesheet" type="text/css" href="/static/css/home.css" media="screen, projection" />
 	{% endif %}
@@ -43,9 +43,6 @@
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/jquery-ui/themes/base/jquery-ui.css')}}"/>
 	{% endif %}
-	
-
-
 	
 	<!--<link rel="stylesheet" type="text/css" href="OpenLayers-2.12/theme/default/style.css"></link>
 	    <!-- InstanceEndEditable -->
@@ -80,11 +77,21 @@
 	    <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
 	    {% endif %}
 
+	    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.css')}}"/>
+	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/bootstrap/dist/js/bootstrap.js')}}"></script>
+	    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap3-typeahead.js')}}"></script>
+	    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js"></script>
+	    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.min.css"/>
+	    <script type="text/javascript" src="{{url_for('static', filename='bower_components/bootstrap-select/dist/js/bootstrap-select.js')}}"></script>
+	    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='bower_components/bootstrap-select/dist/css/bootstrap-select.css')}}"/>
+	    
+
+
 </head>
   <body>
     <div id="wrapper">
       <div id="ieda-header">
-	<h1><a href="http://www.iedadata.org/"><img src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" alt="Interdisciplinary Earth Data Alliance" title="Interdisciplinary Earth Data Alliance" /></a></h1>
+	<a href="http://www.iedadata.org/"><img src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" alt="Interdisciplinary Earth Data Alliance" title="Interdisciplinary Earth Data Alliance" /></a>
 	<a href="http://www.nsf.gov"><img id="NSF" alt="NSFlogo" src="{{url_for('static', filename='imgs/header/nsf1.png')}}" align="right" /></a>
       </div>
       <div>

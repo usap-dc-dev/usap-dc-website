@@ -4,17 +4,20 @@
 /*
 global elements
 */
-html, body, #wrapper{ margin:0 auto; }
+/* html, body, #wrapper{ margin:0 auto; } */
 
 body{
 	background:transparent url(/static/imgs/bg_design.gif) top left repeat-x;
-	font:0.85em/1.3 Helvetica, Arial, sans-serif;
-	//font-family: 'Raleway', sans-serif;
+	/*font:0.85em/1.3 Helvetica, Arial, sans-serif;
+	font-family: 'Raleway', sans-serif;*/
 	line-height:1.6em;
 	color:#005dd0;
 }
 
-#wrapper{ width:866px; }
+#wrapper {
+    width:866px;
+    margin: 25px;
+}
 
 /*
 global ieda header: title, search
@@ -48,14 +51,14 @@ global ieda header: title, search
 	margin: 10px auto 0 auto;
 	width:864px;
 	height:130px;
-	font:normal 1em Georgia, "Times New Roman", Times, serif;
+	/*font:normal 1em Georgia, "Times New Roman", Times, serif;*/
 	text-align:center;
 	position:absolute;
 }
 
 #page-header h1{
 	padding:2px 0 0 0;
-	font:normal 2em Georgia, "Times New Roman", Times, serif
+	/*font:normal 2em Georgia, "Times New Roman", Times, serif*/
 }
 #page-header h1 a{
 	color:#002783;
@@ -111,90 +114,6 @@ ul#menu{
 	#mn6 a:hover, #mn6 a.cur{ background:transparent url(/static/imgs/menu.gif) -626px -22px no-repeat;}
 	
 /*
-content area & common elements
-*/
-.content{
-	margin:0 auto 2.5em auto;
-	padding:0 0.75em;
-}
-	.content p {
-		margin:0 0 1em 1.2em;
-		text-align: justify;
-	}
-
-	.content h2{
-		margin:1.25em 0 0.5em 0;
-		border-bottom:2px ridge #06c;
-		font:normal 1.8em Georiga, "Times New Roman", Times, serif;
-		letter-spacing:-1px;
-		color:#002783;
-	}
-	.content h3{
-		margin:1.2em 0 0.5em 0.75em;
-		padding-bottom:0.15em;
-		border-bottom:1px dotted #005dd0;
-		font:normal 1.3em Georgia, "Times New Roman", Times, serif;
-		color:#304983;
-	}
-	.content ul, .content ol{
-		margin-left:3.5em;
-	}
-	.content ul{ list-style:disc outside; }
-	.content ol{ list-style:decimal outside; }
-		.content ol ol {list-style:lower-alpha outside; }
-		.content li{
-			margin-bottom:0.5em;
-		}
-	.content ul#toc{
-		list-style:none;
-	}
-		.content ul#toc li{
-			margin-bottom:0.25em;
-			list-style:decimal outside;
-		}
-	
-	/* links */
-	.content a, #footer a{
-		padding:0 1px 0 1px;
-		text-decoration:underline;
-	}
-		.content a:link, #footer a:link{
-			text-decoration:none;
-			border-bottom:1px solid #506da8;
-			color:#039;
-		}
-		.content a:visited, #footer a:visited{
-			text-decoration:none;
-			border-bottom:1px solid #8969cc;
-			color:#63c;
-		}
-		.content a.external, #footer a.external{
-			padding-right:13px;
-			background:transparent url(/static/imgs/external.gif) center right no-repeat;
-		}
-		.content a.top{
-			margin:0;
-			padding:0 2px 0 18px;
-			border-bottom:1px dotted;
-			text-align:right;
-			font-size:0.85em;
-			background:transparent url(/static/imgs/top_icon.gif) top left no-repeat;
-		}
-		
-		/* must go last to override any other settings */
-		.content a:hover, #footer a:hover{
-			text-decoration:none;
-			border-bottom:1px solid #aac9ef;
-			color:#285179;
-			background-color:#e9f0ff;
-		}
-		
-	/* acronyms */
-	.content acronym, #footer acronym{
-		cursor:help;
-	}
-
-/*
 footer
 */
 #footer{
@@ -214,13 +133,32 @@ footer
 		margin:0 0.5em;
 	}
 
-button, input[type="submit"], input[type="reset"] {
+/*button, input[type="submit"], input[type="reset"] {
     background:    #3d85c6;
     border-radius: 5px;
     color:         #fff;
     display:       inline-block;
     padding:       5px 5px;
-    font:          normal 700 12px/1 "Open Sans", sans-serif;
+    font:          normal 700 12px/1;
     text-align:    center;
     text-shadow:   1px 1px 0 #000;
+}*/
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Chrome/Safari/Opera */
+     -khtml-user-select: none; /* Konqueror */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+
+.form-group.required .control-label:after {
+  content:"*";
+  color:red;
+}
+
+.content {
+    margin: 10px 30px 10px 30px;
 }
