@@ -54,29 +54,6 @@
     width: 150 px;
   }
 
-  .header {
-    color: #002783;
-    font-family: Georiga,"Times New Roman",Times,serif;
-    font-size: 1.8em;
-    letter-spacing: -1px;
-    line-height: normal;
-    font-weight: normal;
-    padding: 5px;
-    background-color: #b2dbff;
-    margin: 10px;
-    position: relative;
-  }
-
-  .header.small {
-    font-size: 1.3em;
-  }
-
-  .header .subtitle {
-    margin-left: 15px;
-    font-size: .7em;
-    color: #4e5d82
-  }
-
   .download {
     background-color: #008ab8;
     color: white;
@@ -97,6 +74,23 @@
   max-height: 400px;
   overflow: auto;
   }
+
+ .header {
+     color: #002783;
+     font-family: Georiga,"Times New Roman",Times,serif;
+     font-size: 1.8em;
+     letter-spacing: -1px;
+     line-height: normal;
+     font-weight: normal;
+     padding: 5px;
+     background-color: #b2dbff;
+     margin: 10px;
+     position: relative;
+ }
+
+ .header.small {
+     font-size: 1.3em;
+ }
   
 </style>
 
@@ -121,7 +115,7 @@
     </div>
   </div>
   {% if data['doi'] %}
-    <div class="row">
+  <div class="row">
       <div class="field">
 	Data DOI
       </div>
@@ -139,9 +133,9 @@
     </div>
   </div>
   {% if data.get('superset') == 'nsidc' %}
-    <div class="row">
+  <div class="row">
       <div class="field">
-	Repository (originating):
+	Repository (original):
       </div>
       <div class="value">
 	NSIDC
@@ -190,9 +184,9 @@
   </div>
 {% endif %}
   {% if data.get('spatial_extents') %}
-    <div class="row">
+  <div class="row">
       <div class="field">
-	Spatial Extent
+	Spatial Extent(s)
     </div>
       <div class="value">
 	{% for ex in data['spatial_extents'] %}
@@ -204,7 +198,7 @@
   {% if data.get('temporal_extents') %}
     <div class="row">
       <div class="field">
-	Temporal Extent
+	Temporal Extent(s)
       </div>
       <div class="value">
 	{% for ex in data['temporal_extents'] %}
@@ -261,9 +255,30 @@
 	</ol>
       </div>
     </div>
-  {% endif %}
+    {% endif %}
+</div>
+
+{% if data.get('url_extra') %}
+<div id="supplement">
+    <div class="header small">
+	Supplemental Docs
+    </div>
+    <div class="row">
+	<div class="col1">
+	    {{data['url_extra']}}
+	</div>
+	<div class="col2">
+	  <div class="download" data-url="/supplement/{{data['id']}}">
+	    View
+	  </div>
+	</div>
+    </div>
+</div>
+{% endif %}
+
+<div id="files">
   <div class="header small">
-    Files
+    Data Files
   </div>
   <div id="file-rows">
     {% for f in data['files'] %}
@@ -286,20 +301,4 @@
       </div>
     {% endfor %}
   </div>
-  <!--
-  <div class="header small">
-    Related Data
-  </div>
-  <div class="row">
-    <div class="field">
-      Awards
-    </div>
-    <div class="value">
-      {{data['title']}}
-    </div>
-  </div>
--->
-  <!-- <div class="header small">
-    Extended Metadata
-  </div> -->
 </div>

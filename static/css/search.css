@@ -10,6 +10,7 @@ div.one_col{
 	width:99%;
 	float:left;
 }
+/*
 #data_link fieldset{
 	margin:0 0 0.5em 0;
 	padding:1em 0.5em;
@@ -84,6 +85,7 @@ div.one_col{
 		font:normal 1.2em Georgia, "Times New Roman", Times, serif;
 		color:#7DA8DF;
 	}
+*/
 	
 div.autocomplete {
   position:absolute;
@@ -141,25 +143,14 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 }
 
 #map {
-    position: relative;
     width:400px;
     height:400px;
-    border:1px solid black;
-    float:left;
 }
 
 #map-bounds {
     float: left;
     margin: 10px;
     margin-top: 25px;
-}
-
-textarea[name="spatial_bounds"] {
-    resize: none;
-    width: 350px;
-    height: 150px;
-    margin-top: 10px;
-    float: right;
 }
 
 #mouse-position .ol-mouse-position {
@@ -175,11 +166,17 @@ textarea[name="spatial_bounds"] {
     position: relative;
 }
 
-#spatial-tabs ul {
-    margin-left: 0px !important;
+.tooltip-inner {
+    width: 300px;
 }
 
-#spatial-tabs {
-    margin-top: 20px;
+.dropdown div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
-    
+
+.form-group label {
+    display: block;
+}

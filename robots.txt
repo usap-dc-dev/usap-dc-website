@@ -4,7 +4,7 @@ Disallow: /data/
 Disallow: /flask_session/
 Disallow: /static/
 Disallow: /templates/
-Disallow: /uploads/
+Disallow: /upload/
 
 User-agent: googlebot
 Disallow: *.csi

@@ -1,66 +1,30 @@
 <style>
-#google_signin, #orcid_signin {
-    font-weight: 200;
-    padding: 3px 10px 3px 10px;
-    font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
-    border-radius: 10px;
-    width: 60px;
-    height: 30px;
-    text-align: center;
-    display: inline-block;
-    background-color: #008ab8;
-    color: white;
-    cursor: pointer;
-    margin-top: 20px;
-  }
-
-  #google_signin {
-    position: absolute;
-    left: 50px;
-  }
-
-  #orcid_signin {
-    position: absolute;
-    right: 50px;
-  }
-
-  #container {
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 30px;
-    width: 290px;
-    position: relative;
-    height: 150px;
-  }
-
-  #text {
-  text-align: center;
-  color: black;
-  }
+ #container {
+     margin-left: auto;
+     margin-right: auto;
+     margin-top: 30px;
+     width: 220px;
+     position: relative;
+     height: 150px;
+ }
+ 
+ #buttons {
+     display: flex;
+     flex-direction: row;
+     justify-content: space-between;
+ }
 </style>
-<script type="text/javascript">
-  $(document).ready(function() {
-    $('#google_signin').click(function() {
-      window.location.href = '/login_google'
-    });
-    $('#orcid_signin').click(function() {
-      window.location.href = '/login_orcid'
-    });
-  });
-</script>
 
 <div id="container">
-  <div id="text">
+  <h3>
     Sign in with
-  </div>
-  <div id="google_signin">
-    <div style="position:absolute; top:7px; left:17px">
+  </h3>
+  <div id="buttons">
+    <a href="/login_google" class="btn btn-lg btn-primary">
       Google
-    </div>
-  </div>
-  <div id="orcid_signin">
-    <div style="position:absolute; top:7px; left:17px">
-      ORCID
-    </div>
+    </a>
+    <a href="/login_orcid" class="btn btn-lg btn-primary">
+      ORCiD
+    </a>
   </div>
 </div>
