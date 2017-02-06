@@ -1,20 +1,15 @@
 {
-    "usap-dc-database":
+    "DATABASE":
     {
-	"user": "",
-	"password": "",
-	"host": "",
-	"port": "",
-	"database": ""
+	"USER": "",
+	"PASSWORD": "",
+	"HOST": "",
+	"PORT": "",
+	"DATABASE": ""
     },
-    "orcid":
-    {
-	"client_id": "",
-	"client_secret": ""
-    },
-    "google":
-    {
-	"client_id": "",
-	"client_secret": ""
-    }
+    "GOOGLE_CLIENT_ID": "",
+    "GOOGLE_CLIENT_SECRET": "",
+    
+    "SECRET_KEY": "",
+    "RECAPTCHA_SECRET_KEY": "",
 }
