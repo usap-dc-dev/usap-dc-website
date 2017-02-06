@@ -199,7 +199,7 @@ function MapClient() {
 	
 	$.ajax({
 	    type: "GET",
-	    url: 'http://www.usap-dc.org/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
+	    url: 'http://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
 	    data: {
 		"query_layers" : layers,
 		"layers": layers,

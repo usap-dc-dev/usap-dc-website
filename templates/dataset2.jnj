@@ -46,7 +46,7 @@ If this information is included in the data files, write “included in data fil
   <b>Files to upload:</b><br>
    File are uploaded when you click "submit".<br/>
   For large number of files, you may bundle using zip, tar, or gz.<br>
-  <font color="#ff0000">NOTE: Uploads are limited to 200 MB.  For larger files, please <a href="http://www.usap-data.org/contact.php">contact us</a> to arrange a FTP session.</font>
+  <font color="#ff0000">NOTE: Uploads are limited to 200 MB.  For larger files, please <a href={{config.SERVER_NAME}}/contact">contact us</a> to arrange a FTP session.</font>
 
   <br>
   <br/>
