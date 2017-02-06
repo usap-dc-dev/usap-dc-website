@@ -7,10 +7,10 @@ sys.setdefaultencoding("utf-8")
 import math
 import flask
 from flask import Flask, session, render_template, redirect, url_for, request, g, jsonify, flash, send_from_directory, send_file, current_app
+from flask.ext.session import Session
 import random
 from random import randint
 from OpenSSL import SSL
-from flask_session import Session
 import binascii, os
 from flask_oauth import OAuth, OAuthException
 import json
@@ -32,30 +32,31 @@ import humanize
 import urllib
 
 
-GOOGLE_CLIENT_ID = '721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = 'UinYhjGvmECXVaO3jNWPKFWi'
-REDIRECT_URI = '/authorized'
-
-SECRET_KEY = '702c9c7895652021199d367965a074f36b0f6959992af982'
-DEBUG = True
-RECAPTCHA_SECRET_KEY = '6LdtOwoUAAAAAH_tQ1NzKFlEjnOh27HtzoMcuDy7'
-
-SESSION_TYPE = 'filesystem'
-#SESSION_PERMANENT = False
-SESSION_FILE_DIR = 'flask_session'
-PERMANENT_SESSION_LIFETIME = 1440
-
-# Relative to the app root
-UPLOAD_FOLDER = 'upload'
-DATASET_FOLDER = 'dataset'
-
 app = Flask(__name__)
-app.debug = DEBUG
-app.secret_key = SECRET_KEY
-app.config.from_object(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['DATASET_FOLDER'] = DATASET_FOLDER
-Session(app)
+
+############
+# Load configuration
+############
+app.config.update(
+    SESSION_TYPE="filesystem",
+    SESSION_FILE_DIR="flask_session",
+    PERMANENT_SESSION_LIFETIME=1440,
+    UPLOAD_FOLDER="upload",
+    DATASET_FOLDER="dataset"
+    DEBUG=False
+)
+
+try:
+    app.config.update(json.loads(open('config.json','r').read()))
+except:
+    pass
+
+
+
+app.debug = app.config['DEBUG']
+app.secret_key = app.config['SECRET_KEY']
+
+
 
 oauth = OAuth()
 google = oauth.remote_app('google',
@@ -67,22 +68,19 @@ google = oauth.remote_app('google',
                           access_token_url='https://accounts.google.com/o/oauth2/token',
                           access_token_method='POST',
                           access_token_params={'grant_type': 'authorization_code'},
-                          consumer_key=GOOGLE_CLIENT_ID,
-                          consumer_secret=GOOGLE_CLIENT_SECRET)
+                          consumer_key=app.config['GOOGLE_CLIENT_ID'],
+                          consumer_secret=app.config['GOOGLE_CLIENT_SECRET'])
 
-#context = SSL.Context(SSL.SSLv23_METHOD)
-#context.use_privatekey_file('../ssl-cert/www.usap-dc.org.key')
-#context.use_certificate_file('../ssl-cert/1504903768/ssl_certificate.crt')
 
-passwords = json.loads(open('passwords.json', 'r').read())
+config = json.loads(open('config.json', 'r').read())
 
 def connect_to_db():
-    info = passwords['usap-dc-database']
-    conn = psycopg2.connect(host=info['host'],
-                            port=info['port'],
-                            database=info['database'],
-                            user=info['user'],
-                            password=info['password'])
+    info = config['DATABASE']
+    conn = psycopg2.connect(host=info['HOST'],
+                            port=info['PORT'],
+                            database=info['DATABASE'],
+                            user=info['USER'],
+                            password=info['PASSWORD'])
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn,cur)
 
@@ -541,7 +539,6 @@ def dataset2():
                 
             return redirect('/thank_you/dataset')
         elif request.form.get('action') == 'Previous Page':
-            print("here2", file=sys.stderr)
             return redirect('/submit/dataset')
     else:
         return '\n'.join([render_template('header.jnj',cur='dataset'),
@@ -645,9 +642,9 @@ def login_google():
 
 @app.route('/login_orcid')
 def login_orcid():
-    return redirect('https://orcid.org/oauth/authorize?client_id=APP-699JD0NNLULN5MIL&response_type=code&scope=/authenticate&redirect_uri=http://www.usap-dc.org/authorized_orcid')
+    return redirect('https://orcid.org/oauth/authorize?client_id=APP-699JD0NNLULN5MIL&response_type=code&scope=/authenticate&redirect_uri=http://www-dev.usap-dc.org/authorized_orcid')
 
-@app.route(REDIRECT_URI)
+@app.route('/authorized')
 @google.authorized_handler
 def authorized(resp):
     access_token = resp['access_token']
@@ -662,7 +659,7 @@ def authorized(resp):
 @app.route('/authorized_orcid')
 def authorized_orcid():
     code = request.args['code']
-    p = requests.post('https://orcid.org/oauth/token', data={'client_id':'APP-699JD0NNLULN5MIL', 'client_secret':'bd82034f-dada-4b5e-b216-c374a7e3b342','grant_type':'authorization_code','code':code,'redirect_uri':'http://www.usap-dc.org/authorized_orcid'}, headers={'accept': 'application/json'}).json()
+    p = requests.post('https://orcid.org/oauth/token', data={'client_id':'APP-699JD0NNLULN5MIL', 'client_secret':'bd82034f-dada-4b5e-b216-c374a7e3b342','grant_type':'authorization_code','code':code,'redirect_uri':'http://www-dev.usap-dc.org/authorized_orcid'}, headers={'accept': 'application/json'}).json()
     access_token = p['access_token']
     session['orcid_access_token'] = access_token
     r = requests.get('https://pub.orcid.org/v1.2/search/orcid-bio/?q=orcid:'+p['orcid'], headers={'accept': 'application/json'}).json()
@@ -807,7 +804,7 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify',
                              data={'response':g_recaptcha_response,
                                    'remoteip':remoteip,
-                                   'secret': RECAPTCHA_SECRET_KEY}).json()
+                                   'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = form['email']
             recipients = ['web@usap-dc.org','lagrange@ldeo.columbia.edu']
@@ -883,7 +880,7 @@ def landing_page(dataset_id):
     if not url:
         raise InvalidDatasetException()
 
-    usap_domain = 'http://www.usap-dc.org/'
+    usap_domain = 'http://www-dev.usap-dc.org/'
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
         file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
@@ -1010,4 +1007,4 @@ app.jinja_env.globals.update(json_dumps=json.dumps)
     
 if __name__ == "__main__":
     app.secret_key = '702c9c7895652021199d367965a074f36b0f6959992af982'
-    app.run(host='www.usap-dc.org', debug=True, ssl_context=context, threaded=True)
+    app.run(host='www-dev.usap-dc.org', debug=True, ssl_context=context, threaded=True)
