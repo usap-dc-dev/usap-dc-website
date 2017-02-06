@@ -1,0 +1,20 @@
+{
+    "usap-dc-database":
+    {
+	"user": "",
+	"password": "",
+	"host": "",
+	"port": "",
+	"database": ""
+    },
+    "orcid":
+    {
+	"client_id": "",
+	"client_secret": ""
+    },
+    "google":
+    {
+	"client_id": "",
+	"client_secret": ""
+    }
+}
