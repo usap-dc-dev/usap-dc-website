@@ -418,10 +418,10 @@ def invalid_dataset(e):
                       render_template('error.jnj',error_message=str(e),back_url=e.redirect,name=session['user_info']['name']),
                       render_template('footer.jnj')])
 
-@app.errorhandler(OAuthException)
+#@app.errorhandler(OAuthException)
 def oauth_error(e):
     return '\n'.join([render_template('header.jnj',cur='dataset_error'),
-                      render_template('error.jnj',error_message=str(e),back_url=e.redirect),
+                      render_template('error.jnj',error_message=str(e)),
                       render_template('footer.jnj')])
 
 #@app.errorhandler(Exception)
