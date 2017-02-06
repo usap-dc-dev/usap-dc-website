@@ -22,6 +22,7 @@
     "sprintf": "^1.0.3",
     "jquery-ui": "^1.12.1",
     "arc.js": "^0.1.0",
-    "bootstrap": "^3.3.7"
+    "bootstrap": "^3.3.7",
+    "bootstrap-select": "^1.12.2"
   }
 }
