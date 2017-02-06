@@ -7,7 +7,7 @@ sys.setdefaultencoding("utf-8")
 import math
 import flask
 from flask import Flask, session, render_template, redirect, url_for, request, g, jsonify, flash, send_from_directory, send_file, current_app
-from flask.ext.session import Session
+from flask_session import Session
 import random
 from random import randint
 from OpenSSL import SSL
@@ -42,15 +42,13 @@ app.config.update(
     SESSION_FILE_DIR="flask_session",
     PERMANENT_SESSION_LIFETIME=1440,
     UPLOAD_FOLDER="upload",
-    DATASET_FOLDER="dataset"
+    DATASET_FOLDER="dataset",
     DEBUG=False
 )
 
-try:
-    app.config.update(json.loads(open('config.json','r').read()))
-except:
-    pass
 
+
+app.config.update(json.loads(open('config.json','r').read()))
 
 
 app.debug = app.config['DEBUG']

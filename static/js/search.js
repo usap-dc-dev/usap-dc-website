@@ -13,7 +13,7 @@ function updateMenusWithSelected(selected) {
     selected = selected || {};
     return $.ajax({
 	method: 'GET',
-	url: 'http://www.usap-dc.org/filter_search_menus',
+	url: 'http://' + window.location.hostname + '/filter_search_menus',
 	data: selected,
 	success: function(opts) {
 	    for (var menu_name in opts) {

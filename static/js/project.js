@@ -6,7 +6,7 @@ $(document).ready(function() {
 	    var award_num = val.split(' ')[0];
 	    $.ajax({
 		method: 'GET',
-		url: 'http://www.usap-dc.org/submit/projectinfo?award='+award_num,
+		url: 'http://' + window.location.hostname + '/submit/projectinfo?award='+award_num,
 		success: function(msg) {
 		    console.log(msg);
 		    $("#entry textarea[name='title']").val(msg.title);

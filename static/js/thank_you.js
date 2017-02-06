@@ -1,5 +1,5 @@
 $(document).ready(function() {
     setTimeout(function() {
-	window.location.href = 'http://www.usap-dc.org/index'
+	window.location.href = 'http://' + window.location.hostname + '/index'
     }, 5000);
 });
