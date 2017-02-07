@@ -3,26 +3,16 @@
   margin-left: 250px;
   padding: 20px;
   }
+
+ #sidebar-div {
+   margin-top: 20px; 
+ }
 </style>
 
 <div class="container">
-  <div id="left">
+  <div id="sidebar-div">
     {% if name %}
-      <div id="sidebar-left" class="sidebar">
-	<div class="inner">
-	<!-- start block.tpl.php -->
-	<div id="block-user-1" class="block block-user">
-	  <div>{{name}}</div>
-	  <div class="content-menu">
-	    <ul class="menu">
-	      <!--<li class="leaf"><a href="/contributedata" title="Contribute Data" class="active">Contribute Data</a></li>-->
-	      <li class="leaf"><a href="/logout">Log out</a></li>
-	    </ul>
-	  </div>
-	</div>
-	<!-- start block.tpl.php -->
-	</div>
-      </div>
+      {% include 'sidebar.jnj' %}
     {% endif %}
   </div>
   <!-- END HEADER -->

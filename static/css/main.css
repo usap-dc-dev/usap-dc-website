@@ -16,7 +16,7 @@ body{
 
 #wrapper {
     width:866px;
-    margin: 25px;
+    margin: 0px 0px 0px 25px;
 }
 
 /*
@@ -29,22 +29,12 @@ global ieda header: title, search
 
 #ieda-header {
 	height: 36px;
-	padding-bottom: 4px;
+	margin-bottom: 5px;
 	position: relative;
 	width: 866px;
-	text-align:left;
-}
-#ieda-header h1 {
-	height: 38px;
-	overflow: hidden;
-	position: absolute;
-	top: 1px;
-	width: 404px;
-}
-#ieda-header form{
-	position:absolute;
-	top:9px;
-	right:6px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
 }
 
 #page-header{

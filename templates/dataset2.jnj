@@ -2,14 +2,8 @@
 
     <div class="container-fluid">
 	<div class="row">
-	    <div id="sidebar" class="col-xs-3 panel panel-default">
-		<div class="panel-heading">You Are</div>
-		<div class="panel-body">
-		    <div>{{name}}</div>
-		    <a href="/logout">Log out</a>
-		</div>
-	    </div>
-    
+	  {% include 'sidebar.jnj' %}
+	  
 	    <div id="main-content" class="col-xs-9">
 		<h2>Submit Your Dataset</h2>
 		<div class="title" style="font-size: 1em;">Page 2 of &nbsp; 2</div>

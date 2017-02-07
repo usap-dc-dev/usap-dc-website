@@ -34,6 +34,7 @@ import urllib
 
 app = Flask(__name__)
 
+
 ############
 # Load configuration
 ############
@@ -46,15 +47,11 @@ app.config.update(
     DEBUG=False
 )
 
-
-
 app.config.update(json.loads(open('config.json','r').read()))
 
 
 app.debug = app.config['DEBUG']
 app.secret_key = app.config['SECRET_KEY']
-
-
 
 oauth = OAuth()
 google = oauth.remote_app('google',
@@ -435,16 +432,20 @@ def thank_you(submission_type):
 Validator = namedtuple('Validator', ['func', 'msg'])
 
 def check_dataset_submission(msg_data):
+    print(msg_data, file=sys.stderr)
     def default_func(field):
         return lambda data: field in data and bool(data[field])
     def check_spatial_bounds(data):
-        try:
-            return \
-                abs(float(data['geo_w'])) <= 180 and \
-                abs(float(data['geo_e'])) <= 180 and \
-                abs(float(data['geo_n'])) <= 90 and abs(float(data['geo_s'])) <= 90
-        except:
-            return False
+        if not(data['geo_e'] or data['geo_w'] or data['geo_s'] or data['geo_n']):
+            return True
+        else:
+            try:
+                return \
+                    abs(float(data['geo_w'])) <= 180 and \
+                    abs(float(data['geo_e'])) <= 180 and \
+                    abs(float(data['geo_n'])) <= 90 and abs(float(data['geo_s'])) <= 90
+            except:
+                return False
     
     validators = [
         Validator(func=default_func('agree'),msg='You must agree to have your files posted with a DOI.'),
