@@ -91,8 +91,8 @@
   <body>
     <div id="wrapper">
       <div id="ieda-header">
-	<a href="http://www.iedadata.org/"><img src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" alt="Interdisciplinary Earth Data Alliance" title="Interdisciplinary Earth Data Alliance" /></a>
 	<a href="http://www.nsf.gov"><img id="NSF" alt="NSFlogo" src="{{url_for('static', filename='imgs/header/nsf1.png')}}" align="right" /></a>
+	<a href="http://www.iedadata.org/"><img id="IEDA" src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" alt="Interdisciplinary Earth Data Alliance" title="Interdisciplinary Earth Data Alliance" /></a>
       </div>
       <div>
 	<img src="{{url_for('static', filename='imgs/header/menu_top.png')}}"/>

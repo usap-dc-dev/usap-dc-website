@@ -480,7 +480,12 @@ def check_project_registration(msg_data):
         if not v.func(msg_data):
             raise BadSubmission(v.msg,'/submit/project')
     
-    
+
+def format_time():
+    t = datetime.datetime.utcnow()
+    s = t.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    return s[:-5] + 'Z'
+        
 @app.route('/submit/dataset2',methods=['GET','POST'])
 def dataset2():
     user_info = session.get('user_info')
@@ -511,7 +516,7 @@ def dataset2():
                     fnames[fname] = f
 
             msg_data['filenames'] = fnames.keys()
-            timestamp = datetime.datetime.now().isoformat()
+            timestamp = format_time()
             msg_data['timestamp'] = timestamp
             check_dataset_submission(msg_data)
             
@@ -602,7 +607,7 @@ def project():
         msg_data = {k:v for k,v in msg_data.iteritems() if k[:4] != 'repo'}   
         msg_data['repos'] = repos
         
-        msg_data['timestamp'] = datetime.datetime.now().isoformat()
+        msg_data['timestamp'] = format_time()
         msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
         check_project_registration(msg_data)
         from_addr = 'web@usap-dc.org'
