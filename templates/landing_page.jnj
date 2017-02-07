@@ -288,7 +288,7 @@
 	</div>
 	<div class="col2">
 	  <div class="download" data-url="{{f['url']}}">
-	    {% if f['url'].startswith(app.config.SERVER_NAME) %}
+	    {% if f['url'].startswith(config.SERVER_NAME) %}
 	      Download
 	    {% else %}
 	      External
