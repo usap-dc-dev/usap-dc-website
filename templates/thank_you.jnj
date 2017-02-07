@@ -1,20 +1,19 @@
+<style type="text/css">
+ #main {
+     margin-left: 250px;
+     padding: 20px;
+ }
+
+ #sidebar-div {
+     margin-top: 20px;
+ }
+</style>
+
 <div class="container">
   {% if name %}
-    <div id="sidebar-left" class="sidebar">
-      <div class="inner">
-	<!-- start block.tpl.php -->
-	<div id="block-user-1" class="block block-user">
-	  <div>{{name}}</div>
-	  <div class="content-menu">
-	    <ul class="menu">
-	      <!--<li class="leaf"><a href="/contributedata" title="Contribute Data" class="active">Contribute Data</a></li>-->
-	      <li class="leaf"><a href="/logout">Log out</a></li>
-	    </ul>
-	  </div>
-	</div>
-	<!-- start block.tpl.php -->
-      </div>
-    </div>
+  <div id="sidebar-div">
+    {% include 'sidebar.jnj' %}
+  </div>
   {% endif %}
   <!-- END HEADER -->
   <div id="main">

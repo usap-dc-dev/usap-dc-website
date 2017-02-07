@@ -10,3 +10,4 @@ from werkzeug.debug import DebuggedApplication
 from flask import Flask
 from usap import app
 application = DebuggedApplication(app, evalex=True)
+
