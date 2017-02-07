@@ -6,7 +6,6 @@ sys.path.append('/web/usap-dc/htdocs')
 # cd to root web directory so flask works correctly
 os.chdir('/web/usap-dc/htdocs')
 
-
 from werkzeug.debug import DebuggedApplication
 from flask import Flask
 from usap import app
