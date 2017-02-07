@@ -28,13 +28,24 @@ global ieda header: title, search
 }
 
 #ieda-header {
-	height: 36px;
-	margin-bottom: 5px;
 	position: relative;
 	width: 866px;
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-end;
+	align-items: center;
+}
+
+#ieda-header a img {
+    margin: 5px;
+}
+
+#NSF {
+    height: 45px;
+}
+
+#IEDA {
+    height: 35px;
 }
 
 #page-header{
