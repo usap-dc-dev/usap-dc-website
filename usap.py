@@ -641,7 +641,7 @@ def login_google():
 
 @app.route('/login_orcid')
 def login_orcid():
-    return redirect('https://orcid.org/oauth/authorize?client_id=APP-699JD0NNLULN5MIL&response_type=code&scope=/authenticate&redirect_uri=http://www-dev.usap-dc.org/authorized_orcid')
+    return redirect('https://orcid.org/oauth/authorize?client_id=APP-699JD0NNLULN5MIL&response_type=code&scope=/authenticate&redirect_uri=http://' + app.config['SERVER_NAME'] + '/authorized_orcid')
 
 @app.route('/authorized')
 @google.authorized_handler
@@ -658,7 +658,7 @@ def authorized(resp):
 @app.route('/authorized_orcid')
 def authorized_orcid():
     code = request.args['code']
-    p = requests.post('https://orcid.org/oauth/token', data={'client_id':'APP-699JD0NNLULN5MIL', 'client_secret':'bd82034f-dada-4b5e-b216-c374a7e3b342','grant_type':'authorization_code','code':code,'redirect_uri':'http://www-dev.usap-dc.org/authorized_orcid'}, headers={'accept': 'application/json'}).json()
+    p = requests.post('https://orcid.org/oauth/token', data={'client_id':'APP-699JD0NNLULN5MIL', 'client_secret':'bd82034f-dada-4b5e-b216-c374a7e3b342','grant_type':'authorization_code','code':code,'redirect_uri':'http://' + app.config['SERVER_NAME'] + '/authorized_orcid'}, headers={'accept': 'application/json'}).json()
     access_token = p['access_token']
     session['orcid_access_token'] = access_token
     r = requests.get('https://pub.orcid.org/v1.2/search/orcid-bio/?q=orcid:'+p['orcid'], headers={'accept': 'application/json'}).json()
@@ -879,7 +879,7 @@ def landing_page(dataset_id):
     if not url:
         raise InvalidDatasetException()
 
-    usap_domain = 'http://www-dev.usap-dc.org/'
+    usap_domain = 'http://' + app.config['SERVER_NAME']
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
         file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
@@ -1006,4 +1006,4 @@ app.jinja_env.globals.update(json_dumps=json.dumps)
     
 if __name__ == "__main__":
     app.secret_key = '702c9c7895652021199d367965a074f36b0f6959992af982'
-    app.run(host='www-dev.usap-dc.org', debug=True, ssl_context=context, threaded=True)
+    app.run(host=app.config['SERVER_NAME'], debug=True, ssl_context=context, threaded=True)
