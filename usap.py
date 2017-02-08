@@ -884,7 +884,7 @@ def landing_page(dataset_id):
     if not url:
         raise InvalidDatasetException()
 
-    usap_domain = 'http://' + app.config['SERVER_NAME']
+    usap_domain = 'http://www.usap-dc.org/'
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
         file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
