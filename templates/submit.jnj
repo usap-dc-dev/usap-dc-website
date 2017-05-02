@@ -72,23 +72,24 @@
 
 
 <div class="content">
-    <h2>How to Contribute Your Data</h2>
-    <p>There are two steps to complete your NSF data reporting requirement:</p>
-	
-    <h3>Step #1: Deposit your Dataset</h3>
-    <p>Submit your dataset(s) to a long-term repository recognized by the NSF. You may submit to the USAP-DC or to one of these NSF or NOAA funded <a href="/repo_list">disciplinary repositories</a>, if appropriate for your field.
-    </p>
+    <h3>How to Contribute Data</h3>
+	<br />
+    <h4>Step #1: Deposit Your Dataset</h4>
+    <p>Choose one of the following options:<ol>
+<li>All glaciology and cryospheric datasets should be submitted directly to USAP-DC by clicking the "Deposit" button below.
+<li>Other data types should be submitted to one of our partner repositories from <a href="/repo_list"><u>this list</u></a> if possible.
+<li>If no known repository exists for your data type, you may submit to USAP-DC by clicking the "Deposit" button below.
+</ol>
     <div class="button-div">
 	<a href="/submit/dataset" class="btn btn-lg btn-primary">Deposit</a>
     </div>
-    <p><span style="color:red;">NEW</span> The USAP-DC is now hosting all submissions of Antarctic glaciology and cryospheric data in partnership with NSIDC.
-    </p>
-	
-    <h3 style="margin-top: 0;">Step #2: Register your Project</h3>
+	<br />
+    <h4 style="margin-top: 0;">Step #2: Register Your Project</h4>
     <p style="text-align:left">
-	You must register your project in the Antarctic Master Directory (AMD). If you fill out the registration form, we'll take care of your registration and create the URL needed for your NSF report.
+	Register your project in the Antarctic Master Directory (AMD). Click on the "Register" button below to fill out a brief Web form, and we will create the AMD record required for your NSF final report.
     </p>
     <div class="button-div">
 	<a href="/submit/project" class="btn btn-lg btn-primary">Register</a>
     </div>
+<br />
 </div>

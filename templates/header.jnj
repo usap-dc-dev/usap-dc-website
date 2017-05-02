@@ -91,8 +91,9 @@
   <body>
     <div id="wrapper">
       <div id="ieda-header">
+	<a href="http://www.usap.gov"><img id="USAP" alt="USAPlogo" src="{{url_for('static', filename='imgs/header/usaplogo.png')}}" align="right" /></a>
 	<a href="http://www.nsf.gov"><img id="NSF" alt="NSFlogo" src="{{url_for('static', filename='imgs/header/nsf1.png')}}" align="right" /></a>
-	<a href="http://www.iedadata.org/"><img id="IEDA" src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" alt="Interdisciplinary Earth Data Alliance" title="Interdisciplinary Earth Data Alliance" /></a>
+	<a href="http://www.iedadata.org/"><img id="IEDA" alt="IEDAlogo"  src="{{url_for('static', filename='imgs/header/IEDA_banner.png')}}" title="Interdisciplinary Earth Data Alliance" /></a>
       </div>
       <div>
 	<img src="{{url_for('static', filename='imgs/header/menu_top.png')}}"/>
@@ -108,13 +109,11 @@
 	</div>
 	<div style="position:relative;height:22px">
 	  <ul id="menu">
-	    <li id="mn0"><a {% if cur=='home' %} class="cur" {% endif %} title="Go to USAP Data Center Home" href="/index">Home</a></li>
-	    <li id="mn1"><a  {% if cur=='overview' %} class="cur" {% endif %} title="An Overview of the USAP Data Center" href="/overview">Overview</a></li>
-	    <li id="mn2"><a  {% if cur=='submit' %} class="cur" {% endif %} title="How to Contribute Your Data" href="/submit">Contribute Data</a></li>
-	    <li id="mn2a"><a  {% if cur=='register1' %} class="cur" {% endif %} title="Register Your Data Sets" href="/register">Register Your Data Sets</a></li>
-	    <li id="mn2b"><a  {% if cur=='register2' %} class="cur" {% endif %} title="Register Your Data Sets" href="/index">Register Your Data Sets</a></li>
-	    <li id="mn3"><a  {% if cur=='search' %} class="cur" {% endif %} title="Search for Data" href="/search">Search Data</a></li>
-	    <li id="mn4"><a {% if cur=='links' %} class="cur" {% endif %} title="Find Related Web Sites" href="/links">Related Links</a></li>
+	    <li id="mn0"><a {% if cur=='home' %} class="cur" {% endif %} title="USAP Data Center Home" href="/index">Home</a></li>
+	    <li id="mn1"><a  {% if cur=='overview' %} class="cur" {% endif %} title="Overview" href="/overview">Overview</a></li>
+	    <li id="mn2"><a  {% if cur=='submit' %} class="cur" {% endif %} title="Contribute Data" href="/submit">Contribute Data</a></li>
+	    <li id="mn3"><a  {% if cur=='search' %} class="cur" {% endif %} title="Find Data" href="/search">Find Data</a></li>
+	    <li id="mn4"><a {% if cur=='links' %} class="cur" {% endif %} title="Related Links" href="/links">Related Links</a></li>
 	    <li id="mn5"><a  {% if cur=='contact' %} class="cur" {% endif %} title="Contact Us" href="/contact">Contact Us</a></li>
 	    <li id="mn6"><a title="Antarctic Master Directory - External Link" href="http://gcmd.nasa.gov/Data/portals/amd/">AMD</a></li>
 	  </ul>

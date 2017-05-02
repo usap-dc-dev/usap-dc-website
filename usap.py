@@ -41,7 +41,7 @@ app = Flask(__name__)
 app.config.update(
     SESSION_TYPE="filesystem",
     SESSION_FILE_DIR="flask_session",
-    PERMANENT_SESSION_LIFETIME=1440,
+    PERMANENT_SESSION_LIFETIME=86400,
     UPLOAD_FOLDER="upload",
     DATASET_FOLDER="dataset",
     DEBUG=False
@@ -81,7 +81,7 @@ def connect_to_db():
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn,cur) = connect_to_db()
-    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\'' % ','.join(columns)
+    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award::integer<1700000 and a.award::integer>0400000' % ','.join(columns)
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
     query_string +=  ' ORDER BY name,award'
@@ -257,7 +257,7 @@ def get_datasets(dataset_ids):
 def get_parameter_menu(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    cur.execute('SELECT * FROM parameter_menu')
+    cur.execute('SELECT terms FROM parameter_menu')
     return cur.fetchall()
 
 def get_location_menu(conn=None, cur=None):
@@ -363,6 +363,13 @@ def get_programs(conn=None, cur=None):
     cur.execute(query)
     return cur.fetchall()
 
+def get_projects(conn=None, cur=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM project'
+    cur.execute(query)
+    return cur.fetchall()
+
 @app.route('/submit/dataset', methods=['GET','POST'])
 def dataset():
     user_info = session.get('user_info')
@@ -395,7 +402,7 @@ class CaptchaException(ExceptionWithRedirect):
     pass
 
 class InvalidDatasetException(ExceptionWithRedirect):
-    def __init__(self,msg='Invalid Dataset ID',redirect='/'):
+    def __init__(self,msg='Invalid Dataset#',redirect='/'):
         super(InvalidDatasetException, self).__init__(msg,redirect)
     
 
@@ -423,11 +430,23 @@ def general_error(e):
                       render_template('error.jnj',error_message=str(e)),
                       render_template('footer.jnj')])
 
+#@app.errorhandler(InvalidDatasetException)
+def view_error(e):
+    return '\n'.join([render_template('header.jnj',cur='dataset_error'),
+                      render_template('error.jnj',error_message=str(e)),
+                      render_template('footer.jnj')])
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return '\n'.join([render_template('header.jnj'),
+                      render_template('footer.jnj')])
+
 @app.route('/thank_you/<submission_type>')
 def thank_you(submission_type):
     return '\n'.join([render_template('header.jnj',cur='thank_you'),
-                      render_template('thank_you.jnj',name=session['user_info']['name'],submission_type=submission_type),
+                      render_template('thank_you.jnj',submission_type=submission_type),
                       render_template('footer.jnj')])
+#                      render_template('thank_you.jnj',name=session['user_info']['name'],submission_type=submission_type),
 
 Validator = namedtuple('Validator', ['func', 'msg'])
 
@@ -441,9 +460,9 @@ def check_dataset_submission(msg_data):
         else:
             try:
                 return \
-                    abs(float(data['geo_w'])) <= 180 and \
-                    abs(float(data['geo_e'])) <= 180 and \
-                    abs(float(data['geo_n'])) <= 90 and abs(float(data['geo_s'])) <= 90
+                    abs(float(data['geo_w'])) <= 360 and \
+                    abs(float(data['geo_e'])) <= 360 and \
+                    abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
             except:
                 return False
     
@@ -469,12 +488,12 @@ def check_project_registration(msg_data):
         return lambda data: field in data and bool(data[field])
     
     validators = [
-        Validator(func=default_func('award'),msg="You need to select an award #"),
-        Validator(func=default_func("title"),msg="You need to provide a title for the project"),
-        Validator(func=default_func("name"),msg="You need to provide the PI's name for the project"),
-        Validator(func=lambda data: 'repos' in data and (len(data['repos'])>0 or data['repos'] == 'nodata'),msg="You need to provide info about the repository where you submitted the dataset"),
-        Validator(func=lambda data: 'locations' in data and len(data['locations'])>0,msg="You need to provide at least one location term"),
-        Validator(func=lambda data: 'parameters' in data and len(data['parameters'])>0,msg="You need to provide at least one keyword term")
+        Validator(func=default_func('award'),msg="You must select an award #"),
+        Validator(func=default_func("title"),msg="You must provide a title for the project"),
+        Validator(func=default_func("name"),msg="You must provide the PI's name for the project"),
+        Validator(func=lambda data: 'repos' in data and (len(data['repos'])>0 or data['repos'] == 'nodata'),msg="You must provide info about the repository where you submitted the dataset"),
+        Validator(func=lambda data: 'locations' in data and len(data['locations'])>0,msg="You must provide at least one location term"),
+        Validator(func=lambda data: 'parameters' in data and len(data['parameters'])>0,msg="You must provide at least one keyword term")
     ]
     for v in validators:
         if not v.func(msg_data):
@@ -531,8 +550,8 @@ def dataset2():
 
             msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
             sender = 'web@usap-dc.org'
-            recipients = ['web@usap-dc.org','lagrange@ldeo.columbia.edu']
-            msg['Subject'] = 'Dataset Submission'
+            recipients = ['web@usap-dc.org','cc@ldeo-grg.org']
+            msg['Subject'] = 'USAP-DC Dataset Submission'
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
 
@@ -597,10 +616,10 @@ def project():
                     repos.append({'name':'USAP-DC'})
                 else:
                     d = dict()
-                    if 'repo_name_other'+str(idx) in msg_data:
-                        d['name'] = msg_data['repo_name_other'+str(idx)]
-                    if 'repo_id_other'+str(idx) in msg_data:
-                        d['id'] = msg_data['repo_id_other'+str(idx)]
+                    if 'repo_other_name'+str(idx) in msg_data:
+                        d['name'] = msg_data['repo_other_name'+str(idx)]
+                    if 'repo_other_id'+str(idx) in msg_data:
+                        d['id'] = msg_data['repo_other_id'+str(idx)]
                     repos.append(d)
                 idx+=1
                 key = 'repo'+str(idx)
@@ -610,16 +629,15 @@ def project():
         msg_data['timestamp'] = format_time()
         msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
         check_project_registration(msg_data)
-        from_addr = 'web@usap-dc.org'
-        #to_addr = 'web@usap-dc.org'
-        to_addr = 'lagrange@ldeo.columbia.edu'
-        msg['Subject'] = 'Dataset Registration'
-        msg['From'] = from_addr
-        msg['To'] = to_addr
+        sender = 'web@usap-dc.org'
+        recipients = ['web@usap-dc.org','cc@ldeo-grg.org']
+        msg['Subject'] = 'USAP-DC Project Submission'
+        msg['From'] = sender
+        msg['To'] = ', '.join(recipients)
 
         s = smtplib.SMTP('***REMOVED***')
-        s.login(from_addr, '***REMOVED***')
-        s.sendmail(from_addr, [to_addr], msg.as_string())
+        s.login(sender, '***REMOVED***')
+        s.sendmail(sender, recipients, msg.as_string())
         s.quit()
         
         return redirect('thank_you/project')
@@ -726,7 +744,7 @@ def search():
         return '\n'.join([render_template('header.jnj',cur='search'),
                           render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
                                           parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
-                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs(), titles=get_titles()),
+                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles()),
                           render_template('footer.jnj')])
     elif request.method == 'POST':
         params = request.form.to_dict()
@@ -805,22 +823,20 @@ def contact():
         form = request.form.to_dict()
         g_recaptcha_response = form.get('g-recaptcha-response')
         remoteip = request.remote_addr
-        resp = requests.post('https://www.google.com/recaptcha/api/siteverify',
-                             data={'response':g_recaptcha_response,
-                                   'remoteip':remoteip,
-                                   'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
+        resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
+#            sender = 'web@usap-dc.org'
             sender = form['email']
-            recipients = ['web@usap-dc.org','lagrange@ldeo.columbia.edu']
+            recipients = ['web@usap-dc.org','cc@ldeo-grg.org']
             msg = MIMEText(form['msg'])
             msg['Subject'] = form['subj']
             msg['From'] = sender
-            msg['To'] = recipients
+            msg['To'] = ', '.join(recipients)
             s = smtplib.SMTP('***REMOVED***')
-            s.login('web@usap-dc.org', '***REMOVED***')
+            s.login('web@usap-dc.org','***REMOVED***')
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
-            return redirect('/thank_you/email')
+            return redirect('/thank_you/message')
         else:
             msg = "<br/>You failed to pass the captcha<br/>"
             raise CaptchaException(msg,url_for('contact'))
@@ -877,12 +893,13 @@ def json_serial(obj):
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
     datasets = get_datasets([dataset_id])
+    msg = "<br/>Invalid Dataset#<br/>"
     if len(datasets) == 0:
-        raise InvalidDatasetException()
+        raise InvalidDatasetException(msg,'/')
     metadata = datasets[0]
     url = metadata['url']
     if not url:
-        raise InvalidDatasetException()
+        raise InvalidDatasetException(msg,'/')
 
     usap_domain = 'http://www.usap-dc.org/'
     if url.startswith(usap_domain):
@@ -897,6 +914,7 @@ def landing_page(dataset_id):
             f_subpath = f_path[len(directory):]
             files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
             metadata['files'] = files
+        files.sort()
     else:
         metadata['files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 

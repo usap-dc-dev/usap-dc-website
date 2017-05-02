@@ -1,10 +1,6 @@
 <div class="content">
-    <h5>
-	Long-term disciplinary data repositiories offer data services for the following data types and should be used if appropriate
-	for your data set.
-    </h5>
-
-
+	Disciplinary repositories offer data services for the following data types and should be used if appropriate for your data set:<br />
+<br />
     <ul class="list-group">
 	<li class="list-group-item">
 	    <a href="http://www.bco-dmo.org/how-get-started">BCO-DMO</a> for bio/chem oceanographic data
@@ -25,13 +21,13 @@
 	    <a href="http://ilikai.soest.hawaii.edu/sadcp/submit.html">JASADCP</a> for ocean current data
 	</li>
 	<li class="list-group-item">
-	    <a href="http://www.marine-geo.org/submit/">MGDS</a> for marine geological/geophysical data
+	    <a href="http://www.marine-geo.org/submit/">MGDS</a> for marine geological & geophysical data
 	</li>
 	<li class="list-group-item">
 	    <a href="https://www.ncdc.noaa.gov/data-access/paleoclimatology-data/contributing">NCEI</a> for paleoclimate data
 	</li>
 	<li class="list-group-item">
-	    <a href="http://www.geosamples.org/getigsn">SESAR</a> for sample information+registration
+	    <a href="http://www.geosamples.org/getigsn">SESAR</a> for sample information and registration
 	</li>
 	<li class="list-group-item">
 	    <a href="http://www.unavco.org/data/data-help/submission/submission.html">UNAVCO</a> for geodetic data

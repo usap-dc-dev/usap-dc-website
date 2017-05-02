@@ -98,9 +98,9 @@
 </style>
 
 <div class="content">
-  <h2>Search For Data<a name="top"></a></h2>
+  <h3>Search For Data<a name="top"></a></h3>
 
-  <form method="post" action="/search" id="data_link">
+  <form method="post" action="/search" id="data_link" onLoad=reset()>
       <fieldset>
 	<!-- Program -->
 	<div class="form-group" id="program-group">
@@ -128,6 +128,16 @@
 	  </select>
 	</div>
 	
+	<!-- Project -->
+<!--
+	<div class="form-group" id="project-group">
+	  <label for="project">Field Project</label>
+	  
+	  <select class="form-control selectpicker" name="project" data-title="All">
+	  </select>
+	</div>
+-->
+
 	<div class="form-group">
 	  <label for="title">Title</label>
 	  <input name="title" autocomplete="off" class="form-control" data-autoSelect="false"/>
@@ -205,7 +215,7 @@
 
       <div class="btn-group">
 	<input class="btn btn-primary btn-lg" type="submit" value="Search">
-	<input id="reset-btn" type="reset" class="btn btn-default btn-lg" value="Reset">
+	<input id="reset-btn" type="reset" class="btn btn-default btn-lg" value="Reset" onClick=reset()>
       </div>
   </form>
 </div>

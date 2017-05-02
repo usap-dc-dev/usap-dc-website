@@ -1,11 +1,13 @@
 <div class="content">
 		<!-- InstanceBeginEditable name="contentArea" -->
-<h3>Table of Contents<a name="top"></a></h3>
+<!--
+	<h3>Table of Contents<a name="top"></a></h3>
 			<ul id="toc">
 				<a href="#nsf">NSF</a> | <a href="#usap">U.S. Antarctic Program</a> | <a href="#intl">International Organizations</a> | <a href="#data">Data Resources</a> | <a href="#other">Other Resources</a> | <a href="#listserv">List Server</a> | <a href="#news">News</a>
 			</ul>
+-->
 			
-			<h2>1. NSF<a name="nsf"></a></h2>
+			<h3>1. NSF<a name="nsf"></a></h3>
 			<ul>
 				<li><a class="external" href="http://www.nsf.gov/div/index.jsp?div=PLR">Division of Polar Programs</a></li>
 				<li><a class="external" href="http://www.nsf.gov/funding/pgm_summ.jsp?pims_id=13420&amp;org=PLR">Antarctic Astrophysics and Geospace Sciences</a></li>
@@ -17,7 +19,7 @@
 			</ul>
 			<a class="top" href="#top">top</a>
 						
-			<h2>2. U.S. Antarctic Program<a name="usap"></a></h2>
+			<h3>2. U.S. Antarctic Program<a name="usap"></a></h3>
 			<ul>
 				<li><a class="external" href="http://www.usap.gov/">U.S. Antarctic Program (USAP) Portal</a></li>
 				<li><a class="external" href="https://www.leidos.com/antarctic-support-contract">Leidos - Antarctic Support Contract</a></li>
@@ -25,7 +27,7 @@
 			</ul>
 			<a class="top" href="#top">top</a>
 						
-			<h2>3. International Organizations<a name="intl"></a></h2>
+			<h3>3. Int'l Organizations<a name="intl"></a></h3>
 			<ul>
 				<li><a class="external" href="http://www.scar.org/scadm">Standing Committee on Antarctic Data Management</a></li>
 				<li><a class="external" href="http://www.antarctica.ac.uk/about_antarctica/geopolitical/treaty/">Antarctic Treaty</a></li>
@@ -33,8 +35,8 @@
 			</ul>
 			<a class="top" href="#top">top</a>
 			
-			<h2>4. Data Resources<a name="data"></a></h2>
-			<h3>U.S. Based</h3>
+			<h3>4. Data Resources<a name="data"></a></h3>
+			<h4>U.S. Based</h4>
 			<ul>
 				<li><a class="external" href="http://nsidc.org/data/velmap/">Antarctic Ice Velocity Data</a>, <acronym title="National Snow and Ice Data Center">NSIDC</acronym> – Compilation of recent ice velocity data of the Antarctic ice sheet.</li>
 				<li><a class="external" href="http://amrc.ssec.wisc.edu/">Antarctic Meteorology Research Center &amp; Antarctic Weather Stations Project</a>, University of Wisconsin – Antarctic meteorological data for USAP, Iceberg imagery, Real-time meterological data.</li>
@@ -53,7 +55,7 @@
 				 <li><a class="external" href="http://photolibrary.usap.gov/">Antarctic Photo Library</a>, <acronym title="United States Antarctic Program">USAP</acronym></li>
 			</ul>
 			
-			<h3>International</h3>
+			<h4>International</h4>
 			<ul>
 				<li><a class="external" href="https://www.bas.ac.uk/data/">British Antarctic Survey</a> – Polar Data Centre</li>
 				<li><a class="external" href="http://apps3.awi.de/eBathy/">Alfred-Wegener-Institut (AWI) Bathymetry &amp; Geodesy Group</a></li>
@@ -62,7 +64,7 @@
 			</ul>
 			<a class="top" href="#top">top</a>
 			
-			<h2>5. Other Resources<a name="other"></a></h2>
+			<h3>5. Other Resources<a name="other"></a></h3>
 			<ul>
 				<li><a class="external" href="http://www.andrill.org/">Antarctic Geological Drilling</a> (<acronym title="Antarctic Geological Drilling">ANDRILL</acronym>) – Multinational collaboration to Recover Stratigraphic Records from the Antarctic Margin.</li>
 				<li><a class="external" href="http://bprc.osu.edu/">Byrd Polar Research Center</a>, The Ohio State University. </li>
@@ -79,7 +81,7 @@
 			</ul>
 			<a class="top" href="#top">top</a>
 						
-			<h2>6. List Server<a name="listserv"></a></h2>
+			<h3>6. List Server<a name="listserv"></a></h3>
 			<p style="text-align:left">The U.S. SCAR Office maintains the ANtarctic Science WEb Resource (<acronym title="ANtarctic Science WEb Resource">ANSWER</acronym>), a list server
 			intended to disseminate information about Antarctica, communicate
 			opportunities, solicit input on important issues, and to
@@ -88,7 +90,7 @@
 			
 			<a class="top" href="#top">top</a>
 			
-			<h2>7. News<a name="news"></a></h2>
+			<h3>7. News<a name="news"></a></h3>
 			<ul>
 				<li><a class="external" href="http://antarcticsun.usap.gov/">The Antarctic Sun</a> – Online newsletter published during the austral summer at
 			     McMurdo Station, Antarctica.</li>

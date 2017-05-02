@@ -9,8 +9,8 @@
     var n = $('input[name="geo_n"]');
     check.on('click', function() {
       if (check.prop('checked')) {
-        w.val('-180');
-        e.val('180');
+        w.val('0');
+        e.val('360');
         s.val('-90');
         n.val('-60');
       } else {
@@ -48,7 +48,7 @@
       {% include 'sidebar.jnj' %}
       
       <div id="main-content" class="col-xs-9">
-	<h2 class="title">Submit Your Dataset</h2>
+	<h2 class="title">Deposit Your Dataset</h2>
 	<div class="title" style="font-size: 1em;">Page 1 of &nbsp; 2</div>
 	<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 	<form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
@@ -77,8 +77,7 @@
 		All
 		<span class="caret"></span>
 	      </button>
-	      <span class="help-block">Use same number as for DIF record Entry ID (e.g. NSF-ANT09-94546 = 0994546)</span>
-	      
+
 	      <ul class="dropdown-menu">
 		{% for grant in nsf_grants %}
 		{% set s = grant['award'] + " " + grant['name'] %}
@@ -95,21 +94,20 @@
 	  </div>
 	  
 	  <div class="form-group">
-	    <label for="related_fields">Related Field Event ID's</label>
+	    <label for="related_fields">Related Field Event IDs</label>
 	    <textarea name="related_fields" class="form-control">{{dataset_metadata.get('related_fields','')}}</textarea>
-	    <span class="help-block">e.g. cruise ID or flight #</span>
+	    <span class="help-block">eg. Cruise ID, Seismic Network ID, Flight #</span>
 	  </div>
 	  
 	  
 	  <div class="form-group">
-	    <label for="related_samples">Related Sample ID's</label>
+	    <label for="related_samples">Related Sample IDs</label>
 	    <textarea name="related_samples" class="form-control">{{dataset_metadata.get('related_samples','')}}</textarea>
-	    <span class="help-block">e.g. international Geo Sample #</span>
+	    <span class="help-block">eg. International Geo Sample #</span>
 	  </div>
 	  
 	  <div>
-	    <b>Spatial Bounds of Data</b> (Use decimal degrees. Longitudes must be in 0-360 (degree symbol) range. Example: Ross Sea is between 160 and 210)
-	    Bounds: &nbsp;<i>(maximum extent of your data)</i><br>
+	    <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in 0-360 range. Example:<br /> Ross Sea is between 160 and 210
 	    <table>
 	      <tbody>
 		<tr>

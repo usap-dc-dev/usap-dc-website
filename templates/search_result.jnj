@@ -142,7 +142,7 @@
 </script>
 
 <div class="content">
-  <h2>Search Results ({{total_count}} total)</h2>
+  <h3>Search Results ({{total_count}} total)</h3>
   <ul class="list-group" id="params-list">
     {% for k in search_params %}
       {% if search_params[k] %}

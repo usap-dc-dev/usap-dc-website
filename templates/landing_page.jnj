@@ -111,7 +111,11 @@
       Resource Type
     </div>
     <div class="value">
+  {% if data.get('doi') == '10.15784/601021' %}
+      Document
+  {% else %}
       Dataset
+  {% endif %}
     </div>
   </div>
   {% if data['doi'] %}
@@ -120,7 +124,7 @@
 	Data DOI
       </div>
       <div class="value">
-	{{data['doi']}}
+	<a href="http://ezid.cdlib.org/id/doi:{{data['doi']}}">{{data['doi']}}</a>
       </div>
     </div>
   {% endif %}
