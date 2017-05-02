@@ -5,7 +5,7 @@
 	  {% include 'sidebar.jnj' %}
 	  
 	    <div id="main-content" class="col-xs-9">
-		<h2>Submit Your Dataset</h2>
+		<h3>Submit Your Dataset</h3>
 		<div class="title" style="font-size: 1em;">Page 2 of &nbsp; 2</div>
 		<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 
@@ -37,10 +37,10 @@ If this information is included in the data files, write “included in data fil
 <br>
 
 <div class="required">
-  <b>Files to upload:</b><br>
-   File are uploaded when you click "submit".<br/>
-  For large number of files, you may bundle using zip, tar, or gz.<br>
-  <font color="#ff0000">NOTE: Uploads are limited to 200 MB.  For larger files, please <a href={{config.SERVER_NAME}}/contact">contact us</a> to arrange a FTP session.</font>
+  <b>File(s) to upload:</b><br>
+   Note: The file(s) will be uploaded when you click "Submit".<br/>
+  You may use Zip or Tar to bundle a directory.<br/>
+  <font color="#ff0000">Uploads are limited to 250 MB.  For larger datasets, please <a href={{config.SERVER_NAME}}/contact">Contact Us</a> to arrange a FTP/Dropbox session or a USB portable drive.</font>
 
   <br>
   <br/>

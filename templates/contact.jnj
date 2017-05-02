@@ -1,16 +1,16 @@
 <div class="content">
 		
 			<!-- InstanceBeginEditable name="pageHeader" -->
-			<h2>Contact Us</h2>
+			<h3>Contact Us</h3>
 			<!-- InstanceEndEditable -->
 			<div id="info">
 		    <!-- InstanceBeginEditable name="ContactInfo" -->
-				<p>Use the form at the right to send a message.</p>
+				<p>Use the Web form at the right to send a message.</p>
 				<p><b>Email:</b><br>
 				&nbsp; <a href="mailto:web@usap-dc.org">web[at]usap-dc.org</a></p>
 				<p><b>Post:</b><br>
 				&nbsp; Lamont-Doherty Earth Observatory<br>
-				&nbsp; Attn: R. Arko<br>
+				&nbsp; Attn: Robert Arko, USAP-DC Manager<br>
 				&nbsp; 61 Route 9W<br>
 				&nbsp; Palisades, NY 10964 USA
 				</p>
@@ -32,18 +32,17 @@
 		</tr>
 		  <tr>
 		    <td><label for="msg">Message:</label></td>
-		    <td><textarea id="msg" name="msg" cols="30" rows="15"></textarea></td>
+		    <td><textarea id="msg" name="msg" cols="30" rows="10"></textarea></td>
 		  </tr>
 		  <tr>
 		    <td></td>
 		    <td>
-		      <div class="g-recaptcha" data-sitekey="6LdtOwoUAAAAAOxlnGMLBJlC9xWpC4-vuXO5xbUU"/>
-		    </td>
+		      <div class="g-recaptcha" data-sitekey="6LdtOwoUAAAAAOxlnGMLBJlC9xWpC4-vuXO5xbUU"/></td>
 		  </tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td class="submit"><input class="submit" type="submit" name="Submit" value=" Send Email "></td>
-		</tr>
+		  <tr>
+		    <td></td>
+		    <td style=text-align:center> <input class="submit" type="submit" name="Submit" value="Send Email"></td>
+		 </tr>
 		</tbody></table>
 </form>		
 		</div>
