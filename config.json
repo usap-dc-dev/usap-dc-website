@@ -1,0 +1,16 @@
+{
+    "DATABASE":
+    {
+        "USER": "",
+        "PASSWORD": "",
+        "HOST": "",
+        "PORT": "",
+        "DATABASE": ""
+    },
+    "GOOGLE_CLIENT_ID": "",
+    "GOOGLE_CLIENT_SECRET": "",
+    "SECRET_KEY": "",
+    "RECAPTCHA_SECRET_KEY": "",
+
+    "SERVER_NAME": ""
+}
