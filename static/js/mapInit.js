@@ -73,6 +73,7 @@ function MapClient() {
     
     var tracks = new ol.layer.Tile({
 	title: "USAP R/V Cruises",
+	visible: false,
 	source: new ol.source.TileWMS({
 	    url: "http://www.marine-geo.org/services/mapserver/wmscontrolpointsSP?",
 	    params: {
@@ -196,7 +197,6 @@ function MapClient() {
 	    layers += ',Integrated';
 //	if (tracks.getVisible())
 //	    layers += ',Entries';
-	
 	$.ajax({
 	    type: "GET",
 	    url: 'http://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"

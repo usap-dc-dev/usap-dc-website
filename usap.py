@@ -543,6 +543,7 @@ def dataset2():
         session['dataset_metadata']['properGeoreferences'] = 'properGeoreferences' in request.form
         session['dataset_metadata']['propertiesExplained'] = 'propertiesExplained' in request.form
         session['dataset_metadata']['comprehensiveLegends'] = 'comprehensiveLegends' in request.form
+        session['dataset_metadata']['dataUnits'] = 'dataUnits' in request.form
         if request.form.get('action') == 'Submit':                    
             msg_data = copy.copy(session['dataset_metadata'])
             msg_data['name'] = session['user_info']['name']

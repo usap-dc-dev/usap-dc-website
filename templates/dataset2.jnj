@@ -28,7 +28,7 @@ N/A if no new data were acquired. [<a href="/procedures" target="_new">examples<
 <b>3. Brief description of data processing</b><br>
 Please briefly describe any processing steps applied to the data, including, for example, methodology, calibrations, algorithms used.<br>
 Write "see files" if this information is provided with the files.
-<textarea name="content" rows="3" cols="80">{{dataset_metadata.get('data_processing','')}}</textarea><br>
+<textarea name="data_processing" rows="3" cols="80">{{dataset_metadata.get('data_processing','')}}</textarea><br>
 <br>
 <b>4. Brief description of data content</b><br>
 Please briefly describe the content of the data files, e.g. column headers, abbreviations, file format, file organization (i.e. directory structure if applicable).<br>
@@ -36,7 +36,7 @@ Write "see files" if this information is provided with the files.
 <textarea name="content" rows="3" cols="80">{{dataset_metadata.get('content','')}}</textarea><br>
 <br>
 <b>5. Known issues/limitations of the dataset (if applicable)</b><br>
-<textarea name="content" rows="3" cols="80">{{dataset_metadata.get('issues','')}}</textarea><br>
+<textarea name="issues" rows="3" cols="80">{{dataset_metadata.get('issues','')}}</textarea><br>
 <br>
 <b>Check the following before submitting the data</b><br>
 <input type="checkbox" name="properGeoreferences" {% if dataset_metadata.get('properGeoreferences') %}checked{% endif %}>All the data have proper georeferences. (locations of the stations are in the description above or latitude-longitude columns for samples and measurements are in data files).<br>
