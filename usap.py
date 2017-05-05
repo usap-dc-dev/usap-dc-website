@@ -44,7 +44,7 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=86400,
     UPLOAD_FOLDER="upload",
     DATASET_FOLDER="dataset",
-    DEBUG=False
+    DEBUG=True
 )
 
 app.config.update(json.loads(open('config.json','r').read()))
@@ -66,6 +66,19 @@ google = oauth.remote_app('google',
                           consumer_key=app.config['GOOGLE_CLIENT_ID'],
                           consumer_secret=app.config['GOOGLE_CLIENT_SECRET'])
 
+
+orcid = oauth.remote_app('orcid',
+                         base_url='https://orcid.org/oauth/',
+                         authorize_url='https://orcid.org/oauth/authorize',
+                         request_token_url=None,
+                         request_token_params={'scope': '/authenticate',
+                                               'response_type': 'code',
+                                               'show_login': 'true'},
+                         access_token_url='https://pub.orcid.org/oauth/token',
+                         access_token_method='POST',
+                         access_token_params={'grant_type': 'authorization_code'},
+                         consumer_key=app.config['ORCID_CLIENT_ID'],
+                         consumer_secret=app.config['ORCID_CLIENT_SECRET'])
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -90,7 +103,7 @@ def get_nsf_grants(columns, award=None, only_inhabited=True):
 
 def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
                     sensor=None, west=None,east=None,south=None,north=None, spatial_bounds=None, spatial_bounds_interpolated=None,start=None, stop=None, program=None,
-                    title=None, limit=None, offset=None):
+                    project=None, title=None, limit=None, offset=None):
     (conn,cur) = connect_to_db()
     query_string = '''SELECT DISTINCT d.id
                       FROM dataset d
@@ -112,6 +125,8 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
                       LEFT JOIN dataset_temporal_map tem ON tem.dataset_id=d.id
                       LEFT JOIN award_program_map apm ON apm.award_id=a.award
                       LEFT JOIN program prog ON prog.id=apm.program_id
+                      LEFT JOIN dataset_project_map dprojm ON dprojm.dataset_id=d.id
+                      LEFT JOIN project proj ON proj.id=dprojm.project_id
                    '''
     conds = []
     if dataset_id:
@@ -149,11 +164,15 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
         conds.append(cur.mogrify('%s >= tem.start_date', (stop,)))
     if program:
         conds.append(cur.mogrify('prog.id=%s ', (program,)))
+    if project:
+        conds.append(cur.mogrify('proj.id=%s ', (project,)))
     conds.append(cur.mogrify('url IS NOT NULL '))
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
 
+
+    #print(query_string)
     cur.execute(query_string)
     return [d['id'] for d in cur.fetchall()]
 
@@ -174,7 +193,8 @@ def get_datasets(dataset_ids):
                              CASE WHEN ref.references IS NULL THEN '[]'::json ELSE ref.references END,
                              CASE WHEN sp.spatial_extents IS NULL THEN '[]'::json ELSE sp.spatial_extents END,
                              CASE WHEN tem.temporal_extents IS NULL THEN '[]'::json ELSE tem.temporal_extents END,
-                             CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END
+                             CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
+                             CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END
                        FROM
                         dataset d
                         LEFT JOIN (
@@ -233,7 +253,12 @@ def get_datasets(dataset_ids):
                             FROM dataset_award_map dam, award_program_map apm, program prog
                             WHERE dam.award_id = apm.award_id AND apm.program_id = prog.id
                             GROUP BY dam.dataset_id
-                        ) prog ON (d.id = prog.dataset_id) 
+                        ) prog ON (d.id = prog.dataset_id)
+                        LEFT JOIN (
+                            SELECT dprojm.dataset_id, json_agg(proj) projects
+                            FROM dataset_project_map dprojm JOIN project proj ON (proj.id=dprojm.project_id)
+                            GROUP BY dprojm.dataset_id
+                        ) proj ON (d.id = proj.dataset_id)
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)
@@ -664,8 +689,9 @@ def login_google():
 
 @app.route('/login_orcid')
 def login_orcid():
-    return redirect('https://orcid.org/oauth/authorize?client_id=***REMOVED***&response_type=code&scope=/authenticate&redirect_uri=http://' + app.config['SERVER_NAME'] + '/authorized_orcid')
-
+    callback = url_for('authorized_orcid', _external=True)
+    return orcid.authorize(callback=callback)
+    
 @app.route('/authorized')
 @google.authorized_handler
 def authorized(resp):
@@ -679,22 +705,15 @@ def authorized(resp):
     return redirect(session['next'])
 
 @app.route('/authorized_orcid')
-def authorized_orcid():
-    code = request.args['code']
-    p = requests.post('https://orcid.org/oauth/token', data={'client_id':'***REMOVED***', 'client_secret':'***REMOVED***','grant_type':'authorization_code','code':code,'redirect_uri':'http://' + app.config['SERVER_NAME'] + '/authorized_orcid'}, headers={'accept': 'application/json'}).json()
-    access_token = p['access_token']
-    session['orcid_access_token'] = access_token
-    r = requests.get('https://pub.orcid.org/v1.2/search/orcid-bio/?q=orcid:'+p['orcid'], headers={'accept': 'application/json'}).json()
-    bio = r['orcid-search-results']['orcid-search-result'][0]['orcid-profile']['orcid-bio']
-    resp = flask.Response(json.dumps(bio,indent=4))
-    resp.headers['Content-Type'] = 'application/json'
+@orcid.authorized_handler
+def authorized_orcid(resp):
     session['user_info'] = {
-        'name': bio['personal-details']['given-names']['value'] + ' ' + bio['personal-details']['family-name']['value'],
-        'orcid': p['orcid']
+        'name': resp['name'],
+        'orcid': resp['orcid']
     }
     return redirect(session['next'])
 
-    
+
 @google.tokengetter
 def get_access_token():
     return session.get('google_access_token')
@@ -759,32 +778,38 @@ def search():
 
 @app.route('/filter_search_menus', methods=['GET'])
 def filter_search_menus():
-    keys = ['person', 'parameter', 'program', 'award', 'title']
+    keys = ['person', 'parameter', 'program', 'award', 'title', 'project']
     args = request.args.to_dict()
 
-    person_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'person'})
+    person_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'person'})
     person_dsets = get_datasets(person_ids)
     persons = set([p['id'] for d in person_dsets for p in d['persons']])
 
-    parameter_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'parameter'})
+    parameter_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'parameter'})
     parameter_dsets = get_datasets(parameter_ids)
     parameters = set([' > '.join(p['id'].split(' > ')[2:]) for d in parameter_dsets for p in d['parameters']])
 
-    program_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'program'})
+    program_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'program'})
     program_dsets = get_datasets(program_ids)
     programs = set([p['id'] for d in program_dsets for p in d['programs']])
-    
-    award_ids = filter_datasets(**{ k: args.get(k) for k in keys if k != 'award'})
+
+    award_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'award'})
     award_dsets = get_datasets(award_ids)
-    awards = set([(p['name'],p['award']) for d in award_dsets for p in d['awards']])
+    awards = set([(p['name'], p['award']) for d in award_dsets for p in d['awards']])
+
+    project_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'project'})
+    project_dsets = get_datasets(project_ids)
+    projects = set([p['id'] for d in project_dsets for p in d['projects']])
+#    projects = set([d['id'] for d in project_dsets])
 
     return flask.jsonify({
         'person': sorted(persons),
         'parameter': sorted(parameters),
         'program': sorted(programs),
         'award': [a[1] + ' ' + a[0] for a in sorted(awards)],
+        'project': sorted(projects)
     })
-    
+
 @app.route('/search_result')
 def search_result():
     if 'filtered_datasets' not in session:
@@ -868,7 +893,7 @@ def devices():
 def procedures():
     user_info = session.get('user_info')
     if user_info is None:
-        session['next'] = '/devices'
+        session['next'] = '/procedures'
         return redirect(url_for('login'))
     else:
         return '\n'.join([render_template('header.jnj', cur='dataset'),
@@ -879,11 +904,22 @@ def procedures():
 def content():
     user_info = session.get('user_info')
     if user_info is None:
-        session['next'] = '/devices'
+        session['next'] = '/content'
         return redirect(url_for('login'))
     else:
         return '\n'.join([render_template('header.jnj', cur='dataset'),
                           render_template('content_examples.jnj', name=user_info['name']),
+                          render_template('footer.jnj')])
+
+@app.route('/files_to_upload')
+def files_to_upload():
+    user_info = session.get('user_info')
+    if user_info is None:
+        session['next'] = '/files_to_upload'
+        return redirect(url_for('login'))
+    else:
+        return '\n'.join([render_template('header.jnj', cur='dataset'),
+                          render_template('files_to_upload_help.jnj', name=user_info['name']),
                           render_template('footer.jnj')])
 
 def json_serial(obj):
@@ -1028,5 +1064,6 @@ app.jinja_env.globals.update(json_dumps=json.dumps)
 
     
 if __name__ == "__main__":
-    app.secret_key = '***REMOVED***'
+    SECRET_KEY = 'development key'
+    app.secret_key = SECRET_KEY
     app.run(host=app.config['SERVER_NAME'], debug=True, ssl_context=context, threaded=True)

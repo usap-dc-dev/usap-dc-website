@@ -1,5 +1,6 @@
 function fill_opts(menu_name, opts, selected) {
     var $select = $('.selectpicker[name='+'"'+menu_name+'"]');
+    $select.selectpicker({width:'225px'});
     $select.empty();
     $select.append('<option value="">All</option>');
     for (var opt of opts) {
@@ -7,9 +8,10 @@ function fill_opts(menu_name, opts, selected) {
     }
     $select.selectpicker('refresh');
     $select.selectpicker('val', selected);
+    
 }
 
-function updateMenusWithSelected(selected) {
+function updateMenusWithSelected(selected, reset) {
     selected = selected || {};
     return $.ajax({
 	method: 'GET',
@@ -27,15 +29,28 @@ function updateMenusWithSelected(selected) {
 		var award_id = text.split(' ')[0];
 		$(elem).attr('data-toggle', 'tooltip');
 		$(elem).attr('data-placement', 'right');
-		$(elem).attr('title', awards[award_id]['title']);
+		if (awards[award_id] != null) {
+			$(elem).attr('title', awards[award_id]['title']);
+		}
 	    });
 	    $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+	    if (reset) {
+	    	document.getElementById("data_link").reset();
+	    }
 	}
     });
 }
 
+function resetForm() {
+	updateMenusWithSelected({}, true);
+}
+
 var mc;
 $(document).ready(function() {
+    $(document).ajaxStart(function () { $("html").addClass("wait"); });
+    $(document).ajaxStop(function () { $("html").removeClass("wait"); });
+	$('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
+
 
     var check = $("#entire_region");
     var w = $('input[name="west"]');
@@ -57,19 +72,19 @@ $(document).ready(function() {
     });
 
     
-    
-    $('[name="person"], [name="parameter"], [name="program"], [name="award"]').change(function() {
+    $('[name="person"], [name="parameter"], [name="program"], [name="award"], [name="project"]').change(function() {
 	
 	$('[data-toggle="tooltip"]').tooltip('hide');
-	
+
 	var selected = {
 	    person: $('.selectpicker[name="person"]').val(),
 	    parameter: $('.selectpicker[name="parameter"]').val(),
 	    program: $('.selectpicker[name="program"]').val(),
 	    award: $('.selectpicker[name="award"]').val(),
+	    project: $('.selectpicker[name="project"]').val(),
 	};
 
-	updateMenusWithSelected(selected);
+	updateMenusWithSelected(selected, false);
     });
 
     mc = new MapClient();
@@ -122,7 +137,7 @@ $(document).ready(function() {
 	title: 'All',
 	width: 'fit'
     });
-    updateMenusWithSelected(search_params);
+    updateMenusWithSelected(search_params, false);
     
     //$('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('','All'); });
 });

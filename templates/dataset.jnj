@@ -88,8 +88,14 @@
 	  </div>
 	  
 	  <div class="form-group">
-	    <label for="related_articles">Related Articles</label>
-	    <textarea name="related_articles" class="form-control">{{dataset_metadata.get('related_articles','')}}</textarea>
+	    <label for="most_relevant_publication">Most Relevant Source Publications</label>
+	    <textarea name="most_relevant_publication" class="form-control">{{dataset_metadata.get('most_relevant_publication','')}}</textarea>
+	    <span class="help-block">Include DOI where known</span>
+	  </div>
+
+	  <div class="form-group">
+	    <label for="related_publications">Other Related Publications</label>
+	    <textarea name="related_publications" class="form-control">{{dataset_metadata.get('related_publications','')}}</textarea>
 	    <span class="help-block">Include DOI's where known</span>
 	  </div>
 	  
