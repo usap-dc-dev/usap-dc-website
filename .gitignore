@@ -10,3 +10,4 @@ dataset/
 flask_session/
 insert_keywords/
 insert_keywords.py
+doc/
