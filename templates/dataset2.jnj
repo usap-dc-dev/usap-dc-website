@@ -14,33 +14,42 @@
 <br/>
 
 <br>
-<b>Brief description of instruments and devices</b><br>
+<b>1. Brief description of instruments and devices</b><br>
 Please list and describe briefly the type of instruments and devices used for data acquisition and analysis.<br>
-Write n/a if no devices were used in the study.<br>
-Write “see files”, if this information is provided in the files [<a href="/devices" target="_new">examples</a>]<br>
+N/A if no devices were used in the study.<br>
+Write “see files”, if this information is provided in files. [<a href="/devices" target="_new">examples</a>]<br>
 <textarea name="devices" rows="3" cols="80">{{dataset_metadata.get('devices','')}}</textarea><br>
 <br>
-<b>Brief description of data acquisition procedures</b><br>
+<b>2. Brief description of data acquisition procedures</b><br>
 Please describe briefly the procedure / protocols used for acquiring data.<br>
-(if no new data were acquired, write N/A) [<a href="/procedures" target="_new">examples</a>]<br>
+N/A if no new data were acquired. [<a href="/procedures" target="_new">examples</a>]<br>
 <textarea name="procedures" rows="3" cols="80">{{dataset_metadata.get('procedures','')}}</textarea><br>
 <br>
-<b>Brief description of content and processing steps</b><br>
-Please describe briefly the content of the data files, e.g. column headers, abbreviations, and processing step have been applied to the data.<br>
-If this information is included in the data files, write “included in data files” [<a href="/content" target="_new">examples</a>]<br>
+<b>3. Brief description of data processing</b><br>
+Please briefly describe any processing steps applied to the data, including, for example, methodology, calibrations, algorithms used.<br>
+Write "see files" if this information is provided with the files.
+<textarea name="content" rows="3" cols="80">{{dataset_metadata.get('data_processing','')}}</textarea><br>
+<br>
+<b>4. Brief description of data content</b><br>
+Please briefly describe the content of the data files, e.g. column headers, abbreviations, file format, file organization (i.e. directory structure if applicable).<br>
+Write "see files" if this information is provided with the files.
 <textarea name="content" rows="3" cols="80">{{dataset_metadata.get('content','')}}</textarea><br>
 <br>
+<b>5. Known issues/limitations of the dataset (if applicable)</b><br>
+<textarea name="content" rows="3" cols="80">{{dataset_metadata.get('issues','')}}</textarea><br>
+<br>
 <b>Check the following before submitting the data</b><br>
-<input type="checkbox" name="properGeoreferences" {% if dataset_metadata.get('properGeoreferences') %}checked{% endif %}>All the data have proper georeferences. (locations of the stations are in the description above or latitude-longitude columns for samples and measurements are in data files)<br>
-<input type="checkbox" name="propertiesExplained" {% if dataset_metadata.get('propertiesExplained') %}checked{% endif %}>The data column, properties, and attributes listed/used in the data files are explained either in the description of content and/or the data files themselves.<br>
-<input type="checkbox" name="comprehensiveLegends" {% if dataset_metadata.get('comprehensiveLegends') %}checked{% endif %}>Graph and Maps (if provided) have comprehensive legends<br>
+<input type="checkbox" name="properGeoreferences" {% if dataset_metadata.get('properGeoreferences') %}checked{% endif %}>All the data have proper georeferences. (locations of the stations are in the description above or latitude-longitude columns for samples and measurements are in data files).<br>
+<input type="checkbox" name="propertiesExplained" {% if dataset_metadata.get('propertiesExplained') %}checked{% endif %}>The data column, properties, and attributes listed/used in the data files are explained either in the description of content (Q4) and/or the data files themselves.<br>
+<input type="checkbox" name="dataUnits" {% if dataset_metadata.get('dataUnits') %}checked{% endif %}>Appropriate data units are defined and provided (e.g. within data files, or in content description question 4 above).<br>
+<input type="checkbox" name="comprehensiveLegends" {% if dataset_metadata.get('comprehensiveLegends') %}checked{% endif %}>Graph and Maps (if provided) have comprehensive legends.<br>
 <br>
 
 <div class="required">
-  <b>File(s) to upload:</b><br>
+  <b>File(s) to upload</b> [<a href="/files_to_upload" target="_new">Help</a>]<b>:</b><br>
    Note: The file(s) will be uploaded when you click "Submit".<br/>
-  You may use Zip or Tar to bundle a directory.<br/>
-  <font color="#ff0000">Uploads are limited to 250 MB.  For larger datasets, please <a href={{config.SERVER_NAME}}/contact">Contact Us</a> to arrange a FTP/Dropbox session or a USB portable drive.</font>
+  You may use Zip or Tar to bundle a directory. Please use descriptive filenames and non proprietary file formats if possible.<br/>
+  <font color="#ff0000">Uploads limited to 250 MB.  For larger datasets, please <a href={{config.SERVER_NAME}}/contact">Contact Us</a>.</font>
 
   <br>
   <br/>

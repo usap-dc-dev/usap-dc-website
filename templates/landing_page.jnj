@@ -30,23 +30,24 @@
   }
 
   .col1 {
+    text-align: center;
     margin-left: 10px;
-    position: absolute;
-    width: 300 px;
-    font-weight: bold;
+    width: 100px;
+    position: absolute;  
   }
 
   .col2 {
-    text-align: center;
-    margin-left: 300px;
-    width: 100px;
+    margin-left: 150px;
+    width: 150px;
     position: absolute;
   }
 
   .col3 {
-    margin-left: 500px;
-    width: 150 px;
+    margin-left: 250px;
+    width: 500 px;
     position: absolute;
+    font-weight: bold;
+
   }
 
   .col4 {
@@ -264,19 +265,19 @@
 
 {% if data.get('url_extra') %}
 <div id="supplement">
-    <div class="header small">
-	Supplemental Docs
-    </div>
-    <div class="row">
-	<div class="col1">
-	    {{data['url_extra']}}
-	</div>
-	<div class="col2">
-	  <div class="download" data-url="/supplement/{{data['id']}}">
-	    View
-	  </div>
-	</div>
-    </div>
+  <div class="header small">
+	 Supplemental Docs
+  </div>
+  <div class="row">
+	 <div class="col1">
+    <div class="download" data-url="/supplement/{{data['id']}}">
+      View
+    </div>  
+	 </div>
+	 <div class="col3">
+    {{data['url_extra']}}
+	 </div>
+  </div>
 </div>
 {% endif %}
 
@@ -287,21 +288,21 @@
   <div id="file-rows">
     {% for f in data['files'] %}
       <div class="row">
-	<div class="col1">
-	{{f['name']}}
-	</div>
-	<div class="col2">
-	  <div class="download" data-url="{{f['url']}}">
-	    {% if f['url'].startswith('http://www.usap-dc.org/') %}
-	      Download
-	    {% else %}
-	      External
-	    {% endif %}
-	  </div>
-	</div>
-	<div class="col3">
-	  {{f['size']}}
-	</div>
+	      <div class="col1">
+          <div class="download" data-url="{{f['url']}}">
+             {% if f['url'].startswith('http://www.usap-dc.org/') %}
+               Download
+             {% else %}
+               External
+             {% endif %}
+           </div>
+	      </div>
+	      <div class="col2">
+          {{f['size']}}
+	      </div>
+      	<div class="col3">
+      	  {{f['name']}}
+      	</div>
       </div>
     {% endfor %}
   </div>
