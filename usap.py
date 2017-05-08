@@ -781,6 +781,9 @@ def search():
 def filter_search_menus():
     keys = ['person', 'parameter', 'program', 'award', 'title', 'project']
     args = request.args.to_dict()
+    # if reseting:
+    if args == {}:
+        session['search_params'] = {}
 
     person_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'person'})
     person_dsets = get_datasets(person_ids)
