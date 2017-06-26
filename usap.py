@@ -156,9 +156,8 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
     if south:
         conds.append(cur.mogrify('%s <= sp.north', (south,)))
     if spatial_bounds_interpolated:
-        bbox = "st_geomfromewkt('srid=4326;POLYGON ((' || sp.west || ' ' || sp.south || ', ' || sp.west || ' ' || sp.north || ', ' || sp.east || ' ' || sp.north || ', ' || sp.east || ' ' || sp.south || ', ' || sp.west || ' ' || sp.south || '))')"
-        conds.append(cur.mogrify("st_intersects("+bbox+", st_transform(st_geomfromewkt('srid=3031;' || %s),4326))",(spatial_bounds_interpolated,)))
-    if start:
+        conds.append(cur.mogrify("st_within(st_transform(sp.geometry,3031),st_geomfromewkt('srid=3031;'||%s))",(spatial_bounds_interpolated,)))
+   if start:
         conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
     if stop:
         conds.append(cur.mogrify('%s >= tem.start_date', (stop,)))
@@ -172,7 +171,7 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
         query_string += ' WHERE ' + ' AND '.join(conds)
 
 
-    #print(query_string)
+    print(query_string)
     cur.execute(query_string)
     return [d['id'] for d in cur.fetchall()]
 
@@ -760,6 +759,7 @@ def links():
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
+    print('in search')
     if request.method == 'GET':
         return '\n'.join([render_template('header.jnj',cur='search'),
                           render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
@@ -768,7 +768,7 @@ def search():
                           render_template('footer.jnj')])
     elif request.method == 'POST':
         params = request.form.to_dict()
-
+        print(params)
         filtered = filter_datasets(**params)
 
         del params['spatial_bounds_interpolated']

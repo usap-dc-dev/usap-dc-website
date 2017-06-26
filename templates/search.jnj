@@ -249,7 +249,7 @@
 			<div class="help-block small">
 		  		Any WKT polygon, with longitudes in a 0-360 &deg; range. Example: Ross Sea is between 160 and 210. Read about the WKT format
 		  		<a href="https://en.wikipedia.org/wiki/Well-known_text" target="_blank">here</a>.
-			/div>
+			</div>
 	      </div>
 	    </div>
 
