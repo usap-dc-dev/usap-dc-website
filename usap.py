@@ -125,8 +125,8 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
                       LEFT JOIN dataset_temporal_map tem ON tem.dataset_id=d.id
                       LEFT JOIN award_program_map apm ON apm.award_id=a.award
                       LEFT JOIN program prog ON prog.id=apm.program_id
-                      LEFT JOIN dataset_project_map dprojm ON dprojm.dataset_id=d.id
-                      LEFT JOIN project proj ON proj.id=dprojm.project_id
+                      LEFT JOIN dataset_initiative_map dprojm ON dprojm.dataset_id=d.id
+                      LEFT JOIN initiative proj ON proj.id=dprojm.initiative_id
                    '''
     conds = []
     if dataset_id:
@@ -157,7 +157,7 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
         conds.append(cur.mogrify('%s <= sp.north', (south,)))
     if spatial_bounds_interpolated:
         conds.append(cur.mogrify("st_within(st_transform(sp.geometry,3031),st_geomfromewkt('srid=3031;'||%s))",(spatial_bounds_interpolated,)))
-   if start:
+    if start:
         conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
     if stop:
         conds.append(cur.mogrify('%s >= tem.start_date', (stop,)))
@@ -255,7 +255,7 @@ def get_datasets(dataset_ids):
                         ) prog ON (d.id = prog.dataset_id)
                         LEFT JOIN (
                             SELECT dprojm.dataset_id, json_agg(proj) projects
-                            FROM dataset_project_map dprojm JOIN project proj ON (proj.id=dprojm.project_id)
+                            FROM dataset_initiative_map dprojm JOIN initiative proj ON (proj.id=dprojm.initiative_id)
                             GROUP BY dprojm.dataset_id
                         ) proj ON (d.id = proj.dataset_id)
                         WHERE d.id IN %s ORDER BY d.title''',
@@ -390,7 +390,7 @@ def get_programs(conn=None, cur=None):
 def get_projects(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT * FROM project'
+    query = 'SELECT * FROM initiative'
     cur.execute(query)
     return cur.fetchall()
 
@@ -846,7 +846,7 @@ def search_result():
 def contact():
     if request.method == 'GET':
         return '\n'.join([render_template('header.jnj',cur='contact'),
-                          render_template('contact.jnj'),
+                          render_template('contact.jnj',secret=app.config['RECAPTCHA_DATA_SITE_KEY']),
                           render_template('footer.jnj')])
     elif request.method == 'POST':
         form = request.form.to_dict()
@@ -964,8 +964,8 @@ def landing_page(dataset_id):
     creator_orcid = None
     
     for p in metadata['persons'] or []:
-        if p['id'] == metadata['creator'] and p['orcid'] is not None:
-            creator_orcid = p['orcid']
+        if p['id'] == metadata['creator'] and p['id_orcid'] is not None:
+            creator_orcid = p['id_orcid']
             break
     return '\n'.join([render_template('header.jnj',cur='landing_page'),
                       render_template('landing_page.jnj',data=metadata,creator_orcid=creator_orcid),

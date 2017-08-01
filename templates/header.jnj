@@ -13,7 +13,7 @@
 	
 	<meta name="MSSmartTagsPreventParsing" content="true" />
 	<meta name="google-signin-client_id" content="721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com">
-	  <link rel="icon" href="{{ url_for('static', filename='imgs/favicons.png') }}" type="image/x-icon">
+	  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.png') }}" type="image/x-icon">
 	  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet">
 	    
 	    <link rel="stylesheet" type="text/css" href="/static/css/print.css" media="print" />
