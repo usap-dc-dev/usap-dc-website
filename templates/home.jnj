@@ -5,9 +5,10 @@
   <div id="map" style="width:400px;height:400px;border:1px solid black;float:right"></div>
   <!-- InstanceBeginEditable name="pageContent" -->
   <p style="margin-top:0;text-align:left;width:400px;">The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and a partner in the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>).</p> </p>
-<p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT DEVELOPMENTS</p>
-<div class="style4" style="border:solid 1px;padding:4px;width:380px;height:40px;overflow:auto;line-height:150%;font-size:11px">
-  <p>Jan. 2017 - Launched new USAP-DC web site with expanded holdings and ORCID integration.</p>
+<p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT NEWS</p>
+<div class="style4" style="border:solid 1px;padding:4px;width:380px;height:55px;overflow:auto;line-height:150%;font-size:11px">
+  &nbsp;Apr. 2017 - Upgraded USAP-DC site to support Search-by-Project.<br/>
+  &nbsp;Jan. 2017 - Launched new USAP-DC web site with expanded holdings, map-based Search, and ORCID integration.<br/>
   <p>Aug. 2016 - Presented results at the <a href="http://scar2016.com/about.php">SCAR</a> annual meeting of Antarctic data managers, during the Open Science Conference (Kuala Lumpur).</p>
   <p>Oct. 2015 - Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers, concurrent with <a href="http://www.polar-data-forum.org/">PDF-II</a> (Waterloo).</p>
   <p">Aug. 2014 - Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers (Auckland).</p>
@@ -35,9 +36,21 @@
   <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left;font-size:11px;">Jan. 2008 - Added <a href="http://lima.usgs.gov/">LIMA</a> basemap via <a href="http://www.agic.umn.edu/">AGIC</a> web service.</p>
   <p class="style4" style="margin-top: 0; margin-bottom: 0; text-align: left;font-size:11px;">Dec. 2007 - Launched new Web site at <a href="http://www.agu.org/cgi-bin/wais?jj=IN54A-07">AGU</a> meeting.</p>
 </div> 
-<p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT DATASETS</p>
-<div class="style4" style="border:solid 1px;padding:4px;width:380px;height:100px;overflow:auto;line-height:150%;font-size:11px">
+<p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT DATA</p>
+<div class="style4" style="border:solid 1px;padding:4px;width:380px;height:120px;overflow:auto;line-height:150%;font-size:11px">
 
+   &nbsp; &nbsp; (2017-07-24)&nbsp; <a href=/view/dataset/601037>12-46190</a>&nbsp; Z.Yu - Late Holocene Paleoecological and Paleoclimatic Data from the Western Antarctic Peninsula<br />
+   &nbsp; &nbsp; (2017-07-11)&nbsp; <a href=/view/dataset/601036>06-36740</a>&nbsp; B.Koffman - Snowpit Evidence of the 2011 Puyehue-Cordon Caulle Eruption in West Antarctica<br />
+   &nbsp; &nbsp; (2017-06-30)&nbsp; <a href=/view/dataset/601035>11-42129</a>&nbsp; M.Lamanna, S.Salisbury, J.Clarke-3D Digital Reconstructions of Late Cretaceous-Paleogene Vertebrates<br />
+   &nbsp; &nbsp; (2017-06-19)&nbsp; <a href=/view/dataset/601034>08-39093</a>&nbsp; M.M.Arienzo - Holocene Black Carbon in Antarctica<br />
+   &nbsp; &nbsp; (2017-06-16)&nbsp; <a href=/view/dataset/601033>08-39031</a>&nbsp; D.Baggenstos, J.P.Severinghaus - Taylor Glacier Gas Isotope Data<br />
+   &nbsp; &nbsp; (2017-06-12)&nbsp; <a href=/view/dataset/601032>11-41993</a>&nbsp; L.Amaral-Zettler, J.Rich - Bacterial Communities in Coastal Waters of the Western Antarctic Peninsula<br />
+   &nbsp; &nbsp; (2017-06-05)&nbsp; <a href=/view/dataset/601031>13-41360</a>&nbsp; S.Schoenemann, E.Steig - Seasonal 17O Isotope Data from Lake Vostok and WAIS Divide Snow Pits<br />
+   &nbsp; &nbsp; (2017-06-01)&nbsp; <a href=/view/dataset/601030>09-44348</a>&nbsp; J.Souney - WAIS Divide WDC06A Core Quality Versus Depth<br />
+   &nbsp; &nbsp; (2017-05-27)&nbsp; <a href=/view/dataset/601028>14-43554</a>&nbsp; A.Hindle, E.Buys - Weddell Seal Colonies in McMurdo Sound, 2015-2016<br />
+   &nbsp; &nbsp; (2017-05-24)&nbsp; <a href=/view/dataset/601029>12-45659</a>&nbsp; V.Petrenko - Measurements of 14C-methane from Taylor Glacier<br />
+   &nbsp; &nbsp; (2017-05-24)&nbsp; <a href=/view/dataset/601027>12-46463</a>&nbsp; J.Burns - Weddell Seal Colonies in Erebus Bay, 2013-2017<br />
+   &nbsp; &nbsp; (2017-05-12)&nbsp; <a href=/view/dataset/601024>15-53824</a>&nbsp; J.Heine - Temperature Logs (Rebreather Tests) at McMurdo Station<br />
   &nbsp; &nbsp; (2017-04-27)&nbsp; <a href=/view/dataset/601023>06-36740</a>&nbsp; K.Kreutz - WAIS Divide WDC06A Discrete ICP-MS Chemistry<br />
   &nbsp; &nbsp; (2017-04-26)&nbsp; <a href=/view/dataset/601022>12-46223</a>&nbsp; A.Buffen - WAIS Divide WDC06A Nitrate Isotope Record<br />
   &nbsp; &nbsp; (2017-04-24)&nbsp; <a href=/view/dataset/601021>09-44348</a>&nbsp; K.Taylor et al. - Summary of Results from the WAIS Divide Ice Core Project<br />

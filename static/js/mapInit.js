@@ -84,18 +84,18 @@ function MapClient() {
     });
     map.addLayer(tracks);
     
-    var difAeronomyAndAstrophysics = new ol.layer.Tile({
-	title: "Antarctic Astrophysics and Geospace Sciences",
+    var difINT = new ol.layer.Tile({
+	title: "Antarctic Integrated System Science",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
-		layers: 'Astro-Geo',
+		layers: 'Integrated',
 		transparent: true
 	    }
 	})
     });
-    map.addLayer(difAeronomyAndAstrophysics);
-    
+    map.addLayer(difINT);
+	
     var difEarthSciences = new ol.layer.Tile({
 	title: "Antarctic Earth Sciences",
 	source: new ol.source.TileWMS({
@@ -107,6 +107,18 @@ function MapClient() {
 	})
     });
     map.addLayer(difEarthSciences);
+    
+    var difAeronomyAndAstrophysics = new ol.layer.Tile({
+	title: "Antarctic Astrophysics and Geospace Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Astro-Geo',
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(difAeronomyAndAstrophysics);
     
     var difGlaciology = new ol.layer.Tile({
 	title: "Antarctic Glaciology",
@@ -144,19 +156,6 @@ function MapClient() {
     });
     map.addLayer(difOrganismsAndEcosystems);
     
-    var difINT = new ol.layer.Tile({
-	title: "Antarctic Integrated System Science",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Integrated',
-		transparent: true
-	    }
-	})
-    });
-    //difINT.setVisibility(false);
-    map.addLayer(difINT);
-	
     //map.getView().fit([-4103624,-4103624,4103624,4103624], map.getSize());
 
     var mousePosition = new ol.control.MousePosition({

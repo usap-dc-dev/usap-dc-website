@@ -10,7 +10,7 @@
 				&nbsp; <a href="mailto:web@usap-dc.org">web[at]usap-dc.org</a></p>
 				<p><b>Post:</b><br>
 				&nbsp; Lamont-Doherty Earth Observatory<br>
-				&nbsp; Attn: Robert Arko, USAP-DC Manager<br>
+				&nbsp; Attn: Frank Nitsche, USAP-DC Manager<br>
 				&nbsp; 61 Route 9W<br>
 				&nbsp; Palisades, NY 10964 USA
 				</p>
@@ -37,7 +37,9 @@
 		  <tr>
 		    <td></td>
 		    <td>
-		      <div class="g-recaptcha" data-sitekey="***REMOVED***"/></td>
+		   
+		      <div class="g-recaptcha" data-sitekey={{secret}}/></td>
+
 		  </tr>
 		  <tr>
 		    <td></td>
