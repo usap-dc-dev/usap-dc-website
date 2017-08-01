@@ -11,6 +11,6 @@
     "GOOGLE_CLIENT_SECRET": "",
     "SECRET_KEY": "",
     "RECAPTCHA_SECRET_KEY": "",
-
+    "RECAPTCHA_DATA_SITE_KEY": "",
     "SERVER_NAME": ""
 }
