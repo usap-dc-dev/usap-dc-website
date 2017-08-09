@@ -95,6 +95,7 @@ def connect_to_db():
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn,cur) = connect_to_db()
     query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award::integer<1700000 and a.award::integer>0400000' % ','.join(columns)
+    
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
     query_string +=  ' ORDER BY name,award'
@@ -170,8 +171,6 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
 
-
-    print(query_string)
     cur.execute(query_string)
     return [d['id'] for d in cur.fetchall()]
 
@@ -671,10 +670,15 @@ def project():
                           render_template('project.jnj',name=user_info['name'],nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu()),
                           render_template('footer.jnj')])
 
-#@app.route('/submit/projectinfo',methods=['GET'])
-#def projectinfo():
-#    grant = get_nsf_grants(['*'], award=request.args.get('award'))
-#    return flask.jsonify(grant[0])
+@app.route('/submit/projectinfo',methods=['GET'])
+def projectinfo():
+    award_id = request.args.get('award')
+    if award_id is not None:       
+        (conn, cur) = connect_to_db()
+        query_string = "SELECT * FROM award a WHERE a.award = '%s'" % award_id
+        cur.execute(query_string)
+        return flask.jsonify(cur.fetchall()[0])
+    return flask.jsonify({})
 
 @app.route('/login')
 def login():
@@ -760,6 +764,7 @@ def links():
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     print('in search')
+    print(get_nsf_grants(['award','name','title']))
     if request.method == 'GET':
         return '\n'.join([render_template('header.jnj',cur='search'),
                           render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
@@ -1066,7 +1071,6 @@ app.jinja_env.globals.update(int=int)
 app.jinja_env.globals.update(filter_awards=lambda awards: [aw for aw in awards if aw['award'] != 'XXXXXXX'])
 app.jinja_env.globals.update(json_dumps=json.dumps)
 
-    
 if __name__ == "__main__":
     SECRET_KEY = 'development key'
     app.secret_key = SECRET_KEY
