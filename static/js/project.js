@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 to_yyyymmdd = function(date_in) {
   var date = new Date(date_in);
   var mm = date.getUTCMonth() + 1; // getUTCMonth() is zero-based
@@ -11,13 +9,9 @@ to_yyyymmdd = function(date_in) {
          ].join('-');
 };
 
-	
+
 $(document).ready(function() {
 
-
-=======
-$(document).ready(function() {
->>>>>>> 731e01daf724441260f5c33201777968eafd3af0
     $('#award').change(function() {
 	var title = pi = institution = email = copi = start = end = cr = ipy = null;
 	var val = $('#award').val();
@@ -33,13 +27,8 @@ $(document).ready(function() {
 		    $("#entry textarea[name='org']").val(msg.org);
 		    $("#entry input[name='email']").val(msg.email);
 		    $("#entry input[name='copi']").val(msg.copi);
-<<<<<<< HEAD
 		    $("#entry input[name='start']").val(to_yyyymmdd(msg.start));
 		    $("#entry input[name='end']").val(to_yyyymmdd(msg.expiry));
-=======
-		    $("#entry input[name='start']").val(msg.start);
-		    $("#entry input[name='end']").val(msg.expiry);
->>>>>>> 731e01daf724441260f5c33201777968eafd3af0
 		    $("#entry input[name='iscr']").prop('checked',msg.iscr);
 		    $("#entry input[name='isipy']").prop('checked',msg.isipy);
 		    $("#entry textarea[name='sum']").val(msg.sum);
@@ -93,9 +82,4 @@ $(document).ready(function() {
 	}
     });
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 731e01daf724441260f5c33201777968eafd3af0
 });
