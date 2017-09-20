@@ -11,10 +11,13 @@
     "GOOGLE_CLIENT_SECRET": "",
     "SECRET_KEY": "",
     "RECAPTCHA_SECRET_KEY": "",
-<<<<<<< HEAD
-
-=======
     "RECAPTCHA_DATA_SITE_KEY": "",
->>>>>>> 731e01daf724441260f5c33201777968eafd3af0
-    "SERVER_NAME": ""
+    "SERVER_NAME": "",
+    "SMTP":
+    {
+    "SERVER": "",
+    "PORT": "",
+    "USER": "",
+    "PASSWORD": ""
+    }
 }
