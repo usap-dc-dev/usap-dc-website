@@ -47,7 +47,7 @@ app.config.update(
     DEBUG=True
 )
 
-app.config.update(json.loads(open('config.json','r').read()))
+app.config.update(json.loads(open('config.json', 'r').read()))
 
 
 app.debug = app.config['DEBUG']
