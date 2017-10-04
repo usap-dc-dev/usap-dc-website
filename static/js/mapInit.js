@@ -86,7 +86,7 @@ function MapClient(zoom) {
     map.addLayer(tracks);
     
     var difINT = new ol.layer.Tile({
-	title: "Antarctic Integrated System Science",
+	title: "Integrated System Science",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -98,7 +98,7 @@ function MapClient(zoom) {
     map.addLayer(difINT);
 	
     var difEarthSciences = new ol.layer.Tile({
-	title: "Antarctic Earth Sciences",
+	title: "Earth Sciences",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -110,7 +110,7 @@ function MapClient(zoom) {
     map.addLayer(difEarthSciences);
     
     var difAeronomyAndAstrophysics = new ol.layer.Tile({
-	title: "Antarctic Astrophysics and Geospace Sciences",
+	title: "Astrophysics and Geospace Sciences",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -122,7 +122,7 @@ function MapClient(zoom) {
     map.addLayer(difAeronomyAndAstrophysics);
     
     var difGlaciology = new ol.layer.Tile({
-	title: "Antarctic Glaciology",
+	title: "Glaciology",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -134,7 +134,7 @@ function MapClient(zoom) {
     map.addLayer(difGlaciology);
     
     var difOceanAndAtmosphericSciences = new ol.layer.Tile({
-	title: "Antarctic Ocean and Atmospheric Sciences",
+	title: "Ocean and Atmospheric Sciences",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -146,7 +146,7 @@ function MapClient(zoom) {
     map.addLayer(difOceanAndAtmosphericSciences);
     
     var difOrganismsAndEcosystems = new ol.layer.Tile({
-	title: "Antarctic Organisms and Ecosystems",
+	title: "Organisms and Ecosystems",
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -194,48 +194,52 @@ function MapClient(zoom) {
 	    layers += ',Bio';
 	if (difINT.getVisible())
 	    layers += ',Integrated';
+	if (layers.charAt(0) == ',') 
+		layers = layers.substring(1);
 //	if (tracks.getVisible())
 //	    layers += ',Entries';
-	$.ajax({
-	    type: "GET",
-	    url: 'http://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
-	    data: {
-		"query_layers" : layers,
-		"layers": layers,
-		"bbox" : bbox,
-		"request": "GetFeatureInfo",
-		"info_format" : "text/html",
-		"service": "WMS",
-		"version": "1.1.0",
-		"width": 6,
-		"height": 6,
-		"X": 3,
-		"Y": 3,
-		"FEATURE_COUNT": 50,
-		"SRS": "EPSG:3031"
-	    },
-	    success: function(msg){
-		if (msg) {
-		    var $msg = $('<div style="font-size:0.8em;max-height:100px;">'+msg+'</div>');
-		    $msg.find('img').each(function() {
-			if (/arrow_show/.test($(this).attr('src'))) {
-			    $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_show.gif')
-			} else if (/arrow_hide/.test($(this).attr('src'))) {
-			    $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_hide.gif')
+	if (layers.length > 0) {
+		$.ajax({
+		    type: "GET",
+		    url: 'http://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
+		    data: {
+			"query_layers" : layers,
+			"layers": layers,
+			"bbox" : bbox,
+			"request": "GetFeatureInfo",
+			"info_format" : "text/html",
+			"service": "WMS",
+			"version": "1.1.0",
+			"width": 6,
+			"height": 6,
+			"X": 3,
+			"Y": 3,
+			"FEATURE_COUNT": 50,
+			"SRS": "EPSG:3031"
+		    },
+		    success: function(msg){
+			if (msg) {
+			    var $msg = $('<div style="font-size:0.8em;max-height:100px;">'+msg+'</div>');
+			    $msg.find('img').each(function() {
+				if (/arrow_show/.test($(this).attr('src'))) {
+				    $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_show.gif')
+				} else if (/arrow_hide/.test($(this).attr('src'))) {
+				    $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_hide.gif')
+				}
+			    });
+			    popup.show(evt.coordinate, $msg.prop('outerHTML'));
+			    $('.turndown').click(function(){
+				var isrc = 'http://www.marine-geo.org/imgs/arrow_hide.gif';
+				if ($(this).find('img').attr('src')=='http://www.marine-geo.org/imgs/arrow_hide.gif')
+				    isrc = 'http://www.marine-geo.org/imgs/arrow_show.gif';
+				$(this).find('img').attr('src',isrc);
+				$(this).parent().find('.tcontent').toggle();
+				//map.popups[0].updateSize();
+			    });
 			}
-		    });
-		    popup.show(evt.coordinate, $msg.prop('outerHTML'));
-		    $('.turndown').click(function(){
-			var isrc = 'http://www.marine-geo.org/imgs/arrow_hide.gif';
-			if ($(this).find('img').attr('src')=='http://www.marine-geo.org/imgs/arrow_hide.gif')
-			    isrc = 'http://www.marine-geo.org/imgs/arrow_show.gif';
-			$(this).find('img').attr('src',isrc);
-			$(this).parent().find('.tcontent').toggle();
-			//map.popups[0].updateSize();
-		    });
-		}
-	    }
-	});
+		    }
+		});
+	}
     });
 
     //this.createLayerSwitcher();

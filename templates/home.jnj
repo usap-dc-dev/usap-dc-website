@@ -4,7 +4,7 @@
   <!-- InstanceEndEditable -->
   
   <div style="float:right;">
-    <button id="expandMap">Expand Map</button>
+    <button class="btn btn-primary" id="expandMap">Expand Map</button>
     <div id="map" style="width:400px;height:400px;border:1px solid black;"></div>   
   </div>
 

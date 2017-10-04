@@ -18,6 +18,10 @@
     position: absolute;
     left: 50px;
 }
+.layer-switcher .panel {
+    font-size: 0.9em;
+    opacity: 0.85;
+}
 
 
 /*.ol-zoom {
