@@ -42,6 +42,9 @@
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.css')}}"/>
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/jquery-ui/themes/base/jquery-ui.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/mapv3.css')}}" />
+
+
 	{% endif %}
 	
 	<!--<link rel="stylesheet" type="text/css" href="OpenLayers-2.12/theme/default/style.css"></link>
@@ -53,8 +56,9 @@
 	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3/ol-debug.js')}}"></script>
 	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.js')}}"></script>
 	    <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.js')}}"></script>
+
 	    {% endif %}
-	    <script src="https://apis.google.com/js/platform.js" async defer></script>
+	     <script src="https://apis.google.com/js/platform.js" async defer></script>
 	    {% if cur=='home' %}
 	    <script type="text/javascript" src="{{ url_for('static', filename='js/mapInit.js') }}"></script>
 	    {% endif %}

@@ -125,9 +125,7 @@
   border-top: none;
   }
 
-  #mouse-position {
-  height: 50px;
-  }
+ 
 
   #modal-buttons {
   width: 120px;

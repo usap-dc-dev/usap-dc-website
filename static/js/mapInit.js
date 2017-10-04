@@ -1,5 +1,6 @@
-function MapClient() {
-    proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
+function MapClient(zoom) {
+	if (!zoom) {zoom = 1;}
+	proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
     var projection = ol.proj.get('EPSG:3031');
     projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
     projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
@@ -7,7 +8,7 @@ function MapClient() {
 	target: 'map',
 	view: new ol.View({
 	    center: [0,0],
-	    zoom: 1,
+	    zoom: zoom,
 	    projection: projection,
 	    minZoom: 1,
 	    maxZoom: 10
@@ -15,7 +16,7 @@ function MapClient() {
 	
     });
 
-    var api_url = 'http://api.usap-dc.org:81/wfs?'
+    var api_url = 'http://api.usap-dc.org:81/wfs?';
 
     var scar = new ol.layer.Tile({
 	type: 'base',
@@ -164,10 +165,9 @@ function MapClient() {
         target: document.getElementById('mouseposition'),
         undefinedHTML: '&nbsp;'
     });
-    map.addControl(mousePosition);
+     map.addControl(mousePosition);
 
-
-    var popup = new ol.Overlay.Popup();
+    var popup = new ol.Overlay.Popup({"panMapIfOutOfView":false});
     map.addOverlay(popup);
     map.on('click', function(evt) {
 	var tolerance = [7, 7];
@@ -216,7 +216,7 @@ function MapClient() {
 	    },
 	    success: function(msg){
 		if (msg) {
-		    var $msg = $('<div>'+msg+'</div>');
+		    var $msg = $('<div style="font-size:0.8em;max-height:100px;">'+msg+'</div>');
 		    $msg.find('img').each(function() {
 			if (/arrow_show/.test($(this).attr('src'))) {
 			    $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_show.gif')
@@ -228,7 +228,7 @@ function MapClient() {
 		    $('.turndown').click(function(){
 			var isrc = 'http://www.marine-geo.org/imgs/arrow_hide.gif';
 			if ($(this).find('img').attr('src')=='http://www.marine-geo.org/imgs/arrow_hide.gif')
-			    isrc = 'http://www.marine-geo.org/imgs/arrow_show.gif'
+			    isrc = 'http://www.marine-geo.org/imgs/arrow_show.gif';
 			$(this).find('img').attr('src',isrc);
 			$(this).parent().find('.tcontent').toggle();
 			//map.popups[0].updateSize();
@@ -250,8 +250,31 @@ function MapClient() {
     
 }
 
-
-
 $(document).ready(function() {
     new MapClient();
+
+	$("#expandMap").on('click', function(e) {
+		$("#map").empty();
+		if($("#map").width() <= 400) {
+			$("#map").animate({
+      			width: 800,
+      			height:800
+    		}, function() {
+    			new MapClient(2);
+    			$("#expandMap").html('Shrink Map');
+    		});
+    	} else {
+			$("#map").animate({
+      			width: 400,
+      			height:400
+    		}, function() {
+    			new MapClient(1);
+    			$("#expandMap").html('Expand Map');
+    		});
+		}
+		
+    });
+
 });
+
+

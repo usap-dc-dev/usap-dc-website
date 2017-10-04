@@ -1020,6 +1020,7 @@ def mapserver_template():
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
     url = urllib.unquote('http://api.usap-dc.org:81/wfs?' + urllib.urlencode(request.args))
+    print(url)
     return requests.get(url).text
 
 @app.route('/polygon')
