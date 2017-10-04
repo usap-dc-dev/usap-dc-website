@@ -5,10 +5,8 @@
   
   <div style="float:right;">
     <button id="expandMap">Expand Map</button>
-    <div id="map" style="width:400px;height:400px;border:1px solid black;"></div>
-    
+    <div id="map" style="width:400px;height:400px;border:1px solid black;"></div>   
   </div>
-
 
   <!-- InstanceBeginEditable name="pageContent" -->
   <p style="margin-top:0;text-align:left;width:400px;">The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and a partner in the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>).</p> </p>
