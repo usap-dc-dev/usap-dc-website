@@ -219,6 +219,9 @@ function MapClient(zoom) {
 		    },
 		    success: function(msg){
 			if (msg) {
+				// count how many datasets were returned
+				var count = (msg.match(/===========/g) || []).length;
+				msg = "<h6>Number of data sets: " + count + "</h6>" + msg;
 			    var $msg = $('<div style="font-size:0.8em;max-height:100px;">'+msg+'</div>');
 			    $msg.find('img').each(function() {
 				if (/arrow_show/.test($(this).attr('src'))) {
