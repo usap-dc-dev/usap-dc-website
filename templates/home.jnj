@@ -12,6 +12,7 @@
   <p style="margin-top:0;text-align:left;width:400px;">The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>). As of 2016, USAP-DC is now partnered with the National Snow and Ice Data Center (<a class="external" href="https://nsidc.org">NSIDC</a>) to manage glaciology data for the US Antarctic Program.</p></p>
 <p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT NEWS</p>
 <div class="style4" style="border:solid 1px;padding:4px;width:380px;height:55px;overflow:auto;line-height:150%;font-size:11px">
+  &nbsp;Oct. 2017 - Presented new web page and USAP-DC functions at WAIS meeting.<br/>
   &nbsp;Apr. 2017 - Upgraded USAP-DC site to support Search-by-Project.<br/>
   &nbsp;Jan. 2017 - Launched new USAP-DC web site with expanded holdings, map-based Search, and ORCID integration.<br/>
   <p>Aug. 2016 - Presented results at the <a href="http://scar2016.com/about.php">SCAR</a> annual meeting of Antarctic data managers, during the Open Science Conference (Kuala Lumpur).</p>
@@ -44,7 +45,32 @@
 <p style="color:#FF0000;font-size:11px;margin-bottom:0;">RECENT DATA</p>
 <div class="style4" style="border:solid 1px;padding:4px;width:380px;height:120px;overflow:auto;line-height:150%;font-size:11px">
 
-   &nbsp; &nbsp; (2017-07-24)&nbsp; <a href=/view/dataset/601037>12-46190</a>&nbsp; Z.Yu - Late Holocene Paleoecological and Paleoclimatic Data from the Western Antarctic Peninsula<br />
+   &nbsp; &nbsp; (2017-10-27)&nbsp; <a href=/view/dataset/601065>10-43471</a>&nbsp; M. Kaplan and A. Borunda - List of samples of WAIS Divide and Byrd (deep) ice that were analyzed for radiogenic isotopes at LDEO<br />
+   &nbsp; &nbsp; (2017-10-25)&nbsp; <a href=/view/dataset/601064>12-46378</a>&nbsp; Shevenell, A. - Anvers Trough Foraminifer Stable Isotope data<br />
+   &nbsp; &nbsp; (2017-10-23)&nbsp; <a href=/view/dataset/601063>12-46170</a>&nbsp; Hall, B. - Hatherton Glacier Radiocarbon Data<br />
+   &nbsp; &nbsp; (2017-10-20)&nbsp; <a href=/view/dataset/601062>10-41022</a>&nbsp; Schram, J. - Data from Schram et al. 2017 MEPS<br />
+   &nbsp; &nbsp; (2017-10-13)&nbsp; <a href=/view/dataset/601061>11-43836</a>&nbsp; Leventer, A.  - NBP1402 diatom data<br />
+   &nbsp; &nbsp; (2017-10-11)&nbsp; <a href=/view/dataset/601060>13-41754</a>&nbsp; Malin, M.; Hallet, B.; and Sletten, R.S. - Long-term rock abrasion study in the Dry Valleys<br />
+   &nbsp; &nbsp; (2017-09-15)&nbsp; <a href=/view/dataset/601059>10-43522</a>&nbsp; Brook, E.J. - WAIS Divide Replicate Core Methane Isotopic Data Set<br />
+   &nbsp; &nbsp; (2017-09-27)&nbsp; <a href=/view/dataset/601058>12-46317</a>&nbsp; R.Mittal - Hydrodynamics of Spongiobranchaea australis<br />
+   &nbsp; &nbsp; (2017-09-20)&nbsp; <a href=/view/dataset/601057>15-42778</a>&nbsp; D.Voigt - c-Axis Fabric of the South Pole Ice Core, SPC14<br />
+   &nbsp; &nbsp; (2017-09-13)&nbsp; <a href=/view/dataset/601056>07-32946</a>&nbsp; D.McGrath - Observationally constrained surface mass balance of Larsen C Ice Shelf, Antarctica<br />
+   &nbsp; &nbsp; (2017-09-20)&nbsp; <a href=/view/dataset/601055>10-43518</a>&nbsp; J.Ahn - Early Holocene methane records from Siple Dome, Antarctica<br />
+   &nbsp; &nbsp; (2017-09-20)&nbsp; <a href=/view/dataset/601054>12-45737</a>&nbsp; J.Cassano - SUMO unmanned aerial system (UAS) atmospheric data<br />
+   &nbsp; &nbsp; (2017-09-13)&nbsp; <a href=/view/dataset/601052>11-42007</a>&nbsp; Kurbatov, A., N. Dunbar - Antarctic Tephra Data Base AntT static web site <br />
+   &nbsp; &nbsp; (2017-09-16)&nbsp; <a href=/view/dataset/601051>11-42002</a>&nbsp; Kaplan, M. - 10Be and 14C data from northern Antarctic Peninsula<br />
+   &nbsp; &nbsp; (2017-09-05)&nbsp; <a href=/view/dataset/601050>11-42085</a>&nbsp; Muto, A. - Firn-temperature time series in Dronning Maud Land, East Antarctica<br />
+   &nbsp; &nbsp; (2017-08-28)&nbsp; <a href=/view/dataset/601049>04-24589</a>&nbsp; J. Paden et al. - Radar Depth Sounder Echograms and Ice Thickness<br />
+   &nbsp; &nbsp; (2017-08-28)&nbsp; <a href=/view/dataset/601048>04-24589</a>&nbsp; J. Paden et al. - Ku-band Radar Echograms<br />
+   &nbsp; &nbsp; (2017-08-28)&nbsp; <a href=/view/dataset/601047>04-24589</a>&nbsp; J. Paden et al. - Firn-temperature time series in Dronning Maud Land, East Antarctica<br />
+   &nbsp; &nbsp; (2017-08-18)&nbsp; <a href=/view/dataset/601046>14-30550</a>&nbsp; Smith, C. - NBP14-02 JPC-54 and JPC-55 Pollen Assemblage data<br />
+   &nbsp; &nbsp; (2017-08-18)&nbsp; <a href=/view/dataset/601044>14-30550</a>&nbsp; Smith, C. - NBP14-02 JPC-55 Bulk Sediment Carbon and Nitrogen data<br />
+   &nbsp; &nbsp; (2017-08-18)&nbsp; <a href=/view/dataset/601042>11-43836</a>&nbsp; Shevenell, A. - NBP14-02 JPC-55 foraminifer assemblage data<br />
+   &nbsp; &nbsp; (2017-08-18)&nbsp; <a href=/view/dataset/601041>05-38657</a>&nbsp; Seltzer, A. - WAIS Divide d18Oatm and Siple Dome/WAIS Divide composite and individual delta epsilon LAND<br />
+   &nbsp; &nbsp; (2017-08-07)&nbsp; <a href=/view/dataset/601040>11-42122</a>&nbsp; Flynn, E.E., Davis, B.E., Miller, N.A., and Todgham, A.E - Thermal windows and metabolic performance curves in a developing Antarctic fish<br />
+   &nbsp; &nbsp; (2017-08-07)&nbsp; <a href=/view/dataset/601039>11-42122</a>&nbsp; Davis, B.E., Miller, N.A., Flynn, E.E.,  and Todgham, A.E - Antarctic emerald rockcod have the capacity to compensate for warming when uncoupled from CO2-acidification<br />
+   &nbsp; &nbsp; (2017-08-03)&nbsp; <a href=/view/dataset/601038>11-42007</a>&nbsp; Wheatley, S.D. - Antarctic Ice Core Tephra Analysis<br />
+  &nbsp; &nbsp; (2017-07-24)&nbsp; <a href=/view/dataset/601037>12-46190</a>&nbsp; Z.Yu - Late Holocene Paleoecological and Paleoclimatic Data from the Western Antarctic Peninsula<br />
    &nbsp; &nbsp; (2017-07-11)&nbsp; <a href=/view/dataset/601036>06-36740</a>&nbsp; B.Koffman - Snowpit Evidence of the 2011 Puyehue-Cordon Caulle Eruption in West Antarctica<br />
    &nbsp; &nbsp; (2017-06-30)&nbsp; <a href=/view/dataset/601035>11-42129</a>&nbsp; M.Lamanna, S.Salisbury, J.Clarke-3D Digital Reconstructions of Late Cretaceous-Paleogene Vertebrates<br />
    &nbsp; &nbsp; (2017-06-19)&nbsp; <a href=/view/dataset/601034>08-39093</a>&nbsp; M.M.Arienzo - Holocene Black Carbon in Antarctica<br />
@@ -91,36 +117,6 @@
   &nbsp; &nbsp; (2016-11-22)&nbsp; <a href=/view/dataset/600380>11-41411</a>&nbsp; I.Baker - The Effects of Soluble Impurities on the Flow and Fabric of Polycrystalline Ice<br />
   &nbsp; &nbsp; (2016-11-09)&nbsp; <a href=/view/dataset/600379>10-43554</a>&nbsp; J.Willenbring - Activation of high-elevation alluvial fans in the Transantarctic Mountains<br />
   &nbsp; &nbsp; (2016-11-02)&nbsp; <a href=/view/dataset/600378>10-43167</a>&nbsp; J.White - Stable Isotopes of Ice in the Transition and Glacial Sections of the WAIS Divide Deep Ice Core<br />
-  &nbsp; &nbsp; &nbsp; (2016-07-28)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43580>10-43580</a>&nbsp; D.Reusch, D.Lampkin - Decoding and  Predicting Antarctic Surface Melt Dynamics<br />
-  &nbsp; &nbsp; &nbsp; (2016-06-10)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-41973>11-41973</a>&nbsp; M.Tedesco - Enhanced Spatial Resolution Surface Melting over the Antarctic Peninsula<br />
-  &nbsp; &nbsp; &nbsp; (2016-06-02)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT09-44282>09-44282</a>&nbsp; S.Hasiotis - Paleoenvironmental and Paleoclimatic Analysis of the Beacon Supergroup, Beardmore Glacier Area<br />
-  &nbsp; &nbsp; &nbsp; (2016-05-31)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-55533>13-55533</a>&nbsp; P.Dayton - A Multi-decadal Record of Antarctic Benthos<br />
-  &nbsp; &nbsp; &nbsp; (2016-05-17)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-39059>08-39059</a>&nbsp; R.Powell, R.Scherer - Lake & Ice Stream Subglacial Access Research Drilling (LISSARD)<br />
-  &nbsp; &nbsp; &nbsp; (2016-05-09)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT12-45821>12-45821</a>&nbsp; E.Brook - Taylor Glacier Horizontal Ice Core: Exploring changes in the Natural Methane Budget<br />
-  &nbsp; &nbsp; &nbsp; (2016-04-18)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-39031>08-39031</a>&nbsp; J.Severinghaus - A "Horizontal Ice Core" for Large-Volume Samples of the Past Atmosphere, Taylor Glacier<br />
-  &nbsp; &nbsp; &nbsp; (2016-03-16)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42162>11-42162</a>&nbsp; J.Stone, H.Conway, D.Winebrenner - Glacial-interglacial History of West Antarctic Nunataks<br />
-  &nbsp; &nbsp; &nbsp; (2016-03-02)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43669>10-43669</a>&nbsp; X.Yuan -  US/Chinese Collaborative Study: Bottom Water Formation in Prydz Bay<br />
-  &nbsp; &nbsp; &nbsp; (2015-12-16)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT09-44659>09-44659</a>&nbsp; R.Kiene - Ecophysiology of DMSP and related compounds in Phaeocystis antarctica<br />
-  &nbsp; &nbsp; &nbsp; (2015-12-15)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43454>10-43454</a>&nbsp; G.Kooyman - Pre and Post Molt Biology of Emperor Penguins - Ross/Amundsen Sea Cruise<br />
-  &nbsp; &nbsp; &nbsp; (2015-12-01)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43572>10-43572</a>&nbsp; K.Licht - East Antarctic Outlet Glacier Contributions to the Ross Sea from Chronology of Detrital Grains<br />
-  &nbsp; &nbsp; &nbsp; (2015-11-23)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT09-44653>09-44653</a>&nbsp; R.Forster - Annual Satellite Era Accumulation Patterns Over WAIS Divide<br />
-  &nbsp; &nbsp; &nbsp; (2015-10-27)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-46399>11-46399</a>&nbsp; C.Sidor - Preparation of Vertebrate Fossils from the Triassic of Antarctica<br />
-  &nbsp; &nbsp; &nbsp; (2015-10-26)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42156>11-42156</a>&nbsp; H.Marschall - Zircon Hf Isotopes and the Continental Evolution of Dronning Maud Land<br />
-  &nbsp; &nbsp; &nbsp; (2015-10-22)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43657>10-43657</a>&nbsp; J.Cassano, S.Palo - Ocean-Ice-Atmosphere Interactions in the Terra Nova Bay Polynya<br />
-  &nbsp; &nbsp; &nbsp; (2015-10-20)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-43485>10-43485</a>&nbsp; J.Curtice, M.Kurz - A New Reconstruction of the Last West Antarctic Ice Sheet Deglaciation<br />
-  &nbsp; &nbsp; &nbsp; (2015-10-05)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-43649>13-43649</a>&nbsp; J.Levy - Cryptic Hydrology of the McMurdo Dry Valleys: Water Track Contributions<br />
-  &nbsp; &nbsp; &nbsp; (2015-09-29)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-41936>11-41936</a>&nbsp; C.Foreman - Dissolved Organic Carbon and Microbial Diversity in the WAIS Divide Replicate Core<br />
-  &nbsp; &nbsp; &nbsp; (2015-09-25)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT06-32282>06-32282</a>&nbsp; S.Jacobs - West Antarctic Ice Sheet Stability<br />
-  &nbsp; &nbsp; &nbsp; (2015-09-16)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42174>11-42174</a>&nbsp; W.Smith - Penguin Foraging Reveals Phytoplankton Spatial Structure<br />
-  &nbsp; &nbsp; &nbsp; (2015-08-26)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42065>11-42065</a>&nbsp; G.DiTullio - TRacing the fate of Algal Carbon Export in the Ross Sea (TRACERS)<br />
-  &nbsp; &nbsp; &nbsp; (2015-08-26)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT11-42117>11-42117</a>&nbsp; D.Hansell - TRacing the fate of Algal Carbon Export in the Ross Sea (TRACERS)<br />
-  &nbsp; &nbsp; &nbsp; (2015-06-24)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-32492>13-32492</a>&nbsp; R.Lohmann - Origin of Persistent Organic Pollutants<br />
-  &nbsp; &nbsp; &nbsp; (2015-06-07)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-38773>08-38773</a>&nbsp; J.McClintock - Chemical Ecology of Shallow-water Marine Macroalgae<br />
-  &nbsp; &nbsp; &nbsp; (2015-06-04)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT07-39512>07-39512</a>&nbsp; S.Walker - Linking Modern Benthic Communities to the Stratigraphic Record<br />
-  &nbsp; &nbsp; &nbsp; (2015-06-04)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-21782>13-21782</a>&nbsp; D.Costa - Retrospective Analysis of Antarctic Tracking Data (RAATD)<br />
-  &nbsp; &nbsp; &nbsp; (2015-05-24)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT13-03896>13-03896</a>&nbsp; J.Kirschvink - Magnetostratigraphy of Cretaceous Sediments<br />
-  &nbsp; &nbsp; &nbsp; (2015-05-21)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT10-41022>10-41022</a>&nbsp; J.McClintock, R.Angus - Effects of Ocean Acidification on Shallow-water Benthic Organisms<br />
-  &nbsp; &nbsp; &nbsp; (2015-01-17)&nbsp; <a target=_new href=http://gcmd.nasa.gov/getdif.htm?NSF-ANT08-38892>08-38892</a>&nbsp; J.Burns - Weddell Seals as Autonomous Sensors<br />
 </div>
 <br />
 <p style="line-height:100%"/>
