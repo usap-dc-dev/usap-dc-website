@@ -7,7 +7,7 @@
 		    <!-- InstanceBeginEditable name="ContactInfo" -->
 				<p>Use the Web form at the right to send a message.</p>
 				<p><b>Email:</b><br>
-				&nbsp; <a href="mailto:web@usap-dc.org">web[at]usap-dc.org</a></p>
+				&nbsp; <a href="mailto:info@usap-dc.org">info[at]usap-dc.org</a></p>
 				<p><b>Post:</b><br>
 				&nbsp; Lamont-Doherty Earth Observatory<br>
 				&nbsp; Attn: Frank Nitsche, USAP-DC Manager<br>
@@ -38,7 +38,7 @@
 		    <td></td>
 		    <td>
 		   
-		      <div class="g-recaptcha" data-sitekey={{secret}}/></td>
+		      <div class="g-recaptcha" data-sitekey="{{secret}}"/></td>
 
 		  </tr>
 		  <tr>
