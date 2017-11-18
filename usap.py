@@ -504,7 +504,13 @@ def repo_list():
     return '\n'.join([render_template('header.jnj',cur='repo_list'),
                       render_template('repo_list.jnj'),
                       render_template('footer.jnj')])
-    
+
+
+@app.route('/not_found')
+def not_found():
+    return '\n'.join([render_template('header.jnj',cur='not_found'),
+                      render_template('not_found.jnj'),
+                      render_template('footer.jnj')])    
         
 def check_project_registration(msg_data):
     def default_func(field):
@@ -574,8 +580,8 @@ def dataset2():
 
             msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
 
-            sender = 'web@usap-dc.org'
-            recipients = ['web@usap-dc.org','cc@ldeo-grg.org']
+            sender = 'info@usap-dc.org'
+            recipients = ['info@usap-dc.org']
             msg['Subject'] = 'USAP-DC Dataset Submission'
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
@@ -661,8 +667,8 @@ def project():
         msg_data['timestamp'] = format_time()
         msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
         check_project_registration(msg_data)
-        sender = 'web@usap-dc.org'
-        recipients = ['web@usap-dc.org','cc@ldeo-grg.org']
+        sender = 'info@usap-dc.org'
+        recipients = ['info@usap-dc.org']
         msg['Subject'] = 'USAP-DC Project Submission'
         msg['From'] = sender
         msg['To'] = ', '.join(recipients)
@@ -875,7 +881,7 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = form['email']
-            recipients = ['web@usap-dc.org','cc@ldeo-grg.org']
+            recipients = ['info@usap-dc.org']
             msg = MIMEText(form['msg'])
             msg['Subject'] = form['subj']
             msg['From'] = sender
@@ -959,13 +965,12 @@ def json_serial(obj):
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
     datasets = get_datasets([dataset_id])
-    msg = "<br/>Invalid Dataset#<br/>"
     if len(datasets) == 0:
-        raise InvalidDatasetException(msg,'/')
+        return redirect(url_for('not_found'))
     metadata = datasets[0]
     url = metadata['url']
     if not url:
-        raise InvalidDatasetException(msg,'/')
+        return redirect(url_for('not_found'))
 
     usap_domain = 'http://www.usap-dc.org/'
     if url.startswith(usap_domain):
@@ -986,7 +991,7 @@ def landing_page(dataset_id):
 
     if metadata.get('url_extra'):
         metadata['url_extra'] = os.path.basename(metadata['url_extra'])
-        
+
     creator_orcid = None
     
     for p in metadata['persons'] or []:
@@ -1079,6 +1084,16 @@ def dataset_json(dataset_id):
 def initcap(s):
     parts = re.split('( |_|-|>)+',s)
     return ' '.join([p.lower().capitalize() for p in parts])
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return redirect(url_for('not_found'))
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+  return redirect(url_for('not_found'))
 
 
 app.jinja_env.globals.update(map=map)

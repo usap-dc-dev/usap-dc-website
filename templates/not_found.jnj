@@ -1,0 +1,22 @@
+<style type="text/css">
+ #main {
+     margin-left: 250px;
+     padding: 20px;
+ }
+
+ #sidebar-div {
+     margin-top: 20px;
+ }
+</style>
+
+<div class="container">
+  {% if name %}
+  <div id="sidebar-div">
+    {% include 'sidebar.jnj' %}
+  </div>
+  {% endif %}
+  <!-- END HEADER -->
+  <div id="main">
+    <h1>Page Not Found</h1>
+  </div>
+</div>
