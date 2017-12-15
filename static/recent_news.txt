@@ -1,0 +1,30 @@
+#	NOTE: date and news should be separated by a tab
+Oct. 2017	Presented new web page and USAP-DC functions at WAIS meeting.
+Apr. 2017	Upgraded USAP-DC site to support Search-by-Project.
+Jan. 2017	Launched new USAP-DC web site with expanded holdings, map-based Search, and ORCID integration.
+Aug. 2016	Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers, during the Open Science Conference (Kuala Lumpur).
+Oct. 2015	Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers, concurrent with <a href="http://www.polar-data-forum.org/">PDF-II</a> (Waterloo).
+Aug. 2014	Presented results at the <a href="http://www.scar.org/scadm">SCAR</a> annual meeting of Antarctic data managers (Auckland).
+Jan. 2014	Launched new <a href="http://www.a2dc.org/">Antarctic &amp; Arctic Data Consortium</a> site.
+Oct. 2013	Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a> annual meeting of Antarctic data managers (Tokyo).
+Dec. 2012	Launched interactive USAP map for exploring data.
+Oct. 2012	LDEO now a branch of the <a href="http://sdls.ogs.trieste.it">Antarctic Seismic Data Library System</a>.
+Jul. 2012	Created and launched the U.S. Antarctic Data Consortium <a href="/adc">webpage</a>.
+Jul. 2012	Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a> meeting of Antarctic data managers (Portland).
+Apr. 2012	Attended US Antarctic Data Consortium organizational meeting (Minneapolis).
+Sep. 2011	Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a>/<a href="http://www.scar.org/researchgroups/">SC-AGI</a> joint meeting of Antarctic data managers (Palma).
+Jul. 2011	Presented results at <a href="http://www.isaes2011.org.uk/">ISAES 2011</a> meeting (Edinburgh).
+Aug. 2010	Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a>/<a href="http://www.scar.org/researchgroups/">SC-AGI</a> joint meeting of Antarctic data managers (Buenos Aires).
+Jun. 2010	Attended <a href="http://gcmd.nasa.gov/Aboutus/UWG/uwg.html">GCMD</a> Science User Working Group meeting (Washington).
+Mar. 2010	Added "Recent Data" section to highlight hosted data.
+Oct. 2009	Added search option for <a href="http://ipydis.org/">U.S. IPY</a> data sets.
+Sep. 2009	Presented results at the SCAR <a href="http://www.scar.org/scadm">SC-ADM</a>/<a href="http://www.scar.org/researchgroups/">SC-AGI</a> joint meeting of Antarctic data managers (Amsterdam).
+Jun. 2009	Upgraded <a href="/contribute.php">Contribute Data</a> interface to accept direct data upload/archiving.
+Mar. 2009	New <a href="search.php">Search</a> interface available for searching for data sets within the Antarctic Master Directory
+Nov. 2008	Posted new <a href="http://www.marine-geo.org/services/cpkmz?search=NBP">KMZ file</a> for accessing R/V <i>Palmer</i> ship tracks in <a href="http://earth.google.com/">Google Earth</a>. Ctrl-click (Win) or Cmd-click (Mac) on a track for details.
+Nov. 2008	Posted new <a href="AMD.kmz">KMZ file</a> to explore AMD data sets (both U.S. and non-U.S.) in <a href="http://earth.google.com/">Google Earth</a>.
+Oct. 2008	Deployed new &quot;<a href="{{config.SERVER_NAME}}">short form</a>&quot; for registering data sets in the Antarctic Master Directory (AMD).
+May 2008	Added new WFS map layer for non-U.S. data sets.
+Mar. 2008	Reorganized U.S. data sets per <a href="http://www.nsf.gov/div/index.jsp?div=ANT">NSF OPP</a> programs.
+Jan. 2008	Added <a href="http://lima.usgs.gov/">LIMA</a> basemap via <a href="http://www.agic.umn.edu/">AGIC</a> web service.
+Dec. 2007	Launched new Web site at <a href="http://www.agu.org/cgi-bin/wais?jj=IN54A-07">AGU</a> meeting.

@@ -1,3 +1,8 @@
+{% extends "layout.html" %}
+{% set cur = "dataset" %}
+{% block body %}
+
+
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 <script type="text/javascript">
   $(document).ready(function() {
@@ -45,7 +50,7 @@
   <div class="container-fluid">
     <div class="row">
 
-      {% include 'sidebar.jnj' %}
+      {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9">
 	<h2 class="title">Deposit Your Dataset</h2>
@@ -156,3 +161,4 @@
   </div>
   
 </div>
+{% endblock body %}

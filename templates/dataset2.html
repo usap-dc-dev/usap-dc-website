@@ -1,8 +1,13 @@
+{% extends "layout.html" %}
+{% set cur = "dataset" %}
+{% block body %}
+
+
 <div class="content">
 
     <div class="container-fluid">
 	<div class="row">
-	  {% include 'sidebar.jnj' %}
+	  {% include 'sidebar.html' %}
 	  
 	    <div id="main-content" class="col-xs-9">
 		<h3>Submit Your Dataset</h3>
@@ -49,7 +54,7 @@ Write "see files" if this information is provided with the files.
   <b>File(s) to upload</b> [<a href="/files_to_upload" target="_new">Help</a>]<b>:</b><br>
    Note: The file(s) will be uploaded when you click "Submit".<br/>
   You may use Zip or Tar to bundle a directory. Please use descriptive filenames and non proprietary file formats if possible.<br/>
-  <font color="#ff0000">Uploads limited to 250 MB.  For larger datasets, please <a href={{config.SERVER_NAME}}/contact">Contact Us</a>.</font>
+  <font color="#ff0000">Uploads limited to 250 MB.  For larger datasets, please <a href="{{ url_for('contact') }}">Contact Us</a>.</font>
 
   <br>
   <br/>
@@ -80,3 +85,5 @@ Write "see files" if this information is provided with the files.
   });
   });
 </script>
+
+{% endblock body %}

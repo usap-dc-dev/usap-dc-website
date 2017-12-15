@@ -1,15 +1,18 @@
+{% extends "layout.html" %}
+{% set cur = "landing_page" %}
+{% block body %}
 <style>
 
   body {
     font-color: black !important;
   }
   
-  tr:nth-child(even) {
+ /* tr:nth-child(even) {
     background-color: #FFFFFF
   }
   tr:nth-child(odd) {
     background-color: #CCCCCC
-  }
+  }*/
 
   .row {
   position: relative;
@@ -66,7 +69,7 @@
     cursor: pointer;
   }
 
-  li {
+  .value li {
   display: list-item;
   list-style: circle;
   }
@@ -77,14 +80,14 @@
   }
 
  .header {
-     color: #002783;
+     color: white;
      font-family: Georiga,"Times New Roman",Times,serif;
      font-size: 1.8em;
      letter-spacing: -1px;
      line-height: normal;
      font-weight: normal;
      padding: 5px;
-     background-color: #b2dbff;
+     background-color: #92b9c5;
      margin: 10px;
      position: relative;
  }
@@ -195,7 +198,7 @@
     </div>
       <div class="value">
 	{% for ex in data['spatial_extents'] %}
-	  {{'<br/>'.join(['West: ' + str(ex['west']), 'East: ' + str(ex['east']), 'South: ' + str(ex['south']), 'North: ' + str(ex['north'])])}}<br/>
+	  {{'<br/>'.join(['West: ' + str(ex['west']), 'East: ' + str(ex['east']), 'South: ' + str(ex['south']), 'North: ' + str(ex['north'])])|safe}}<br/>
 	{% endfor %}
       </div>
     </div>
@@ -307,3 +310,4 @@
     {% endfor %}
   </div>
 </div>
+{% endblock body %}

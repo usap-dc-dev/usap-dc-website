@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% set cur = "login" %}
+{% block body %}
+
+
+<style>
+ #container {
+     margin-left: auto;
+     margin-right: auto;
+     margin-top: 30px;
+     width: 220px;
+     position: relative;
+     height: 150px;
+     text-align: center;
+ }
+ 
+ #buttons {
+     display: flex;
+     flex-direction: row;
+     justify-content: space-between;
+ }
+</style>
+
+<div id="container">
+  <h3>
+    Sign in with
+  </h3>
+  <div id="buttons">
+    <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+      Google
+    </a>
+    <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+      <span style="color:gray; font-weight:bolder">ORC</span>iD
+    </a>
+  </div>
+</div>
+{% endblock body %}

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% set cur = "dataset" %}
+{% block body %}
+
+
+<div class="container">
+  <div id="sidebar-left" class="sidebar">
+    <div class="inner">
+      <div id="block-user-1" class="block block-user">
+       <div>{{name}}</div>
+       <div class="content-menu">
+         <ul class="menu">
+           <li class="leaf"><a href="/logout">Log out</a></li>
+         </ul>
+       </div>
+     </div>
+   </div>
+ </div>
+
+ <div class="wrapper">
+  <h1>Help on Files To Upload</h1>
+  <div>
+    <p>
+      Data should be provided in non proprietary formats if possible. However, if only proprietary formats are available please<br>provide guidance
+      on use, e.g. link to manufacturer web site of format documents or manuals.
+    </p>
+  </div>
+</div>
+</div>
+{% endblock body %}

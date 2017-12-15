@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% set cur = "thank_you" %}
+{% block body %}
+
+<style type="text/css">
+ #main {
+     padding: 20px;
+ }
+
+ #sidebar-div {
+     margin-top: 20px;
+ }
+</style>
+
+<div class="wrapper">
+  {% if name %}
+  <div id="sidebar-div">
+    {% include 'sidebar.html' %}
+  </div>
+  {% endif %}
+  <!-- END HEADER -->
+  <div id="main">
+    <h3>Your {{submission_type}} has successfully been submitted. Thank you!</h3>
+  </div>
+</div>
+
+{% endblock body %}

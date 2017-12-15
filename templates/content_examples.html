@@ -1,3 +1,7 @@
+{% extends "layout.html" %}
+{% set cur = "dataset" %}
+{% block body %}
+
 <div class="container">
 <div id="sidebar-left" class="sidebar">
     <div class="inner">
@@ -13,7 +17,7 @@
   </div>
   <div id="main">
         <div class="main-inner">
-                      <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div>
+                     <!--  <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div> -->
                                                               <h1 class="title">Examples of Content and Processing Steps</h1>
                                         <div class="content">
             <!-- start node.tpl.php -->
@@ -40,3 +44,4 @@ No further processing was applied to the data. The data file contains raw values
       </div>
       <!-- END MAIN -->
           </div>
+{% endblock body %}

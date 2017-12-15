@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% set cur = "home" %}
+{% block body %}
+
+<div class="content">
+  
+  
+  
+  
+  <div style="float:right;">
+    <button class="btn btn-primary" id="expandMap">Expand Map</button>
+    <div id="map" style="width:400px;height:400px;border:1px solid black;"></div>   
+  </div>
+
+  <h2>Welcome</h2>
+  <p style="margin-top:0;text-align:left;width:400px;">The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>). As of 2016, USAP-DC is now partnered with the National Snow and Ice Data Center (<a class="external" href="https://nsidc.org">NSIDC</a>) to manage glaciology data for the US Antarctic Program.</p></p>
+
+
+
+<div style="clear:both"></div>
+ <div id="split">
+    <div class="left">
+        <h3>Recent News</h3>
+          <div  style="border:solid 1px;padding:4px;height:400px;overflow:auto;line-height:120%;font-size:1em">
+            {% for news in news_dict %}
+              <p><h5><b>{{news.date}}</b></h5>{{news.news|safe}}</p>
+            {% endfor %}
+          </div> 
+     <!-- <a id="read-more-button" href="/about/recent_data.php">READ MORE »</a> -->
+    </div>
+    <div class="right">
+     <h3>Recent Data</h3>
+      <div style="border:solid 1px;padding:4px;height:400px;overflow:auto;line-height:120%;font-size:1em;margin-bottom:30px;">
+        <br>
+          {% for data in data_dict %}
+            <p><b>{{data.date}}</b>&nbsp;{{data.link|safe}}&nbsp;{{data.authors}}&nbsp;{{data.title}}</p>
+          {% endfor %}
+   
+      </div>
+
+
+     <!-- <a id="read-more-button" href="/about/citations.php">READ MORE »</a> -->
+    </div>
+                              
+</div>
+
+</div>
+{% endblock body %}

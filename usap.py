@@ -409,9 +409,7 @@ def dataset():
         return redirect('/submit/dataset2')
 
     else:
-        return '\n'.join([render_template('header.jnj',cur='dataset'),
-                          render_template('dataset.jnj',name=user_info['name'],dataset_metadata=session.get('dataset_metadata',dict()),nsf_grants=get_nsf_grants(['award','name','title'],only_inhabited=False)),
-                          render_template('footer.jnj')])
+        return render_template('dataset.html',name=user_info['name'],dataset_metadata=session.get('dataset_metadata',dict()),nsf_grants=get_nsf_grants(['award','name','title'],only_inhabited=False))
 
 class ExceptionWithRedirect(Exception):
     def __init__(self, message, redirect):
@@ -427,49 +425,37 @@ class CaptchaException(ExceptionWithRedirect):
 class InvalidDatasetException(ExceptionWithRedirect):
     def __init__(self,msg='Invalid Dataset#',redirect='/'):
         super(InvalidDatasetException, self).__init__(msg,redirect)
-    
+
 
 @app.errorhandler(CaptchaException)
 def failed_captcha(e):
-    return '\n'.join([render_template('header.jnj',cur='failed_captcha'),
-                      render_template('error.jnj',error_message=str(e)),
-                      render_template('footer.jnj')])
+    return render_template('error.html',error_message=str(e))
+
 
 @app.errorhandler(BadSubmission)
 def invalid_dataset(e):
-    return '\n'.join([render_template('header.jnj',cur='dataset_error'),
-                      render_template('error.jnj',error_message=str(e),back_url=e.redirect,name=session['user_info']['name']),
-                      render_template('footer.jnj')])
+    return render_template('error.html',error_message=str(e),back_url=e.redirect,name=session['user_info']['name'])
+
 
 #@app.errorhandler(OAuthException)
 def oauth_error(e):
-    return '\n'.join([render_template('header.jnj',cur='dataset_error'),
-                      render_template('error.jnj',error_message=str(e)),
-                      render_template('footer.jnj')])
+    return render_template('error.html',error_message=str(e))
+
 
 #@app.errorhandler(Exception)
 def general_error(e):
-    return '\n'.join([render_template('header.jnj',cur='_error'),
-                      render_template('error.jnj',error_message=str(e)),
-                      render_template('footer.jnj')])
+    return render_template('error.html',error_message=str(e))
+
 
 #@app.errorhandler(InvalidDatasetException)
 def view_error(e):
-    return '\n'.join([render_template('header.jnj',cur='dataset_error'),
-                      render_template('error.jnj',error_message=str(e)),
-                      render_template('footer.jnj')])
+    return render_template('error.html',error_message=str(e))
 
-@app.errorhandler(500)
-def internal_server_error(e):
-    return '\n'.join([render_template('header.jnj'),
-                      render_template('footer.jnj')])
 
 @app.route('/thank_you/<submission_type>')
 def thank_you(submission_type):
-    return '\n'.join([render_template('header.jnj',cur='thank_you'),
-                      render_template('thank_you.jnj',submission_type=submission_type),
-                      render_template('footer.jnj')])
-#                      render_template('thank_you.jnj',name=session['user_info']['name'],submission_type=submission_type),
+    return render_template('thank_you.html',submission_type=submission_type)
+
 
 Validator = namedtuple('Validator', ['func', 'msg'])
 
@@ -501,17 +487,14 @@ def check_dataset_submission(msg_data):
 
 @app.route('/repo_list')
 def repo_list():
-    return '\n'.join([render_template('header.jnj',cur='repo_list'),
-                      render_template('repo_list.jnj'),
-                      render_template('footer.jnj')])
+    return render_template('repo_list.html')
 
 
 @app.route('/not_found')
 def not_found():
-    return '\n'.join([render_template('header.jnj',cur='not_found'),
-                      render_template('not_found.jnj'),
-                      render_template('footer.jnj')])    
-        
+    return render_template('not_found.html')
+
+
 def check_project_registration(msg_data):
     def default_func(field):
         return lambda data: field in data and bool(data[field])
@@ -602,9 +585,8 @@ def dataset2():
         elif request.form.get('action') == 'Previous Page':
             return redirect('/submit/dataset')
     else:
-        return '\n'.join([render_template('header.jnj',cur='dataset'),
-                          render_template('dataset2.jnj',name=user_info['name'],dataset_metadata=session.get('dataset_metadata', dict())),
-                          render_template('footer.jnj')])
+        return render_template('dataset2.html',name=user_info['name'],dataset_metadata=session.get('dataset_metadata', dict()))
+
 
 @app.route('/submit/project',methods=['GET','POST'])
 def project():
@@ -621,7 +603,7 @@ def project():
         if 'email' in session['user_info']:
             msg_data['email'] = session['user_info']['email']
         msg_data.update(request.form.to_dict())
-        
+
         parameters = []
         idx = 1
         key = 'parameter1'
@@ -631,7 +613,7 @@ def project():
             idx += 1
             key = 'parameter'+str(idx)
         msg_data['parameters'] = parameters
-            
+
         locations = []
         idx = 1
         key = 'location1'
@@ -663,7 +645,7 @@ def project():
                 key = 'repo'+str(idx)
         msg_data = {k:v for k,v in msg_data.iteritems() if k[:4] != 'repo'}   
         msg_data['repos'] = repos
-        
+
         msg_data['timestamp'] = format_time()
         msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
         check_project_registration(msg_data)
@@ -684,12 +666,11 @@ def project():
         s.login(smtp_details["USER"], smtp_details["PASSWORD"])
         s.sendmail(sender, recipients, msg.as_string())
         s.quit()
-        
+
         return redirect('thank_you/project')
     else:
-        return '\n'.join([render_template('header.jnj',cur='project'),
-                          render_template('project.jnj',name=user_info['name'],nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu()),
-                          render_template('footer.jnj')])
+        return render_template('project.html',name=user_info['name'],nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu())
+
 
 @app.route('/submit/projectinfo',methods=['GET'])
 def projectinfo():
@@ -701,21 +682,23 @@ def projectinfo():
         return flask.jsonify(cur.fetchall()[0])
     return flask.jsonify({})
 
+
 @app.route('/login')
 def login():
-    return '\n'.join([render_template('header.jnj',cur='login'),
-                      render_template('login.jnj'),
-                      render_template('footer.jnj')])
+    return render_template('login.html')
+
 
 @app.route('/login_google')
 def login_google():
-    callback=url_for('authorized', _external=True)
+    callback = url_for('authorized', _external=True)
     return google.authorize(callback=callback)
+
 
 @app.route('/login_orcid')
 def login_orcid():
     callback = url_for('authorized_orcid', _external=True)
     return orcid.authorize(callback=callback)
+
     
 @app.route('/authorized')
 @google.authorized_handler
@@ -759,39 +742,45 @@ def logout():
 
 @app.route("/index")
 @app.route("/")
-def home():
-    return '\n'.join([render_template('header.jnj',cur='home'),
-                      render_template('home.jnj'),
-                      render_template('footer.jnj')])
-
 @app.route("/home2")
-def home2():
-    return '\n'.join([render_template('header2.jnj',cur='home'),
-                      render_template('home.jnj'),
-                      render_template('footer.jnj')])
+def home():
+    template_dict = {}
+    # read in news
+    news_dict = []
+    with open("static/recent_news.txt") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        for row in reader:
+            if row[0] == "#" or len(row) != 2: continue
+            news_dict.append({"date": row[0], "news": row[1]})
+        template_dict['news_dict'] = news_dict
+    # read in recent data
+    data_dict = []
+    with open("static/recent_data.txt") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        for row in reader:
+            if row[0] == "#" or len(row) != 4: continue
+            data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
+        template_dict['data_dict'] = data_dict
+    return render_template('home.html', **template_dict)
 
 @app.route('/overview')
 def overview():
-    return '\n'.join([render_template('header.jnj',cur='overview'),
-                      render_template('overview.jnj'),
-                      render_template('footer.jnj')])
+    return render_template('overview.html')
+
 
 @app.route('/links')
 def links():
-    return '\n'.join([render_template('header.jnj',cur='links'),
-                      render_template('links.jnj'),
-                      render_template('footer.jnj')])
+    return render_template('links.html')
+
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     print('in search')
     print(get_nsf_grants(['award','name','title']))
     if request.method == 'GET':
-        return '\n'.join([render_template('header.jnj',cur='search'),
-                          render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
+        return render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
                                           parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
-                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles()),
-                          render_template('footer.jnj')])
+                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
     elif request.method == 'POST':
         params = request.form.to_dict()
         print(params)
@@ -840,6 +829,7 @@ def filter_search_menus():
         'project': sorted(projects)
     })
 
+
 @app.route('/search_result')
 def search_result():
     if 'filtered_datasets' not in session:
@@ -860,20 +850,16 @@ def search_result():
         dataset_grps.append(cur_grp)
     
     
-    return '\n'.join([render_template('header.jnj',cur='search_result'),
-                      render_template('search_result.jnj',
+    return render_template('search_result.html',
                                       total_count=len(filtered_ids),
                                       dataset_grps=dataset_grps,
-                                      search_params=session['search_params']),
-                      render_template('footer.jnj')])
-        
+                                      search_params=session['search_params'])
+
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'GET':
-        return '\n'.join([render_template('header.jnj',cur='contact'),
-                          render_template('contact.jnj',secret=app.config['RECAPTCHA_DATA_SITE_KEY']),
-                          render_template('footer.jnj')])
+        return render_template('contact.html',secret=app.config['RECAPTCHA_DATA_SITE_KEY'])
     elif request.method == 'POST':
         form = request.form.to_dict()
         g_recaptcha_response = form.get('g-recaptcha-response')
@@ -902,17 +888,16 @@ def contact():
             msg = "<br/>You failed to pass the captcha<br/>"
             raise CaptchaException(msg,url_for('contact'))
 
+
 @app.route('/submit')
 def submit():
-    return '\n'.join([render_template('header.jnj',cur='submit'),
-                      render_template('submit.jnj'),
-                      render_template('footer.jnj')])
+    return render_template('submit.html')
+
 
 @app.route('/data_repo')
 def data_repo():
-    return '\n'.join([render_template('header.jnj',cur='data_repo'),
-                      render_template('data_repo.jnj'),
-                      render_template('footer.jnj')])
+    return render_template('data_repo.html')
+
 
 @app.route('/devices')
 def devices():
@@ -921,9 +906,8 @@ def devices():
         session['next'] = '/devices'
         return redirect(url_for('login'))
     else:
-        return '\n'.join([render_template('header.jnj', cur='dataset'),
-                          render_template('device_examples.jnj', name=user_info['name']),
-                          render_template('footer.jnj')])
+        return render_template('device_examples.html', name=user_info['name'])
+
 
 @app.route('/procedures')
 def procedures():
@@ -932,9 +916,8 @@ def procedures():
         session['next'] = '/procedures'
         return redirect(url_for('login'))
     else:
-        return '\n'.join([render_template('header.jnj', cur='dataset'),
-                          render_template('procedure_examples.jnj', name=user_info['name']),
-                          render_template('footer.jnj')])
+        return render_template('procedure_examples.html', name=user_info['name'])
+
 
 @app.route('/content')
 def content():
@@ -943,9 +926,8 @@ def content():
         session['next'] = '/content'
         return redirect(url_for('login'))
     else:
-        return '\n'.join([render_template('header.jnj', cur='dataset'),
-                          render_template('content_examples.jnj', name=user_info['name']),
-                          render_template('footer.jnj')])
+        return render_template('content_examples.html', name=user_info['name'])
+
 
 @app.route('/files_to_upload')
 def files_to_upload():
@@ -954,9 +936,8 @@ def files_to_upload():
         session['next'] = '/files_to_upload'
         return redirect(url_for('login'))
     else:
-        return '\n'.join([render_template('header.jnj', cur='dataset'),
-                          render_template('files_to_upload_help.jnj', name=user_info['name']),
-                          render_template('footer.jnj')])
+        return render_template('files_to_upload_help.html', name=user_info['name'])
+
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -993,14 +974,12 @@ def landing_page(dataset_id):
         metadata['url_extra'] = os.path.basename(metadata['url_extra'])
 
     creator_orcid = None
-    
+
     for p in metadata['persons'] or []:
         if p['id'] == metadata['creator'] and p['id_orcid'] is not None:
             creator_orcid = p['id_orcid']
             break
-    return '\n'.join([render_template('header.jnj',cur='landing_page'),
-                      render_template('landing_page.jnj',data=metadata,creator_orcid=creator_orcid),
-                      render_template('footer.jnj')])
+    return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
 
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
@@ -1071,11 +1050,11 @@ def parameter_search():
     cur.execute(query)
     return flask.jsonify([row['id'] for row in cur.fetchall()])
 
-@app.route('/test_autocomplete')
-def test_autocomplete():
-    return '\n'.join([render_template('header.jnj'),
-                      render_template('test_autocomplete.jnj'),
-                      render_template('footer.jnj')])
+# @app.route('/test_autocomplete')
+# def test_autocomplete():
+#     return '\n'.join([render_template('header.html'),
+#                       render_template('test_autocomplete.html'),
+#                       render_template('footer.html')])
 
 @app.route('/dataset_json/<dataset_id>')
 def dataset_json(dataset_id):
@@ -1093,7 +1072,7 @@ def internal_error(error):
 
 @app.errorhandler(404)
 def page_not_found(error):
-  return redirect(url_for('not_found'))
+    return redirect(url_for('not_found'))
 
 
 app.jinja_env.globals.update(map=map)

@@ -1,3 +1,7 @@
+{% extends "layout.html" %}
+{% set cur = "not_found" %}
+{% block body %}
+
 <style type="text/css">
  #main {
      margin-left: 250px;
@@ -12,7 +16,7 @@
 <div class="container">
   {% if name %}
   <div id="sidebar-div">
-    {% include 'sidebar.jnj' %}
+    {% include 'sidebar.html' %}
   </div>
   {% endif %}
   <!-- END HEADER -->
@@ -20,3 +24,5 @@
     <h1>Page Not Found</h1>
   </div>
 </div>
+
+{% endblock body %}
