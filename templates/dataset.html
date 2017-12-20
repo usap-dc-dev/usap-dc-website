@@ -14,8 +14,8 @@
     var n = $('input[name="geo_n"]');
     check.on('click', function() {
       if (check.prop('checked')) {
-        w.val('0');
-        e.val('360');
+        w.val('-180');
+        e.val('180');
         s.val('-90');
         n.val('-60');
       } else {
@@ -58,9 +58,14 @@
 	<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 	<form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
 	  <div class="form-group required">
+	    <label for="email">Contact Email</label>
+	    <input class="form-control" type="text" name="email" value="{{session['user_info']['email']}}"/>
+	  </div>
+
+	  <div class="form-group required">
 	    <label for="title">Dataset Title</label>
 	    <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
-	    <span class="help-block">As the title should appear in a data citation</span>
+	    <span class="help-block">As the title should appear in a data citation [<a href="{{url_for('title_examples')}}" target="_new">guidelines and examples</a>]</span>
 	  </div>
 	  <div class="form-group required">
 	    <label for="author">Dataset Author</label>
@@ -70,7 +75,7 @@
 	  <div class="form-group">
 	    <label for="abstract">Abstract</label>
 	    <textarea name="abstract" class="form-control">{{dataset_metadata.get('abstract','')}}</textarea>
-	    <span class="help-block">Describe this specific dataset, not the overall project</span>
+	    <span class="help-block">Describe this specific dataset, not the overall project [<a href="{{url_for('abstract_examples')}}" target="_new">guidelines and examples</a>]</span>
 	  </div>
 	  
 	  <!-- Award -->
@@ -110,15 +115,8 @@
 	    <span class="help-block">eg. Cruise ID, Seismic Network ID, Flight #</span>
 	  </div>
 	  
-	  
-	  <div class="form-group">
-	    <label for="related_samples">Related Sample IDs</label>
-	    <textarea name="related_samples" class="form-control">{{dataset_metadata.get('related_samples','')}}</textarea>
-	    <span class="help-block">eg. International Geo Sample #</span>
-	  </div>
-	  
 	  <div>
-	    <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in 0-360 range. Example:<br /> Ross Sea is between 160 and 210
+	    <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
 	    <table>
 	      <tbody>
 		<tr>

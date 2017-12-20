@@ -50,6 +50,10 @@ Write "see files" if this information is provided with the files.
 <input type="checkbox" name="comprehensiveLegends" {% if dataset_metadata.get('comprehensiveLegends') %}checked{% endif %}>Graph and Maps (if provided) have comprehensive legends.<br>
 <br>
 
+<b>Other comments relevant for data submission</b><br>
+<textarea name="other_comments" rows="3" cols="80">{{dataset_metadata.get('other_comments','')}}</textarea><br>
+<br>
+
 <div class="required">
   <b>File(s) to upload</b> [<a href="/files_to_upload" target="_new">Help</a>]<b>:</b><br>
    Note: The file(s) will be uploaded when you click "Submit".<br/>

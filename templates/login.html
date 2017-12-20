@@ -21,6 +21,25 @@
  }
 </style>
 
+{% if session.next == "/submit/dataset" %}
+<div class="content">
+  <h3>Deposit Your Dataset</h3>
+  <p>Choose one of the following options:<ol>
+    <li>All glaciology and cryospheric datasets should be submitted directly to USAP-DC. Sign in below with your ORCID or Google account.</li>
+    <li>Other data types should be submitted to one of our partner repositories from <a href="/repo_list"><u>this list</u></a> if possible.</li>
+    <li>If no known repository exists for your data type, you may submit to USAP-DC. Sign in below with your ORCID or Google account.</li>
+  </ol></p>
+</div>
+{% elif session.next == "/submit/project" %}
+<div class="content">
+  <h3>Register Your Project</h3>
+  <p style="text-align:left">
+    Register your project in the Antarctic Master Directory (AMD). Sign in below with your ORCID or Google account and fill out a brief Web form.  We will create the AMD record required for your NSF final report.
+  </p>
+</div>
+{% endif %}
+
+
 <div id="container">
   <h3>
     Sign in with

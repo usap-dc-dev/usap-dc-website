@@ -469,8 +469,8 @@ def check_dataset_submission(msg_data):
         else:
             try:
                 return \
-                    abs(float(data['geo_w'])) <= 360 and \
-                    abs(float(data['geo_e'])) <= 360 and \
+                    abs(float(data['geo_w'])) <= 180 and \
+                    abs(float(data['geo_e'])) <= 180 and \
                     abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
             except:
                 return False
@@ -763,6 +763,7 @@ def home():
         template_dict['data_dict'] = data_dict
     return render_template('home.html', **template_dict)
 
+
 @app.route('/overview')
 def overview():
     return render_template('overview.html')
@@ -771,6 +772,26 @@ def overview():
 @app.route('/links')
 def links():
     return render_template('links.html')
+
+
+@app.route('/legal')
+def legal():
+    return render_template('legal.html')
+
+
+@app.route('/terms_of_use')
+def terms_of_use():
+    return render_template('terms_of_use.html')
+
+
+@app.route('/title_examples')
+def title_examples():
+    return render_template('title_examples.html')
+
+
+@app.route('/abstract_examples')
+def abstract_examples():
+    return render_template('abstract_examples.html')
 
 
 @app.route('/search', methods=['GET', 'POST'])

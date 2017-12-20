@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% set cur = "terms_of_use" %}
+{% block body %}
+
+
+<div class="content">
+  
+    <h2>Terms of Use</h2>
+      
+
+<p>This web site is designed for both public and academic use. Data and metadata presented on these pages
+  is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/us/">Creative 
+   Commons Attribution-Noncommercial-Share Alike 3.0 United States License</a>.
+  Appropriate acknowledgment with a byline/credit/link <strong>must</strong> be given to both the original scientists/data 
+  contributors by reference to their relevant publications and Data DOIs when possible, and also to the United States Antarctic Program Data Center (USAP-DC; www.usap-dc.org). 
+        Where citation information has been provided to us by scientists it is included with the 
+        relevant database entries, and should be acknowledged when data are used. You may browse freely, 
+        but you may not circulate or publish materials you obtained from this site if you do not 
+        accept the terms of providing adequate citation.</p>
+<p>Data are provided with the express understanding that they will not be 
+    sold to third parties or included in commercial databases.</p>
+<p>A Business Use License may be available for USAP data. For queries, contact <a href="mailto:techventures@columbia.edu?subject=LDEO Data Commercial License Request/Inquiry">techventures@columbia.edu</a>.
+</p>
+
+<p>Users are strongly encouraged to contact the original investigators responsible 
+    for data made available on this site. Where appropriate, researchers are also 
+    encouraged to consider collaboration and/or co-authorship with original investigators.</p>
+<p><i> Data should not be used for navigation purposes.</i> </p>
+
+     <!--  <h3>To Cite USAP-DC </h3>
+        <p>For use of the Ridge 2000 and MARGINS Data Portals of the MGDS, an appropriate reference is:  </p>
+            <ul><li>Carbotte, S.M., R. Arko, D.N. Chayes, W. Haxby, K.  Lehnert, S. O'Hara, W.B.F. Ryan, R.A. Weissel, T. Shipley, L. Gahagan, K. Johnson, T. Shank (2004), <a href="/about/docs/reports/Carbotte_etal_2004EO510002.pdf">New Integrated Data Management System for Ridge2000 and MARGINS Research</a>, <em>Eos Trans. AGU</em>,  85(51), 553, doi:<a href="http://dx.doi.org/10.1029/2004EO510002">10.1029/2004EO510002</a>.</li></ul>
+      <p>For use of the Global Multi-Resolution Topography (<a href="/portals/gmrt/">GMRT</a>) synthesis,  the default basemap in GeoMapApp, an appropriate reference is:  </p>
+            <ul><li>Ryan, W. B. F., S.M. Carbotte, J. Coplan, S. O'Hara, A. Melkonian, R. Arko, R.A. Weissel, V. Ferrini, A. Goodwillie, F. Nitsche, J. Bonczkowski, and R. Zemsky (2009), Global Multi-Resolution Topography (GMRT) synthesis data set, <em>Geochem. Geophys. Geosyst.</em>, 10, Q03014, doi:<a href="http://dx.doi.org/10.1029/2008GC002332">10.1029/2008GC002332</a>.</li><li>Data doi: <a href="http://dx.doi.org/10.1594/IEDA.0001000">10.1594/IEDA.0001000</a></li></ul>
+        <p>For use of the Antarctic and Southern Ocean Data Portal of the MGDS, an appropriate reference is: </p>
+            <ul><li>Carbotte, S.M., W.B.F. Ryan, S. O&rsquo;Hara, R. Arko, A. Goodwillie, A. Melkonian, R.A. Weissel, V.L. Ferrini, <a href="http://pubs.usgs.gov/of/2007/1047/srp/srp002/of2007-1047srp002.pdf">Antarctic Multibeam Bathymetry and Geophysical Data Synthesis: An On-Line Digital Data Resource for Marine Geoscience Research in the Southern Ocean</a>, U.S. Geological Survey Open-File Report 2007-1047, doi:<a href="http://dx.doi.org/10.3133/of2007-1047.srp002">10.3133/of2007-1047.srp002</a>, 2007. </li></ul> -->
+
+      <h3>Accuracy</h3>
+      <p>Because much of the data are legacy in nature, we make no claims to accuracy of the data identification, acquisition parameters, processing methods, navigation, or database entries. We ask that you <a href="{{url_for('contact')}}">notify us</a> immediately of any errors or incomplete entries that you discover, and we will make every effort to correct them. We encourage <a href="{{url_for('submit')}}">contributions of data and metadata</a>.</p>
+      <h3>Proprietary Data</h3>
+  <p>The site contains both public and proprietary data. Generally, access to proprietary data is by mutual agreement and depends on terms and conditions of the original acquisition project.</p>
+      <h3>Acknowledgement</h3>
+  <p>Funding for USAP-DC is provided by the <a class="external" href="http://www.nsf.gov/">National Science Foundation</a> as part of the <a class="external" href="http://www.iedadata.org">IEDA</a> Cooperative Agreement </p>
+    <!-- InstanceEndEditable -->
+    
+</div>
+
+{% endblock body %}

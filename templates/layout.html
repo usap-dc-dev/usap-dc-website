@@ -93,7 +93,7 @@
     <tr>      
       <td>  
         <div id="page-header">
-          <h1><a title="U.S. Antarctic Program Data Center" href="/">U.S. Antarctic Program Data Center</a></h1>
+          <h1><a title="U.S. Antarctic Program Data Center" href="/"><em>U.S. Antarctic Program Data Center</em></a></h1>
         </div>
       </td>
       <td style="width:15%">
@@ -122,24 +122,24 @@
           </li>
           <li><a href="{{url_for('search')}}">Search</a>
           </li>
-          <li><a href="#">Tools</a>
+          <li><a href="#">Other IEDA Resources</a>
             <ul>
-              <li><a href="http://www.marine-geo.org/portals/antarctic/">ASODS</a></li>
+              <li><a href="http://www.marine-geo.org/portals/antarctic/">Polar Ship Data</a></li>
               <li><a href="http://www.marine-geo.org/tools/GMRTMapTool/sp/">GMRT MapTool</a></li> 
               <li><a href="http://www.geomapapp.org/">GeoMapApp</a></li>
               <li><a href="http://app.iedadata.org/spdatabrowser">IEDA Data Browser</a></li>
-              <li><a disabled href="#">GeoPortal</a></li>
-              <li><a href="http://media.marine-geo.org">MediaBank</a></li>
-            </ul>
-          </li>
-          <li><a href="#">Investigator Resources</a>
-            <ul>  
+              <li><a href="http://catalog-dev.iedadata.org:8080/geoportal/">GeoPortal</a></li>
+              <li><a href="http://media.marine-geo.org/category/6/78">MediaBank</a></li>
               <li><a href="http://app.iedadata.org/compliance/dmp/">Data Management Plan</a></li>
               <li><a href="http://www.geosamples.org/">SESAR</a></li>
-              <li><a href="http://app.iedadata.org/dcr/report.php">Data Compliance Reports</a></li>
             </ul>
           </li>
-          <li><a href="{{url_for('links')}}">Other Resources</a>
+          <li><a href="#">External Resources</a>
+            <ul>
+              <li><a href="{{url_for('links')}}">Polar related links</a></li>
+              <li><a href="https://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory (AMD)</a></li>
+              <li><a href="https://sdls.ogs.trieste.it">Antarctic Seismic Data Library System (SDLS)</a></li>
+            </ul>
           </li>
           <li><a href="{{url_for('contact')}}">Contact</a>
           </li>
@@ -148,9 +148,11 @@
     </div>
 
 
-  <div id="ieda-header-banner">
-    <img src="{{url_for('static', filename='imgs/header/usap_banner' + str(randint(1,6)) + '.jpg') }}" alt="USAP Data Center" />
-  </div>
+  {% if cur != "search" and cur != "dataset" and cur != "project" %}
+    <div id="ieda-header-banner">
+      <img src="{{url_for('static', filename='imgs/header/usap_banner' + str(randint(1,6)) + '.jpg') }}" alt="USAP Data Center" />
+    </div>
+  {% endif %}
 
 
   <div class="wrapper" style="margin-left:0px;">
@@ -164,8 +166,8 @@
         <td  style="border-style: none; width: 15%" ></td>
         <td  style="border-style: none; width: 80%"  >  
           <p> Hosted at <a href="http://www.ldeo.columbia.edu">Lamont-Doherty Earth Observatory</a> of <a href="http://www.columbia.edu">Columbia University</a>.</p>      
-          <p>Site licensed under <a href="/about/legal.php#copyright">Creative Commons Attribution-Noncommercial-Share Alike 3.0</a> </p>
-          <p>    Part of the <a href="http://www.iedadata.org">IEDA Data Facility</a> | <a href="/about/legal.php#credits">Acknowledgments</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
+          <p>Site licensed under <a href="{{url_for('legal')}}">Creative Commons Attribution-Noncommercial-Share Alike 3.0</a> </p>
+          <p>    Part of the <a href="http://www.iedadata.org">IEDA Data Facility</a> | <a href="{{url_for('legal')}}">Acknowledgments</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
         </td> 
         <td style="border-style: none; width: 5%; ">
           <a  href="http://www.nsf.gov"><img id="nsf_logo" src="{{ url_for('static', filename='imgs/nsf-logo.png') }}" ></a>

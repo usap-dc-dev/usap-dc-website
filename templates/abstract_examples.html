@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% set cur = "dataset" %}
+{% block body %}
+
+<div class="container">
+<div id="sidebar-left" class="sidebar">
+    <div class="inner">
+      <div id="block-user-1" class="block block-user">
+	<div>{{name}}</div>
+	<div class="content-menu">
+	  <ul class="menu">
+	    <li class="leaf"><a href="/logout">Log out</a></li>
+	  </ul>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div id="main">
+        <div class="main-inner">
+                     <!--  <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div> -->
+                                                              <h1 class="title">Examples of Dataset Abstracts</h1>
+                                        <div class="content">
+            <!-- start node.tpl.php -->
+<div id="node-14" class="node node-page">
+<div><p><strong>Example 1:</strong><br />
+
+<p><strong>Example 2: </strong><br />
+</p>
+<p><strong>Example 3:</strong><br />
+</p>
+<p><strong>Example 4:</strong><br /></p>
+</div>
+</div>
+</div>
+          <!-- END CONTENT -->
+                            </div>
+        <!-- END MAIN INNER -->
+      </div>
+      <!-- END MAIN -->
+          </div>
+{% endblock body %}

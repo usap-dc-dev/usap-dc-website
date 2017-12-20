@@ -1,6 +1,29 @@
 {% extends "layout.html" %}
 {% set cur = "project" %}
 {% block body %}
+<script type="text/javascript">
+  $(document).ready(function() {
+
+    var check = $('input[name="entire_region"]');
+    var w = $('input[name="geo_w"]');
+    var e = $('input[name="geo_e"]');
+    var s = $('input[name="geo_s"]');
+    var n = $('input[name="geo_n"]');
+    check.on('click', function() {
+      if (check.prop('checked')) {
+        w.val('-180');
+        e.val('180');
+        s.val('-90');
+        n.val('-60');
+      } else {
+        w.val('');
+        e.val('');
+        s.val('');
+        n.val('');
+      }
+  });
+  });
+</script>
 
 <div class="content">
 
@@ -26,34 +49,34 @@
 
           <i>(from NSF FastLane database)</i>
           <br>
-          Title:<br>
+          <b>Title:</b><br>
           <textarea name="title" id="title" rows="1" cols="80"></textarea>
           <br>
-          PI Name:<br>
+          <b>PI Name:</b><br>
           <input type="text" name="name" id="name" size="40">
           <br>
-          Institution:<br>
+          <b>Institution:</b><br>
           <textarea name="org" id="org" rows="1" cols="80"></textarea>
           <br>
-          Email:<br>
-          <input type="text" name="email" id="email" size="40">
+          <b>Email:</b><br>
+          <input type="text" name="email" id="email" size="40" value="{{session['user_info']['email']}}">
           <br>
-          Co-PI(s):  <i>(at your institution only)</i><br>
+          <b>Co-PI(s):</b>  <i>(at your institution only)</i><br>
           <input type="text" name="copi" id="copi" size="40">
           <br>
-          Start Date:<br>
+          <b>Start Date:</b><br>
           <input type="text" name="start" id="start" size="10">
           <br>
-          End Date:<br>
+          <b>End Date:</b><br>
           <input type="text" name="end" id="end" size="10">
           &nbsp; &nbsp; &nbsp; <input type="checkbox" name="iscr" id="iscr"> Collaborative Research
           &nbsp; &nbsp; &nbsp; <input type="checkbox" name="isipy" id="isipy"> IPY Project
           <br>
-          Abstract:<br>
+          <b>Abstract:</b> <i>(Please modify the original NSF award abstract to better describe the project results, if applicable)</i><br>
           <textarea name="sum" id="sum" rows="10" cols="80"></textarea>
 
           <br><br>
-          Location(s): &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
+          <b>Location(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
           <div id="locations">
             <select name="location1" id="location1">
               <option value="">(Select Term 1)</option>
@@ -68,7 +91,7 @@
         </td></tr></tbody></table>
 
         <br>
-        Data Type(s): &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
+        <b>Data Type(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
         <div id="parameters">
           <select name="parameter1" id="parameter1" style="width:40em">
             <option value="">(Select Term 1)</option>
@@ -81,18 +104,43 @@
         </div>
         <button type="button" id="add-parameter">Add Term</button>
         <br><br>
-        Repository:<br>
+
+            <div>
+              <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+              <table>
+                <tbody>
+            <tr>
+              <td align="center">
+                N: <input type="text" name="geo_n" id="geo_n" size="5" value=""> <br>
+                W: <input type="text" name="geo_w" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value=""> <br>
+                S: <input type="text" name="geo_s" id="geo_s" size="5" value="">
+              </td>
+              <td>
+                <span style="margin: 20px">
+                  <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
+                </span>
+              </td>
+            </tr>
+                </tbody>
+              </table>
+            </div>
+            <br>
+        <b>Repository:</b><br>
         <div id="repositories">
           <div id="repo1">
             <input type="radio" name="repo1" value="USAP-DC"> I submitted my data to USAP-DC (this Web site).<br>
             <input type="radio" name="repo1" value="other"> I submitted my data to a <a href=/repo_list>different repository</a>:<br>
             &nbsp; &nbsp; &nbsp; <input type="text" name="repo_other_name1" size="40"> Name<br>
-            &nbsp; &nbsp; &nbsp; <input type="text" name="repo_other_id1" size="40"> Dataset ID#<br>
+            &nbsp; &nbsp; &nbsp; <input type="text" name="repo_other_id1" size="40"> Dataset URL<br>
           </div>
         </div>
 
         <input type="radio" name="nodata"> This is an interim report - my data aren't ready yet.
         <br><br>
+        <b>Other comments relevant for data submission:</b><br>
+        <textarea name="other_comments" rows="3" cols="80"></textarea><br>
+        <br>
+
         <button value="Submit" name="entry">Submit</button>
       </form>
 

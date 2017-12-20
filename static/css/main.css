@@ -45,9 +45,13 @@ body{
     float: right;
 }
 
+.ieda-header ieda-banner img {
+    width:80%;
+    height:80%;
+}
 .ieda-header h1 {
-      font-size: 2.8em;
-      font-family: "Open Sans";
+      font-size: 2.3em;
+      font-family: "Optima Bold";
 }
 #ieda-header-banner{
 	  position:relative;
