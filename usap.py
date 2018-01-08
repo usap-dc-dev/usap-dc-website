@@ -192,7 +192,8 @@ def get_datasets(dataset_ids):
                              CASE WHEN sp.spatial_extents IS NULL THEN '[]'::json ELSE sp.spatial_extents END,
                              CASE WHEN tem.temporal_extents IS NULL THEN '[]'::json ELSE tem.temporal_extents END,
                              CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
-                             CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END
+                             CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END,
+                             CASE WHEN dif.dif_records IS NULL THEN '[]'::json ELSE dif.dif_records END
                        FROM
                         dataset d
                         LEFT JOIN (
@@ -257,6 +258,11 @@ def get_datasets(dataset_ids):
                             FROM dataset_initiative_map dprojm JOIN initiative proj ON (proj.id=dprojm.initiative_id)
                             GROUP BY dprojm.dataset_id
                         ) proj ON (d.id = proj.dataset_id)
+                        LEFT JOIN (
+                            SELECT ddm.dataset_id, json_agg(dif) dif_records
+                            FROM dataset_dif_map ddm JOIN dif ON (dif.id=ddm.dif_id)
+                            GROUP BY ddm.dataset_id
+                        ) dif ON (d.id = dif.dataset_id)
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)
@@ -370,6 +376,7 @@ def get_spatial_extents(conn=None, cur=None, dataset_id=None):
     cur.execute(query)
     return cur.fetchall()
 
+
 def get_temporal_extents(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
@@ -379,12 +386,14 @@ def get_temporal_extents(conn=None, cur=None, dataset_id=None):
     cur.execute(query)
     return cur.fetchall()
 
+
 def get_programs(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM program'
     cur.execute(query)
     return cur.fetchall()
+
 
 def get_projects(conn=None, cur=None):
     if not (conn and cur):
@@ -393,7 +402,8 @@ def get_projects(conn=None, cur=None):
     cur.execute(query)
     return cur.fetchall()
 
-@app.route('/submit/dataset', methods=['GET','POST'])
+
+@app.route('/submit/dataset', methods=['GET', 'POST'])
 def dataset():
     user_info = session.get('user_info')
     if user_info is None:
@@ -404,12 +414,20 @@ def dataset():
         if 'dataset_metadata' not in session:
             session['dataset_metadata'] = dict()
         session['dataset_metadata'].update(request.form.to_dict())
+
+        publications_keys = [s for s in request.form.keys() if "publication" in s]
+        publications_keys.sort()
+        session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
+
         session['dataset_metadata']['agree'] = 'agree' in request.form
         flash('test message')
         return redirect('/submit/dataset2')
 
     else:
-        return render_template('dataset.html',name=user_info['name'],dataset_metadata=session.get('dataset_metadata',dict()),nsf_grants=get_nsf_grants(['award','name','title'],only_inhabited=False))
+        if (session['user_info'].get('email') and not session.get('dataset_metadata')):
+            session['dataset_metadata'] = {'email': session['user_info']['email']}
+        return render_template('dataset.html', name=user_info['name'], dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+
 
 class ExceptionWithRedirect(Exception):
     def __init__(self, message, redirect):
@@ -476,14 +494,20 @@ def check_dataset_submission(msg_data):
                 return False
     
     validators = [
-        Validator(func=default_func('agree'),msg='You must agree to have your files posted with a DOI.'),
+        Validator(func=default_func('title'),msg='You must include a dataset title for the submission.'),
+        Validator(func=default_func('author'),msg='You must include a dataset author for the submission.'),
+        Validator(func=default_func('email'),msg='You must include a contact email address for the submission.'),
+        Validator(func=default_func('award'),msg='You must select an NSF grant for the submission.'),
+        Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid."),
         Validator(func=default_func('filenames'),msg='You must include files in your submission.'),
-        Validator(func=default_func('award'),msg='You must select an NSF grant for the submission'),
-        Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid")
+        Validator(func=default_func('agree'),msg='You must agree to have your files posted with a DOI.')
     ]
+    msg = ""
     for v in validators:
         if not v.func(msg_data):
-            raise BadSubmission(v.msg,'/submit/dataset')
+            msg += "<p>" + v.msg
+    if len(msg) > 0:
+        raise BadSubmission(msg,'/submit/dataset')
 
 @app.route('/repo_list')
 def repo_list():
@@ -503,13 +527,17 @@ def check_project_registration(msg_data):
         Validator(func=default_func('award'),msg="You must select an award #"),
         Validator(func=default_func("title"),msg="You must provide a title for the project"),
         Validator(func=default_func("name"),msg="You must provide the PI's name for the project"),
+        Validator(func=default_func('email'),msg='You must include a contact email address for the submission.'),
         Validator(func=lambda data: 'repos' in data and (len(data['repos'])>0 or data['repos'] == 'nodata'),msg="You must provide info about the repository where you submitted the dataset"),
         Validator(func=lambda data: 'locations' in data and len(data['locations'])>0,msg="You must provide at least one location term"),
         Validator(func=lambda data: 'parameters' in data and len(data['parameters'])>0,msg="You must provide at least one keyword term")
     ]
+    msg = ""
     for v in validators:
         if not v.func(msg_data):
-            raise BadSubmission(v.msg,'/submit/project')
+            msg += "<p>" + v.msg
+    if len(msg) > 0:
+        raise BadSubmission(msg,'/submit/project')
     
 
 def format_time():
@@ -531,14 +559,13 @@ def dataset2():
         session['dataset_metadata']['propertiesExplained'] = 'propertiesExplained' in request.form
         session['dataset_metadata']['comprehensiveLegends'] = 'comprehensiveLegends' in request.form
         session['dataset_metadata']['dataUnits'] = 'dataUnits' in request.form
+
         if request.form.get('action') == 'Submit':                    
             msg_data = copy.copy(session['dataset_metadata'])
             msg_data['name'] = session['user_info']['name']
             del msg_data['action']
             if 'orcid' in session['user_info']:
                 msg_data['orcid'] = session['user_info']['orcid']
-            if 'email' in session['user_info']:
-                msg_data['email'] = session['user_info']['email']
 
             files = request.files.getlist('file[]')
             fnames = dict()
@@ -562,8 +589,7 @@ def dataset2():
                 fobj.save(os.path.join(upload_dir, fname))
 
             msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
-
-            sender = 'info@usap-dc.org'
+            sender = msg_data.get('email')
             recipients = ['info@usap-dc.org']
             msg['Subject'] = 'USAP-DC Dataset Submission'
             msg['From'] = sender
@@ -600,8 +626,8 @@ def project():
         msg_data['name'] = session['user_info']['name']
         if 'orcid' in session['user_info']:
             msg_data['orcid'] = session['user_info']['orcid']
-        if 'email' in session['user_info']:
-            msg_data['email'] = session['user_info']['email']
+        # if 'email' in session['user_info']:
+        #     msg_data['email'] = session['user_info']['email']
         msg_data.update(request.form.to_dict())
 
         parameters = []
@@ -649,7 +675,8 @@ def project():
         msg_data['timestamp'] = format_time()
         msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
         check_project_registration(msg_data)
-        sender = 'info@usap-dc.org'
+
+        sender = msg_data.get('email')
         recipients = ['info@usap-dc.org']
         msg['Subject'] = 'USAP-DC Project Submission'
         msg['From'] = sender
@@ -669,7 +696,10 @@ def project():
 
         return redirect('thank_you/project')
     else:
-        return render_template('project.html',name=user_info['name'],nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu())
+        email = ""
+        if user_info.get('email'):
+            email = user_info.get('email')
+        return render_template('project.html',name=user_info['name'],email=email,nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu())
 
 
 @app.route('/submit/projectinfo',methods=['GET'])
@@ -963,6 +993,7 @@ def files_to_upload():
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     return str(obj)
+
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):

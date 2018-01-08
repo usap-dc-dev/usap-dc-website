@@ -3,39 +3,44 @@
 {% block body %}
 
 <div class="container">
-<div id="sidebar-left" class="sidebar">
+  <div id="sidebar-left" class="sidebar">
     <div class="inner">
       <div id="block-user-1" class="block block-user">
-	<div>{{name}}</div>
-	<div class="content-menu">
-	  <ul class="menu">
-	    <li class="leaf"><a href="/logout">Log out</a></li>
-	  </ul>
-	</div>
+       <div>{{name}}</div>
+       <div class="content-menu">
+         <ul class="menu">
+           <li class="leaf"><a href="/logout">Log out</a></li>
+         </ul>
+       </div>
+     </div>
+   </div>
+ </div>
+ <div id="main">
+  <div class="main-inner">
+   <h1 class="title">Examples of Dataset Titles</h1>
+   <div class="content">
+    <p>A good dataset title is short but contains enough details that the content is clear.</p>
+
+    <div id="node-14" class="node node-page">
+      <div><p><strong>Example 1:</strong><br/>
+        Firn-temperature time series in Dronning Maud Land, East Antarctica</p>
+        <p><strong>Example 2: </strong><br/>
+        2011 Time-domain ElectroMagnetics data for McMurdo Dry Valleys</p>
+        <p><strong>Example 3:</strong><br/>
+        Physiological and biochemical measurements on Antarctic dragonfish (Gymnodraco acuticeps) from McMurdo Sound</p>
+        <p><strong>Example 4:</strong><br/>
+        Biogeochemistry of Dissolved Organic Matter in Pony Lake, Ross Island Biogeochemistry of Dissolved Organic Matter in Pony Lake, Ross Island</p>
+        <p><strong>Example 5:</strong><br/>
+        Carbon-13 Isotopic Composition of Atmospheric Methane in Firn Air, South Pole and Siple Dome, Antarctica</p>
+        <p><strong>Example 6:</strong><br/>
+        Biosamples and observations from Weddell Seal colonies in McMurdo Sound during the 2015-2016 Antarctic field season</p>
       </div>
     </div>
   </div>
-  <div id="main">
-        <div class="main-inner">
-                     <!--  <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div> -->
-                                                              <h1 class="title">Examples of Dataset Titles</h1>
-                                        <div class="content">
-            <!-- start node.tpl.php -->
-<div id="node-14" class="node node-page">
-<div><p><strong>Example 1:</strong><br />
-
-<p><strong>Example 2: </strong><br />
-</p>
-<p><strong>Example 3:</strong><br />
-</p>
-<p><strong>Example 4:</strong><br /></p>
+  <!-- END CONTENT -->
 </div>
+<!-- END MAIN INNER -->
 </div>
+<!-- END MAIN -->
 </div>
-          <!-- END CONTENT -->
-                            </div>
-        <!-- END MAIN INNER -->
-      </div>
-      <!-- END MAIN -->
-          </div>
 {% endblock body %}

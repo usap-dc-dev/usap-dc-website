@@ -3,39 +3,49 @@
 {% block body %}
 
 <div class="container">
-<div id="sidebar-left" class="sidebar">
+  <div id="sidebar-left" class="sidebar">
     <div class="inner">
       <div id="block-user-1" class="block block-user">
-	<div>{{name}}</div>
-	<div class="content-menu">
-	  <ul class="menu">
-	    <li class="leaf"><a href="/logout">Log out</a></li>
-	  </ul>
-	</div>
+       <div>{{name}}</div>
+       <div class="content-menu">
+         <ul class="menu">
+           <li class="leaf"><a href="/logout">Log out</a></li>
+         </ul>
+       </div>
+     </div>
+   </div>
+ </div>
+ <div id="main">
+  <div class="main-inner">
+
+    <h1 class="title">Examples of Dataset Abstracts</h1>
+    <div class="content">
+      <p>The dataset abstract should describe the data, details about acquisition and processing, location, collection time and, potentially, the format.<br/>
+      Avoid using award abstracts with information not related to the actual data.</p>
+
+      <div id="node-14" class="node node-page">
+        <div><p><strong>Example 1:</strong><br/>
+          This data set contains measurements of d18Oatm (d18O of O2), d15N, dAr/N2, and dO2/N2 in gas bubbles from the WAIS Divide ice core. The time resolution is variable throughout the record but is ~100 years on average (from 65 ka to present). All measurements were made in the Noble Gas Isotope Laboratory at Scripps Institution of Oceanography (La Jolla, CA). The data set includes all replicate measurements as well as replicate-mean values and a calculation of measurement precision (pooled standard deviation). The second sheet of this data set includes fitted d18Oatm curves for the past 50 ka from both the WAIS Divide and Siple Dome Antarctic ice cores, both on the WD2014 timescale (Buizert et al., 2015). The second sheet also includes calculations of the time derivative of d18Oatm and d e LAND in both ice cores individual as well as in a composite record. Details of the entire data set and all relevant methods are provided in Seltzer et al., 2017.</p> 
+
+          <p><strong>Example 2:</strong><br/>
+          The dataset includes carbonyl sulfide (COS) measurements made on air extracted from 53 samples from the Taylor Dome M3C1 ice core. COS was measured in air from the Taylor Dome ice core to reconstruct an atmospheric record for the Holocene (11-0 kyr B.P.) and part of the last glacial period (50-30 kyr B.P.).</p>
+
+          <p><strong>Example 3:</strong><br/>
+          This data set includes records of the delta carbon-13 (δ13C) of methane (CH4) in firn air from the South Pole and trapped in bubbles in a short ice core from Siple Dome, Antarctica. Using two firn air samples, one from January 1995 and the other from January 2001, investigators reconstructed records of the isotopic composition of paleoatmospheric methane covering the last 2 centuries, from 1820 to 2001. Data are in Microsoft Excel and Microsoft Word formats.</p>
+
+          <p><strong>Example 4:</strong><br/>
+          This data set is the result of a study of volcanic ash and rock fragment (tephra) layers in exposed blue ice areas on Brimstone Peak (75.888S 158.55E) in East Antarctica. Tephra samples were collected between 15 November 1996 and 15 January 1997. The Antarctic ice sheets preserve a record of the volcanic ash layers and chemical aerosol signatures of local and distant volcanic eruptions. Correlation of individual tephra layers, or sets of layers, in blue ice areas will allow a better understanding of the geometry of ice flow in these areas. Tephra layers in deep ice cores can also provide unique time-stratigraphic markers in cores that are difficult to date. Data include the following information for each sample site: a general description, electron microprobe analysis, GPS location, neutron activation analysis, and a visual description of the petrography. Data are provided as Excel 97 data files, JPG map files, and GIF-formatted BSE images.</p>
+
+          <p><strong>Example 5:</strong><br/>
+          This dataset includes an inventory of Weddell Seals captured by net, tagged, and observed at colonies in the Erebus Bay region of Antarctica during 4 austral field seasons between November 2013 and February 2017. Observations recorded include body mass, length, and molt category.</p> 
+
+        </div>
       </div>
     </div>
+    <!-- END CONTENT -->
   </div>
-  <div id="main">
-        <div class="main-inner">
-                     <!--  <div class="breadcrumb"><div class="breadcrumb"><a href="/">Home</a></div></div> -->
-                                                              <h1 class="title">Examples of Dataset Abstracts</h1>
-                                        <div class="content">
-            <!-- start node.tpl.php -->
-<div id="node-14" class="node node-page">
-<div><p><strong>Example 1:</strong><br />
-
-<p><strong>Example 2: </strong><br />
-</p>
-<p><strong>Example 3:</strong><br />
-</p>
-<p><strong>Example 4:</strong><br /></p>
+  <!-- END MAIN INNER -->
 </div>
+<!-- END MAIN -->
 </div>
-</div>
-          <!-- END CONTENT -->
-                            </div>
-        <!-- END MAIN INNER -->
-      </div>
-      <!-- END MAIN -->
-          </div>
 {% endblock body %}

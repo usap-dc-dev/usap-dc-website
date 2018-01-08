@@ -5,8 +5,11 @@
 
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 <script type="text/javascript">
-  $(document).ready(function() {
 
+  var publications = "{{dataset_metadata['publications']|safe}}".split(',');
+  $(document).ready(function() {
+    var wrapper = $('#more_publications');
+    var counter = 1;
     var check = $('input[name="entire_region"]');
     var w = $('input[name="geo_w"]');
     var e = $('input[name="geo_e"]');
@@ -18,31 +21,67 @@
         e.val('180');
         s.val('-90');
         n.val('-60');
-      } else {
+    } else {
         w.val('');
         e.val('');
         s.val('');
         n.val('');
-      }
+    }
+});
+
+    $('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('',''); });
+    $('#datepicker').datepicker({
+        format: "yyyy-mm-dd",
+        startView: 2
+    });
+
+    $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
+
+    $('#award-dropdown').on('show.bs.dropdown', function() {
+      $(this).find('.help-block').hide();
   });
 
-  $('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('',''); });
-  $('#datepicker').datepicker({
-    format: "yyyy-mm-dd",
-    startView: 2
+    $('#award-dropdown').on('hide.bs.dropdown', function() {
+      $(this).find('.help-block').show();
   });
 
-  $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
 
-  $('#award-dropdown').on('show.bs.dropdown', function() {
-  $(this).find('.help-block').hide();
-  });
+    // if reloading, populate any added publication fields
+    $('#publication').html(publications[0].split("'")[1]);
+    for (var i=1; i < publications.length; i++ ) {
+        var publication = publications[i].split("'")[1];
+        addRow(publication);
+    }
 
-  $('#award-dropdown').on('hide.bs.dropdown', function() {
-  $(this).find('.help-block').show();
-  });
-  
-  });
+    $('#addRow').click(function (e) {
+        //code to add another file
+        e.preventDefault();
+        addRow();
+    });
+
+    $(wrapper).on("click","#removeRow", function(e){ //user click on remove field
+        e.preventDefault(); 
+        $(this).parent('div').remove();
+        counter--;
+    });
+
+    function addRow(publication) {
+        var extraPub = $('.publicationTemplate').clone();
+        //increment the element ids
+        $(extraPub).find('#publication').attr('id', 'publication'+counter).attr('name', 'publication'+counter).html("");
+        $(extraPub).find('#removeRow').show();
+        $(extraPub).find('#extraLine').show();
+        if (publication !== null) {
+            $(extraPub).find('#publication'+counter).html(publication);
+        }
+        $(wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
+        counter++;
+    }
+
+
+});
+
+
 </script>
 
 <div class="content">
@@ -53,106 +92,126 @@
       {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9">
-	<h2 class="title">Deposit Your Dataset</h2>
-	<div class="title" style="font-size: 1em;">Page 1 of &nbsp; 2</div>
-	<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
-	<form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
-	  <div class="form-group required">
-	    <label for="email">Contact Email</label>
-	    <input class="form-control" type="text" name="email" value="{{session['user_info']['email']}}"/>
-	  </div>
+    <h2 class="title">Deposit Your Dataset</h2>
+    <div class="title" style="font-size: 1em;">Page 1 of &nbsp; 2</div>
+    <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
+    <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+      <div class="form-group required">
+        <label for="email">Contact Email</label>
+        <input class="form-control" type="text" name="email" value="{{dataset_metadata.get('email','')}}"/>
+      </div>
 
-	  <div class="form-group required">
-	    <label for="title">Dataset Title</label>
-	    <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
-	    <span class="help-block">As the title should appear in a data citation [<a href="{{url_for('title_examples')}}" target="_new">guidelines and examples</a>]</span>
-	  </div>
-	  <div class="form-group required">
-	    <label for="author">Dataset Author</label>
-	    <input class="form-control" type="text" name="author" value="{{dataset_metadata.get('author','')}}"/>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label for="abstract">Abstract</label>
-	    <textarea name="abstract" class="form-control">{{dataset_metadata.get('abstract','')}}</textarea>
-	    <span class="help-block">Describe this specific dataset, not the overall project [<a href="{{url_for('abstract_examples')}}" target="_new">guidelines and examples</a>]</span>
-	  </div>
-	  
-	  <!-- Award -->
-	  <div class="form-group required">
-	    <label for="award">Award</label>
-	    <div class="dropdown" id="award-dropdown">
-	      <input type="hidden" name="award"/>
-	      <button type="button" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control">
-		All
-		<span class="caret"></span>
-	      </button>
+      <div class="form-group required">
+        <label for="title">Dataset Title</label>
+        <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
+        <span class="help-block">As the title should appear in a data citation [<a href="{{url_for('title_examples')}}" target="_new">guidelines and examples</a>]</span>
+      </div>
+      <div class="form-group required">
+        <label for="author">Dataset Author</label>
+        <input class="form-control" type="text" name="author" value="{{dataset_metadata.get('author','')}}"/>
+      </div>
+      
+      <div class="form-group">
+        <label for="abstract">Abstract</label>
+        <textarea name="abstract" class="form-control">{{dataset_metadata.get('abstract','')}}</textarea>
+        <span class="help-block">Describe this specific dataset, not the overall project [<a href="{{url_for('abstract_examples')}}" target="_new">guidelines and examples</a>]</span>
+      </div>
+      
+      <!-- Award -->
+      <div class="form-group required">
+        <label for="award">Award</label>
+        <div class="dropdown" id="award-dropdown">
+          <input type="hidden" name="award"/>
+          <button type="button" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control">
+        All
+        <span class="caret"></span>
+          </button>
 
-	      <ul class="dropdown-menu">
-		{% for grant in nsf_grants %}
-		{% set s = grant['award'] + " " + grant['name'] %}
-		<li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
-		{% endfor %}
-	      </ul>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label for="most_relevant_publication">Most Relevant Source Publications</label>
-	    <textarea name="most_relevant_publication" class="form-control">{{dataset_metadata.get('most_relevant_publication','')}}</textarea>
-	    <span class="help-block">Include DOI where known</span>
-	  </div>
+          <ul class="dropdown-menu">
+        {% for grant in nsf_grants %}
+        {% set s = grant['award'] + " " + grant['name'] %}
+        <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
+        {% endfor %}
+          </ul>
+        </div>
+      </div>
+      
+      <div class="form-group" name="publications">
+        <label for="publication">Relevant Publications</label>
+        <span><i>Include DOI where known</i></span>
+        <div class="publicationTemplate">
+                <div id='extraLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+                <textarea id="publication" name="publication" class="form-control" style="float:left; width:95%"></textarea>
+                <a href="#publications" id="removeRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+                <div style="clear:both"></div>
+        </div>
+        <div id="more_publications"></div>
+        <a href="#publications" id="addRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another">Add another publication</span></a>
+      </div>
+      
+      <div class="form-group">
+        <label for="related_fields">Related Field Event IDs</label>
+        <textarea name="related_fields" class="form-control">{{dataset_metadata.get('related_fields','')}}</textarea>
+        <span class="help-block">eg. Cruise ID, Seismic Network ID, Flight #</span>
+      </div>
 
-	  <div class="form-group">
-	    <label for="related_publications">Other Related Publications</label>
-	    <textarea name="related_publications" class="form-control">{{dataset_metadata.get('related_publications','')}}</textarea>
-	    <span class="help-block">Include DOI's where known</span>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label for="related_fields">Related Field Event IDs</label>
-	    <textarea name="related_fields" class="form-control">{{dataset_metadata.get('related_fields','')}}</textarea>
-	    <span class="help-block">eg. Cruise ID, Seismic Network ID, Flight #</span>
-	  </div>
-	  
-	  <div>
-	    <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
-	    <table>
-	      <tbody>
-		<tr>
-		  <td align="center">
-		    N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{dataset_metadata.get('geo_n','')}}"> <br>
-		    W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{dataset_metadata.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{dataset_metadata.get('geo_e','')}}"> <br>
-		    S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{dataset_metadata.get('geo_s','')}}">
-		  </td>
-		  <td>
-		    <span style="margin: 20px">
-		      <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
-		    </span>
-		  </td>
-		</tr>
-	      </tbody>
-	    </table>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label>Temporal Bounds</label>
-	    <div class="input-daterange input-group" id="datepicker">
-	      <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD"/>
-	      <span class="input-group-addon">to</span>
-	      <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD"/>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label for="feature_name">Region Feature Name</label>
-	    <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
-	  </div>
-	  
-	  <button class="btn btn-default" type="submit">Next page</button>
-	  
-	</form>
-	
+      <div class="form-group">
+        <label for="project">Science Project</label><br/>
+        <select class="form-control selectpicker" name="project" data-width="225px">
+            <option value="None" selected="selected">None</option>
+            {% for project in projects |sort %}
+                {% set proj = project['id'] %}
+                <option value="{{proj}}" {% if proj == dataset_metadata.get('project','') %} selected="selected" {% endif %}>{{proj}}</option>
+                
+            {% endfor %}
+        </select>
+      </div>
+
+
+      <div class="form-group">
+        <label for="user_keywords">User Keywords</label>
+        <textarea name="user_keywords" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
+        <span class="help-block">Enter comma separated non-geographic keywords, eg. volitiles, mantle melting, CO2 fluxes.</span>
+      </div>
+      
+      <div>
+        <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+        <table>
+          <tbody>
+        <tr>
+          <td align="center">
+            &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{dataset_metadata.get('geo_n','')}}"> <br>
+            W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{dataset_metadata.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{dataset_metadata.get('geo_e','')}}"> <br>
+            S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{dataset_metadata.get('geo_s','')}}">
+          </td>
+          <td>
+            <span style="margin: 20px">
+              <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
+            </span>
+          </td>
+        </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="form-group">
+        <label>Temporal Bounds</label>
+        <div class="input-daterange input-group" id="datepicker">
+          <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD"/>
+          <span class="input-group-addon">to</span>
+          <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD"/>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="feature_name">Region Feature Name</label>
+        <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
+      </div>
+      
+      <button class="btn btn-default" type="submit">Next page</button>
+      
+    </form>
+    
       </div>
       
     </div>
