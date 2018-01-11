@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% set cur = "news" %}
+{% block body %}
+<div class="border">
+<div class="content">
+  
+  <h2>Recent News</h2>
+
+  <ul>
+    {% for news in news_dict %}
+
+      <li><h5><b>{{news.date}}</b><p>{{news.news|safe}}</p></h5></li>
+
+    {% endfor %}
+  </ul>
+
+
+</div>
+</div>
+{% endblock body %}

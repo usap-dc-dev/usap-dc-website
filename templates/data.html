@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% set cur = "news" %}
+{% block body %}
+<div class="border">
+<div class="content">
+  <h2>Recent Data</h2>
+
+  <ul>
+    {% for data in data_dict %}
+      <li><h5><b>{{data.date}}</b><p>{{data.link|safe}}&nbsp;{{data.authors}}&nbsp;{{data.title}}</p></h5></li>
+    {% endfor %}
+  </ul>
+
+</div>
+</div>
+{% endblock body %}

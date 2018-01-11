@@ -157,17 +157,10 @@
   
   html.wait, html.wait * { cursor: wait !important; }
 
-.border{
-  width: 100%;
-  color: #555;
-  border: 3px solid #92b9c5;
-  border-radius: 10px;
-}
-
 </style>
 
 
-<div class="border">
+<div class="border" style="margin:auto;width:900px">
 <div class="content">
 
   <form method="post" action="/search" id="data_link" onLoad="resetForm()">

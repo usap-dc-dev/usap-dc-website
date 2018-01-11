@@ -73,16 +73,14 @@
 
 </style>
 
-
+<div class="border">
 <div class="content">
     <h3>How to Contribute Data</h3>
 	<br />
     <h4>Step #1: Deposit Your Dataset</h4>
-    <p>Choose one of the following options:<ol>
-<li>All glaciology and cryospheric datasets should be submitted directly to USAP-DC by clicking the "Deposit" button below.
-<li>Other data types should be submitted to one of our partner repositories from <a href="/repo_list"><u>this list</u></a> if possible.
-<li>If no known repository exists for your data type, you may submit to USAP-DC by clicking the "Deposit" button below.
-</ol>
+    <p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services, including data publication in the <a href="http://www.doi.org/">DOI&reg; system</a> and long-term archiving.</p>
+    <p><strong>Note:</strong> <a href="{{url_for('contact')}}" title="contact us">Contact us</a> if other disciplinary repositories may be more appropriate for your datatype, e.g. those in <a href="{{url_for('repo_list')}}"> this list</a>.
+    </p>
     <div class="button-div">
 	<a href="/submit/dataset" class="btn btn-lg btn-primary">Deposit</a>
     </div>
@@ -95,6 +93,7 @@
 	<a href="/submit/project" class="btn btn-lg btn-primary">Register</a>
     </div>
 <br />
+</div>
 </div>
 
 {% endblock body %}

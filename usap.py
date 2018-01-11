@@ -937,7 +937,7 @@ def contact():
             return redirect('/thank_you/message')
         else:
             msg = "<br/>You failed to pass the captcha<br/>"
-            raise CaptchaException(msg,url_for('contact'))
+            raise CaptchaException(msg, url_for('contact'))
 
 
 @app.route('/submit')
@@ -948,6 +948,37 @@ def submit():
 @app.route('/data_repo')
 def data_repo():
     return render_template('data_repo.html')
+
+
+@app.route('/news')
+def news():
+    template_dict = {}
+    # read in news
+    news_dict = []
+    with open("static/recent_news.txt") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        for row in reader:
+            if row[0] == "#" or len(row) != 2:
+                continue
+            news_dict.append({"date": row[0], "news": row[1]})
+        template_dict['news_dict'] = news_dict
+
+    return render_template('news.html', **template_dict)
+
+
+@app.route('/data')
+def data():
+    template_dict = {}
+    # read in recent data
+    data_dict = []
+    with open("static/recent_data.txt") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        for row in reader:
+            if row[0] == "#" or len(row) != 4:
+                continue
+            data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
+        template_dict['data_dict'] = data_dict
+    return render_template('data.html', **template_dict)
 
 
 @app.route('/devices')
