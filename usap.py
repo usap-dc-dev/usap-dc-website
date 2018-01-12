@@ -426,7 +426,12 @@ def dataset():
     else:
         if (session['user_info'].get('email') and not session.get('dataset_metadata')):
             session['dataset_metadata'] = {'email': session['user_info']['email']}
-        return render_template('dataset.html', name=user_info['name'], dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+        return render_template('dataset.html', name=user_info['name'], email=user_info['email'], dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+
+
+@app.route('/submit/help', methods=['GET', 'POST'])
+def submit_help():
+    return render_template('submission_help.html')
 
 
 class ExceptionWithRedirect(Exception):
@@ -560,7 +565,7 @@ def dataset2():
         session['dataset_metadata']['comprehensiveLegends'] = 'comprehensiveLegends' in request.form
         session['dataset_metadata']['dataUnits'] = 'dataUnits' in request.form
 
-        if request.form.get('action') == 'Submit':                    
+        if request.form.get('action') == 'Submit':
             msg_data = copy.copy(session['dataset_metadata'])
             msg_data['name'] = session['user_info']['name']
             del msg_data['action']
@@ -584,8 +589,8 @@ def dataset2():
             msg_data['upload_directory'] = upload_dir
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
-                      
-            for fname,fobj in fnames.items():
+
+            for fname, fobj in fnames.items():
                 fobj.save(os.path.join(upload_dir, fname))
 
             msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
@@ -611,7 +616,7 @@ def dataset2():
         elif request.form.get('action') == 'Previous Page':
             return redirect('/submit/dataset')
     else:
-        return render_template('dataset2.html',name=user_info['name'],dataset_metadata=session.get('dataset_metadata', dict()))
+        return render_template('dataset2.html', name=user_info['name'], email=user_info['email'], dataset_metadata=session.get('dataset_metadata', dict()))
 
 
 @app.route('/submit/project',methods=['GET','POST'])

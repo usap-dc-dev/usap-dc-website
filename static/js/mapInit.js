@@ -263,18 +263,26 @@ $(document).ready(function() {
 	$("#expandMap").on('click', function(e) {
 		$("#map").empty();
 		if($("#map").width() <= 400) {
+			$(".map-btn-container").animate({width:800});
+			$(".map-text-container").animate({width:690});
+			
 			$("#map").animate({
       			width: 800,
       			height:800
     		}, function() {
+    			$(".map-text-container").css({'padding-top':'14px'});
     			new MapClient(2);
     			$("#expandMap").html('Shrink Map');
     		});
     	} else {
+   			$(".map-btn-container").animate({width:400});
+   			$(".map-text-container").animate({width:290});
+   			
 			$("#map").animate({
       			width: 400,
       			height:400
     		}, function() {
+    			$(".map-text-container").css({'padding-top':'4px'});
     			new MapClient(1);
     			$("#expandMap").html('Expand Map');
     		});

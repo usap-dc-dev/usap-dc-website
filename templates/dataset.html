@@ -92,7 +92,9 @@
       {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9">
-    <h2 class="title">Deposit Your Dataset</h2>
+    <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
+    <a target="_external" style="float:right; margin-top: 20px;" href="/submit/help" class="btn btn-primary">Help</a>
+    <div style="clear:both"></div>
     <div class="title" style="font-size: 1em;">Page 1 of &nbsp; 2</div>
     <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
     <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">

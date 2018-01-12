@@ -3,79 +3,19 @@
 {% block body %}
 
 <style>
-/*
-.hvr-fade {
-  display: inline-block;
-  vertical-align: middle;
-  -webkit-transform: perspective(1px) translateZ(0);
-  transform: perspective(1px) translateZ(0);
-  box-shadow: 0 0 1px transparent;
-  overflow: hidden;
-  -webkit-transition-duration: 0.3s;
-  transition-duration: 0.3s;
-  -webkit-transition-property: color, background-color;
-  transition-property: color, background-color;
-  }
-
-  hvr-fade:hover, .hvr-fade:focus, .hvr-fade:active {
-  background-color: #2098D1;
-  color: white;
-  }
-
-  .button {
-
-        text-align: center;
-        -moz-box-shadow:inset 0px 0px 0px 0px #3dc21b;
-	-webkit-box-shadow:inset 0px 0px 0px 0px #3dc21b;
-	box-shadow:inset 0px 0px 0px 0px #3dc21b;
-	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #44c767), color-stop(1, #5cbf2a));
-	background:-moz-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
-	background:-webkit-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
-	background:-o-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
-	background:-ms-linear-gradient(top, #44c767 5%, #5cbf2a 100%);
-	background:linear-gradient(to bottom, #44c767 5%, #5cbf2a 100%);
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#44c767', endColorstr='#5cbf2a',GradientType=0);
-	background-color:#44c767;
-	-moz-border-radius:10px;
-	-webkit-border-radius:10px;
-	border-radius:10px;
-	border:2px solid #18ab29;
-	display:inline-block;
-	cursor:pointer;
-	color:#ffffff !important;
-	font-family:Arial;
-	font-size:22px;
-	padding:12px 29px !important;
-	text-decoration:none;
-	text-shadow:0px 0px 0px #2f6627;
-}
-.button:hover {
-	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #5cbf2a), color-stop(1, #44c767));
-	background:-moz-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
-	background:-webkit-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
-	background:-o-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
-	background:-ms-linear-gradient(top, #5cbf2a 5%, #44c767 100%);
-	background:linear-gradient(to bottom, #5cbf2a 5%, #44c767 100%);
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#5cbf2a', endColorstr='#44c767',GradientType=0);
-	background-color:#5cbf2a;
-}
-.button:active {
-	position:relative;
-	top:1px;
-  }
-*/
   .button-div {
       display: flex;
       flex-direction: row;
       justify-content: center;
       margin: 10px 0px 10px 0px;
   }
-
 </style>
 
 <div class="border">
 <div class="content">
-    <h3>How to Contribute Data</h3>
+    <h3 style="float:left">How to Contribute Data</h3> 
+    <a target="_external" style="float:right; margin-top: 20px;" href="/submit/help" class="btn btn-primary">Help</a>
+    <div style="clear:both"></div>
 	<br />
     <h4>Step #1: Deposit Your Dataset</h4>
     <p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services, including data publication in the <a href="http://www.doi.org/">DOI&reg; system</a> and long-term archiving.</p>

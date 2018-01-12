@@ -1,7 +1,13 @@
 <div id	="sidebar" class="col-xs-3 panel panel-default">
   <div class="panel-heading">You are Logged in as</div>
   <div class="panel-body">
-    <div>{{name}}</div>
+    <div>
+    {% if name|length > 0 %}
+	    {{name}}
+	{% else %}
+		{{email}}
+	{% endif %}
+	</div>
     <a href="/logout">Log out</a>
   </div>
 </div>

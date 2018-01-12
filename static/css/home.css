@@ -13,6 +13,10 @@
 
 #map {
     position: relative;
+    margin: auto;
+    width:400px;
+    height:400px;
+    border:1px solid black;
 }
 .ol-mouse-position {
     position: absolute;
@@ -22,8 +26,23 @@
     font-size: 0.9em;
     opacity: 0.85;
 }
-
-
+.map-container {
+	margin:auto; 
+	width:100%;
+}
+.map-btn-container {
+	margin:auto;
+	width:400px;
+	height:34px;
+	padding:0;
+}
+.map-text-container {
+	width:290px;
+	float:right;
+	font-size:0.95em;
+	padding-top: 4px;
+	line-height: 1em;
+}
 /*.ol-zoom {
     position: absolute;
     top: 10px;
