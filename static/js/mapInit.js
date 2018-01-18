@@ -1,11 +1,12 @@
 function MapClient(zoom) {
-	if (!zoom) {zoom = 1;}
+	if (!zoom) {zoom = 2;}
 	proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
     var projection = ol.proj.get('EPSG:3031');
     projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
     projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
     var map = new ol.Map({	// set to GMRT SP bounds
 	target: 'map',
+	interactions: ol.interaction.defaults({mouseWheelZoom:false}),
 	view: new ol.View({
 	    center: [0,0],
 	    zoom: zoom,

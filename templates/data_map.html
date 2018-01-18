@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% set cur = "map" %}
+{% block body %}
+
+<div class="container">
+
+ <div id="main">
+  <div class="main-inner">
+
+   <h1 class="title">Map of Datasets Registered with the USAP-DC</h1>
+  <br/>
+  <div class="map-container">
+    <div class="map-btn-container">
+      <em>Dots correspond with centroid locations</em>
+    </div>
+    <div id="map"></div>   
+  </div>
+
+  <!-- END CONTENT -->
+</div>
+<!-- END MAIN INNER -->
+</div>
+<!-- END MAIN -->
+</div>
+{% endblock body %}

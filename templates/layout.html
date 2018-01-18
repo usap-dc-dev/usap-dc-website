@@ -12,13 +12,13 @@
   <meta http-equiv="imagetoolbar" content="no" />
   
   <meta name="MSSmartTagsPreventParsing" content="true" />
-  <meta name="google-signin-client_id" content="721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com">
-  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.png') }}" type="image/x-icon">
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet">
-  <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <meta name="google-signin-client_id" content="721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com"/>
+  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.png') }}" type="image/x-icon"/>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet"/>
+  <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
 
-  {% if cur=='home' or cur=='search' %}
+  {% if cur=='home' or cur=='search' or cur=='map' %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3/ol.css')}}" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.css')}}"/>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
@@ -29,7 +29,7 @@
   <!-- InstanceEndEditable -->
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery/dist/jquery.js') }}"></script>
   <script type="text/javascript" src="/static/js/oauth.js"></script>
-  {% if cur=='home' or cur=='search' %}
+  {% if cur=='home' or cur=='search' or cur=='map' %}
     <script type="text/javascript" src="{{ url_for('static', filename='bower_components/proj4/dist/proj4.js')}}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3/ol-debug.js')}}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.js')}}"></script>
@@ -37,7 +37,7 @@
 
   {% endif %}
   <script src="https://apis.google.com/js/platform.js" async defer></script>
-  {% if cur=='home' %}
+  {% if cur=='home' or cur=='map' %}
     <script type="text/javascript" src="{{ url_for('static', filename='js/mapInit.js') }}"></script>
   {% endif %}
   {% if cur == 'project' %}
@@ -71,7 +71,7 @@
 
   <link rel="stylesheet" type="text/css" href="/static/css/print.css" media="print" />
   <link rel="stylesheet" type="text/css" href="/static/css/main.css" media="screen, projection" />
-  {% if cur=='home' %}
+  {% if cur=='home' or cur=='map' %}
     <link rel="stylesheet" type="text/css" href="/static/css/home.css" media="screen, projection" />
   {% endif %}
   {% if cur=='search' %}
@@ -88,84 +88,87 @@
   {% endif %}
 </head>
 
+<body>
 
-<div class="ieda-header">
- 
-        <div id="page-header">
-          <h1 style="margin-bottom:0;margin-top:3px;"><a title="U.S. ANTARCTIC PROGRAM DATA CENTER" href="/"><em>USAP-DC</em></a></h1>
-          <h4 style="margin-top:0;">U.S. ANTARCTIC PROGRAM DATA CENTER</h4>
-        </div>
+  <div class="ieda-header">
 
-        <ieda-banner>
-          <a href="http://www.iedadata.org"><img id="IEDA" alt="IEDA" src="{{ url_for('static', filename='imgs/header/ieda_logo_200x88.png') }}"/></a>
-        </ieda-banner>
+    <div id="page-header">
+      <h1 style="margin-bottom:0;margin-top:3px;"><a title="U.S. ANTARCTIC PROGRAM DATA CENTER" href="/"><em>USAP-DC</em></a></h1>
+      <h4 style="margin-top:0;">U.S. ANTARCTIC PROGRAM DATA CENTER</h4>
+    </div>
 
-  
+    <ieda-banner>
+      <a href="http://www.iedadata.org"><img id="IEDA" alt="IEDA" src="{{ url_for('static', filename='imgs/header/ieda_logo_200x88.png') }}"/></a>
+    </ieda-banner>
+
+
 <!--       <div id="page-header">
         <h1><a title="U.S. Antarctic Program Data Center" href="/">U.S. Antarctic Program Data Center</a></h1>
       </div>
-       -->
-      <div id="ieda-menu-wrap">
-        <ul id="ieda-menu">
-          <!--<li><a class="cur" href="/"><img src="/imgs/menu_home.gif" alt="Home Icon"/> Home</a></li>-->
-          <li><a href="{{url_for('overview')}}">About</a>
-          </li>
-          <li><a href="{{url_for('submit')}}">Contribute</a>
-            <ul> 
-              <li><a href="{{url_for('dataset')}}">Deposit Your Dataset</a></li>
-              <li><a href="{{url_for('project')}}">AMD Project Registration</a></li>
-            </ul>
-          </li>
-          <li><a href="{{url_for('search')}}">Search</a>
-            <ul>
-              <li><a href="{{url_for('search')}}">Search USAP-DC</a></li>
-              <li><a href="https://gcmd.gsfc.nasa.gov/KeywordSearch/Freetext.do?KeywordPath=&Portal=amd&MetadataType=0&Freetext=DIF%2FIDN_Node%3A+AMD*">Search AMD</a></li>
-              <li><a href="#" disabled> DIF Browser</a></li>
-              </li>
-            </ul>
-          </li>
-          </li>
-          <li><a href="#">Other IEDA Resources</a>
-            <ul>
-              <li><a href="http://www.marine-geo.org/portals/antarctic/">Polar Ship Data</a></li>
-              <li><a href="http://www.marine-geo.org/tools/GMRTMapTool/sp/">GMRT MapTool</a></li> 
-              <li><a href="http://www.geomapapp.org/">GeoMapApp</a></li>
-              <li><a href="http://app.iedadata.org/spdatabrowser">IEDA Data Browser</a></li>
-              <li><a href="http://catalog-dev.iedadata.org:8080/geoportal/">GeoPortal</a></li>
-              <li><a href="http://media.marine-geo.org/category/6/78">MediaBank</a></li>
-              <li><a href="http://app.iedadata.org/compliance/dmp/">Data Management Plan</a></li>
-              <li><a href="http://www.geosamples.org/">SESAR</a></li>
-            </ul>
-          </li>
-          <li><a href="#">External Resources</a>
-            <ul>
-              <li><a href="{{url_for('links')}}">Polar Related Links</a></li>
-              <li><a href="https://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory (AMD)</a></li>
-              <li><a href="https://sdls.ogs.trieste.it">Antarctic Seismic Data Library System (SDLS)</a></li>
-            </ul>
-          </li>
-          <li><a href="{{url_for('contact')}}">Contact</a>
-          </li>
-        </ul>
-      </div>
+    -->
+    <div id="ieda-menu-wrap">
+      <ul id="ieda-menu">
+        <!--<li><a class="cur" href="/"><img src="/imgs/menu_home.gif" alt="Home Icon"/> Home</a></li>-->
+        <li><a href="{{url_for('overview')}}">About</a>
+          <ul>
+            <li><a href="{{url_for('overview')}}">Overview</a></li>
+            <li><a href="{{url_for('submit_help')}}">Submission Help</a></li>
+          </ul>
+        </li>
+        <li><a href="{{url_for('submit')}}">Contribute</a>
+          <ul> 
+            <li><a href="{{url_for('dataset')}}">Deposit Your Dataset</a></li>
+            <li><a href="{{url_for('project')}}">AMD Project Registration</a></li>
+          </ul>
+        </li>
+        <li><a href="{{url_for('search')}}">Search</a>
+          <ul>
+            <li><a href="{{url_for('search')}}">Search USAP-DC</a></li>
+            <li><a href="https://gcmd.gsfc.nasa.gov/KeywordSearch/Freetext.do?Portal=amd&amp;MetadataType=0&amp;Freetext=DIF%2FIDN_Node%3A+AMD*">Search AMD</a></li>
+            <li><a href="#" disabled> DIF Browser</a></li>
+          </ul>
+        </li>
+        <li><a href="#">Other IEDA Resources</a>
+          <ul>
+            <li><a href="http://www.marine-geo.org/portals/antarctic/">Polar Ship Data</a></li>
+            <li><a href="http://www.marine-geo.org/tools/GMRTMapTool/sp/">GMRT MapTool</a></li> 
+            <li><a href="http://www.geomapapp.org/">GeoMapApp</a></li>
+            <li><a href="http://app.iedadata.org/spdatabrowser">IEDA Data Browser</a></li>
+            <li><a href="http://catalog-dev.iedadata.org:8080/geoportal/">GeoPortal</a></li>
+            <li><a href="http://media.marine-geo.org/category/6/78">MediaBank</a></li>
+            <li><a href="http://app.iedadata.org/compliance/dmp/">Data Management Plan</a></li>
+            <li><a href="http://www.geosamples.org/">SESAR</a></li>
+          </ul>
+        </li>
+        <li><a href="#">External Resources</a>
+          <ul>
+            <li><a href="{{url_for('links')}}">Polar Related Links</a></li>
+            <li><a href="https://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory (AMD)</a></li>
+            <li><a href="https://sdls.ogs.trieste.it">Antarctic Seismic Data Library System (SDLS)</a></li>
+          </ul>
+        </li>
+        <li><a href="{{url_for('contact')}}">Contact</a>
+        </li>
+      </ul>
     </div>
+  </div>
 
 
 <!--   {% if cur != "search" and cur != "dataset" and cur != "project" %}
     <div id="ieda-header-banner">
       <img src="{{url_for('static', filename='imgs/header/usap_banner' + str(randint(1,6)) + '.jpg') }}" alt="USAP Data Center" />
     </div>
-  {% endif %} -->
+    {% endif %} -->
 
   {% if cur == "home" %}
-    {% block home %}{%endblock home %}
+
+  {% block home %}{%endblock home %}
   {% else %}
-    <div id="wrapper">
-      {% block body %}{%endblock body %}
-    </div>
+  <div id="wrapper">
+    {% block body %}{%endblock body %}
+  </div>
   {% endif %}
 
-  
   <div id="footer">
     <table style="width: 80%; border-left:20%; border-style: none; ">
       <tr style="border-style: none; ">        
@@ -176,10 +179,10 @@
           <p>    Part of the <a href="http://www.iedadata.org">IEDA Data Facility</a> | <a href="{{url_for('legal')}}">Acknowledgments</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
         </td> 
         <td style="border-style: none; width: 5%; ">
-          <a href="http://www.nsf.gov"><img id="nsf_logo" src="{{url_for('static',filename='imgs/nsf1.gif')}}" width="60"></a>
+          <a href="http://www.nsf.gov"><img id="nsf_logo" alt="NSF logo" src="{{url_for('static',filename='imgs/nsf1.gif')}}" width="60"/></a>
         </td>
         <td style="border-style: none; width: 20%" >
-            Funded by the <a href="http://www.nsf.gov">US National Science Foundation (NSF)</a>
+          Funded by the <a href="http://www.nsf.gov">US National Science Foundation (NSF)</a>
         </td>
       </tr>
     </table>

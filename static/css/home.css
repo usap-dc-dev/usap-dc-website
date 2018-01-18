@@ -14,9 +14,9 @@
 #map {
     position: relative;
     margin: auto;
-    width:400px;
-    height:400px;
-    border:1px solid black;
+    width:800px;
+    height:800px;
+    border:2px solid black;
 }
 .ol-mouse-position {
     position: absolute;
@@ -32,8 +32,8 @@
 }
 .map-btn-container {
 	margin:auto;
-	width:400px;
-	height:34px;
+	width:800px;
+	/*height:34px;*/
 	padding:0;
 }
 .map-text-container {

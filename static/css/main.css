@@ -21,12 +21,13 @@ body{
 
 .wrapper {
     position:relative;
-    width:1000px;
+    width:950px;
     padding-top:25px;
     padding-left:68px;
   }
 
 #wrapper {
+  width:950px;
   margin: 30px;
 }
 
@@ -40,7 +41,7 @@ body{
   height:25em;
   width: 100%;
   margin: 0;
-  margin-top:30px;
+  margin-top:20px;
   padding-top: 30px;
   left: 0;
 }
@@ -74,22 +75,6 @@ body{
     /*width:100%;*/
 }
 
-
-#mgds-header ieda_logo {
-  float: right;
-  display: block;
-  height: 69px;
-  position: relative;
-  width: 150px;
-  padding-right: 20px;
-}
-#mgds-header ieda_logo a img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 150px;
-}
 
 
 #page-header {
@@ -283,48 +268,6 @@ ul#ieda-menu li.submenu ul {
   border: none !important;
   text-decoration: none !important;
 }
-
-/*ul#menu{
-	width:864px;
-	height:22px;
-	background:transparent url(/static/imgs/menu.gif) top left no-repeat;
-	list-style:none;
-	bottom:0;
-	left:0;
-}
-	ul#menu li {
-		position:absolute;
-		top:0;
-	}
-	ul#menu li, ul#menu li a{
-		display:block;
-		height:22px;
-	}
-	ul#menu li a{
-		text-decoration:none;
-		text-indent:-9999px;
-		line-height:22px;
-	}
-	html ul#menu li>a{ overflow:hidden; }*/
-	
-	/*dimensions & position*/
-/*	#mn0{ left:0px; width:66px; }
-	#mn1{ left:86px; width:74px; }
-	#mn2{ left:180px; width:114px; }
-	#mn3{ left:314px; width:92px; }
-	#mn4{ left:428px; width:97px; }
-	#mn5{ left:545px; width:83px; }
-	#mn6{ left:626px; width:238px; }*/
-	
-	/*psuedo-rollover*/
-/*	#mn0 a:hover, #mn0 a.cur{ background:transparent url(/static/imgs/menu.gif) -0px -22px no-repeat;}
-	#mn1 a:hover, #mn1 a.cur{ background:transparent url(/static/imgs/menu.gif) -86px -22px no-repeat;}
-	#mn2 a:hover, #mn2 a.cur{ background:transparent url(/static/imgs/menu.gif) -180px -22px no-repeat;}
-	#mn3 a:hover, #mn3 a.cur{ background:transparent url(/static/imgs/menu.gif) -314px -22px no-repeat;}
-	#mn4 a:hover, #mn4 a.cur{ background:transparent url(/static/imgs/menu.gif) -428px -22px no-repeat;}
-	#mn5 a:hover, #mn5 a.cur{ background:transparent url(/static/imgs/menu.gif) -545px -22px no-repeat;}
-	#mn6 a:hover, #mn6 a.cur{ background:transparent url(/static/imgs/menu.gif) -626px -22px no-repeat;}
-	*/
 
 
 /*
@@ -634,7 +577,7 @@ content area & common elements
   margin-bottom: 2em;
   margin-left: 2.5em;
 }
-#read-more-button {
+.read-more-button {
   background-color: #92b9c5;
   height: 180 px;
   width: 200px;
@@ -649,7 +592,7 @@ content area & common elements
 
 
 /*this is for the home page 2 columns used on new index page */
-#split {
+.split {
   width: 100%;
   /*height:600px;*/
   margin-top: 10 px;
@@ -662,16 +605,17 @@ content area & common elements
   width: 45%;
   float: right;
 }
-#split h3 {
+
+.split h3 {
   margin: 1.2em 0 0.5em 0;
   padding-bottom: 0.15em;
   border-bottom: 1px dotted;
   font-weight: 400;
 }
-#split h5 {
+.split h5 {
   display: inline;
 }
-#split ul {
+.split ul {
   list-style: circle outside;
 }
 .loginBtn {

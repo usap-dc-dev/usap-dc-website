@@ -1,5 +1,18 @@
 # NOTE: date, link, authors and title should be separated by a tab
-2017-10-27	<a href=/view/dataset/601065>10-43471</a> M. Kaplan and A. Borunda  List of samples of WAIS Divide and Byrd (deep) ice that were analyzed for radiogenic isotopes at LDEO
+2017-12-21	<a href=/view/dataset/601078>1565576</a>	Truffer, M.	Scar Inlet Terrestrial Radar Interferometry			
+2017-12-20	<a href=/view/dataset/601075>1246203</a>	Gooseff, M.	Active Layer Temperatures from Crescent Stream banks, Taylor Valley Antarctica			
+2017-12-20	<a href=/view/dataset/601076>1141978</a>	Foreman, C.	Respiration Metadata			
+2017-12-20	<a href=/view/dataset/601077>1141978</a>	Foreman, C.	FT-ICR MS Metadata			
+2017-12-18	<a href=/view/dataset/601072>0839075</a>	Priscu, J.; Santibanez, P.	Prokaryotic cell concentration record from the WAIS Divide ice core			
+2017-12-18	<a href=/view/dataset/601073>0732917</a>	McCormick, M.	LARISSA: Impact of ice-shelf loss on geochemical profiles and microbial community composition in marine sediments of the Larsen A embayment, Antarctic Peninsula			
+2017-12-18	<a href=/view/dataset/601074>1141939</a>	Lubin, D.	Shortwave Spectroradiometer Data from Ross Island, Antarctica			
+2017-12-06	<a href=/view/dataset/601071>1344349</a>	Tulaczyk, Slawek	2017 Time-domain ElectroMagnetics data for McMurdo Dry Valleys			
+2017-11-17	<a href=/view/dataset/601070>0944307</a>	Conway, H.	Rosevlelt Isaland - GPS and Radar			
+2017-11-15	<a href=/view/dataset/601068>1143834</a>	Huber, B.	NBP1402 Lowered ADCP data			
+2017-11-15	<a href=/view/dataset/601069>1143834</a>	Huber, B.	Sabrina Coast mooring data- sediment trap mooring 2014
+2017-11-10	<a href=/view/dataset/601067>1143834</a>	Huber, B.	NBP1402 Final CTD data
+2017-11-08	<a href=/view/dataset/601066>1341500</a>	Ryberg, R.	Images of Fossil Plants of Antarctica
+2017-10-27	<a href=/view/dataset/601065>10-43471</a>	M. Kaplan and A. Borunda  List of samples of WAIS Divide and Byrd (deep) ice that were analyzed for radiogenic isotopes at LDEO
 2017-10-25	<a href=/view/dataset/601064>12-46378</a>	Shevenell, A.	Anvers Trough Foraminifer Stable Isotope data
 2017-10-23	<a href=/view/dataset/601063>12-46170</a>	Hall, B.	Hatherton Glacier Radiocarbon Data
 2017-10-20	<a href=/view/dataset/601062>10-41022</a>	Schram, J.	Data from Schram et al. 2017 MEPS

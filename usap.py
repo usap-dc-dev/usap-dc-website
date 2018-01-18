@@ -777,7 +777,7 @@ def logout():
 
 @app.route("/index")
 @app.route("/")
-@app.route("/home2")
+@app.route("/home")
 def home():
     template_dict = {}
     # read in news
@@ -785,7 +785,7 @@ def home():
     with open("static/recent_news.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
-            if row[0] == "#" or len(row) != 2: continue
+            if row[0] == "#" or len(row) < 2: continue
             news_dict.append({"date": row[0], "news": row[1]})
         template_dict['news_dict'] = news_dict
     # read in recent data
@@ -793,10 +793,33 @@ def home():
     with open("static/recent_data.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
-            if row[0] == "#" or len(row) != 4: continue
+            if row[0] == "#" or len(row) < 4: continue
             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
         template_dict['data_dict'] = data_dict
     return render_template('home.html', **template_dict)
+
+
+# @app.route("/home2")
+# def home2():
+#     template_dict = {}
+#     # read in news
+#     news_dict = []
+#     with open("static/recent_news.txt") as csvfile:
+#         reader = csv.reader(csvfile, delimiter="\t")
+#         for row in reader:
+#             if row[0] == "#" or len(row) != 2: continue
+#             news_dict.append({"date": row[0], "news": row[1]})
+#         template_dict['news_dict'] = news_dict
+#     # read in recent data
+#     data_dict = []
+#     with open("static/recent_data.txt") as csvfile:
+#         reader = csv.reader(csvfile, delimiter="\t")
+#         for row in reader:
+#             if row[0] == "#" or len(row) != 4: continue
+#             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
+#         template_dict['data_dict'] = data_dict
+#     return render_template('home2.html', **template_dict)
+
 
 
 @app.route('/overview')
@@ -963,7 +986,7 @@ def news():
     with open("static/recent_news.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
-            if row[0] == "#" or len(row) != 2:
+            if row[0] == "#" or len(row) < 2:
                 continue
             news_dict.append({"date": row[0], "news": row[1]})
         template_dict['news_dict'] = news_dict
@@ -979,7 +1002,7 @@ def data():
     with open("static/recent_data.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
-            if row[0] == "#" or len(row) != 4:
+            if row[0] == "#" or len(row) < 4:
                 continue
             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
         template_dict['data_dict'] = data_dict
@@ -1085,9 +1108,16 @@ def supplement(dataset_id):
                      as_attachment=True,
                      attachment_filename=os.path.basename(url_extra))
 
+
 @app.route('/mapserver-template.html')
 def mapserver_template():
     return render_template('mapserver-template.html')
+
+
+@app.route('/map')
+def map():
+    return render_template('data_map.html')
+
 
 @app.route('/getfeatureinfo')
 def getfeatureinfo():

@@ -7,9 +7,48 @@
  <div id="main">
   <div class="main-inner">
 
-    <h1 class="title">Contributing Data to USAP-DC</h1>
+    <h1 class="title">Advice for submitting data to USAP-DC and for project registration at AMD</h1>
     <div class="content">
-      Coming Soon...
+       
+
+<p>The <a target="_blank" href="https://www.nsf.gov/pubs/2016/nsf16055/nsf16055.jsp">NSF Antarctic Research Program</a> requires for each award that
+<ol>
+<li>metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly accessible archive;</li>
+<li>metadata for all Antarctic supported data sets and derived data products must be submitted to the Antarctic Master Directory, via the USAP Data Center.</li>
+</ol>
+The <a href="{{url_for('home')}}">United States Antarctic Program Data Center (USAP-DC)</a> can help with both parts.
+</p>
+
+<ol>
+
+<h2><li>Depositing research data</h2>
+<p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services for these data including data publication and long term archiving. However, if there is an <a href="{{url_for('repo_list')}}">existing disciplinary repository</a> well used in your field, the best practice is to submit your data to this repository and the USAP-DC asks that you contact us to coordinate.</p>
+
+<p>For submitting data to USAP-DC, please go to <a href="{{url_for('submit')}}">http://www.usap-dc.org/submit</a> and use the "Deposit" button.</p>
+
+<p>After logging in, the submitter is asked to fill out a web form that collects information (metadata) about the dataset to support the curation and long-term archiving of the data, search and discovery by others, and to provide basic information necessary for future researchers to make use of your data. At the end you can upload one or many data files. If you have a very large dataset, e.g. many Giga or Terabytes in size, please <a href="{{url_for('contact')}}">contact us</a> directly to arrange for separate data transfer.</p>
+
+<p>At USAP-DC we will also create a data DOI for each dataset as part of the process. This DOI can be used to reference the dataset in publications.</p>
+
+<p>The submitted datasets will be reviewed by personnel from USAP-DC or NSIDC to check for data integrity, and that the necessary metadata information is submitted so that the data can be re-used in the future. The submission can be updated if necessary.</p>
+</li>
+
+<h2><li>Registration of a project record in the Antarctic Master Directory (AMD)</h2>
+<p><h3>About the AMD:</h3> The <a target="_blank" href="https://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory</a> is part of NASA's Global Change Master Directory (GCMD) and is a central catalog of metadata about datasets, research programs and data resources. As such the AMD is not a repository of actual data but instead contains links to data as provided by the submitting scientist or data repository. It also serves as a central platform for member countries of the Antarctic Treaty to provide information about data collected in Antarctica. Hence it serves as a central resource for scientists to find data acquired in Antarctica internationally.</p>
+
+<p>For NSF-funded Antarctic projects it is common practice to create an entry in the AMD for each funded award. This entry can contain one or multiple links to the actual dataset(s), which can be stored at different repositories (<a target="_blank" href="https://gcmd.gsfc.nasa.gov/search/Metadata.do?entry=USAP-0424589&subset=GCMD#metadata">example</a>).</p>
+
+<p><h3>USAP-DC Registration Service</h3> While every PI can use the GCMD interface to create their AMD records themselves, it is encouraged to use the USAP-DC registration service. This is a simple web form that will collect the key metadata for the AMD record submission and information about the different datasets that should be linked to the record. If you submitted your data at USAP-DC we will retrieve that information from the USAP-DC database to link your AMD record to your dataset.</p>
+
+<p>To make the process easier, much of the metadata about the project will be automatically created from the NSF award information, but PI’s will be asked in the webform to update this information to best reflect project outcomes. Based on this information USAP-DC will create the AMD metadata record and submit it to AMD.</p>
+
+<p>Each AMD submission is verified by AMD staff and it takes usually several business days from submitting a record until a record goes live.</p>
+
+<p>Once an AMD record has been created it can be updated as new dataset or additional information becomes available by <a href="{{url_for('contact')}}">contacting us.</a></p>
+</li>
+</ol>
+<p>For additional questions, please don't hesitate to <a href="{{url_for('contact')}}">contact USAP-DC</a>.</p>
+
     </div>
   <!-- END CONTENT -->
 </div>

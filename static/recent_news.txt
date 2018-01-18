@@ -1,4 +1,6 @@
 #	NOTE: date and news should be separated by a tab
+Dec. 2017	Presented new web page and USAP-DC functions at AGU fall meeting.
+Dec. 2017	Conducted workshop on USAP-DC data submission and Antarctic GeoMapApp at AGU fall meeting
 Oct. 2017	Presented new web page and USAP-DC functions at WAIS meeting.
 Apr. 2017	Upgraded USAP-DC site to support Search-by-Project.
 Jan. 2017	Launched new USAP-DC web site with expanded holdings, map-based Search, and ORCID integration.

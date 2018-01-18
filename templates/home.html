@@ -3,52 +3,47 @@
 {% block home %}
 
 
-
-
 <div class="usap-dc-banner">
-
-</div>
-
-
-<div class="content">
-  
-  <div id="split">
-    
+   <div class="split">
     <div class="left">
-      <div class="shadow-container" onclick="location.href='{{url_for('submit')}}';">
+      <div style="float:right" class="shadow-container" onclick="location.href='{{url_for('submit')}}';">
         <div class="container">
-          <a href="/submit" class="image"><img src="{{url_for('static',filename='imgs/upload-icon.png')}}" alt="Contribute"/></a>
+          <a href="{{url_for('submit')}}" class="image"><img src="{{url_for('static',filename='imgs/upload-icon.png')}}" alt="Contribute"/></a>
           <br/><br/><p>Contribute Data</p>
         </div>
       </div>
     </div>
 
     <div class="right">
-      <div class="shadow-container"  onclick="location.href='{{url_for('search')}}';">
+      <div style="float:left" class="shadow-container"  onclick="location.href='{{url_for('search')}}';">
         <div class="container">
-          <a href="/tools/search" class="image"><img src="{{url_for('static',filename='imgs/search-icon.png')}}" alt="Search"/></a>
+          <a href="{{url_for('search')}}" class="image"><img src="{{url_for('static',filename='imgs/search-icon.png')}}" alt="Search"/></a>
           <br/><br/><p>Search Data</p>
         </div>
       </div>
     </div>
 
   </div>
+</div>
 
+
+<div class="content">
 
   <div style="clear:both"></div>
 
+  <h2>Welcome</h2>
+  <p>The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>). As of 2016, USAP-DC is now partnered with the National Snow and Ice Data Center (<a class="external" href="https://nsidc.org">NSIDC</a>) to manage glaciology data for the US Antarctic Program.</p><br/>
 
   <div class="map-container">
     <div class="map-btn-container">
-      <button class="btn btn-primary" id="expandMap" style="float:left">Expand Map</button>
-      <div class="map-text-container"> Map shows datasets (dots correspond with centroid locations) registered with the USAP-DC.</div>
+      <em>Map shows datasets (dots correspond with centroid locations) registered with the USAP-DC.</em>
     </div>
     <div id="map"></div>   
   </div>
 
 
-  <div id="split">
-    
+  <div class="split">
+
     <div class="left">
       <h3>Recent News</h3>
       <div style="height:430px;line-height:120%;font-size:1.3em">
@@ -59,7 +54,7 @@
           {% endif %}
           {% endfor %}
         </ul>
-        <a id="read-more-button" href="{{url_for('news')}}">READ MORE »</a>
+        <a class="read-more-button" href="{{url_for('news')}}">READ MORE »</a>
       </div> 
     </div>
     
@@ -73,11 +68,12 @@
         {% endif %}
         {% endfor %}
       </ul>
-      <a id="read-more-button" href="{{url_for('data')}}">READ MORE »</a>
+      <a class="read-more-button" href="{{url_for('data')}}">READ MORE »</a>
     </div>
 
   </div>
 
+</div>
 </div>
 
 {% endblock home %}
