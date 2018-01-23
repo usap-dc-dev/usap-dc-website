@@ -286,7 +286,7 @@ def get_datasets(dataset_ids):
 def get_parameter_menu(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    cur.execute('SELECT terms FROM parameter_menu')
+    cur.execute('SELECT terms FROM parameter_menu_orig')
     return cur.fetchall()
 
 def get_location_menu(conn=None, cur=None):
@@ -424,9 +424,10 @@ def dataset():
         return redirect('/submit/dataset2')
 
     else:
-        if (session['user_info'].get('email') and not session.get('dataset_metadata')):
-            session['dataset_metadata'] = {'email': session['user_info']['email']}
-        return render_template('dataset.html', name=user_info['name'], email=user_info['email'], dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+        email = ""
+        if user_info.get('email'):
+            email = user_info.get('email')
+        return render_template('dataset.html', name=user_info['name'], email=email, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
 
 
 @app.route('/submit/help', methods=['GET', 'POST'])
@@ -616,7 +617,7 @@ def dataset2():
         elif request.form.get('action') == 'Previous Page':
             return redirect('/submit/dataset')
     else:
-        return render_template('dataset2.html', name=user_info['name'], email=user_info['email'], dataset_metadata=session.get('dataset_metadata', dict()))
+        return render_template('dataset2.html', name=user_info['name'], dataset_metadata=session.get('dataset_metadata', dict()))
 
 
 @app.route('/submit/project',methods=['GET','POST'])
@@ -1063,7 +1064,6 @@ def landing_page(dataset_id):
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
-
     usap_domain = 'http://www.usap-dc.org/'
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
