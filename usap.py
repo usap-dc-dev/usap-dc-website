@@ -1065,8 +1065,10 @@ def landing_page(dataset_id):
     if not url:
         return redirect(url_for('not_found'))
     usap_domain = 'http://www.usap-dc.org/'
+    print(url)
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
+        print(directory)
         file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
         omit = set(['readme.txt', '00README.txt', 'index.php', 'index.html', 'data.html'])
         file_paths = [f for f in file_paths if os.path.basename(f) not in omit]
@@ -1104,9 +1106,13 @@ def supplement(dataset_id):
     url_extra = cur.fetchall()[0]['url_extra'][1:]
     if url_extra.startswith('/'):
         url_extra = url_extra[1:]
-    return send_file(os.path.join(current_app.root_path, url_extra),
-                     as_attachment=True,
-                     attachment_filename=os.path.basename(url_extra))
+    try:
+        return send_file(os.path.join(current_app.root_path, url_extra),
+                       as_attachment=True,
+                       attachment_filename=os.path.basename(url_extra))
+    except:
+        return redirect(url_for('not_found'))
+
 
 
 @app.route('/mapserver-template.html')
