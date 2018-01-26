@@ -1114,7 +1114,6 @@ def supplement(dataset_id):
         return redirect(url_for('not_found'))
 
 
-
 @app.route('/mapserver-template.html')
 def mapserver_template():
     return render_template('mapserver-template.html')
@@ -1123,6 +1122,85 @@ def mapserver_template():
 @app.route('/map')
 def map():
     return render_template('data_map.html')
+
+
+@app.route('/dif_browser', methods=['GET', 'POST'])
+def dif_browser():
+    template_dict = {}
+    (conn, cur) = connect_to_db()
+
+    query = "SELECT award FROM dif_test ORDER BY award"
+    cur.execute(query)
+    template_dict['awards'] = cur.fetchall()
+
+    query = "SELECT dif_id FROM dif_test ORDER BY dif_id"
+    cur.execute(query)
+    template_dict['dif_ids'] = cur.fetchall()
+
+    query = 'SELECT DISTINCT title FROM dif_test ORDER BY title'
+    cur.execute(query)
+    template_dict['titles'] = cur.fetchall()
+
+    query = 'SELECT DISTINCT pi_name FROM dif_test ORDER BY pi_name'
+    cur.execute(query)
+    template_dict['pi_names'] = cur.fetchall()
+
+
+    query = "SELECT DISTINCT dif_test.* FROM dif_test WHERE dif_test.dif_id !=''"
+
+    if request.method == 'POST':
+        print(request.form)
+        template_dict['pi_name'] = request.form.get('pi_name')
+        template_dict['title'] = request.form.get('title')
+        template_dict['award'] = request.form.get('award')
+        template_dict['dif_id'] = request.form.get('dif_id')
+
+        if (request.form.get('pi_name') != ""):
+            query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
+        if(request.form.get('title') != ""):
+            query += " AND dif_test.title ILIKE '%" + request.form['title'] + "%'"
+        if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
+            query += " AND dif_test.award = '%s'" % request.form['award']
+        if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):
+            query += " AND dif_test.dif_id = '%s'" % request.form['dif_id']
+
+    query += " ORDER BY dif_test.dif_id"
+
+    query_string = cur.mogrify(query)
+    cur.execute(query_string)
+    rows = cur.fetchall()
+
+    for row in rows:
+        authors = row['pi_name']
+        if row['co_pi'] != "":
+            authors += "; %s" % row['co_pi']
+        row['authors'] = authors
+        if row['award'] != "":
+            row['award'] = int(row['award'])
+            row['award_7d'] = "%07d" % row['award']
+        ds_query = "SELECT * FROM dif_data_url_map WHERE dif_id = '%s'" % row['dif_id']
+        ds_query_string = cur.mogrify(ds_query)
+        cur.execute(ds_query_string)
+        datasets = cur.fetchall()
+        row['datasets'] = datasets
+
+        # get the list of repositories
+        repos = []
+        for ds in datasets:
+            repo = ds['repository']
+            if repo not in repos:
+                repos.append(repo)
+        row['repositories'] = repos
+
+    template_dict['dif_records'] = rows
+
+    if template_dict['award'] == "":
+        template_dict['award'] = "Any award"
+
+    if template_dict['dif_id'] == "":
+        template_dict['dif_id'] = "Any DIF ID"
+
+    return render_template('dif_browser.jnj', **template_dict)
 
 
 @app.route('/getfeatureinfo')

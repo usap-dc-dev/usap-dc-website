@@ -104,7 +104,6 @@ body{
 	
 
 
-
 /*
 menu
 */
@@ -462,7 +461,42 @@ content area & common elements
   padding-bottom: 0.5em;
   margin-left: 9em;
 }
-#content table {
+
+
+/* table theming */
+
+table {
+  width:100%;
+  border:2px solid #024161;
+  border-collapse: separate;
+  padding:0;
+  margin:5px 5px 10px 5px;
+}
+
+table th {
+  background-color:#92b9c5;
+  text-align: left;
+  padding-right: 1em; 
+  padding: 2px 5px;
+  line-height:1.5em; 
+  border:1px solid white;
+}
+
+table tr {
+  padding: 2px 5px;
+  line-height:1.5em;
+   
+}
+
+table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+table td {
+  padding:2px;
+  border:1px solid white;
+}
+/*#content table {
   margin: 0.5em 0 1em 0;
   border-collapse: collapse;
 }
@@ -490,7 +524,7 @@ content area & common elements
 }
 #content table.left_header tfoot td {
   border-bottom: 0;
-}
+}*/
 #content a {
   padding: 0 1px 0 1px;
 }

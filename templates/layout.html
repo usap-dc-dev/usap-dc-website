@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
 
+
   {% if cur=='home' or cur=='search' or cur=='map' %}
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3/ol.css')}}" />
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.css')}}"/>
@@ -29,6 +30,8 @@
   <!-- InstanceEndEditable -->
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery/dist/jquery.js') }}"></script>
   <script type="text/javascript" src="/static/js/oauth.js"></script>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script type="text/javascript" src="{{url_for ('static', filename='js/sorttable.js')}}"></script>
 
   <script type="application/ld+json">
     {
@@ -187,6 +190,11 @@
   <script src="{{ url_for('static', filename='js/search.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
   {% endif %}
+  {% if cur=='dif_browser' %}
+  <script type="text/javascript" src="{{ url_for('static', filename='bower_components/sprintf/dist/sprintf.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery-ui/jquery-ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
+  {% endif %}
 
 
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.css')}}"/>
@@ -254,7 +262,7 @@
           <ul>
             <li><a href="{{url_for('search')}}">Search USAP-DC</a></li>
             <li><a href="https://gcmd.gsfc.nasa.gov/KeywordSearch/Freetext.do?Portal=amd&amp;MetadataType=0&amp;Freetext=DIF%2FIDN_Node%3A+AMD*">Search AMD</a></li>
-            <li><a href="#" disabled> DIF Browser</a></li>
+            <li><a href="{{url_for('dif_browser')}}">DIF Browser</a></li>
           </ul>
         </li>
         <li><a href="#">Other IEDA Resources</a>
@@ -297,6 +305,11 @@
     {% if cur == "home" %}
 
     {% block home %}{%endblock home %}
+
+    {% elif cur == "dif_browser" %}
+      <div class="content">
+        {% block dif_body %}{%endblock dif_body %}
+      </div>
     {% else %}
     <div id="wrapper">
       {% block body %}{%endblock body %}

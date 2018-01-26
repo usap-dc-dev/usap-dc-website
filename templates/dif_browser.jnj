@@ -1,0 +1,237 @@
+{% extends "layout.html" %}
+{% set cur = "dif_browser" %}
+{% block dif_body %}
+<script type="text/javascript">
+
+var titles = {{json_dumps(titles)}}
+  .map(function(r) { return r['title']; })
+  .filter(function(t) { return t; });
+
+var pi_names = {{json_dumps(pi_names)}}
+  .map(function(r) { return r['pi_name']; })
+  .filter(function(t) { return t; });
+
+var awards = {{json_dumps(awards)}}
+  .map(function(r) { return r['award']; })
+  .filter(function(t) { return t; });
+
+var dif_ids = {{json_dumps(dif_ids)}}
+  .map(function(r) { return r['dif_id']; })
+  .filter(function(t) { return t; });
+
+ $(document).ready(function() {
+  $(document).ajaxStart(function () { $("html").addClass("wait"); });
+  $(document).ajaxStop(function () { $("html").removeClass("wait"); });
+  $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
+  $('[data-toggle="tooltip"]').tooltip('hide');
+
+
+  function makeAutocompleteSource(wordlist) {
+  return function(term, responseFn) {
+      var re = new RegExp($.ui.autocomplete.escapeRegex(term),'i');
+      var ret = wordlist.filter(function(t) {return re.test(t); });
+      ret.unshift(term);
+      return responseFn(ret);
+  }
+    };
+    
+    $('[name="title"]').typeahead({
+  source: makeAutocompleteSource(titles),
+  autoSelect: false
+    });
+
+    $('[name="pi_name"]').typeahead({
+  source: makeAutocompleteSource(pi_names),
+  autoSelect: false
+    });
+
+    $('[name="award"]').typeahead({
+  source: makeAutocompleteSource(awards),
+  autoSelect: false
+    });
+
+    $('[name="dif_id"]').typeahead({
+  source: makeAutocompleteSource(dif_ids),
+  autoSelect: false
+    });
+
+});
+ 
+</script>
+
+
+<style>
+
+   .select-editable-award {
+       position:relative;
+       background-color:white;
+       /*border:solid grey 1px;*/
+       width:100px;
+       height:30px;
+   }
+   .select-editable-award select {
+       /*position:absolute;*/
+       top:0px;
+       left:0px;
+       font-size:14px;
+       /*border:none;*/
+       width:100px;
+       margin:0;
+       background-color:white;
+   }
+   .select-editable-award input {
+       position:absolute;
+       top:0px;
+       left:3px;
+       width:80px;
+       height:17px;
+       padding:1px;
+       font-size:14px;
+       border:none;
+       background-color:white;
+   }
+   .select-editable-award select:focus, .select-editable input:focus {
+       outline:none;
+   }
+
+   .select-editable-dif-id {
+       position:relative;
+       background-color:white;
+       /*border:solid grey 1px;*/
+       width:300px;
+       height:30px;
+   }
+   .select-editable-dif-id select {
+       /*position:absolute;*/
+       top:0px;
+       left:0px;
+       font-size:14px;
+       /*border:none;*/
+       width:300px;
+       margin:0;
+       background-color:white;
+   }
+   .select-editable-dif-id input {
+       position:absolute;
+       top:0px;
+       left:3px;
+       width:280px;
+       height:17px;
+       padding:1px;
+       font-size:14px;
+       border:none;
+       background-color:white;
+   }
+   .select-editable-dif-id select:focus, .select-editable input:focus {
+       outline:none;
+   }
+
+</style>
+<div >
+  <h2 class="title">USAP-DC DIF browser</h2>
+  <h5> Search includes AMD DIF records managed through USAP-DC.</h5>
+  <h5><b>Note:</b> Includes records formerly managed through AGDC. Not all records contain links to datasets.</h5>
+
+  <br/>
+
+<form action="{{url_for('dif_browser')}}" method="POST" enctype="multipart/form-data">
+  <div style="margin:5px;"><b>PI Name: </b> 
+    <input type="text" name="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
+    <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
+  </div>
+
+    <div style="margin:5px;"><b>Title Keyword: </b> 
+     <input type="text" name="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
+   </div> 
+
+   <div style="margin:5px;"><b>Award: </b> 
+    <span class="select-editable-award">
+      <select onchange="this.nextElementSibling.value=this.value">
+      <option value='Any award' {% if award =='' or award =='Any award' %} selected {% endif %}>Any award</option>
+      {% for row in awards %}
+        {% if row['award'] != "" %}
+          <option value="{{row['award']}}" {% if row['award'] == award %} selected {% endif %}> {{row['award']}}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <input name="award" type="text" value="{{award}}" />
+
+  </div>
+
+  <div style="margin:5px;"><b>DIF ID: </b> 
+    <span class="select-editable-dif-id">
+      <select onchange="this.nextElementSibling.value=this.value">
+        <option value='Any DIF ID' {% if award =='' or award =='Any DIF ID' %} selected {% endif %}>Any DIF ID</option>
+        {% for row in dif_ids %}
+          <option value="{{row['dif_id']}}" {% if row['dif_id'] == dif_id %} selected {% endif %}> {{row['dif_id']}}</option>
+        {% endfor %}
+      </select>
+      <input name="dif_id" type="text" value="{{dif_id}}" />
+    </div>
+  </div>
+
+  <div style="margin-top: 10px"><input type="submit" value="Search"/>
+  </form>
+
+  {% if dif_records|length > 0 %}
+
+    <div>
+      <i><font size=2 color=gray>({{dif_records|length}} Data Set(s)) </font></i>
+
+      <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
+    </div>
+
+  <table class='sortable' preserve_style='row'>
+    
+      <tr>
+        <th width="150">DIF ID</th>
+        <th width="50">NSF award</th>
+        <th width="200">PI (CoPIs)</th>
+        <th width="300">Title</th>
+        <th width="250">List of Datasets</th>
+        <th width="50">Repositories</th>
+      </tr>
+    
+      {% for val in dif_records %}
+   
+      <tr class='w3-border'>
+        {% set dif_url = "https://gcmd.gsfc.nasa.gov/search/Metadata.do?entry=" + val['dif_id'] + "&amp;subset=GCMD" %}
+        <td><a target='_blank' href='{{dif_url}}'>{{val['dif_id']}}</a></td>
+
+        {% if val['award'] != "" %}
+          {% set award_url = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + val['award_7d'] %}
+          <td><a target='_blank' href='{{award_url}}'>{{val['award']}}</a></td>
+        {% else %}
+          <td></td>
+        {% endif %}
+
+        <td>{{val['authors']}}</td>
+        <td>{{val['title']}}</td>
+
+
+    <td><font size=2>
+    {% for ds in val['datasets'] %}
+      <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
+    {% endfor %}
+    </font></td>
+
+    <td><font size=2>
+    {% for repo in val['repositories'] %}
+      {{repo}}<br/>
+    {% endfor %}
+    </font></td>
+
+  </tr>
+    {% endfor %}
+
+  </table>
+{% else %}
+  <td colspan="4"><br/><br/><i>No records found, please try again.</i></td>
+{% endif %}
+
+
+
+</div>
+
+
+{% endblock dif_body %}
