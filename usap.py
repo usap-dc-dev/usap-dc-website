@@ -1126,7 +1126,7 @@ def map():
 
 @app.route('/dif_browser', methods=['GET', 'POST'])
 def dif_browser():
-    template_dict = {}
+    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': ''}
     (conn, cur) = connect_to_db()
 
     query = "SELECT award FROM dif_test ORDER BY award"
