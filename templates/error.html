@@ -3,25 +3,9 @@
 {% block body %}
 
 
-<style>
-  #main {
-  margin-left: 250px;
-  padding: 20px;
-  }
-
- #sidebar-div {
-   margin-top: 20px; 
- }
-</style>
-
 <div class="container">
-  <div id="sidebar-div">
-    {% if name %}
-      {% include 'sidebar.html' %}
-    {% endif %}
-  </div>
-  <!-- END HEADER -->
-  <div id="main">
+
+  <div >
     {{error_message|safe}}
     <br/><br/>
     <button onclick="goBack()">Go Back</button>

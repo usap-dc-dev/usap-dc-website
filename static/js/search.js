@@ -115,6 +115,7 @@ $(document).ready(function() {
 	}
     };
     
+
     $('[name="title"]').typeahead({
 	source: makeAutocompleteSource(titles),
 	autoSelect: false
@@ -123,6 +124,12 @@ $(document).ready(function() {
 	source: makeAutocompleteSource(parameters),
 	autoSelect: false
     });
+ //    $('[name="award-input"]').typeahead({
+	// source: makeAutocompleteSource(awards_str),
+	// autoSelect: false
+ //    });
+
+
 
     $('#datepicker').datepicker({
 	format: "yyyy-mm-dd",

@@ -21,14 +21,18 @@ body{
 
 .wrapper {
     position:relative;
-    width:950px;
+    /*width:950px;*/
     padding-top:25px;
     padding-left:68px;
   }
 
 #wrapper {
-  width:950px;
+/*  width:950px;*/
   margin: 30px;
+}
+
+.fixed-width {
+  width:950px;
 }
 
 .usap-dc-banner{ 
@@ -465,7 +469,7 @@ content area & common elements
 
 /* table theming */
 
-table {
+#dif-browser-table table {
   width:100%;
   border:2px solid #024161;
   border-collapse: separate;
@@ -473,7 +477,7 @@ table {
   margin:5px 5px 10px 5px;
 }
 
-table th {
+#dif-browser-table table th {
   background-color:#92b9c5;
   text-align: left;
   padding-right: 1em; 
@@ -482,21 +486,22 @@ table th {
   border:1px solid white;
 }
 
-table tr {
+#dif-browser-table table tr {
   padding: 2px 5px;
   line-height:1.5em;
    
 }
 
-table tr:nth-child(even) {
+#dif-browser-table table tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
-table td {
+#dif-browser-table table td {
   padding:2px;
   border:1px solid white;
 }
-/*#content table {
+
+#content table {
   margin: 0.5em 0 1em 0;
   border-collapse: collapse;
 }
@@ -524,7 +529,7 @@ table td {
 }
 #content table.left_header tfoot td {
   border-bottom: 0;
-}*/
+}
 #content a {
   padding: 0 1px 0 1px;
 }

@@ -84,18 +84,18 @@
 
 </script>
 
-<div class="content">
+<div class="content fixed-width">
 
   <div class="container-fluid">
     <div class="row">
 
       {% include 'sidebar.html' %}
       
-      <div id="main-content" class="col-xs-9">
+      <div id="main-content" class="col-xs-9" >
     <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
     <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
     <div style="clear:both"></div>
-    <div class="title" style="font-size: 1em;">Page 1 of &nbsp; 2</div>
+    <div class="title" style="font-size: 1em;">Page 1 of 2</div>
     <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
     <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
       <div class="form-group required">
@@ -178,7 +178,7 @@
       
       <div>
         <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
-        <table>
+        <table style="border:0">
           <tbody>
         <tr>
           <td align="center">

@@ -617,7 +617,10 @@ def dataset2():
         elif request.form.get('action') == 'Previous Page':
             return redirect('/submit/dataset')
     else:
-        return render_template('dataset2.html', name=user_info['name'], dataset_metadata=session.get('dataset_metadata', dict()))
+        email = ""
+        if user_info.get('email'):
+            email = user_info.get('email')
+        return render_template('dataset2.html', name=user_info['name'], email=email, dataset_metadata=session.get('dataset_metadata', dict()))
 
 
 @app.route('/submit/project',methods=['GET','POST'])
@@ -800,26 +803,26 @@ def home():
     return render_template('home.html', **template_dict)
 
 
-# @app.route("/home2")
-# def home2():
-#     template_dict = {}
-#     # read in news
-#     news_dict = []
-#     with open("static/recent_news.txt") as csvfile:
-#         reader = csv.reader(csvfile, delimiter="\t")
-#         for row in reader:
-#             if row[0] == "#" or len(row) != 2: continue
-#             news_dict.append({"date": row[0], "news": row[1]})
-#         template_dict['news_dict'] = news_dict
-#     # read in recent data
-#     data_dict = []
-#     with open("static/recent_data.txt") as csvfile:
-#         reader = csv.reader(csvfile, delimiter="\t")
-#         for row in reader:
-#             if row[0] == "#" or len(row) != 4: continue
-#             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
-#         template_dict['data_dict'] = data_dict
-#     return render_template('home2.html', **template_dict)
+@app.route("/home2")
+def home2():
+    template_dict = {}
+    # read in news
+    news_dict = []
+    with open("static/recent_news.txt") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        for row in reader:
+            if row[0] == "#" or len(row) != 2: continue
+            news_dict.append({"date": row[0], "news": row[1]})
+        template_dict['news_dict'] = news_dict
+    # read in recent data
+    data_dict = []
+    with open("static/recent_data.txt") as csvfile:
+        reader = csv.reader(csvfile, delimiter="\t")
+        for row in reader:
+            if row[0] == "#" or len(row) != 4: continue
+            data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
+        template_dict['data_dict'] = data_dict
+    return render_template('home2.html', **template_dict)
 
 
 

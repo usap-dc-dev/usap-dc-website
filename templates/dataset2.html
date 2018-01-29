@@ -3,7 +3,7 @@
 {% block body %}
 
 
-<div class="content">
+<div class="content fixed-width">
 
     <div class="container-fluid">
 	<div class="row">
@@ -13,7 +13,7 @@
 		<h3 style="float:left;">Submit Your Dataset</h3>
     <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
     <div style="clear:both"></div>
-		<div class="title" style="font-size: 1em;">Page 2 of &nbsp; 2</div>
+		<div class="title" style="font-size: 1em;">Page 2 of 2</div>
 		<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 
 		<form action="/submit/dataset2" method="POST" enctype="multipart/form-data" name="entry" id="entry">
@@ -27,19 +27,22 @@ N/A if no devices were used in the study.<br>
 Write “see files”, if this information is provided in files. [<a href="/devices" target="_new">examples</a>]<br>
 <textarea name="devices" rows="3" cols="80">{{dataset_metadata.get('devices','')}}</textarea><br>
 <br>
+
 <b>2. Brief description of data acquisition procedures</b><br>
 Please describe briefly the procedure / protocols used for acquiring data.<br>
 N/A if no new data were acquired. [<a href="/procedures" target="_new">examples</a>]<br>
 <textarea name="procedures" rows="3" cols="80">{{dataset_metadata.get('procedures','')}}</textarea><br>
 <br>
+
 <b>3. Brief description of data processing</b><br>
 Please briefly describe any processing steps applied to the data, including, for example, methodology, calibrations, algorithms used.<br>
-Write "see files" if this information is provided with the files.
+Write "see files" if this information is provided with the files.<br>
 <textarea name="data_processing" rows="3" cols="80">{{dataset_metadata.get('data_processing','')}}</textarea><br>
 <br>
+
 <b>4. Brief description of data content</b><br>
 Please briefly describe the content of the data files, e.g. column headers, abbreviations, file format, file organization (i.e. directory structure if applicable).<br>
-Write "see files" if this information is provided with the files.
+Write "see files" if this information is provided with the files.<br>
 <textarea name="content" rows="3" cols="80">{{dataset_metadata.get('content','')}}</textarea><br>
 <br>
 <b>5. Known issues/limitations of the dataset (if applicable)</b><br>

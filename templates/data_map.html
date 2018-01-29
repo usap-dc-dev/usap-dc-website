@@ -2,24 +2,45 @@
 {% set cur = "map" %}
 {% block body %}
 
+
+
 <div class="container">
 
- <div id="main">
-  <div class="main-inner">
 
-   <h1 class="title">Map of Datasets Registered with the USAP-DC</h1>
+
+<!--    <h1 class="title">Map of Datasets Registered with the USAP-DC</h1>
   <br/>
   <div class="map-container">
     <div class="map-btn-container">
       <em>Dots correspond with centroid locations</em>
     </div>
     <div id="map"></div>   
-  </div>
+  </div> -->
 
-  <!-- END CONTENT -->
+
+<iframe id="databrowser" src="http://app.iedadata.org/spdatabrowser/" height="500" width="900" frameBorder="2px"></iframe>
+
 </div>
-<!-- END MAIN INNER -->
-</div>
-<!-- END MAIN -->
-</div>
+
+
+
+
+<script type="text/javascript">
+  
+$(document).ready(function() {
+  var iframe = document.getElementById('databrowser');
+  // var innerDoc = iframe.contentDocument || iframe.contentWindow.Document;
+  // var el = $(["title='USAP-DC'"]);
+  // iframe.contentDocument.$(["title='USAP-DC'"]).click();
+
+  var el = $("#databrowser").contents(".map-control-button[title='USAP-DC']");
+  console.log(el);
+  // el.click();
+  // $("#databrowser").find(".map-control-button[title='USAP-DC']").click();
+$("#databrowser").contents(".map-control-button[title='USAP-DC']").click();
+});
+
+
+
+</script>
 {% endblock body %}

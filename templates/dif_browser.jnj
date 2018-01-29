@@ -155,7 +155,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
       {% endfor %}
     </select>
     <input name="award" type="text" value="{{award}}" />
-
+    </span>
   </div>
 
   <div style="margin:5px;"><b>DIF ID: </b> 
@@ -167,7 +167,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
         {% endfor %}
       </select>
       <input name="dif_id" type="text" value="{{dif_id}}" />
-    </div>
+    </span>
   </div>
 
   <div style="margin-top: 10px"><input type="submit" value="Search"/>
@@ -181,6 +181,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
       <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
     </div>
 
+  <div id='dif-browser-table'>
   <table class='sortable' preserve_style='row'>
     
       <tr>
@@ -225,6 +226,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
     {% endfor %}
 
   </table>
+  </div>
 {% else %}
   <td colspan="4"><br/><br/><i>No records found, please try again.</i></td>
 {% endif %}
