@@ -1195,7 +1195,7 @@ def dif_browser():
         row['repositories'] = repos
 
         if row['dif_id'] == "NSF-ANT05-37143":
-            datasets = [{'title': 'GenBank datasets', 'url': url_for('genBank_datasets')}]
+            datasets = [{'title': 'Studies of Antarctic Fungi', 'url': url_for('genBank_datasets')}]
 
         row['datasets'] = datasets
 
