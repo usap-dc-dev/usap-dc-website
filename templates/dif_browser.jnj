@@ -128,7 +128,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
 
 </style>
 <div >
-  <h2 class="title">USAP-DC DIF browser</h2>
+  <h2 class="title">USAP-DC DIF browser (beta)</h2>
   <h5> Search includes AMD DIF records managed through USAP-DC.</h5>
   <h5><b>Note:</b> Includes records formerly managed through AGDC. Not all records contain links to datasets.</h5>
 
@@ -186,8 +186,8 @@ var dif_ids = {{json_dumps(dif_ids)}}
     
       <tr>
         <th width="150">DIF ID</th>
-        <th width="50">NSF award</th>
-        <th width="200">PI (CoPIs)</th>
+        <th width="50">NSF Award</th>
+        <th width="200">PI (CoPIs) / Date Created</th>
         <th width="300">Title</th>
         <th width="250">List of Datasets</th>
         <th width="50">Repositories</th>
@@ -206,11 +206,14 @@ var dif_ids = {{json_dumps(dif_ids)}}
           <td></td>
         {% endif %}
 
-        <td>{{val['authors']}}</td>
+        <td>{{val['authors']}}<br/>{{val['date_created']}}</td>
         <td>{{val['title']}}</td>
 
 
     <td><font size=2>
+    {% if val['datasets']|length == 0 %}
+      No data provided
+    {% endif %}
     {% for ds in val['datasets'] %}
       <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
     {% endfor %}

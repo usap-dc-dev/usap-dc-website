@@ -132,6 +132,20 @@
       </div>
     </div>
   {% endif %}
+
+  {% if len(data['dif_records']) > 0 %}
+  <div class="row">
+    <div class="field">
+      AMD - DIF Record(s)
+    </div>
+    <div class="value">
+      {% for record in data['dif_records'] %}
+        <a target=_new href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record['id']}}">{{record['id']}}</a><br/>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="row">
     <div class="field">
       Repository (current):
@@ -228,18 +242,6 @@
 	{% endfor %}
       </div>
     </div>
-  {% endif %}
-  {% if len(data['dif_records']) > 0 %}
-  <div class="row">
-    <div class="field">
-      AMD - DIF Record(s)
-    </div>
-    <div class="value">
-      {% for record in data['dif_records'] %}
-        <a target=_new href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record['id']}}">{{record['id']}}</a><br/>
-      {% endfor %}
-    </div>
-  </div>
   {% endif %}
   {% if data.get('version') %}
   <div class="row">

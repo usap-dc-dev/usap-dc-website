@@ -87,6 +87,64 @@ div.one_col{
 	}
 */
 	
+
+
+/* set button background-color to always be white */
+.btn-default:hover,
+.btn-default:active,
+.btn-default:active:hover,
+.btn-default:active:focus,
+.btn-default:focus,
+.open > .dropdown-toggle.btn-default,
+.open > .dropdown-toggle.btn-default:hover, 
+.open > .dropdown-toggle:focus, 
+.open > .dropdown-toggle.btn-default:focus {
+	background-color: white;
+}
+
+.btn-group.open .dropdown-toggle {
+	box-shadow: inset 0 0 0 white;
+	-webkit-box-shadow: inset 0 0 0 white;
+}
+
+.select-editable {
+   position:relative;
+   background-color:white;
+   /*border:solid grey 1px;*/
+   width:225px;
+   height:30px;
+}
+
+.select-editable select {
+   /*position:absolute;*/
+   top:0px;
+   left:0px;
+   font-size:14px;
+   /*border:none;*/
+   width:225;
+   margin:0;
+   background-color:blue;
+}
+.select-editable input {
+   position:absolute;
+   top:2px;
+   left:1px;
+   width:198px;
+   height:28px;
+   padding:6px;
+   font-size:14px;
+   border:0;
+   background-color:white;
+   z-index:2;
+}
+
+
+.select-editable select:focus, .select-editable input:focus {
+  /*background-color:lightgrey;*/
+   outline:1px;
+   /*z-index:1;*/
+}
+
 div.autocomplete {
   position:absolute;
   background-color:white;

@@ -17,17 +17,40 @@
     .map(function(r) { return r['title']; })
     .filter(function(t) { return t; });
 
+  var projects_rows = {{json_dumps(projects)}};
+  var projects = ["All"];
+  for (var row of projects_rows) {
+    //projects[row['award']] = { 'name': row['name'], 'title': row['title'] };
+    projects.push(row['id']);
+  }
+
+  var persons_rows = {{json_dumps(persons)}};
+  var persons = ["All"];
+  for (var row of persons_rows) {
+    persons.push(row['id']);
+  }
+
+  var programs_rows = {{json_dumps(programs)}};
+  var programs = ["All"];
+  for (var row of programs_rows) {
+    programs.push(row['id']);
+  }
+
   var parameters = {{json_dumps(parameters)}}
     .map(function(r) { return capitalizeWords(r['id']); })
   .filter(function(p) { return p; });
 
   var awards_rows = {{json_dumps(nsf_grants)}};
-  var awards = {}
+  var awards = {};
+  var awards_str = ["All"];
   for (var row of awards_rows) {
     awards[row['award']] = { 'name': row['name'], 'title': row['title'] };
+    awards_str.push(row['award']+ " " + row['name']);
   }
 
+
   var search_params = {{json_dumps(search_params)}}
+
 </script>
 
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
@@ -39,7 +62,7 @@
   border-bottom: none !important;
   }
   
-.content a:hover {
+  .content a:hover {
   text-decoration:none;
   color:#000000;
   background-color: rgba(0,0,0,0);
@@ -194,41 +217,60 @@
 	</div>
 
 
+
 	<!-- Project -->
 	<div class="form-group col3" id="project-group">
 	  <label for="project">Science Project</label>
-	  
-	  <select class="form-control selectpicker" name="project" data-title="All" data-width="225px">
+    <div class="select-editable">
+      <select class="form-control selectpicker" id="project" name="project" data-title="All" data-width="225px">
+      </select>
+      <input class="editable-input" id="project-input" type="text" />
+    </div>
 	  </select>
 	</div>
    </div>
 
    <div class="row2>">
 
+
    	<!-- Person -->
 	<div class="form-group col1" id="person-group">
 	  <label for="person">Person</label>
-	  
-	  <select class="form-control selectpicker" name="person" data-title="All" data-width="225px">
+    <div class="select-editable">
+      <select class="form-control selectpicker" id="person" name="person" data-title="All" data-width="225px">
+      </select>
+      <input class="editable-input" id="person-input" type="text" />
+    </div>
 	  </select>
 	</div>
 
 	<!-- Program -->
 	<div class="form-group col2" id="program-group">
 	  <label for="program">NSF Funding Program</label>
-	  
-	  <select class="form-control selectpicker" name="program" data-title="All" data-width="225px">
+    <div class="select-editable">
+      <select class="form-control selectpicker" id="program" name="program" data-title="All" data-width="225px">
+      </select>
+      <input class="editable-input" id="program-input" type="text" />
+    </div>
 	  </select>
 	</div>
 
 	<!-- Award -->
 	<div class="form-group col3" id="award-group">
-	  <label for="award">Award</label>
+	  <label for="award-input">Award</label>
+    <div class="select-editable">
+      <select class="form-control selectpicker" id="award" name="award" data-title="All" data-width="225px">
+      </select>
+      <input class="editable-input" id="award-input" type="text" />
+    </div>
+  </div>
 
-	  <select class="form-control selectpicker" name="award" data-title="All" data-width="225px">
-	  </select>
-	</div>
-   </div>
+
+ 
+</div>
+
+
+
 
    <div class="row3">
 	  <!-- Spatial Bounds -->

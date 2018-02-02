@@ -1,15 +1,33 @@
 function fill_opts(menu_name, opts, selected) {
     var $select = $('.selectpicker[name='+'"'+menu_name+'"]');
     $select.selectpicker({width:'225px'});
+
     $select.empty();
     $select.append('<option value="">All</option>');
     for (var opt of opts) {
-	$select.append('<option value="'+opt+'">'+opt+'</option>');
+		$select.append('<option value="'+opt+'">'+opt+'</option>');
     }
+
+    switch (menu_name) {
+    	case 'award':
+    		if(!selected) $('#award-input').val("All"); else $('#award-input').val(selected);
+    		break;
+    	case 'project':
+    		if(!selected) $('#project-input').val("All"); else $('#project-input').val(selected);
+    		break;
+    	case 'person':
+    		if(!selected) $('#person-input').val("All"); else $('#person-input').val(selected);
+    		break;
+    	case 'program':
+    		if(!selected) $('#program-input').val("All"); else $('#program-input').val(selected);
+    		break;
+    }
+
     $select.selectpicker('refresh');
     $select.selectpicker('val', selected);
     
 }
+
 
 function updateMenusWithSelected(selected, reset) {
     selected = selected || {};
@@ -18,26 +36,16 @@ function updateMenusWithSelected(selected, reset) {
 	url: 'http://' + window.location.hostname + '/filter_search_menus',
 	data: selected,
 	success: function(opts) {
-	    for (var menu_name in opts) {
-		fill_opts(menu_name, opts[menu_name], selected[menu_name]);
-	    }
-	    $('#award-group .dropdown-menu ul li a').each(function(i,elem) {
-		var text = $(elem).children('span.text').text();
-		if (text == 'All') {
-		    return;
-		}
-		var award_id = text.split(' ')[0];
-		$(elem).attr('data-toggle', 'tooltip');
-		$(elem).attr('data-placement', 'right');
-		if (awards[award_id] != null) {
-			$(elem).attr('title', awards[award_id]['title']);
-		}
-	    });
-	    $('[data-toggle="tooltip"]').tooltip({container: 'body'});
-	    if (reset) {
+		if (reset) {
 	    	document.getElementById("data_link").reset();
 	    }
-	}
+	    for (var menu_name in opts) {
+			fill_opts(menu_name, opts[menu_name], selected[menu_name]);
+	    }
+
+	    $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+		}
     });
 }
 
@@ -72,20 +80,74 @@ $(document).ready(function() {
     });
 
     
-    $('[name="person"], [name="parameter"], [name="program"], [name="award"], [name="project"]').change(function() {
-	
-	$('[data-toggle="tooltip"]').tooltip('hide');
+    $('#person, #parameter, #program, #award, #project').change(function(e) {
 
-	var selected = {
-	    person: $('.selectpicker[name="person"]').val(),
-	    parameter: $('.selectpicker[name="parameter"]').val(),
-	    program: $('.selectpicker[name="program"]').val(),
-	    award: $('.selectpicker[name="award"]').val(),
-	    project: $('.selectpicker[name="project"]').val(),
-	};
+		$('[data-toggle="tooltip"]').tooltip('hide');
 
-	updateMenusWithSelected(selected, false);
+		var selected = {
+		    person: $('.selectpicker[name="person"]').val(),
+		    parameter: $('.selectpicker[name="parameter"]').val(),
+		    program: $('.selectpicker[name="program"]').val(),
+		    award: $('.selectpicker[name="award"]').val(),
+		    project: $('.selectpicker[name="project"]').val(),
+		};
+		 updateMenusWithSelected(selected, false);
     });
+
+
+    $('#award-input, #project-input, #person-input, #program-input').change(function() {
+	
+		var el = $(':focus');
+		var newVal = el.val();
+		switch (el.attr('id')) {
+			case 'project-input':
+				if (projects.indexOf(newVal) == -1) {
+					$('#project-input').val("All");
+					$('.selectpicker[name="project"]').val("");
+				} else {
+					$('.selectpicker[name="project"]').val(newVal);
+				}
+				break;
+			case 'award-input':
+				if (awards_str.indexOf(newVal) == -1) {
+					$('#award-input').val("All");
+					$('.selectpicker[name="award"]').val("");
+				} else {
+					$('.selectpicker[name="award"]').val(newVal);
+				}
+				break;
+			case 'person-input':
+				if (persons.indexOf(newVal) == -1) {
+					$('#person-input').val("All");
+					$('.selectpicker[name="person"]').val("");
+				} else {
+					$('.selectpicker[name="person"]').val(newVal);
+				}
+				break;
+			case 'program-input':
+				if (programs.indexOf(newVal) == -1) {
+					$('#program-input').val("All");
+					$('.selectpicker[name="program"]').val("");
+				} else {
+					$('.selectpicker[name="program"]').val(newVal);
+				}
+				break;
+			default:
+				return;
+		}
+
+		var selected = {
+		    person: $('.selectpicker[name="person"]').val(),
+		    parameter: $('.selectpicker[name="parameter"]').val(),
+		    program: $('.selectpicker[name="program"]').val(),
+		    award: $('.selectpicker[name="award"]').val(),
+		    project: $('.selectpicker[name="project"]').val(),
+		};
+		updateMenusWithSelected(selected, false);	
+		
+	});
+
+
 
     mc = new MapClient();
 
@@ -107,27 +169,41 @@ $(document).ready(function() {
       $('[name="parameter"]').autocomplete({source: 'http://www.usap-dc.org/parameter_search'});*/
 
     function makeAutocompleteSource(wordlist) {
-	return function(term, responseFn) {
-	    var re = new RegExp($.ui.autocomplete.escapeRegex(term),'i');
-	    var ret = wordlist.filter(function(t) {return re.test(t); });
-	    ret.unshift(term);
-	    return responseFn(ret);
-	}
-    };
+		return function(term, responseFn) {
+		    var re = new RegExp($.ui.autocomplete.escapeRegex(term),'i');
+		    var ret = wordlist.filter(function(t) {return re.test(t); });
+		    ret.unshift(term);
+		    return responseFn(ret);
+		};
+    }
     
 
     $('[name="title"]').typeahead({
 	source: makeAutocompleteSource(titles),
 	autoSelect: false
     });
-    $('[name="parameter"]').typeahead({
-	source: makeAutocompleteSource(parameters),
-	autoSelect: false
-    });
- //    $('[name="award-input"]').typeahead({
-	// source: makeAutocompleteSource(awards_str),
+ //    $('[name="parameter"]').typeahead({
+	// source: makeAutocompleteSource(projects),
 	// autoSelect: false
  //    });
+
+
+    $('#project-input').typeahead({
+	source: makeAutocompleteSource(projects),
+	autoSelect: false
+    });
+    $('#person-input').typeahead({
+	source: makeAutocompleteSource(persons),
+	autoSelect: false
+    });
+    $('#program-input').typeahead({
+	source: makeAutocompleteSource(programs),
+	autoSelect: false
+    });
+    $('#award-input').typeahead({
+	source: makeAutocompleteSource(awards_str),
+	autoSelect: false
+    });
 
 
 
@@ -144,6 +220,7 @@ $(document).ready(function() {
 	title: 'All',
 	width: 'fit'
     });
+
     updateMenusWithSelected(search_params, false);
     
     //$('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('','All'); });

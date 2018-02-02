@@ -803,26 +803,26 @@ def home():
     return render_template('home.html', **template_dict)
 
 
-@app.route("/home2")
-def home2():
-    template_dict = {}
-    # read in news
-    news_dict = []
-    with open("static/recent_news.txt") as csvfile:
-        reader = csv.reader(csvfile, delimiter="\t")
-        for row in reader:
-            if row[0] == "#" or len(row) != 2: continue
-            news_dict.append({"date": row[0], "news": row[1]})
-        template_dict['news_dict'] = news_dict
-    # read in recent data
-    data_dict = []
-    with open("static/recent_data.txt") as csvfile:
-        reader = csv.reader(csvfile, delimiter="\t")
-        for row in reader:
-            if row[0] == "#" or len(row) != 4: continue
-            data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
-        template_dict['data_dict'] = data_dict
-    return render_template('home2.html', **template_dict)
+# @app.route("/home2")
+# def home2():
+#     template_dict = {}
+#     # read in news
+#     news_dict = []
+#     with open("static/recent_news.txt") as csvfile:
+#         reader = csv.reader(csvfile, delimiter="\t")
+#         for row in reader:
+#             if row[0] == "#" or len(row) != 2: continue
+#             news_dict.append({"date": row[0], "news": row[1]})
+#         template_dict['news_dict'] = news_dict
+#     # read in recent data
+#     data_dict = []
+#     with open("static/recent_data.txt") as csvfile:
+#         reader = csv.reader(csvfile, delimiter="\t")
+#         for row in reader:
+#             if row[0] == "#" or len(row) != 4: continue
+#             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
+#         template_dict['data_dict'] = data_dict
+#     return render_template('home2.html', **template_dict)
 
 
 
@@ -1185,7 +1185,6 @@ def dif_browser():
         ds_query_string = cur.mogrify(ds_query)
         cur.execute(ds_query_string)
         datasets = cur.fetchall()
-        row['datasets'] = datasets
 
         # get the list of repositories
         repos = []
@@ -1194,6 +1193,11 @@ def dif_browser():
             if repo not in repos:
                 repos.append(repo)
         row['repositories'] = repos
+
+        if row['dif_id'] == "NSF-ANT05-37143":
+            datasets = [{'title': 'GenBank datasets', 'url': url_for('genBank_datasets')}]
+
+        row['datasets'] = datasets
 
     template_dict['dif_records'] = rows
 
@@ -1206,12 +1210,34 @@ def dif_browser():
     return render_template('dif_browser.jnj', **template_dict)
 
 
+@app.route('/NSF-ANT05-37143_datasets')
+def genBank_datasets():
+    genbank_url = "https://www.ncbi.nlm.nih.gov/nuccore/"
+    (conn, cur) = connect_to_db()
+    ds_query = "SELECT title FROM dif_data_url_map WHERE dif_id = 'NSF-ANT05-37143'"
+    ds_query_string = cur.mogrify(ds_query)
+    cur.execute(ds_query_string)
+    title = cur.fetchone()
+    datasets = re.split(', |\) |\n', title['title'])
+    print(datasets)
+    lines = []
+    for ds in datasets:
+        if ds.strip()[0] == "(":
+            lines.append({'title': ds.replace("(", "")})
+        else:
+            lines.append({'title': ds, 'url': genbank_url + ds.replace(' ', '')})
+    print(lines)
+    template_dict = {'lines': lines}
+    return render_template("NSF-ANT05-37143_datasets.html", **template_dict)
+
+
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
     if request.args.get('layers') != "":
         url = urllib.unquote('http://api.usap-dc.org:81/wfs?' + urllib.urlencode(request.args))
         return requests.get(url).text
     return None
+
 
 @app.route('/polygon')
 def polygon_count():

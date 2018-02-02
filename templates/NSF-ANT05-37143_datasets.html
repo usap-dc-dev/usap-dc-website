@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% set cur = "genbanks" %}
+{% block body %}
+
+<div class="content">
+	<h2> Datasets for DIF ID NSF-ANT05-37143</h2><br/>
+	{% for ds in lines %}
+		{% if ds.get('url') == None %}
+			<h4>{{ds['title']}}</h4>
+		{% else %}
+			<a target="_blank" href="{{ds['url']}}">{{ds['title']}}</a>
+		{% endif %}
+	{% endfor %}
+</div>
+
+{% endblock body %}
