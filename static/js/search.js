@@ -94,6 +94,20 @@ $(document).ready(function() {
 		 updateMenusWithSelected(selected, false);
     });
 
+    $('#award-input, #project-input, #person-input, #program-input').focus(function() {
+    	var el = $(':focus');
+		var newVal = el.val();
+		if (newVal == "All") {
+			el.val("");
+		}
+	});
+
+    $('#award-input, #project-input, #person-input, #program-input').blur(function() {
+		var bluredElement = $(this);
+		if (bluredElement.val() === "") {
+			bluredElement.val("All");
+		}
+	});
 
     $('#award-input, #project-input, #person-input, #program-input').change(function() {
 	
