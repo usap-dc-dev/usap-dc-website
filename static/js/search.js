@@ -35,11 +35,14 @@ function updateMenusWithSelected(selected, reset) {
 	method: 'GET',
 	url: 'http://' + window.location.hostname + '/filter_search_menus',
 	data: selected,
+
 	success: function(opts) {
 		if (reset) {
 	    	document.getElementById("data_link").reset();
 	    }
+
 	    for (var menu_name in opts) {
+	    	// console.log('filling opts: ' + menu_name +", " + selected[menu_name]);
 			fill_opts(menu_name, opts[menu_name], selected[menu_name]);
 	    }
 
@@ -95,7 +98,7 @@ $(document).ready(function() {
     });
 
     $('#award-input, #project-input, #person-input, #program-input').focus(function() {
-    	var el = $(':focus');
+    	var el = $(this);
 		var newVal = el.val();
 		if (newVal == "All") {
 			el.val("");
@@ -110,55 +113,56 @@ $(document).ready(function() {
 	});
 
     $('#award-input, #project-input, #person-input, #program-input').change(function() {
-	
-		var el = $(':focus');
-		var newVal = el.val();
-		switch (el.attr('id')) {
-			case 'project-input':
-				if (projects.indexOf(newVal) == -1) {
-					$('#project-input').val("All");
-					$('.selectpicker[name="project"]').val("");
-				} else {
-					$('.selectpicker[name="project"]').val(newVal);
-				}
-				break;
-			case 'award-input':
-				if (awards_str.indexOf(newVal) == -1) {
-					$('#award-input').val("All");
-					$('.selectpicker[name="award"]').val("");
-				} else {
-					$('.selectpicker[name="award"]').val(newVal);
-				}
-				break;
-			case 'person-input':
-				if (persons.indexOf(newVal) == -1) {
-					$('#person-input').val("All");
-					$('.selectpicker[name="person"]').val("");
-				} else {
-					$('.selectpicker[name="person"]').val(newVal);
-				}
-				break;
-			case 'program-input':
-				if (programs.indexOf(newVal) == -1) {
-					$('#program-input').val("All");
-					$('.selectpicker[name="program"]').val("");
-				} else {
-					$('.selectpicker[name="program"]').val(newVal);
-				}
-				break;
-			default:
-				return;
-		}
+		// need to put in a delay so that some broswers (eg Firefox) can catch up wit the focus
+		window.setTimeout(function() {
+			var el = $(':focus');
+			var newVal = el.val();
+			switch (el.attr('id')) {
+				case 'project-input':
+					if (projects.indexOf(newVal) == -1) {
+						$('#project-input').val("All");
+						$('.selectpicker[name="project"]').val("");
+					} else {
+						$('.selectpicker[name="project"]').val(newVal);
+					}
+					break;
+				case 'award-input':
+					if (awards_str.indexOf(newVal) == -1) {
+						$('#award-input').val("All");
+						$('.selectpicker[name="award"]').val("");
+					} else {
+						$('.selectpicker[name="award"]').val(newVal);
+					}
+					break;
+				case 'person-input':
+					if (persons.indexOf(newVal) == -1) {
+						$('#person-input').val("All");
+						$('.selectpicker[name="person"]').val("");
+					} else {
+						$('.selectpicker[name="person"]').val(newVal);
+					}
+					break;
+				case 'program-input':
+					if (programs.indexOf(newVal) == -1) {
+						$('#program-input').val("All");
+						$('.selectpicker[name="program"]').val("");
+					} else {
+						$('.selectpicker[name="program"]').val(newVal);
+					}
+					break;
+				default:
+					return;
+			}
 
-		var selected = {
-		    person: $('.selectpicker[name="person"]').val(),
-		    parameter: $('.selectpicker[name="parameter"]').val(),
-		    program: $('.selectpicker[name="program"]').val(),
-		    award: $('.selectpicker[name="award"]').val(),
-		    project: $('.selectpicker[name="project"]').val(),
-		};
-		updateMenusWithSelected(selected, false);	
-		
+			var selected = {
+			    person: $('.selectpicker[name="person"]').val(),
+			    parameter: $('.selectpicker[name="parameter"]').val(),
+			    program: $('.selectpicker[name="program"]').val(),
+			    award: $('.selectpicker[name="award"]').val(),
+			    project: $('.selectpicker[name="project"]').val(),
+			};
+			updateMenusWithSelected(selected, false);	
+		}, 300);
 	});
 
 
@@ -219,7 +223,7 @@ $(document).ready(function() {
 	autoSelect: false
     });
 
-
+console.log(persons);
 
     $('#datepicker').datepicker({
 	format: "yyyy-mm-dd",

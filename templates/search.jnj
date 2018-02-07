@@ -224,7 +224,7 @@
     <div class="select-editable">
       <select class="form-control selectpicker" id="project" name="project" data-title="All" data-width="225px">
       </select>
-      <input class="editable-input" id="project-input" type="text" />
+      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="project-input" type="text" />
     </div>
 	  </select>
 	</div>
@@ -239,7 +239,7 @@
     <div class="select-editable">
       <select class="form-control selectpicker" id="person" name="person" data-title="All" data-width="225px">
       </select>
-      <input class="editable-input" id="person-input" type="text" />
+      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="person-input" type="text" />
     </div>
 	  </select>
 	</div>
@@ -250,7 +250,7 @@
     <div class="select-editable">
       <select class="form-control selectpicker" id="program" name="program" data-title="All" data-width="225px">
       </select>
-      <input class="editable-input" id="program-input" type="text" />
+      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="program-input" type="text" />
     </div>
 	  </select>
 	</div>
@@ -261,7 +261,7 @@
     <div class="select-editable">
       <select class="form-control selectpicker" id="award" name="award" data-title="All" data-width="225px">
       </select>
-      <input class="editable-input" id="award-input" type="text" />
+      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="award-input" type="text" />
     </div>
   </div>
 
