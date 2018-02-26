@@ -1,4 +1,5 @@
 #	NOTE: date and news should be separated by a tab
+Feb. 2018	Launched new web site design for USAP-DC.
 Dec. 2017	Presented new web page and USAP-DC functions at AGU fall meeting.
 Dec. 2017	Conducted workshop on USAP-DC data submission and Antarctic GeoMapApp at AGU fall meeting
 Oct. 2017	Presented new web page and USAP-DC functions at WAIS meeting.

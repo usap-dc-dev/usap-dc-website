@@ -421,6 +421,10 @@ def dataset():
 
         session['dataset_metadata']['agree'] = 'agree' in request.form
         flash('test message')
+
+        if request.form.get('action') == "Previous Page":
+            return render_template('dataset.html', name=user_info['name'], email="", dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+
         return redirect('/submit/dataset2')
 
     else:
@@ -614,8 +618,10 @@ def dataset2():
             s.quit()
 
             return redirect('/thank_you/dataset')
-        elif request.form.get('action') == 'Previous Page':
-            return redirect('/submit/dataset')
+        elif request.form['action'] == 'Previous Page':
+            # post the form back to dataset since the session['dataset_metadata'] 
+            # gets lost if we use a standard GET redirect
+            return redirect('/submit/dataset', code=307)
     else:
         email = ""
         if user_info.get('email'):

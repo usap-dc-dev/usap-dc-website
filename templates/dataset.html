@@ -100,7 +100,7 @@
     <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
       <div class="form-group required">
         <label for="email">Contact Email</label>
-        <input class="form-control" type="text" name="email" value="{{dataset_metadata.get('email','')}}"/>
+        <input class="form-control" type="text" name="email" value="{{dataset_metadata.get('email',email)}}"/>
       </div>
 
       <div class="form-group required">
