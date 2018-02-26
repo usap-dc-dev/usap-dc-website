@@ -267,9 +267,8 @@
 	References
       </div>
       <div class="value">
-	{% set refs = data['references'][0]['reference'].split('\n\n') %}
 	<ol>
-	  {% for r in refs %}
+	  {% for r in data['refs'] %}
 	    <li>
 	      {{r}}
 	    </li>

@@ -1074,10 +1074,10 @@ def landing_page(dataset_id):
     if not url:
         return redirect(url_for('not_found'))
     usap_domain = 'http://www.usap-dc.org/'
-    print(url)
+    # print(url)
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
-        print(directory)
+        # print(directory)
         file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
         omit = set(['readme.txt', '00README.txt', 'index.php', 'index.html', 'data.html'])
         file_paths = [f for f in file_paths if os.path.basename(f) not in omit]
@@ -1101,6 +1101,14 @@ def landing_page(dataset_id):
         if p['id'] == metadata['creator'] and p['id_orcid'] is not None:
             creator_orcid = p['id_orcid']
             break
+
+    references = []
+    for ref in metadata.get('references'):
+        refs = ref['reference'].replace("<br><br>", "\n\n")
+        refs = refs.split("\n\n")
+        references.extend(refs)
+    metadata['refs'] = references
+
     return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
 
 @app.route('/dataset/<path:filename>')
