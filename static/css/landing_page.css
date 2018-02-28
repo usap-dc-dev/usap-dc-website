@@ -1,0 +1,95 @@
+
+#map {
+    position: relative;
+    margin: 10px;
+    width:320px;
+    height:320px;
+    border:2px solid black;
+    z-index: 1;
+}
+
+body {
+font-color: black !important;
+}
+
+.lprow {
+position: relative;
+min-height: 40px;
+margin-left: 20px;
+margin-bottom: 10px;
+}
+
+.field {
+margin-left: 10px;
+position: absolute;
+width: 200px;
+font-weight: bold;
+}
+
+.value {
+margin-left: 200px;
+}
+
+.col1 {
+text-align: center;
+margin-left: 10px;
+width: 100px;
+position: absolute;  
+}
+
+.col2 {
+margin-left: 150px;
+width: 150px;
+position: absolute;
+}
+
+.col3 {
+margin-left: 250px;
+width: 500 px;
+position: absolute;
+font-weight: bold;
+
+}
+
+.col4 {
+margin-left: 600px;
+width: 150 px;
+}
+
+.download {
+background-color: #008ab8;
+color: white;
+font-weight: 200;
+padding: 3px 10px 3px 10px;
+font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+font-size: 0.7em;
+border-radius: 10px;
+cursor: pointer;
+}
+
+.value li {
+display: list-item;
+list-style: circle;
+}
+
+#file-rows {
+max-height: 400px;
+overflow: auto;
+}
+
+.header {
+color: white;
+font-family: Georiga,"Times New Roman",Times,serif;
+font-size: 1.8em;
+letter-spacing: -1px;
+line-height: normal;
+font-weight: normal;
+padding: 5px;
+background-color: #92b9c5;
+margin: 10px;
+position: relative;
+}
+
+.header.small {
+font-size: 1.3em;
+}

@@ -1,0 +1,255 @@
+{% extends "layout.html" %}
+{% set cur = "landing_page" %}
+{% block body %}
+
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('.download').click(function() {
+      window.open($(this).attr('data-url'), '_blank');
+    });
+  });
+
+  var extents = {{json_dumps(data['spatial_extents'])}};
+</script>
+
+<div id="metadata">
+  <div class="header small">
+    Metadata
+  </div>
+
+<table>
+  <tr>
+   <td width="75%">
+      <div class="lprow">
+        <div class="field">
+          Resource Type
+        </div>
+        <div class="value">
+          {% if data.get('doi') == '10.15784/601021' %}
+          Document
+          {% else %}
+          Dataset
+          {% endif %}
+        </div>
+      </div>
+
+      {% if data['doi'] %}
+      <div class="lprow">
+        <div class="field">
+          Data DOI
+        </div>
+        <div class="value">
+          <a href="http://ezid.cdlib.org/id/doi:{{data['doi']}}">{{data['doi']}}</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if len(data['dif_records']) > 0 %}
+      <div class="lprow">
+        <div class="field">
+          AMD - DIF Record(s)
+        </div>
+        <div class="value">
+          {% for record in data['dif_records'] %}
+          <a target=_new href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record['dif_id']}}">{{record['dif_id']}}</a><br/>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="lprow">
+        <div class="field">
+          Repository (current):
+        </div>
+        <div class="value">
+          USAP-DC
+        </div>
+      </div>
+      {% if data.get('superset') == 'nsidc' %}
+      <div class="lprow">
+        <div class="field">
+         Repository (original):
+       </div>
+       <div class="value">
+         NSIDC
+       </div>
+     </div>
+     {% endif %}
+     <div class="lprow">
+      <div class="field">
+        Title
+      </div>
+      <div class="value">
+        {{data['title']}}
+      </div>
+    </div>
+    {% if data.get('abstract') %}
+    <div class="lprow">
+      <div class="field">
+        Abstract
+      </div>
+      <div class="value">
+        {{data['abstract']}}
+      </div>
+    </div>
+    {% endif %}
+  </td>
+
+  {% if data.get('spatial_extents') %}
+    <td valign="top">
+      <div id="map"></div>
+    </td>
+  {% endif %}
+   
+  </tr>
+</table>
+
+  {% if data.get('release_date') %}
+  <div class="lprow">
+    <div class="field">
+      Date Created
+    </div>
+    <div class="value">
+      {{data['release_date']}}
+    </div>
+  </div>
+  {% endif %}
+  {% if data.get('creator') %}
+  <div class="lprow">
+    <div class="field">
+      Creator(s)
+    </div>
+    <div class="value">
+      {{data['creator']}}
+      {% if data['creator_orcid'] %}
+      &nbsp&nbsp (<a href="orcid.org/{{data['creator_orcid']}}">ORCID</a>)
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if data.get('spatial_extents') %}
+  <div class="lprow">
+    <div class="field">
+     Spatial Extent(s)
+   </div>
+   <div class="value">
+     {% for ex in data['spatial_extents'] %}
+      {{'<br/>'.join(['West: ' + str(ex['west']), 'East: ' + str(ex['east']), 'South: ' + str(ex['south']), 'North: ' + str(ex['north'])])|safe}}<br/>
+     {% endfor %}
+  </table>
+</div>
+</div>
+
+
+
+{% endif %}
+{% if data.get('temporal_extents') %}
+<div class="lprow">
+  <div class="field">
+  	Temporal Extent(s)
+  </div>
+  <div class="value">
+  	{% for ex in data['temporal_extents'] %}
+   Start: {{ex['start_date']}}<br/>
+   End: {{ex['stop_date']}}<br/>
+   {% endfor %}
+ </div>
+</div>
+{% endif %}
+{% set awards = filter_awards(data['awards']) %}
+{% if len(awards) > 0 %}
+<div class="lprow">
+  <div class="field">
+  	Award
+  </div>
+  <div class="value">
+  	{% for aw in awards %}
+   <a target=_new href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{aw['award']}}">NSF {{aw['award']}}</a><br/>
+   {% endfor %}
+ </div>
+</div>
+{% endif %}
+{% if data.get('version') %}
+<div class="lprow">
+  <div class="field">
+    Version
+  </div>
+  <div class="value">
+    {{data['version']}}
+  </div>
+</div>
+{% endif %}
+<div class="lprow">
+  <div class="field">
+    Language
+  </div>
+  <div class="value">
+    {{data['language_id']}}
+  </div>
+</div>
+{% if len(data['references']) > 0 and len(data['references'][0]['reference'].strip()) > 0 %}
+<div class="lprow">
+  <div class="field">
+  	References
+  </div>
+  <div class="value">
+  	<ol>
+     {% for r in data['refs'] %}
+     <li>
+       {{r}}
+     </li>
+     {% endfor %}
+   </ol>
+ </div>
+</div>
+{% endif %}
+</div>
+
+{% if data.get('url_extra') %}
+<div id="supplement">
+  <div class="header small">
+    Supplemental Docs
+  </div>
+  <div class="lprow">
+    <div class="col1">
+      <div class="download" data-url="/supplement/{{data['id']}}">
+        View
+      </div>  
+    </div>
+    <div class="col3">
+      {{data['url_extra']}}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div id="files">
+  <div class="header small">
+    Data Files
+  </div>
+  <div id="file-rows">
+    {% for f in data['files'] %}
+    <div class="lprow">
+     <div class="col1">
+      <div class="download" data-url="{{f['url']}}">
+       {% if f['url'].startswith('http://www.usap-dc.org/') %}
+       Download
+       {% else %}
+       External
+       {% endif %}
+     </div>
+   </div>
+   <div class="col2">
+    {{f['size']}}
+  </div>
+  <div class="col3">
+   {{f['name']}}
+ </div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+
+{% endblock body %}

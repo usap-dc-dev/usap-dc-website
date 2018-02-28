@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
 
 
-  {% if cur=='home' or cur=='search' or cur=='map' %}
+  {% if cur=='home' or cur=='search' or cur=='map' or cur == 'landing_page'%}
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3/ol.css')}}" />
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.css')}}"/>
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
@@ -161,7 +161,7 @@
     }
   </script> 
 
-  {% if cur=='home' or cur=='search' or cur=='map' %}
+  {% if cur=='home' or cur=='search' or cur=='map' or cur == 'landing_page' %}
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/proj4/dist/proj4.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3/ol-debug.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.js')}}"></script>
@@ -210,6 +210,9 @@
   <link rel="stylesheet" type="text/css" href="/static/css/main.css" media="screen, projection" />
   {% if cur=='home' or cur=='map' %}
   <link rel="stylesheet" type="text/css" href="/static/css/home.css" media="screen, projection" />
+  {% endif %}
+  {% if cur=='landing_page' %}
+  <link rel="stylesheet" type="text/css" href="/static/css/landing_page.css" media="screen, projection" />
   {% endif %}
   {% if cur=='search' %}
   <link rel="stylesheet" type="text/css" href="/static/css/search.css" media="screen, projection" />
