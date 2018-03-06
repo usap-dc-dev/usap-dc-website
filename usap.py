@@ -30,7 +30,10 @@ from collections import namedtuple
 import string
 import humanize
 import urllib
-
+import lib.json2sql as json2sql
+import shutil
+from lib.curatorFunctions import isCurator, isRegisteredWithEZID, submitToEZID, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
+    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists
 
 app = Flask(__name__)
 
@@ -44,6 +47,15 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=86400,
     UPLOAD_FOLDER="upload",
     DATASET_FOLDER="dataset",
+    SUBMITTED_FOLDER="submitted",
+    DCXML_FOLDER="submitted",
+    ISOXML_FOLDER="submitted",
+    DOCS_FOLDER="doc",
+    DOI_REF_FILE="inc/doi_ref",
+    CURATORS_LIST="inc/curators.txt",
+    EZID_FILE="inc/ezid.json",
+    DATACITE_TO_ISO_XSLT="static/DataciteToISO19139v3.2.xslt",
+    ISO_WATCHDIR_CONFIG_FILE="inc/iso_watchdir_config.json",
     DEBUG=True
 )
 
@@ -260,7 +272,7 @@ def get_datasets(dataset_ids):
                         ) proj ON (d.id = proj.dataset_id)
                         LEFT JOIN (
                             SELECT ddm.dataset_id, json_agg(dif) dif_records
-                            FROM dataset_dif_map ddm JOIN dif ON (dif.dif_id=ddm.dif_id)
+                            FROM dataset_dif_map ddm JOIN dif ON (dif.id=ddm.dif_id)
                             GROUP BY ddm.dataset_id
                         ) dif ON (d.id = dif.dataset_id)
                         WHERE d.id IN %s ORDER BY d.title''',
@@ -598,9 +610,24 @@ def dataset2():
             for fname, fobj in fnames.items():
                 fobj.save(os.path.join(upload_dir, fname))
 
-            msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
+
+            # save json file in submitted dir
+            submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+            # get next_id
+            next_id = getNextDOIRef()
+            updateNextDOIRef()
+            submitted_file = os.path.join(submitted_dir, next_id + ".json")
+            with open(submitted_file, 'w') as file:
+                file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+
+            # email RT queue
+            # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
+            message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
+                % (request.url_root, next_id)
+            msg = MIMEText(message)
             sender = msg_data.get('email')
             recipients = ['info@usap-dc.org']
+       
             msg['Subject'] = 'USAP-DC Dataset Submission'
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
@@ -627,6 +654,19 @@ def dataset2():
         if user_info.get('email'):
             email = user_info.get('email')
         return render_template('dataset2.html', name=user_info['name'], email=email, dataset_metadata=session.get('dataset_metadata', dict()))
+
+
+
+# Read the next doi reference number from the file
+def getNextDOIRef():
+    return open(app.config['DOI_REF_FILE'], 'r').readline().strip()
+
+
+# increment the next email reference number in the file
+def updateNextDOIRef():
+    newRef = int(getNextDOIRef()) + 1
+    with open(app.config['DOI_REF_FILE'], 'w') as refFile:
+        refFile.write(str(newRef))
 
 
 @app.route('/submit/project',methods=['GET','POST'])
@@ -772,7 +812,7 @@ def get_access_token():
     return session.get('google_access_token')
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET'])
 def logout():
     if 'user_info' in session:
         del session['user_info']
@@ -782,6 +822,8 @@ def logout():
         del session['orcid_access_token']
     if 'dataset_metadata' in session:
         del session['dataset_metadata']
+    if request.args.get('type') == 'curator':
+        return redirect(url_for('curator'))
     return redirect(url_for('submit'))
 
 
@@ -1141,6 +1183,255 @@ def map():
     return render_template('data_map.html')
 
 
+@app.route('/curator', methods=['GET', 'POST'])
+def curator():
+    template_dict = {}
+    template_dict['message'] = []
+
+    # login
+    if (not isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+    else:
+        template_dict['need_login'] = False
+        submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+
+        # get list of json files in submission directory
+        files = os.listdir(submitted_dir)
+        submissions = []
+        for f in files:
+            if f.find(".json") > 0:
+                dataset_id = f.split(".json")[0]
+                # if a submission has a landing page, then set the status to Complete, otherwise Pending
+                if len(get_datasets([dataset_id])) == 0:
+                    status = "Pending"
+                    landing_page = ''
+                else:
+                    landing_page = '/view/dataset/%s' % dataset_id
+                    if not isRegisteredWithEZID(dataset_id):
+                        status = "Not yet registered with EZID"
+                    elif not ISOXMLExists(dataset_id):
+                        status = "ISO XML file missing"
+                    else:
+                        status = "Completed"
+                submissions.append({'id': dataset_id, 'status': status, 'landing_page': landing_page})
+        submissions.sort(reverse=True)
+        template_dict['submissions'] = submissions
+
+        if request.args.get('uid') is not None:
+            uid = request.args.get('uid')
+            template_dict['uid'] = uid
+            submission_file = os.path.join(submitted_dir, uid + ".json")
+            template_dict['filename'] = submission_file
+            template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
+            template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
+            template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
+            template_dict['tab'] = "json"
+            if request.method == 'POST':
+                template_dict.update(request.form.to_dict())
+                # read in json and convert to sql
+                if request.form.get('submit') == 'make_sql':
+                    json_str = request.form.get('json').encode('utf-8')
+                    json_data = json.loads(json_str)
+                    template_dict['json'] = json_str
+                    sql, readme_file = json2sql.json2sql(json_data, uid)
+                    template_dict['sql'] = sql
+                    template_dict['readme_file'] = readme_file
+                    template_dict['tab'] = "sql"
+                    try:
+                        with open(readme_file) as infile:
+                            readme_text = infile.read()
+                    except:
+                        template_dict['error'] = "Can't read Read Me file"
+                    template_dict['readme'] = readme_text
+
+                # read in sql and submit to the database only
+                elif request.form.get('submit') == 'import_to_db':
+                    sql_str = request.form.get('sql').encode('utf-8')
+                    template_dict['tab'] = "sql"
+                    problem = False
+                    print("IMPORTING TO DB")
+                    try:
+                        # run sql to import data into the database
+                        (conn, cur) = connect_to_db()
+                        cur.execute(sql_str)
+
+                        template_dict['message'].append("Successfully imported to database")
+                        template_dict['landing_page'] = '/view/dataset/%s' % uid
+                    except Exception as err:
+                        template_dict['error'] = "Error Importing to database: " + str(err)
+                        problem = True
+
+                    if not problem:
+                        # copy uploaded files to their permanent home
+                        print('Copying uploaded files')
+                        json_str = request.form.get('json').encode('utf-8')
+                        json_data = json.loads(json_str)
+                        timestamp = json_data.get('timestamp')
+                        if timestamp:
+                            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
+                            dest_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid, timestamp)
+                            try:
+                                if os.path.exists(dest_dir):
+                                    shutil.rmtree(dest_dir)
+                                shutil.copytree(upload_dir, dest_dir)
+                            except Exception as err:
+                                template_dict['error'] = "Error copying uploaded files: " + str(err)
+                                problem = True
+
+                # full curator workflow
+                elif request.form.get('submit') == 'full_workflow':
+                    # read in sql and submit to the database
+                    sql_str = request.form.get('sql').encode('utf-8')
+                    template_dict['tab'] = "sql"
+                    problem = False
+                    print("IMPORTING TO DB")
+                    try:
+                        # run sql to import data into the database
+                        (conn, cur) = connect_to_db()
+                        cur.execute(sql_str)
+
+                        template_dict['message'].append("Successfully imported to database")
+                        template_dict['landing_page'] = '/view/dataset/%s' % uid
+                    except Exception as err:
+                        template_dict['error'] = "Error Importing to database: " + str(err)
+                        problem = True
+
+                    if not problem:
+                        # copy uploaded files to their permanent home
+                        print('Copying uploaded files')
+                        json_str = request.form.get('json').encode('utf-8')
+                        json_data = json.loads(json_str)
+                        timestamp = json_data.get('timestamp')
+                        if timestamp:
+                            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
+                            dest_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid, timestamp)
+                            try:
+                                if os.path.exists(dest_dir):
+                                    shutil.rmtree(dest_dir)
+                                shutil.copytree(upload_dir, dest_dir)
+                            except Exception as err:
+                                template_dict['error'] = "Error copying uploaded files: " + str(err)
+                                problem = True
+
+                    if not problem:
+                        # EZID DOI submission
+                        print('EZID DOI submission')
+                        datacite_file, status = getDataCiteXML(uid)
+                        if status == 0:
+                            template_dict['error'] = "Error: Unable to get DataCiteXML from database."
+                            problem = True
+                        else:
+                            msg = submitToEZID(uid)
+                            template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
+                            if msg.find("Error") >= 0:
+                                template_dict['error'] = msg
+                                problem = True
+                            else:
+                                template_dict['message'].append(msg)
+
+                    if not problem:
+                        # generate ISO XML file and place in watch dir for geoportal.
+                        print('Generating ISO XML file')
+                        msg = doISOXML(uid)
+                        template_dict['isoxml'] = getISOXMLFromFile(uid)
+                        print(msg)
+                        if msg.find("Error") >= 0:
+                            template_dict['error'] = msg
+                            problem = True
+                        else:
+                            template_dict['message'].append(msg)
+
+                # save updates to the readme file
+                elif request.form.get('submit') == "save_readme":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "readme"
+                    readme_str = request.form.get('readme').encode('utf-8')
+                    filename = request.form.get('readme_file')
+                    try:
+                        with open(filename, 'w') as out_file:
+                            out_file.write(readme_str)
+                        template_dict['message'].append("Successfully updated Read Me file")
+                    except:
+                        template_dict['error'] = "Error updating Read Me file"
+
+                # Standalone EZID DOI submission
+                elif request.form.get('submit') == "submit_to_ezid":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "dcxml"
+                    xml_str = request.form.get('dcxml').encode('utf-8')
+                    datacite_file = getDCXMLFileName(uid)
+                    try:
+                        with open(datacite_file, 'w') as out_file:
+                            out_file.write(xml_str)
+                        msg = submitToEZID(uid)
+                        if msg.find("Error") >= 0:
+                            template_dict['error'] = msg
+                            problem = True
+                        else:
+                            template_dict['message'].append(msg)
+                    except Exception as err:
+                        template_dict['error'] = "Error updating DataCite XML file: " + str(err) + datacite_file
+
+                # Standalone DataCite XML generation
+                elif request.form.get('submit') == "generate_dcxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "dcxml"
+                    datacite_file, status = getDataCiteXML(uid)
+                    if status == 0:
+                        template_dict['error'] = "Error: Unable to get DataCiteXML from database."
+                    else:
+                        template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
+
+                # Standalone save ISO XML to watch dir
+                elif request.form.get('submit') == "save_isoxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "isoxml"
+                    xml_str = request.form.get('isoxml').encode('utf-8')
+                    isoxml_file = getISOXMLFileName(uid)
+                    try:
+                        with open(isoxml_file, 'w') as out_file:
+                            out_file.write(xml_str)
+                            template_dict['message'].append("ISO XML file saved to watch directory.")
+
+                    except Exception as err:
+                        template_dict['error'] = "Error saving ISO XML file to watch directory: " + str(err)
+
+                # Standalone ISO XML generation
+                elif request.form.get('submit') == "generate_isoxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "isoxml"
+                    isoxml = getISOXMLFromFile(uid)
+                    if isoxml.find("Error") >= 0:
+                        template_dict['error'] = "Error: Unable to generate ISO XML."
+                    template_dict['isoxml'] = isoxml
+
+            else:
+                # display submission json file
+                try:
+                    with open(submission_file) as infile:
+                        data = json.load(infile)
+                        submission_data = json.dumps(data, sort_keys=True, indent=4)
+                        template_dict['json'] = submission_data
+                except:
+                    template_dict['error'] = "Can't read submission file: %s" % submission_file
+
+    return render_template('curator.html', **template_dict)
+
+
+
+@app.route('/curator/help', methods=['GET', 'POST'])
+def curator_help():
+    template_dict = {}
+    template_dict['submitted_dir'] = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+    template_dict['doc_dir'] = os.path.join(current_app.root_path, "doc/{dataset_id}")
+    template_dict['upload_dir'] = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], "{upload timestamp}")
+    template_dict['dataset_dir'] = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', "{dataset_id}", "{upload timestamp}")
+    template_dict['watch_dir'] = os.path.join(current_app.root_path, "watch/isoxml")
+
+    return render_template('curator_help.html', **template_dict)
+
+
 @app.route('/dif_browser', methods=['GET', 'POST'])
 def dif_browser():
     template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': ''}
@@ -1161,7 +1452,6 @@ def dif_browser():
     query = 'SELECT DISTINCT pi_name FROM dif_test ORDER BY pi_name'
     cur.execute(query)
     template_dict['pi_names'] = cur.fetchall()
-
 
     query = "SELECT DISTINCT dif_test.* FROM dif_test WHERE dif_test.dif_id !=''"
 

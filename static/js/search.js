@@ -223,8 +223,6 @@ $(document).ready(function() {
 	autoSelect: false
     });
 
-console.log(persons);
-
     $('#datepicker').datepicker({
 	format: "yyyy-mm-dd",
 	startView: 2

@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+{% set cur = "curator" %}
+{% block body %}
+
+<div class="border">
+	<div class="content">
+
+	<h1 class="title">Curator Help Page</h1>
+
+		<p>When a user submits a new dataset, the web portal generates a JSON object and saves it in the submitted directory ({{submitted_dir}}).
+		The portal emails a message to web@usap-dc.org with a link to the curator page for that dataset. This message will have the Subject line “USAP-DC Dataset Submission” and will be routed to an RT queue.</p>
+
+
+		<h3>Login</h3>
+		<p>To access the Curator page, a user is required to login with an account that is included in the curators list.</p> 
+
+		<h3>Curator home page</h3>
+
+
+		<p>The USAP-DC curator home page contains a table of the submissions currently in the submitted directory.  Each submission has a status:
+			<ul>
+				<li> <b>Pending</b> The JSON file is in the submitted directory, but no work has been done with it.</li>
+				<li> <b>Not yet registered with EZID</b> The submission has been uploaded to the database, the readme file has been created and the submitted files have been moved to the dataset directory.  But the submission has not yet been registered with EZID.</li>
+				<li> <b>ISO XML file missing</b> The submission has been uploaded to the database, the readme file has been created, the submitted files have been moved to the dataset directory, and a DataCite XML has been generated and succesfuly submitted to EZID.  However, an ISO XML file has not yet been created and moved to the watch directory for Geoportal harvesting.</li>
+				<li> <b>Completed</b> The submission has been fully ingested.</li>
+			</ul>
+			Once a submission has been uploaded to the database, a landing page will be available.  This can be viewed by clicking on the link in the third column.
+		</p>
+
+		<p>To start the dataset ingestion workflow, either select the link sent in the email, or click on the Submission ID in the table.  This will take you to the curator page for that submission. The page contains tabs entitled "JSON", "SQL", "README", "DataCite XML", "ISO XML".</p>
+
+		<h3>JSON</h3>
+		<p>The initial tab that will be displayed contains an editable display of the JSON object created by the submission.  The curator can browse through the text and make any changes that are required.  When the curator is done, they can click the <i>Create SQL and Readme</i> button.  This will run a script that parses the JSON file and creates an SQL file for data ingestion. It will also create a README_{dataset_id}.txt file with additional metadata and dataset descriptions.  The Readme file will be saved in the doc directory ({{doc_dir}}). The process will automatically move on the the SQL tab.</p>
+
+		<h3>SQL</h3>
+		<p>The SQL tab will display the SQL command generated from the JSON in the previous tab. The SQL needs to be checked for correct values and missing entries, especially:
+		<ul>
+			<li>names might be in the person list and that first and last name are correct</li>
+			<li>add additional person entries depending on the creators list</li>
+			<li>check and adjust the NSF program</li>
+			<li>check, if mid point calculations are correct</li>
+			<li>check, if references are present</li>
+			<li>check potential link to major science project</li>
+			<li>add keywords</li>
+			</ul>
+		When all updates have been made, the curator can either click <i>Import to Database Only</i> or <i>Full Workflow</i>.  </p>
+
+		<h4>Full Workflow</h4>
+		<p> If this is chosen, the following workflow will be performed:
+		<ol>
+			<li>The SQL will be sent to the database and all the dataset information will be imported.</li>
+			<li>Any file(s) submitted by the user via the Web upload form will be copied from the upload folder ({{upload_dir}}) and placed in their permanent home ({{dataset_dir}})</li> 
+			<li>A DataCite XML file will be generated from the database and submitted to EZID for DOI registration</li>
+			<li>The DataCite XML will be transformed to an ISO XML file that will be placed in a watch directory ({{watch_dir}}). A cron job will check this directory daily and rsync it with the appropriate directory on the seafloor server, where it will be harvested by the Geoportal.</li>
+		</ol>
+		After the workflow has been completed, green messages will be displayed at the top of the screen, listing successful stages.  If there is an error, a red message will be displayed.  For the database submission, you may see error messages for duplicate insert statements if a person, DIF, and/or _map table entry already exist from a prior submission. This is harmless. Correct the error and run again.</p>
+		<p>The landing page for the Dataset should now exist.  Check that it looks ok using the link returned.
+			If you see errors, you can connect to the SQL database and modify table(s) as necessary to correct them.</p>
+		<p>The new Dataset should also now display on the “Live Status” <a target="_blank" href="http://team.usap-dc.org/"> Google Sheet</a>.
+
+
+
+		<p>If a the workflow does not complete all the way through successfully, you may want to work through the steps one at a time. </p>
+
+		<h4>Import to Database Only</h4>
+		<p> If this is chosen, just the following will be performed:
+		<ol>
+			<li>The SQL will be sent to the database and all the dataset information will be imported.</li>
+			<li>Any file(s) submitted by the user via the Web upload form will be copied from the upload folder ({{upload_dir}}) and placed in their permanent home ({{dataset_dir}})</li> 
+		</ol>
+		For the database submission, you may see error messages for duplicate insert statements if a person, DIF, and/or _map table entry already exist from a prior submission. This is harmless. Correct the error and run again.</p>
+
+		<h3>README</h3>
+		<p>The README tab will display the text from the README_{dataset_id}.txt file in the doc directory ({{doc_dir}}). This is populated with certain fields from the JSON file.  The curator should check the text and make sure it looks OK.  If there are any changes to be made, they can be made on the screen.  Clicking the <i>Save Readme File</i> button will save the changes.</p>
+
+		<h3>DataCite XML</h3>
+		<p>If there was a problem with the EZID submission when running the Full Workflow, the curator can work on fixing it in this tab. The database submission must be performed before this can be run.</p>
+		<p>Click the <i>Generate DataCite XML from DB</i> button to generate the DataCite XML using the database script. This can then be viewed and edited, if needed.  Click the <i>Submit to EZID</i> button to submit the XML to EZID and register the DOI.  A success or error message will be displayed.</p>
+
+		<h3>ISO XML</h3>
+		<p>If there was a problem with the ISO XML generation when running the Full Workflow, the curator can work on fixing it in this tab. The database submission must be performed before this can be run.</p>
+		<p>Click the <i>Generate ISO XML from Datacite XML</i> button to generate the ISO XML using the DataCite XML and the DataciteToISO19139v3.2.xslt file. This can then be viewed and edited, if needed.  Click the <i>Save in Watch Directory</i> button to save the file in the watch directory {{watch_dir}}.  A cron job will check this directory daily and rsync it with the appropriate directory on the seafloor server, where it will be harvested by the Geoportal.  A success or error message will be displayed.</p>
+
+		<h3>Future improvements</h3>
+		<ul>
+			<li> Specific handling of very large datasets.</li>
+			<li> More automatic checking and formatting of data when creating the SQL file, e.g. handling muliple authors; checking against existing database entries.</li>
+			<li> Ability to edit database from within the Curator pages.</li>
+		</ul>
+
+
+
+
+
+
+
+
+</div>
+</div>
+{% endblock body %}

@@ -1,0 +1,189 @@
+{% extends "layout.html" %}
+{% set cur = "curator" %}
+{% block body %}
+
+<div class="border">
+<div class="content">
+
+<h2 style="float:left;">Curator Page</h2>
+<a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('curator_help')}}" class="btn btn-primary">Help</a>
+<div style="clear:both"></div>
+
+{% for msg in message %}
+  <div class="alert alert-success" style="width:800;">
+    <h4>{{msg}}</h4>
+  </div>
+{% endfor %}
+{% if landing_page %}
+  <div class="alert alert-success" style="width:800;">
+    <h4><a target="_blank" href="{{landing_page}}">Click here to view landing page</a></h4>
+  </div>
+{% endif %}
+{% if error %}
+  <div class="alert alert-danger" style="width:800;">
+    <h4>{{error}}</h4>
+  </div>
+{% endif %}
+
+{% if need_login %}
+    
+<div class="container">
+      
+  <h4>Curator Login </h4>
+
+  <div id="container">
+    <h5>
+      Sign in using an authorized curator account
+    </h5>
+    <div id="buttons">
+      <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+        Google
+      </a>
+      <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+        <span style="color:gray; font-weight:bolder">ORC</span>iD
+      </a>
+    </div>
+  </div>
+
+      
+{% else %}
+  <a href="{{url_for('logout', type='curator')}}" style="float:right">Log out</a>
+
+  {% if json %}
+
+    <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
+      <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'jsonTab')" {% if tab == 'json' %} id="defaultOpen" {% endif %}>JSON</button>
+        <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
+        <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
+        <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
+        <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
+      </div>
+    <form method="post" enctype="multipart/form-data">
+
+      <div id="jsonTab", class="tabcontent active">
+          <h4>{{filename}}</h4>
+        <button type="submit" name="submit" value="make_sql" onclick="waitCursor()">Create SQL and Readme</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="json" name="json" cols="130" rows="50">{{ json }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+      <div id="sqlTab", class="tabcontent">
+        <h4>SQL for {{filename}}</h4>
+        <button type="submit" name="submit" value="import_to_db" title="Import to DB and copy uploaded files" onclick="waitCursor()">Import to Database Only</button>
+        <button type="submit" name="submit" value="full_workflow" title="Import to DB, copy uploaded files, DataCite XML generation and EZID submission, ISO XML generation and copying to watch dir." onclick="waitCursor()">Full Workflow</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="sql" name="sql" cols="130" rows="50">{{ sql }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+      <div id="readmeTab", class="tabcontent">
+        <h4>Read Me text for {{readme_file}}</h4>
+        <input type="hidden" name="readme_file" value="{{readme_file}}">
+        <button type="submit" name="submit" value="save_readme" onclick="waitCursor()">Save Readme File</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="readme" name="readme" cols="130" rows="50">{{ readme }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+      <div id="dcxmlTab", class="tabcontent">
+        <h4>DataCite XML for {{uid}}</h4>
+        <input type="hidden" name="dcxml_file" value="{{dcxml_file}}">
+        <button type="submit" name="submit" value="generate_dcxml" onclick="waitCursor()">Generate DataCite XML from DB</button>
+        <button type="submit" name="submit" value="submit_to_ezid" onclick="waitCursor()">Submit To EZID</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="dcxml" name="dcxml" cols="130" rows="50">{{ dcxml }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+      <div id="isoxmlTab", class="tabcontent">
+        <h4>ISO XML for {{uid}}</h4>
+        <input type="hidden" name="isoxml_file" value="{{isoxml_file}}">
+        <button type="submit" name="submit" value="generate_isoxml" onclick="waitCursor()">Generate ISO XML from Datacite XML</button>
+        <button type="submit" name="submit" value="save_isoxml" onclick="waitCursor()">Save in Watch Directory</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="isoxml" name="isoxml" cols="130" rows="50"> {{ isoxml }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+    </form>
+
+  {% else %}
+    
+    <div id='dif-browser-table'>
+      <table class='sortable' >
+           <thead class="w3-striped w3-bordered w3-hoverable">
+            <tr>
+              <th>Submission</th>
+              <th>Status</th>
+              <th>Landing Page</th>
+            </tr>
+          </thead>
+
+          {% for sub in submissions %}
+              <tr {% if sub['status'] != 'Completed' %} style="font-weight: bold" {% endif %}>
+                  <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub['id']}} </a></td>
+                  <td>{{sub['status']}}</td>
+                  <td>{% if sub['landing_page'] %} <a target="_blank" href={{sub['landing_page']}}>{{sub['landing_page']}}</a> {% endif %}</td>
+              </tr>
+          {% endfor %}
+      </table>
+    </div>
+    {% endif %}
+  
+{% endif %}
+
+</div>
+</div>
+
+<script>
+
+  function waitCursor() {
+    $("html").addClass("wait");
+  }
+
+  function openTab(evt, tabName) {
+    // Declare all variables
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tabcontent" and hide them
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+  }
+  // Get the element with id="defaultOpen" and click on it
+  document.getElementById("defaultOpen").click();
+</script>
+{% endblock body %}
