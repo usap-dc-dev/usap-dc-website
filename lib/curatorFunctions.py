@@ -109,6 +109,7 @@ def getDataCiteXML(uid):
             out_text = xml.toprettyxml().encode('utf-8').strip()
         except:
             out_text = "Error running database query. \n%s" % sys.exc_info()[1][0]
+            print(out_text)
             status = 0
 
     # write the xml to a temporary file

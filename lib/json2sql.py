@@ -79,14 +79,15 @@ def make_sql(data, id):
     cur.execute(query)
     res = cur.fetchone()
   
-    if res['count'] == 0:
+    if res['count'] == 0 and data["author"] != '':
         line = "insert into person(id,email,id_orcid) values ('{}','{}','{}');\n".format(data["author"],data["email"],data["orcid"])
         sql_out += line
 
-    if data["author"] != data["name"]:
+    if data["name"] != data["author"] and data["name"] != '':
         query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["name"]
         cur.execute(query)
-        res = cur.fetchall()
+        res = cur.fetchone()
+        print(res)
         if res['count'] == 0:
             line = "insert into person(id,email,id_orcid) values ('{}','{}','{}');\n".format(data["name"],data["email"],data["orcid"])
             sql_out += line
@@ -125,8 +126,9 @@ def make_sql(data, id):
                            (id, 'USAP-' + data["award"])
     sql_out += line
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
-    line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
-                           (id, data["name"])
+    if data["name"] != data["author"] and data["name"] != '':
+        line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
+                               (id, data["name"])
     
     sql_out += line
     if data["author"] != data["name"]:
@@ -155,9 +157,10 @@ def make_sql(data, id):
     line = "insert into dataset_spatial_map(dataset_id,west,east,south,north) values  ('%s','%s','%s','%s','%s');\n" % \
                            (id, data["geo_w"],data["geo_e"],data["geo_s"],data["geo_n"],)
     sql_out += line
-    line = "insert into dataset_temporal_map(dataset_id,start_date,stop_date) values ('%s','%s','%s');\n\n" % \
-                           (id, data["start"], data["stop"])
-    sql_out += line
+    if data["start"] != "" or data["stop"] != "":
+        line = "insert into dataset_temporal_map(dataset_id,start_date,stop_date) values ('%s','%s','%s');\n\n" % \
+                               (id, data["start"], data["stop"])
+        sql_out += line
 
     if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != ''):
         west = float(data["geo_w"])
