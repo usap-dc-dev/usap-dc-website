@@ -485,6 +485,7 @@ content area & common elements
   padding: 2px 5px;
   line-height:1.5em; 
   border:1px solid white;
+  word-wrap: break-word;
 }
 
 #dif-browser-table table tr {
