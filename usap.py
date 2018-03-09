@@ -50,6 +50,7 @@ app.config.update(
     SUBMITTED_FOLDER="submitted",
     DCXML_FOLDER="submitted",
     ISOXML_FOLDER="submitted",
+    SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
     DOI_REF_FILE="inc/doi_ref",
     CURATORS_LIST="inc/curators.txt",
@@ -417,6 +418,8 @@ def get_projects(conn=None, cur=None):
 
 @app.route('/submit/dataset', methods=['GET', 'POST'])
 def dataset():
+    error = ''
+    success = ''
     user_info = session.get('user_info')
     if user_info is None:
         session['next'] = '/submit/dataset'
@@ -428,14 +431,52 @@ def dataset():
         session['dataset_metadata'].update(request.form.to_dict())
 
         publications_keys = [s for s in request.form.keys() if "publication" in s]
-        publications_keys.sort()
-        session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
+        if len(publications_keys) > 0:
+            publications_keys.sort()
+            session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
 
         session['dataset_metadata']['agree'] = 'agree' in request.form
         flash('test message')
 
         if request.form.get('action') == "Previous Page":
-            return render_template('dataset.html', name=user_info['name'], email="", dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+
+        elif request.form.get('action') == "save":
+            # save to file
+            if user_info.get('orcid'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
+            elif user_info.get('id'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            else:
+                error = "Unable to save dataset."
+            if save_file:
+                try:
+                    with open(save_file, 'w') as file:
+                        file.write(json.dumps(session.get('dataset_metadata', dict()), indent=4, sort_keys=True))
+                    success = "Saved dataset form"
+                except Exception as e:
+                    error = "Unable to save dataset."
+            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+
+        elif request.form.get('action') == "restore":
+            # restore from file
+            if user_info.get('orcid'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
+            elif user_info.get('id'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            else:
+                error = "Unable to restore dataset"
+            if saved_file:
+                try:
+                    with open(saved_file, 'r') as file:
+                        data = json.load(file)
+                    session['dataset_metadata'].update(data)
+                    success = "Restored dataset form"
+                except Exception as e:
+                    error = "Unable to restore dataset."
+            else:
+                error = "Unable to restore dataset."
+            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
 
         return redirect('/submit/dataset2')
 
@@ -443,7 +484,7 @@ def dataset():
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
-        return render_template('dataset.html', name=user_info['name'], email=email, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+        return render_template('dataset.html', name=user_info['name'], email=email, error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
 
 
 @app.route('/submit/help', methods=['GET', 'POST'])
@@ -569,6 +610,8 @@ def format_time():
         
 @app.route('/submit/dataset2',methods=['GET','POST'])
 def dataset2():
+    error = ""
+    success = ""
     user_info = session.get('user_info')
     if user_info is None:
         session['next'] = '/submit/dataset2'
@@ -576,6 +619,7 @@ def dataset2():
     if request.method == 'POST':
         if 'dataset_metadata' not in session:
             session['dataset_metadata'] = dict()
+
         session['dataset_metadata'].update(request.form.to_dict())
         session['dataset_metadata']['properGeoreferences'] = 'properGeoreferences' in request.form
         session['dataset_metadata']['propertiesExplained'] = 'propertiesExplained' in request.form
@@ -648,7 +692,45 @@ def dataset2():
         elif request.form['action'] == 'Previous Page':
             # post the form back to dataset since the session['dataset_metadata'] 
             # gets lost if we use a standard GET redirect
+            print('DATASET2b, publications: %s' % session['dataset_metadata'].get('publications'))
             return redirect('/submit/dataset', code=307)
+        elif request.form.get('action') == "save":
+            # save to file
+            if user_info.get('orcid'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
+            elif user_info.get('id'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            else:
+                error = "Unable to save dataset."
+            if save_file:
+                try:
+                    with open(save_file, 'w') as file:
+                        file.write(json.dumps(session.get('dataset_metadata', dict()), indent=4, sort_keys=True))
+                    success = "Saved dataset form"
+                except Exception as e:
+                    error = "Unable to save dataset."
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()))
+
+        elif request.form.get('action') == "restore":
+            # restore from file
+            if user_info.get('orcid'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
+            elif user_info.get('id'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            else:
+                error = "Unable to restore dataset"
+            if saved_file:
+                try:
+                    with open(saved_file, 'r') as file:
+                        data = json.load(file)
+                    session['dataset_metadata'].update(data)
+                    success = "Restored dataset form"
+                except Exception as e:
+                    error = "Unable to restore dataset."
+            else:
+                error = "Unable to restore dataset."
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()))
+
     else:
         email = ""
         if user_info.get('email'):
@@ -1419,7 +1501,6 @@ def curator():
     return render_template('curator.html', **template_dict)
 
 
-
 @app.route('/curator/help', methods=['GET', 'POST'])
 def curator_help():
     template_dict = {}
@@ -1471,7 +1552,8 @@ def dif_browser():
         if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):
             query += " AND dif_test.dif_id = '%s'" % request.form['dif_id']
 
-    query += " ORDER BY dif_test.dif_id"
+    # query += " ORDER BY dif_test.dif_id"
+    query += " ORDER BY dif_test.date_created DESC"
 
     query_string = cur.mogrify(query)
     cur.execute(query_string)

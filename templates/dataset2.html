@@ -10,8 +10,25 @@
 	  {% include 'sidebar.html' %}
 	  
 	    <div id="main-content" class="col-xs-9">
+
+  {% if success|length > 0 %}
+    <div class="alert alert-success" style="width:800;">
+      <h4>{{success}}</h4>
+    </div>
+  {% endif %}
+  {% if error|length > 0 %}
+  <div class="alert alert-danger" style="width:800;">
+    <h4>{{error}}</h4>
+  </div>
+  {% endif %}
+
 		<h3 style="float:left;">Submit Your Dataset</h3>
-    <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+    <div style="float:right; margin-top: 20px;">
+      <button class="btn btn-default" type="submit" name="action" value="save">Save</button>
+      <button class="btn btn-default" type="submit" name="action" value="restore">Restore</button>
+      <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+    </div>
+    
     <div style="clear:both"></div>
 		<div class="title" style="font-size: 1em;">Page 2 of 2</div>
 		<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
@@ -78,9 +95,10 @@ Write "see files" if this information is provided with the files.<br>
 
 <br/>
 
-<button type="submit" name="action" value="Submit">Submit</button><br/>
+<button type="submit" name="action" value="Submit">Submit</button>
 <!-- <button class="prev-button" type="button" name="action" value="Previous Page">Previous Page</button> -->
 <button class="prev-button" type="submit" name="action" value="Previous Page">Previous Page</button>
+<button type="submit" name="action" value="save">Save</button>
 
 </div>
 

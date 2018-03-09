@@ -6,8 +6,10 @@
     $.fn.makeDropdownIntoSelect = function(defaultVal, defaultText) {
 
 	var selectedHtml = function(s) {
-	    return '<span>' + s + '</span>' + ' <span class="caret"></span>';
-	}
+		if (s !== '') {
+		    return '<span>' + s + '</span>' + ' <span class="caret"></span>';
+		}
+	};
 
 	var $val_input = $(this).children().first();
 	$(this).find('.dropdown-menu li a').click(function() {
@@ -20,6 +22,7 @@
 
 	var val = $val_input.val();
 	var text = val == defaultVal ? defaultText : val;
+
 	$(this).find('.dropdown-toggle').html(selectedHtml(text));
 	
 	

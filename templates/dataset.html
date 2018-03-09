@@ -47,6 +47,7 @@
 
 
     // if reloading, populate any added publication fields
+    console.log(publications);
     $('#publication').html(publications[0].split("'")[1]);
     for (var i=1; i < publications.length; i++ ) {
         var publication = publications[i].split("'")[1];
@@ -92,12 +93,28 @@
       {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9" >
+  {% if success|length > 0 %}
+    <div class="alert alert-success" style="width:800;">
+      <h4>{{success}}</h4>
+    </div>
+  {% endif %}
+  {% if error|length > 0 %}
+  <div class="alert alert-danger" style="width:800;">
+    <h4>{{error}}</h4>
+  </div>
+  {% endif %}
+   <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
     <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
-    <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+    <div style="float:right; margin-top: 20px;">
+      <button class="btn btn-default" type="submit" name="action" value="save">Save</button>
+      <button class="btn btn-default" type="submit" name="action" value="restore">Restore</button>
+      <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+    </div>
+
     <div style="clear:both"></div>
     <div class="title" style="font-size: 1em;">Page 1 of 2</div>
     <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
-    <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+   
       <div class="form-group required">
         <label for="email">Contact Email</label>
         <input class="form-control" type="text" name="email" value="{{dataset_metadata.get('email',email)}}"/>
@@ -123,32 +140,32 @@
       <div class="form-group required">
         <label for="award">Award</label>
         <div class="dropdown" id="award-dropdown">
-          <input type="hidden" name="award"/>
+          <input type="hidden" name="award" value="{{dataset_metadata.get('award')}}"/>
           <button type="button" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control">
-        All
-        <span class="caret"></span>
+            {{dataset_metadata.get('award','All')}}
+            <span class="caret"></span>
           </button>
 
           <ul class="dropdown-menu">
-        {% for grant in nsf_grants %}
-        {% set s = grant['award'] + " " + grant['name'] %}
-        <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
-        {% endfor %}
+            {% for grant in nsf_grants %}
+              {% set s = grant['award'] + " " + grant['name'] %}
+              <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
+            {% endfor %}
           </ul>
         </div>
       </div>
       
-      <div class="form-group" name="publications">
+      <div class="form-group" name="publicationsForm">
         <label for="publication">Relevant Publications</label>
         <span><i>Include DOI where known</i></span>
         <div class="publicationTemplate">
                 <div id='extraLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
                 <textarea id="publication" name="publication" class="form-control" style="float:left; width:95%"></textarea>
-                <a href="#publications" id="removeRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+                <a href="#publicationsForm" id="removeRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
                 <div style="clear:both"></div>
         </div>
         <div id="more_publications"></div>
-        <a href="#publications" id="addRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another">Add another publication</span></a>
+        <a href="#publicationsForm" id="addRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another">Add another publication</span></a>
       </div>
       
       <div class="form-group">
@@ -199,9 +216,9 @@
       <div class="form-group">
         <label>Temporal Bounds</label>
         <div class="input-daterange input-group" id="datepicker">
-          <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD"/>
+          <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('start','')}}"/>
           <span class="input-group-addon">to</span>
-          <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD"/>
+          <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('stop','')}}"/>
         </div>
       </div>
       
@@ -210,7 +227,8 @@
         <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
       </div>
       
-      <button class="btn btn-default" type="submit">Next page</button>
+      <button class="btn btn-default" type="submit" name="action" value="next">Next page</button>
+      <button class="btn btn-default" type="submit" name="action" value="save">Save</button>
       
     </form>
     
