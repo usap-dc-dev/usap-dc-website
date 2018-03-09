@@ -254,7 +254,7 @@ function MapClient() {
 	target: 'map',
 	view: new ol.View({
 	    center: [0,0],
-	    zoom: 1,
+	    zoom: 2,
 	    projection: projection,
 	    minZoom: 1,
 	    maxZoom: 10
@@ -274,6 +274,19 @@ function MapClient() {
 	})
     });
     this.map.addLayer(gmrt);
+
+    var modis = new ol.layer.Tile({
+	title: "MODIS Mosaic",
+	visible: true,
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'MODIS',
+		transparent: true
+	    }
+	})
+    });
+    this.map.addLayer(modis);
 
     var difAeronomyAndAstrophysics = new ol.layer.Tile({
 	title: "Antarctic Astrophysics and Geospace Sciences",

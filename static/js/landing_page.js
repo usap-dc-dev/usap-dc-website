@@ -11,7 +11,8 @@ $(document).ready(function() {
 	    var projection = ol.proj.get('EPSG:3031');
 	    projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
 	    projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
-
+		var api_url = 'http://api.usap-dc.org:81/wfs?';
+		
 	    var map = new ol.Map({	// set to GMRT SP bounds
 		target: 'map',
 		interactions: ol.interaction.defaults({mouseWheelZoom:false}),
@@ -36,6 +37,18 @@ $(document).ready(function() {
 	    });
 	    map.addLayer(gmrt);
 
+	    var modis = new ol.layer.Tile({
+		title: "MODIS Mosaic",
+		visible: true,
+		source: new ol.source.TileWMS({
+		    url: api_url,
+		    params: {
+			layers: 'MODIS',
+			transparent: true
+		    }
+		})
+	    });
+	    map.addLayer(modis);
 
 		var styles = [
 	        new ol.style.Style({

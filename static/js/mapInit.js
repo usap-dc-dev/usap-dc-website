@@ -1,5 +1,5 @@
 function MapClient(zoom) {
-	if (!zoom) {zoom = 2;}
+	if (!zoom) {zoom = 3;}
 	proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
     var projection = ol.proj.get('EPSG:3031');
     projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
@@ -60,19 +60,53 @@ function MapClient(zoom) {
     });
     map.addLayer(gmrtmask);
 
-    var modis = new ol.layer.Tile({
-	type: 'base',
-	title: "MODIS Mosaic",
+
+    var gma_modis = new ol.layer.Tile({
+	// type: 'base',
+	title: "GMA MODIS Mosaic",
 	visible: false,
+	source: new ol.source.TileWMS({
+	    url: "http://nsidc.org/cgi-bin/atlas_south?",
+	    params: {
+		layers: 'antarctica_satellite_image',
+		format:'image/png',
+		srs: 'epsg:3031',
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(gma_modis);
+
+    var modis = new ol.layer.Tile({
+	// type: 'base',
+	title: "MODIS Mosaic",
+	visible: true,
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
-		layers: 'MODIS'
+		layers: 'MODIS',
+		transparent: true
 	    }
 	})
     });
     map.addLayer(modis);
     
+
+    var frank_modis = new ol.layer.Tile({
+	// type: 'base',
+	title: "Franks MODIS Mosaic",
+	visible: false,
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: "Franks MODIS",
+		transparent: true
+	    }
+	})
+    });
+     map.addLayer(frank_modis);
+
+
     var tracks = new ol.layer.Tile({
 	title: "USAP R/V Cruises",
 	visible: false,
@@ -261,35 +295,35 @@ function MapClient(zoom) {
 $(document).ready(function() {
     new MapClient();
 
-	$("#expandMap").on('click', function(e) {
-		$("#map").empty();
-		if($("#map").width() <= 400) {
-			$(".map-btn-container").animate({width:800});
-			$(".map-text-container").animate({width:690});
+	// $("#expandMap").on('click', function(e) {
+	// 	$("#map").empty();
+	// 	if($("#map").width() <= 400) {
+	// 		$(".map-btn-container").animate({width:800});
+	// 		$(".map-text-container").animate({width:690});
 			
-			$("#map").animate({
-      			width: 800,
-      			height:800
-    		}, function() {
-    			$(".map-text-container").css({'padding-top':'14px'});
-    			new MapClient(2);
-    			$("#expandMap").html('Shrink Map');
-    		});
-    	} else {
-   			$(".map-btn-container").animate({width:400});
-   			$(".map-text-container").animate({width:290});
+	// 		$("#map").animate({
+ //      			width: 800,
+ //      			height:800
+ //    		}, function() {
+ //    			$(".map-text-container").css({'padding-top':'14px'});
+ //    			new MapClient(2);
+ //    			$("#expandMap").html('Shrink Map');
+ //    		});
+ //    	} else {
+ //   			$(".map-btn-container").animate({width:400});
+ //   			$(".map-text-container").animate({width:290});
    			
-			$("#map").animate({
-      			width: 400,
-      			height:400
-    		}, function() {
-    			$(".map-text-container").css({'padding-top':'4px'});
-    			new MapClient(1);
-    			$("#expandMap").html('Expand Map');
-    		});
-		}
+	// 		$("#map").animate({
+ //      			width: 400,
+ //      			height:400
+ //    		}, function() {
+ //    			$(".map-text-container").css({'padding-top':'4px'});
+ //    			new MapClient(1);
+ //    			$("#expandMap").html('Expand Map');
+ //    		});
+	// 	}
 		
-    });
+ //    });
 
 });
 

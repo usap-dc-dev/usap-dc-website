@@ -273,7 +273,7 @@ def get_datasets(dataset_ids):
                         ) proj ON (d.id = proj.dataset_id)
                         LEFT JOIN (
                             SELECT ddm.dataset_id, json_agg(dif) dif_records
-                            FROM dataset_dif_map ddm JOIN dif ON (dif.id=ddm.dif_id)
+                            FROM dataset_dif_map ddm JOIN dif ON (dif.dif_id=ddm.dif_id)
                             GROUP BY ddm.dataset_id
                         ) dif ON (d.id = dif.dataset_id)
                         WHERE d.id IN %s ORDER BY d.title''',

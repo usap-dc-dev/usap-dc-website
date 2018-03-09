@@ -31,10 +31,9 @@
 	width:100%;
 }
 .map-btn-container {
-	margin:auto;
-	width:900px;
+	margin: auto;
+	width:800px;
 	/*height:34px;*/
-	padding:0;
 }
 .map-text-container {
 	width:290px;
