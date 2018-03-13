@@ -93,3 +93,7 @@ position: relative;
 .header.small {
 font-size: 1.3em;
 }
+
+.layer-switcher {
+    font-size: 0.8em;
+}
