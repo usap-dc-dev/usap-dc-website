@@ -955,7 +955,6 @@ def home():
 #     return render_template('home2.html', **template_dict)
 
 
-
 @app.route('/overview')
 def overview():
     return render_template('overview.html')
@@ -964,6 +963,11 @@ def overview():
 @app.route('/links')
 def links():
     return render_template('links.html')
+
+
+@app.route('/sdls')
+def sdls():
+    return render_template('sdls.html')
 
 
 @app.route('/legal')
