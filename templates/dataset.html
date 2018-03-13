@@ -106,8 +106,8 @@
    <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
     <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
     <div style="float:right; margin-top: 20px;">
-      <button class="btn btn-default" type="submit" name="action" value="save">Save</button>
-      <button class="btn btn-default" type="submit" name="action" value="restore">Restore</button>
+      <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
+      <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
       <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
     </div>
 
@@ -228,7 +228,7 @@
       </div>
       
       <button class="btn btn-default" type="submit" name="action" value="next">Next page</button>
-      <button class="btn btn-default" type="submit" name="action" value="save">Save</button>
+      <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
       
     </form>
     
