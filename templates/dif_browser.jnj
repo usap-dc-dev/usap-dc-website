@@ -176,7 +176,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
   {% if dif_records|length > 0 %}
 
     <div>
-      <i><font size=2 color=gray>({{dif_records|length}} Data Set(s)) </font></i>
+      <i><font size=2 color=gray>({{dif_records|length}} AMD DIF record(s)) </font></i>
 
       <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
     </div>
@@ -216,10 +216,14 @@ var dif_ids = {{json_dumps(dif_ids)}}
 
         <td><font size=2>
         {% if val['datasets']|length == 0 %}
-          No data provided
+          No data link provided
         {% endif %}
         {% for ds in val['datasets'] %}
-          <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
+          {% if ds['url'] == '' %}
+            No data link provided
+          {% else %}
+            <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
+          {% endif %}
         {% endfor %}
         </font></td>
 
