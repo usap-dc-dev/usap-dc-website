@@ -80,7 +80,7 @@ function MapClient(zoom) {
     var modis = new ol.layer.Tile({
 	// type: 'base',
 	title: "MODIS Mosaic",
-	visible: true,
+	visible: false,
 	source: new ol.source.TileWMS({
 	    url: api_url,
 	    params: {
@@ -90,7 +90,21 @@ function MapClient(zoom) {
 	})
     });
     map.addLayer(modis);
-    
+ 
+
+    var lima = new ol.layer.Tile({
+	// type: 'base',
+	title: "LIMA 240m",
+	visible: true,
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: "LIMA 240m",
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(lima);
 
     var frank_modis = new ol.layer.Tile({
 	// type: 'base',
@@ -104,7 +118,7 @@ function MapClient(zoom) {
 	    }
 	})
     });
-     map.addLayer(frank_modis);
+    map.addLayer(frank_modis);
 
 
     var tracks = new ol.layer.Tile({
