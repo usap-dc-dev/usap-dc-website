@@ -71,7 +71,7 @@ $(document).ready(function() {
 
 	    var gma_modis = new ol.layer.Tile({
 		// type: 'base',
-		title: "GMA MODIS Mosaic",
+		title: "MODIS Mosaic",
 		visible: false,
 		source: new ol.source.TileWMS({
 		    url: "http://nsidc.org/cgi-bin/atlas_south?",
@@ -85,18 +85,18 @@ $(document).ready(function() {
 	    });
 	    map.addLayer(gma_modis);
 
-	    var modis = new ol.layer.Tile({
-		title: "MODIS Mosaic",
-		visible: false,
-		source: new ol.source.TileWMS({
-		    url: api_url,
-		    params: {
-			layers: 'MODIS',
-			transparent: true
-		    }
-		})
-	    });
-	    map.addLayer(modis);
+	 //    var modis = new ol.layer.Tile({
+		// title: "MODIS Mosaic",
+		// visible: false,
+		// source: new ol.source.TileWMS({
+		//     url: api_url,
+		//     params: {
+		// 	layers: 'MODIS',
+		// 	transparent: true
+		//     }
+		// })
+	 //    });
+	 //    map.addLayer(modis);
 
 	    var lima = new ol.layer.Tile({
 		// type: 'base',
@@ -111,21 +111,6 @@ $(document).ready(function() {
 		})
 	    });
 	    map.addLayer(lima);
-
-	    var frank_modis = new ol.layer.Tile({
-		// type: 'base',
-		title: "Franks MODIS Mosaic",
-		visible: false,
-		source: new ol.source.TileWMS({
-		    url: api_url,
-		    params: {
-			layers: "Franks MODIS",
-			transparent: true
-		    }
-		})
-	    });
-	    map.addLayer(frank_modis);
-
 
 	    var tracks = new ol.layer.Tile({
 		title: "USAP R/V Cruises",

@@ -930,7 +930,11 @@ def home():
             if row[0] == "#" or len(row) < 4: continue
             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
         template_dict['data_dict'] = data_dict
-    return render_template('home.html', **template_dict)
+
+    # get all spatial extents
+    (conn, cur) = connect_to_db()
+    template_dict['spatial_extents'] = get_spatial_extents(conn=conn, cur=cur)
+    return render_template('home.jnj', **template_dict)
 
 
 # @app.route("/home2")
@@ -1623,8 +1627,11 @@ def genBank_datasets():
 
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
+    print('getfeatureinfo')
     if request.args.get('layers') != "":
         url = urllib.unquote('http://api.usap-dc.org:81/wfs?' + urllib.urlencode(request.args))
+        print(url)
+        print(requests.get(url).text)
         return requests.get(url).text
     return None
 

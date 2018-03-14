@@ -63,7 +63,7 @@ function MapClient(zoom) {
 
     var gma_modis = new ol.layer.Tile({
 	// type: 'base',
-	title: "GMA MODIS Mosaic",
+	title: "MODIS Mosaic",
 	visible: false,
 	source: new ol.source.TileWMS({
 	    url: "http://nsidc.org/cgi-bin/atlas_south?",
@@ -77,19 +77,19 @@ function MapClient(zoom) {
     });
     map.addLayer(gma_modis);
 
-    var modis = new ol.layer.Tile({
-	// type: 'base',
-	title: "MODIS Mosaic",
-	visible: false,
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'MODIS',
-		transparent: true
-	    }
-	})
-    });
-    map.addLayer(modis);
+ //    var modis = new ol.layer.Tile({
+	// // type: 'base',
+	// title: "MODIS Mosaic",
+	// visible: false,
+	// source: new ol.source.TileWMS({
+	//     url: api_url,
+	//     params: {
+	// 	layers: 'MODIS',
+	// 	transparent: true
+	//     }
+	// })
+ //    });
+ //    map.addLayer(modis);
  
 
     var lima = new ol.layer.Tile({
@@ -105,20 +105,6 @@ function MapClient(zoom) {
 	})
     });
     map.addLayer(lima);
-
-    var frank_modis = new ol.layer.Tile({
-	// type: 'base',
-	title: "Franks MODIS Mosaic",
-	visible: false,
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: "Franks MODIS",
-		transparent: true
-	    }
-	})
-    });
-    map.addLayer(frank_modis);
 
 
     var tracks = new ol.layer.Tile({
@@ -208,6 +194,85 @@ function MapClient(zoom) {
     
     //map.getView().fit([-4103624,-4103624,4103624,4103624], map.getSize());
 
+	var styles = [
+        new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'rgba(255, 0, 0, 0.2)',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'rgba(255, 0, 0, 0.1)'
+          })
+        }),
+		new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 4,
+           	stroke: new ol.style.Stroke({
+	            color: 'rgba(255, 0, 0, 0.2)',
+	            width: 2
+	          }),
+            fill: new ol.style.Fill({
+              color: 'rgba(255, 0, 0, 0.1)'
+            })
+          })
+  		})
+    ];
+
+	var geom;
+	var features = [];
+	for (var i in extents) {
+		var extent = extents[i];
+		var north = extent.north;
+		var east = extent.east;
+		var west = extent.west;
+		var south = extent.south;
+	    // point
+	    if (west == east && north == south) {
+	    	geom = new ol.geom.Point(ol.proj.transform([west, north], 'EPSG:4326', 'EPSG:3031'));
+	    	feature = new ol.Feature({
+	    			geometry: geom
+	    	});
+	    	features.push(feature);
+	    } else {
+	    // box
+			geom = new ol.geom.Polygon([[
+			  [west, north],
+			  [east, north],
+			  [east, south],
+			  [west, south],
+			  [west, north]
+			]]).transform('EPSG:4326', 'EPSG:3031');
+
+			[x0, y0] = ol.proj.fromLonLat([west, north], 'EPSG:3031');
+			[x1, y1] = ol.proj.fromLonLat([east, south], 'EPSG:3031');
+			var xmin = Math.min(x0, x1);
+			var xmax = Math.max(x0, x1);
+			var ymin = Math.min(y0, y1);
+			var ymax = Math.max(y0, y1);
+
+
+			if (!isNaN(xmin) && !isNaN(xmax) && !isNaN(ymin) && !isNaN(ymax) ){
+				// ol.extent.containsExtent(map.getView().calculateExtent(map.getSize()), [xmin, ymin, xmax, ymax])) {
+				feature = new ol.Feature({
+	    			geometry: geom
+	    		});
+				features.push(feature);
+			}
+		}
+
+	}
+	console.log(features);
+   	var geometries = new ol.layer.Vector({
+    	title:"Dataset Geometries",
+    	visible: false,
+    	source: new ol.source.Vector({
+    		features: features
+    	}),
+    	style: styles
+    });
+	map.addLayer(geometries);
+
+
     var mousePosition = new ol.control.MousePosition({
         coordinateFormat: ol.coordinate.createStringXY(2),
         projection: 'EPSG:4326',
@@ -247,6 +312,7 @@ function MapClient(zoom) {
 		layers = layers.substring(1);
 //	if (tracks.getVisible())
 //	    layers += ',Entries';
+
 	if (layers.length > 0) {
 		$.ajax({
 		    type: "GET",
