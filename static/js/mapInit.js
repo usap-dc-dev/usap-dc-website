@@ -119,80 +119,8 @@ function MapClient(zoom) {
 	})
     });
     map.addLayer(tracks);
-    
-    var difINT = new ol.layer.Tile({
-	title: "Integrated System Science",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Integrated',
-		transparent: true
-	    }
-	})
-    });
-    map.addLayer(difINT);
-	
-    var difEarthSciences = new ol.layer.Tile({
-	title: "Earth Sciences",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Earth',
-		transparent: true
-	    }
-	})
-    });
-    map.addLayer(difEarthSciences);
-    
-    var difAeronomyAndAstrophysics = new ol.layer.Tile({
-	title: "Astrophysics and Geospace Sciences",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Astro-Geo',
-		transparent: true
-	    }
-	})
-    });
-    map.addLayer(difAeronomyAndAstrophysics);
-    
-    var difGlaciology = new ol.layer.Tile({
-	title: "Glaciology",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Glacier',
-		transparent: true
-	    }
-	})
-    });			  
-    map.addLayer(difGlaciology);
-    
-    var difOceanAndAtmosphericSciences = new ol.layer.Tile({
-	title: "Ocean and Atmospheric Sciences",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Ocean-Atmosphere',
-		transparent: true
-	    }
-	})
-    });							   
-    map.addLayer(difOceanAndAtmosphericSciences);
-    
-    var difOrganismsAndEcosystems = new ol.layer.Tile({
-	title: "Organisms and Ecosystems",
-	source: new ol.source.TileWMS({
-	    url: api_url,
-	    params: {
-		layers: 'Bio',
-		transparent: true
-	    }
-	})
-    });
-    map.addLayer(difOrganismsAndEcosystems);
-    
-    //map.getView().fit([-4103624,-4103624,4103624,4103624], map.getSize());
+
+
 
 	var styles = [
         new ol.style.Style({
@@ -272,6 +200,81 @@ function MapClient(zoom) {
     });
 	map.addLayer(geometries);
 
+    
+    
+    var difINT = new ol.layer.Tile({
+	title: "Integrated System Science",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Integrated',
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(difINT);
+	
+    var difEarthSciences = new ol.layer.Tile({
+	title: "Earth Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Earth',
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(difEarthSciences);
+    
+    var difAeronomyAndAstrophysics = new ol.layer.Tile({
+	title: "Astrophysics and Geospace Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Astro-Geo',
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(difAeronomyAndAstrophysics);
+    
+    var difGlaciology = new ol.layer.Tile({
+	title: "Glaciology",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Glacier',
+		transparent: true
+	    }
+	})
+    });			  
+    map.addLayer(difGlaciology);
+    
+    var difOceanAndAtmosphericSciences = new ol.layer.Tile({
+	title: "Ocean and Atmospheric Sciences",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Ocean-Atmosphere',
+		transparent: true
+	    }
+	})
+    });							   
+    map.addLayer(difOceanAndAtmosphericSciences);
+    
+    var difOrganismsAndEcosystems = new ol.layer.Tile({
+	title: "Organisms and Ecosystems",
+	source: new ol.source.TileWMS({
+	    url: api_url,
+	    params: {
+		layers: 'Bio',
+		transparent: true
+	    }
+	})
+    });
+    map.addLayer(difOrganismsAndEcosystems);
+    
+    //map.getView().fit([-4103624,-4103624,4103624,4103624], map.getSize());
 
     var mousePosition = new ol.control.MousePosition({
         coordinateFormat: ol.coordinate.createStringXY(2),
