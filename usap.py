@@ -866,22 +866,26 @@ def login_orcid():
     callback = url_for('authorized_orcid', _external=True)
     return orcid.authorize(callback=callback)
 
-    
+
 @app.route('/authorized')
 @google.authorized_handler
 def authorized(resp):
     access_token = resp['access_token']
     session['google_access_token'] = access_token, ''
+    session['googleSignedIn'] = True
     headers = {'Authorization': 'OAuth '+access_token}
     req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
                   None, headers)
     res = urlopen(req)
     session['user_info'] = json.loads(res.read())
+
     return redirect(session['next'])
+
 
 @app.route('/authorized_orcid')
 @orcid.authorized_handler
 def authorized_orcid(resp):
+    session['orcid_access_token'] = resp['access_token']
     session['user_info'] = {
         'name': resp['name'],
         'orcid': resp['orcid']
@@ -909,11 +913,16 @@ def logout():
     return redirect(url_for('submit'))
 
 
-@app.route("/index")
-@app.route("/")
-@app.route("/home")
+@app.route("/index", methods=['GET'])
+@app.route("/", methods=['GET'])
+@app.route("/home", methods=['GET'])
 def home():
     template_dict = {}
+
+    if request.method == 'GET':
+        if request.args.get('google') == 'false':
+            session['googleSignedIn'] = False
+
     # read in news
     news_dict = []
     with open("static/recent_news.txt") as csvfile:
@@ -1004,7 +1013,6 @@ def search():
                                           persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
     elif request.method == 'POST':
         params = request.form.to_dict()
-        print(params)
         filtered = filter_datasets(**params)
 
         del params['spatial_bounds_interpolated']
@@ -1110,8 +1118,11 @@ def contact():
             raise CaptchaException(msg, url_for('contact'))
 
 
-@app.route('/submit')
+@app.route('/submit', methods=['GET'])
 def submit():
+    if request.method == 'GET':
+        if request.args.get('google') == 'false':
+            session['googleSignedIn'] = False
     return render_template('submit.html')
 
 

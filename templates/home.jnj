@@ -5,6 +5,13 @@
   var extents = {{json_dumps(spatial_extents)}};
 </script>
 
+{% if session.googleSignedIn %} 
+    <div class="alert alert-danger alert-dismissible" style="width:800;">
+        <a href="{{url_for('home', google='false')}}" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <h4>If you are using a public computer, please make sure you <a onclick="logoutGoogle()" href="https://www.google.com/accounts/Logout?continue=https://appengine.google.com/_ah/logout?continue={{url_for('home', google='false', _external=True)}}">sign out</a> of your Google account before leaving.</h4>
+     </div>
+{% endif %}
+
 <div class="usap-dc-banner">
    <div class="split">
     <div class="left">

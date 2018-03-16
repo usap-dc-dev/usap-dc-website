@@ -47,7 +47,6 @@
 
 
     // if reloading, populate any added publication fields
-    console.log(publications);
     $('#publication').html(publications[0].split("'")[1]);
     for (var i=1; i < publications.length; i++ ) {
         var publication = publications[i].split("'")[1];
@@ -78,7 +77,6 @@
         $(wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
         counter++;
     }
-
 
 });
 
