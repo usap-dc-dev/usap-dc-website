@@ -630,6 +630,12 @@ def dataset2():
             msg_data = copy.copy(session['dataset_metadata'])
             msg_data['name'] = session['user_info']['name']
             del msg_data['action']
+
+            cross_dateline = False
+            if session['dataset_metadata'].get('cross_dateline') == 'on':
+                cross_dateline = True
+            msg_data['cross_dateline'] = cross_dateline
+
             if 'orcid' in session['user_info']:
                 msg_data['orcid'] = session['user_info']['orcid']
 
@@ -644,7 +650,7 @@ def dataset2():
             timestamp = format_time()
             msg_data['timestamp'] = timestamp
             check_dataset_submission(msg_data)
-            
+
             nsfid = 'NSF' + msg_data['award'].split(' ')[0]
             upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
             msg_data['upload_directory'] = upload_dir

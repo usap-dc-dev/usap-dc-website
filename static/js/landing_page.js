@@ -234,6 +234,18 @@ $(document).ready(function() {
 	    ];
 
 		var geom;
+		var xmin = 8200000;
+		var xmax = -8200000;
+		var ymin = 8200000;
+		var ymax = -8200000;
+
+		function updateBounds(lon, lat) {
+			[x, y] = ol.proj.fromLonLat([lon, lat], 'EPSG:3031');
+	    	xmin = Math.min(x, xmin);
+			xmax = Math.max(x, xmax);
+			ymin = Math.min(y, ymin);
+			ymax = Math.max(y, ymax);
+		}
 
 		for (var i in extents) {
 			var extent = extents[i];
@@ -241,26 +253,96 @@ $(document).ready(function() {
 			var east = extent.east;
 			var west = extent.west;
 			var south = extent.south;
+
 		    // point
 		    if (west == east && north == south) {
 		    	geom = new ol.geom.Point(ol.proj.transform([west, north], 'EPSG:4326', 'EPSG:3031'));
 		    } else {
-
 		    // box
-				geom = new ol.geom.Polygon([[
-				  [west, north],
-				  [east, north],
-				  [east, south],
-				  [west, south],
-				  [west, north]
-				]]).transform('EPSG:4326', 'EPSG:3031');
+		    	var polygon = [];
+		    	var n = 30;
+		    	var dlon, dlat;
 
-				[x0, y0] = ol.proj.fromLonLat([west, north], 'EPSG:3031');
-				[x1, y1] = ol.proj.fromLonLat([east, south], 'EPSG:3031');
-				var xmin = Math.min(x0, x1);
-				var xmax = Math.max(x0, x1);
-				var ymin = Math.min(y0, y1);
-				var ymax = Math.max(y0, y1);
+			    if (extent.cross_dateline){
+			    	dlon = (-180 - west)/n;
+			    	dlat = (north - south)/n;
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([-180-dlon*i, north]);
+			    		updateBounds(-180-dlon*i, north);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([west, north-dlat*i]);
+			    		updateBounds(west, north-dlat*i);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([west+dlon*i, south]);
+			    		updateBounds(west+dlon*i, south);
+			    	}
+			    	dlon = (180 - east)/n;
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([180-dlon*i, south]);
+			    		updateBounds(180-dlon*i, south);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([east, south+dlat*i]);
+			    		updateBounds(east, south+dlat*i);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([east+dlon*i, north]);
+			    		updateBounds(east+dlon*i, north);
+			    	}
+			   	}
+		    	else if (east > west) {
+			    	dlon = (west - east)/n;
+			    	dlat = (north - south)/n;
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([west-dlon*i, north]);
+			    		updateBounds(west-dlon*i, north);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([east, north-dlat*i]);
+			    		updateBounds(east, north-dlat*i);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([east+dlon*i, south]);
+			    		updateBounds(east+dlon*i, south);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([west, south+dlat*i]);
+			    		updateBounds(west, south+dlat*i);
+			    	}
+			    } 
+
+			    else {
+			    	dlon = (-180 - east)/n;
+			    	dlat = (north - south)/n;
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([-180-dlon*i, north]);
+			    		updateBounds(-180-dlon*i, north);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([east, north-dlat*i]);
+			    		updateBounds(east, north-dlat*i);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([east+dlon*i, south]);
+			    		updateBounds(east+dlon*i, south);
+			    	}
+			    	dlon = (180 - west)/n;
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([180-dlon*i, south]);
+			    		updateBounds(180-dlon*i, south);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([west, south+dlat*i]);
+			    		updateBounds(west, south+dlat*i);
+			    	}
+			    	for (i = 0; i < n; i++) {
+			    		polygon.push([west+dlon*i, north]);
+			    		updateBounds(west+dlon*i, north);
+			    	}
+			    }
+				geom = new ol.geom.Polygon([polygon]).transform('EPSG:4326', 'EPSG:3031');
 
 				if (!isNaN(xmin) && !isNaN(xmax) && !isNaN(ymin) && !isNaN(ymax) &&
 					ol.extent.containsExtent(map.getView().calculateExtent(map.getSize()), [xmin, ymin, xmax, ymax])) {

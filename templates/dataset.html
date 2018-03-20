@@ -203,7 +203,10 @@
           </td>
           <td>
             <span style="margin: 20px">
-              <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
+              <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
+            </span>
+            <span style="margin: 20px">
+             <input type="checkbox" name="cross_dateline" {% if dataset_metadata.get('cross_dateline') %}checked{% endif %}> Check if your bounds cross the International Date Line</input>
             </span>
           </td>
         </tr>

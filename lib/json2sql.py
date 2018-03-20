@@ -113,12 +113,12 @@ def make_sql(data, id):
                       'In Work')
     sql_out += sql_line
 
-    query = "SELECT COUNT(*) FROM dif WHERE id = 'USAP-%s'" % data["award"]
+    query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % data["award"]
     cur.execute(query)
     res = cur.fetchone()
     if res['count'] == 0:
         sql_out += '\n--NOTE: DIF may already exist if a previous Dataset has been submitted\n'
-        line = "insert into dif(id) values ('%s');\n" % \
+        line = "insert into dif(dif_id) values ('%s');\n" % \
                                ('USAP-' + data["award"])
         sql_out += line
 
@@ -154,8 +154,8 @@ def make_sql(data, id):
     sql_out += "update dataset set review_person='Nitsche' where id='{}';\n".format(id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
-    line = "insert into dataset_spatial_map(dataset_id,west,east,south,north) values  ('%s','%s','%s','%s','%s');\n" % \
-                           (id, data["geo_w"],data["geo_e"],data["geo_s"],data["geo_n"],)
+    line = "insert into dataset_spatial_map(dataset_id,west,east,south,north,cross_dateline) values  ('%s','%s','%s','%s','%s','%s');\n" % \
+                           (id, data["geo_w"],data["geo_e"],data["geo_s"],data["geo_n"],data["cross_dateline"])
     sql_out += line
     if data["start"] != "" or data["stop"] != "":
         line = "insert into dataset_temporal_map(dataset_id,start_date,stop_date) values ('%s','%s','%s');\n\n" % \
