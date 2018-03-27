@@ -62,7 +62,6 @@ function MapClient(zoom) {
 
 
     var gma_modis = new ol.layer.Tile({
-    // type: 'base',
     title: "MODIS Mosaic",
     visible: false,
     source: new ol.source.TileWMS({
@@ -93,7 +92,6 @@ function MapClient(zoom) {
  
 
     var lima = new ol.layer.Tile({
-    // type: 'base',
     title: "LIMA 240m",
     visible: true,
     source: new ol.source.TileWMS({
@@ -132,7 +130,7 @@ function MapClient(zoom) {
         }),
         new ol.style.Style({
           image: new ol.style.Circle({
-            radius: 4,
+            radius: 8,
             stroke: new ol.style.Stroke({
                 color: 'rgba(255, 0, 0, 0.2)',
                 width: 2

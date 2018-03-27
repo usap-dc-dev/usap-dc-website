@@ -45,7 +45,7 @@
 
   <div class="map-container">
     <div class="map-btn-container">
-      <em>Map shows datasets (dots correspond with centroid locations) registered with the USAP-DC.</em>
+      <em>Map shows datasets registered with the USAP-DC. Dots show the locations of the centroid of the geographic bounding box  for each data set or the point locations for datasets from single sites (e.g. ice cores). Click on  centroid locations to view the full bounding box as provided by the contributing scientists as well as more information about the datasets.</em>
     </div>
     <div id="map"></div>   
   </div>
