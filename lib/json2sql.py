@@ -209,7 +209,10 @@ def make_sql(data, id):
 def write_readme(data, id):
     doc_dir = os.path.join("doc", id)
     if not os.path.exists(doc_dir):
-        os.makedirs(doc_dir)
+        oldmask = os.umask(000)
+        os.makedirs(doc_dir, 0o775)
+        os.umask(oldmask)
+
     out_filename = os.path.join(doc_dir, 'README_' + id + '.txt')
     text = []
     text.append('USAP-DC Dataset# ' + id + '\n')
@@ -235,6 +238,7 @@ def write_readme(data, id):
     #--- write the text to output file
     with open(out_filename,'w') as out_file:
         out_file.writelines(text)
+    os.chmod(out_filename, 0o664)
     
     return out_filename
 

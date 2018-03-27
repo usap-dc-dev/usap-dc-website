@@ -116,6 +116,7 @@ def getDataCiteXML(uid):
     xml_file = getDCXMLFileName(uid)
     with open(xml_file, "w") as myfile:
         myfile.write(out_text)
+    os.chmod(xml_file, 0o664)
     return(xml_file, status)
 
 

@@ -669,6 +669,7 @@ def dataset2():
             submitted_file = os.path.join(submitted_dir, next_id + ".json")
             with open(submitted_file, 'w') as file:
                 file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+            os.chmod(submitted_file, 0o664)
 
             # email RT queue
             # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
@@ -1377,11 +1378,20 @@ def curator():
                         timestamp = json_data.get('timestamp')
                         if timestamp:
                             upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
-                            dest_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid, timestamp)
+                            uid_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid)
+                            dest_dir = os.path.join(uid_dir, timestamp)
                             try:
                                 if os.path.exists(dest_dir):
                                     shutil.rmtree(dest_dir)
                                 shutil.copytree(upload_dir, dest_dir)
+                                # change permissions
+                                os.chmod(uid_dir, 0o775)
+                                for root, dirs, files in os.walk(uid_dir):
+                                    for d in dirs:
+                                        os.chmod(os.path.join(root, d), 0o775)
+                                    for f in files:
+                                        os.chmod(os.path.join(root, f), 0o664)
+
                             except Exception as err:
                                 template_dict['error'] = "Error copying uploaded files: " + str(err)
                                 problem = True
@@ -1412,11 +1422,19 @@ def curator():
                         timestamp = json_data.get('timestamp')
                         if timestamp:
                             upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
-                            dest_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid, timestamp)
+                            uid_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid)
+                            dest_dir = os.path.join(uid_dir, timestamp)
                             try:
                                 if os.path.exists(dest_dir):
                                     shutil.rmtree(dest_dir)
                                 shutil.copytree(upload_dir, dest_dir)
+                                # change permissions
+                                os.chmod(uid_dir, 0o775)
+                                for root, dirs, files in os.walk(uid_dir):
+                                    for d in dirs:
+                                        os.chmod(os.path.join(root, d), 0o775)
+                                    for f in files:
+                                        os.chmod(os.path.join(root, f), 0o664)
                             except Exception as err:
                                 template_dict['error'] = "Error copying uploaded files: " + str(err)
                                 problem = True
@@ -1458,6 +1476,7 @@ def curator():
                     try:
                         with open(filename, 'w') as out_file:
                             out_file.write(readme_str)
+                        os.chmod(filename, 0o664)
                         template_dict['message'].append("Successfully updated Read Me file")
                     except:
                         template_dict['error'] = "Error updating Read Me file"
@@ -1471,6 +1490,7 @@ def curator():
                     try:
                         with open(datacite_file, 'w') as out_file:
                             out_file.write(xml_str)
+                        os.chmod(datacite_file, 0o664)
                         msg = submitToEZID(uid)
                         if msg.find("Error") >= 0:
                             template_dict['error'] = msg
@@ -1500,6 +1520,7 @@ def curator():
                         with open(isoxml_file, 'w') as out_file:
                             out_file.write(xml_str)
                             template_dict['message'].append("ISO XML file saved to watch directory.")
+                        os.chmod(isoxml_file, 0o664)
 
                     except Exception as err:
                         template_dict['error'] = "Error saving ISO XML file to watch directory: " + str(err)
