@@ -128,7 +128,7 @@ var dif_ids = {{json_dumps(dif_ids)}}
 
 </style>
 <div >
-  <h2 class="title">USAP-DC DIF browser (beta)</h2>
+  <h2 class="title">Metadata DIF browser (beta)</h2>
   <h5> Search includes AMD DIF records managed through USAP-DC.</h5>
   <h5><b>Note:</b> Includes records formerly managed through AGDC. Not all records contain links to datasets.</h5>
 
