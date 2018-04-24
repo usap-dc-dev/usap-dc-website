@@ -1,5 +1,6 @@
 import lxml.etree as ET
 import sys
+import os
 
 
 def makeISOXMLFile(dcxml_filename, xsl_filename, isoxml_filename):
@@ -12,6 +13,7 @@ def makeISOXMLFile(dcxml_filename, xsl_filename, isoxml_filename):
 
         with open(isoxml_filename, "w") as myfile:
             myfile.write(out_text)
+        os.chmod(isoxml_filename, 0o664)
 
         return "Successfully created ISO XML file %s" % isoxml_filename
     except Exception as e:
