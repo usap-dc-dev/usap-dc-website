@@ -5,6 +5,7 @@ from lib.ezid import formatAnvlRequest, issueRequest, encode, MyHTTPErrorProcess
 #import lxml.etree as ET
 import os
 import psycopg2
+import psycopg2.extras
 import sys
 import requests
 from flask import session
