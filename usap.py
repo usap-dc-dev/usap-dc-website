@@ -932,7 +932,7 @@ def home():
 
     # read in news
     news_dict = []
-    with open("static/recent_news.txt") as csvfile:
+    with open("inc/recent_news.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 2: continue
@@ -940,7 +940,7 @@ def home():
         template_dict['news_dict'] = news_dict
     # read in recent data
     data_dict = []
-    with open("static/recent_data.txt") as csvfile:
+    with open("inc/recent_data.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 4: continue
@@ -958,7 +958,7 @@ def home():
 #     template_dict = {}
 #     # read in news
 #     news_dict = []
-#     with open("static/recent_news.txt") as csvfile:
+#     with open("inc/recent_news.txt") as csvfile:
 #         reader = csv.reader(csvfile, delimiter="\t")
 #         for row in reader:
 #             if row[0] == "#" or len(row) != 2: continue
@@ -966,7 +966,7 @@ def home():
 #         template_dict['news_dict'] = news_dict
 #     # read in recent data
 #     data_dict = []
-#     with open("static/recent_data.txt") as csvfile:
+#     with open("inc/recent_data.txt") as csvfile:
 #         reader = csv.reader(csvfile, delimiter="\t")
 #         for row in reader:
 #             if row[0] == "#" or len(row) != 4: continue
@@ -1143,7 +1143,7 @@ def news():
     template_dict = {}
     # read in news
     news_dict = []
-    with open("static/recent_news.txt") as csvfile:
+    with open("inc/recent_news.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 2:
@@ -1159,7 +1159,7 @@ def data():
     template_dict = {}
     # read in recent data
     data_dict = []
-    with open("static/recent_data.txt") as csvfile:
+    with open("inc/recent_data.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 4:

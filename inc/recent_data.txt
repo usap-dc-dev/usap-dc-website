@@ -1,7 +1,9 @@
 # NOTE: date, link, authors and title should be separated by a tab
-2018-02-16	<a href=/view/dataset/601086>0943466</a>	Robert Hawley and David Clemens-Sewall	Roosevelt Island Borehole Optical Televiewer logs
-2018-02-16	<a href=/view/dataset/601085>0943466</a>	Hawley, David Clemens-Sewall, and Alexandra Giese, Robert	Roosevelt Island Borehole Firn temperatures
-2018-02-13	<a href=/view/dataset/601084>1565576</a>	Scambos, Ted	Weather data from LARISSA / SCAR Inlet Rapid AMIGOS and cGPS stations
+2018-03-23	<a href=/view/dataset/601089>1141978</a>	Michelle Tigges, Brian Bothner and Christine Foreman	UPLC-Q-TOF data of Cotton Glacier exometabolites
+2018-03-01	<a href=/view/dataset/601087>0539578</a>	Fegyveresi, J.	WAIS Divide 580m Bubble and Grain Hybrid Data
+2018-02-16	<a href=/view/dataset/601086>0943466</a>	Hawley, R.	Roosevelt Island Borehole Optical Televiewer logs
+2018-02-16	<a href=/view/dataset/601085>0943466</a>	Hawley, R.	Roosevelt Island Borehole Firn temperatures
+2018-02-13	<a href=/view/dataset/601084>1565576</a>	Scambos, T.	Weather data from LARISSA / SCAR Inlet Rapid AMIGOS and cGPS stations
 2018-02-05	<a href=/view/dataset/601083>1246353</a>	Anderson, J.	NBP1502A Cruise Core Data
 2018-02-05	<a href=/view/dataset/601082>1341669</a>	DeMaster, D.	Region Climate Model Output Plio-Pleistocene
 2018-01-23	<a href=/view/dataset/601081>1141411</a>	Hammonds, K.	Laboratory Experiments with H2SO4-Doped Ice

@@ -1,5 +1,7 @@
 #	NOTE: date and news should be separated by a tab
-Feb. 2018	Launched new web site design for USAP-DC.
+Mar. 2018	Updated web site with new map view on the home page and the dataset pages. Added option to save and restore the last submission entries.
+Feb. 2018	Launched new web site design for USAP-DC. 
+Feb. 2018	Launched beta version of <a href="http://www.usap-dc.org/dif_browser">"DIF Browser"</a> as new search option for USAP-DC managed DIF records.
 Dec. 2017	Presented new web page and USAP-DC functions at AGU fall meeting.
 Dec. 2017	Conducted workshop on USAP-DC data submission and Antarctic GeoMapApp at AGU fall meeting
 Oct. 2017	Presented new web page and USAP-DC functions at WAIS meeting.
