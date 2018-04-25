@@ -1,9 +1,9 @@
 
 #map {
     position: relative;
-    margin: 10px;
-    width:320px;
-    height:320px;
+    margin:0.72em;
+    width:23em;
+    height:23em;
     border:2px solid black;
     z-index: 1;
 }
@@ -14,56 +14,56 @@ font-color: black !important;
 
 .lprow {
 position: relative;
-min-height: 40px;
-margin-left: 20px;
-margin-bottom: 10px;
+min-height: 2.88em;
+margin-left: 1.44em;
+margin-bottom: 0.72em;
 }
 
 .field {
-margin-left: 10px;
+margin-left: 0.72em;
 position: absolute;
-width: 200px;
+width: 14.4em;
 font-weight: bold;
 }
 
 .value {
-margin-left: 200px;
+margin-left: 14.4em;
 }
 
 .col1 {
 text-align: center;
-margin-left: 10px;
-width: 100px;
+margin-left: 0.72em;
+width: 7.2em;
 position: absolute;  
 }
 
 .col2 {
-margin-left: 150px;
-width: 150px;
+margin-left: 10.8em;
+width: 10.8em;
 position: absolute;
 }
 
 .col3 {
-margin-left: 250px;
-width: 500 px;
+margin-left: 18em;
+width: 36em;
 position: absolute;
 font-weight: bold;
 
 }
 
 .col4 {
-margin-left: 600px;
-width: 150 px;
+margin-left: 43.2em;
+width: 10.8em;
 }
 
 .download {
 background-color: #008ab8;
 color: white;
 font-weight: 200;
-padding: 3px 10px 3px 10px;
+padding: 0.21em 0.72em 0.21em 0.72em;
 font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
 font-size: 0.7em;
-border-radius: 10px;
+border-radius: 0.72em;
 cursor: pointer;
 }
 
@@ -73,7 +73,7 @@ list-style: circle;
 }
 
 #file-rows {
-max-height: 400px;
+max-height: 28.8em;
 overflow: auto;
 }
 
@@ -84,9 +84,9 @@ font-size: 1.8em;
 letter-spacing: -1px;
 line-height: normal;
 font-weight: normal;
-padding: 5px;
+padding: 0.36em;
 background-color: #92b9c5;
-margin: 10px;
+margin: 0.72em;
 position: relative;
 }
 
@@ -96,4 +96,11 @@ font-size: 1.3em;
 
 .layer-switcher {
     font-size: 0.8em;
+}
+
+.layer-switcher button{
+    width:1.7em;
+    height:1.7em;
+    background-size: 100%;
+    background-position: center;
 }

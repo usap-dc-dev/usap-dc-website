@@ -5,7 +5,7 @@
   <meta name="Description" content="United States Antarctic Program Data Center (USAP-DC)" />
   <meta name="Keywords" content="Antarctic, Antarctica, Polar, science, data sets" />
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  
+ 
   <meta http-equiv="Content-Language" content="en-us" />
   <meta name="Copyright" content="Copyright (c)2010-2017 Interdisciplinary Earth Data Alliance" />
   
@@ -230,6 +230,15 @@
   {% if cur =="curator" %}
   <link rel="stylesheet" type="text/css" href="/static/css/curator.css" media="screen, projection" />
   {% endif %}
+
+
+  <script>
+    //If viewing on a touch screen, need to disable top menu links
+    window.addEventListener('touchstart', function() {
+      $(".top_link").click(function(){return false;});
+    });
+  </script>
+
 </head>
 
 <body>
@@ -253,27 +262,27 @@
     <div id="ieda-menu-wrap">
       <ul id="ieda-menu">
         <!--<li><a class="cur" href="/"><img src="/imgs/menu_home.gif" alt="Home Icon"/> Home</a></li>-->
-        <li><a href="{{url_for('home')}}">About</a>
+        <li><a class="top_link" href="{{url_for('home')}}">About</a>
           <ul>
             <li><a href="{{url_for('home')}}">Home</a></li>
             <li><a href="{{url_for('overview')}}">Overview</a></li>
           </ul>
         </li>
-        <li><a href="{{url_for('submit')}}">Contribute</a>
+        <li><a class="top_link" href="{{url_for('submit')}}">Contribute</a>
           <ul> 
             <li><a href="{{url_for('dataset')}}">Deposit Your Dataset</a></li>
             <li><a href="{{url_for('project')}}">AMD Project Registration</a></li>
             <li><a href="{{url_for('submit_help')}}">Submission Help</a></li>
           </ul>
         </li>
-        <li><a href="{{url_for('search')}}">Search</a>
+        <li><a class="top_link" href="{{url_for('search')}}">Search</a>
           <ul>
             <li><a href="{{url_for('search')}}">Data Search</a></li>
             <li><a href="{{url_for('dif_browser')}}">Metadata (DIF) Browser</a></li>
             <li><a href="https://gcmd.gsfc.nasa.gov/KeywordSearch/Freetext.do?Portal=amd&amp;MetadataType=0&amp;Freetext=DIF%2FIDN_Node%3A+AMD*">Search AMD</a></li>
           </ul>
         </li>
-        <li><a href="#">Other IEDA Resources</a>
+        <li><a class="top_link" href="#">Other IEDA Resources</a>
           <ul>
             <li><a href="http://www.marine-geo.org/portals/antarctic/">Polar Ship Data</a></li>
             <li><a href="http://www.marine-geo.org/tools/GMRTMapTool/sp/">GMRT-SP MapTool</a></li> 
@@ -285,7 +294,7 @@
             <li><a href="http://www.geosamples.org/">SESAR</a></li>
           </ul>
         </li>
-        <li><a href="#">Partner Resources</a>
+        <li><a class="top_link" href="#">Partner Resources</a>
           <ul>
             <li><a href="https://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory (AMD)</a></li>
             <li><a href="{{url_for('sdls')}}">Antarctic Seismic Data Library System (SDLS)</a></li>

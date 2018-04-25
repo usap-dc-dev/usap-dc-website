@@ -14,8 +14,8 @@
   }
   
   var titles = {{json_dumps(titles)}}
-    .map(function(r) { return r['title']; })
-    .filter(function(t) { return t; });
+  .map(function(r) { return r['title']; })
+  .filter(function(t) { return t; });
 
   var projects_rows = {{json_dumps(projects)}};
   var projects = ["All"];
@@ -37,7 +37,7 @@
   }
 
   var parameters = {{json_dumps(parameters)}}
-    .map(function(r) { return capitalizeWords(r['id']); })
+  .map(function(r) { return capitalizeWords(r['id']); })
   .filter(function(p) { return p; });
 
   var awards_rows = {{json_dumps(nsf_grants)}};
@@ -56,277 +56,136 @@
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 
 
-<style>
+<div class="border" style="margin:auto;width:64.8em">
+  <div class="content">
 
-  .content a {
-  border-bottom: none !important;
-  }
-  
-  .content a:hover {
-  text-decoration:none;
-  color:#000000;
-  background-color: rgba(0,0,0,0);
-  }
+    <form method="post" action="/search" id="data_link" onLoad="resetForm()">
 
-  .content .ui-state-active a:hover {
-  color: #ffffff !important;
-  }
+      <div class="row0">
+        <div class="col1">
+          <h3>Search For Data<a name="top"></a></h3>
 
-  .form-group {
-    width: 100%;
-  }
-
-  .row0 {
-	 position: static;
-	 min-height: 40px;
-	 margin-left: 0px;
-	 margin-bottom: 60px;
-  }
-
-  .row1 {
-	 position: static;
-	 min-height: 40px;
-	 margin-left: 0px;
-	 margin-bottom: 60px;
-  }
-
-  .row2 {
-	 position: static;
-	 min-height: 40px;
-	 margin-left: 0px;
-	 margin-bottom: 60px;
-
-  }
-
-  .row3 {
-	 position: static;
-	 min-height: 40px;
-	 margin-left: 0px;
-	 margin-top: 160px;
-	 margin-bottom: 40px;
-  }
-
-  .col1 {
-  	text-align: left;
-    margin-left: 0px;
-    width: 550px;
-    position: absolute; 
-  }
-
-  .col2 {
-    margin-left: 287px;
-    width: 150px;
-    position: absolute;
-  }
-
-  .col3 {
-    margin-left: 575px;
-    width: 300 px;
-    position: absolute;
-  }
-
-  .col3btns {
-    margin-left: 575px;
-    margin-top: 30px;
-    width: 300 px;
-    position: absolute;
-  }
-
-
-  .modal, .modal-body, .modal-content, .modal-dialog, .modal-footer, .modal-header {
-  padding: 0px;
-  margin: 0px;
-  }
-
- 
-  .modal-content {
-  margin:0 auto;
-  float: none;
-  }
-
-  #modal-contents {
-  position: relative;
-  top: 50px;
-  }
-
-  .modal-footer {
-  border-top: none;
-  }
-
- 
-
-  #modal-buttons {
-  width: 120px;
-  display: flex;
-  justify-content: space-around;
-  }
-
-  #modal-mapbox {
-  width:400px;
-  }
-
-  .dropdown-menu {
-  max-height: 500px;
-  overflow-y: auto;
-  }
-
-  .tooltip {
-  z-index: 10000;
-  }
-
-  button.dropdown-toggle {
-    min-width: 200px;
-  }
-  
-  html.wait, html.wait * { cursor: wait !important; }
-
-</style>
-
-
-<div class="border" style="margin:auto;width:900px">
-<div class="content">
-
-  <form method="post" action="/search" id="data_link" onLoad="resetForm()">
-
-  <div class="row0">
-   <div class="col1">
-    <h3>Search For Data<a name="top"></a></h3>
-
-    <h4><a href="#" data-toggle="popover" data-placement="right"
-      data-content="Search <a title='Antarctic Master Directory - External Link' target='_blank' href='http://gcmd.nasa.gov/Data/portals/amd/''>AMD</a> for all data funded by US Antarctic Program.">
-      Hosted at USAP-DC</h3></a></h4>
-   </div>
-    <div class="col3btns"> 
-      <div class="btn-group">
-      <input class="btn btn-primary btn-lg w3-blue-grey" type="submit" value="Search">
-      <input type="button" id="reset-btn" class="btn btn-default btn-lg " value="Reset" onClick="resetForm()">
+          <h4><a href="#" data-toggle="popover" data-placement="right"
+            data-content="Search <a title='Antarctic Master Directory - External Link' target='_blank' href='http://gcmd.nasa.gov/Data/portals/amd/''>AMD</a> for all data funded by US Antarctic Program.">
+          Hosted at USAP-DC</a></h4>
+        </div>
+        <div class="col3btns"> 
+          <div class="btn-group">
+            <input class="btn btn-primary btn-lg w3-blue-grey" type="submit" value="Search">
+            <input type="button" id="reset-btn" class="btn btn-default btn-lg " value="Reset" onClick="resetForm()">
+          </div>
+        </div>
       </div>
-    </div>
+
+      <fieldset>
+
+        <div class="row1">
+          <!-- Title -->
+          <div class="form-group col1">
+            <label for="title">
+              <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset title - e.g. type 'ice core' to find all datasets with ice core in the title.">
+              Title (free text)</a>
+            </label>
+            <input name="title" autocomplete="off" class="form-control" size="550" data-autoSelect="false"/>
+          </div>
+
+          <!-- Project -->
+          <div class="form-group col3" id="project-group">
+            <label for="project">Science Project</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="project" name="project" data-title="All" data-width="225px">
+              </select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="project-input" type="text" />
+            </div>  
+          </div>
+        </div>
+
+        <div class="row2>">
+          <!-- Person -->
+          <div class="form-group col1" id="person-group">
+            <label for="person">Person</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="person" name="person" data-title="All" data-width="225px">
+              </select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="person-input" type="text" />
+            </div>
+          </div>
+
+          <!-- Program -->
+          <div class="form-group col2" id="program-group">
+            <label for="program">NSF Funding Program</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="program" name="program" data-title="All" data-width="225px">
+              </select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="program-input" type="text" />
+            </div>
+          </div>
+
+          <!-- Award -->
+          <div class="form-group col3" id="award-group">
+            <label for="award-input">Award</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="award" name="award" data-title="All" data-width="225px">
+              </select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="award-input" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="row3">
+          <!-- Spatial Bounds -->
+          <div id="spatial">
+
+            <div class="form-group">
+              <label for="spatial_bounds">Spatial Bounds of Data</label>
+              <button type="button" class="btn btn-default" data-toggle="modal" data-target="#map-modal">Draw on Map</button><br/>
+              <button class="btn btn-xs btn-link" type="button" data-toggle="collapse" data-target="#edit-geometry-div">
+                <span>Edit Geometry</span><span class="caret"></span>
+              </button>
+              <div id="edit-geometry-div" class="collapse">
+                <textarea name="spatial_bounds" class="form-control"></textarea>
+                <div class="help-block small">
+                  Any WKT polygon, with longitudes in a 0-360 &deg; range. Example: Ross Sea is between 160 and 210. Read about the WKT format
+                  <a href="https://en.wikipedia.org/wiki/Well-known_text" target="_blank">here</a>.
+                </div>
+              </div>
+            </div>
+
+            <input name="spatial_bounds_interpolated" type="hidden"/>
+            <div class="modal fade" id="map-modal" role="dialog">
+              <div class="modal-dialog" role="document">
+                <div id="modal-contents">
+                  <div class="modal-content" id="modal-mapbox">
+                    <div class="modal-body">
+                      <div id="map">
+                        <!--<span id="mouse-position"></span>-->
+                        <div id="drawing-buttons">
+                          <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
+                            <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
+                          </div>
+                          <div id="rect-icon" data-mode="Box" class="drawing-button">
+                            <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
+                          </div>
+                          <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
+                            <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div><!-- /.modal-content -->
+
+                  <div class="modal-content" id="modal-buttons">
+                    <button type="button" class="btn btn-primary btn-sm" id="clear-polygon">Clear</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="close-modal" class="close" data-dismiss="modal">Save</button>
+                   </div>
+                </div>
+              </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+          </div><!-- /.spatial -->
+        </div> <!-- /.row3 -->
+      </fieldset>
+    </form>
   </div>
-
-   <fieldset>
-
-   <div class="row1">
-    <!-- Title -->
-	<div class="form-group col1">
-	  <label for="title">
-	  	<a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset title - e.g. type 'ice core' to find all datasets with ice core in the title.">
-	  	Title (free text)</a>
-	  </label>
-	  <input name="title" autocomplete="off" class="form-control" size="550" data-autoSelect="false"/>
-	</div>
-
-
-
-	<!-- Project -->
-	<div class="form-group col3" id="project-group">
-	  <label for="project">Science Project</label>
-    <div class="select-editable">
-      <select class="form-control selectpicker" id="project" name="project" data-title="All" data-width="225px">
-      </select>
-      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="project-input" type="text" />
-    </div>
-	  </select>
-	</div>
-   </div>
-
-   <div class="row2>">
-
-
-   	<!-- Person -->
-	<div class="form-group col1" id="person-group">
-	  <label for="person">Person</label>
-    <div class="select-editable">
-      <select class="form-control selectpicker" id="person" name="person" data-title="All" data-width="225px">
-      </select>
-      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="person-input" type="text" />
-    </div>
-	  </select>
-	</div>
-
-	<!-- Program -->
-	<div class="form-group col2" id="program-group">
-	  <label for="program">NSF Funding Program</label>
-    <div class="select-editable">
-      <select class="form-control selectpicker" id="program" name="program" data-title="All" data-width="225px">
-      </select>
-      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="program-input" type="text" />
-    </div>
-	  </select>
-	</div>
-
-	<!-- Award -->
-	<div class="form-group col3" id="award-group">
-	  <label for="award-input">Award</label>
-    <div class="select-editable">
-      <select class="form-control selectpicker" id="award" name="award" data-title="All" data-width="225px">
-      </select>
-      <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="award-input" type="text" />
-    </div>
-  </div>
-
-
- 
-</div>
-
-
-
-
-   <div class="row3">
-	  <!-- Spatial Bounds -->
-	  <div id="spatial">
-	  
-	    <div class="form-group">
-	      <label for="spatial_bounds">Spatial Bounds of Data</label>
-	      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#map-modal">Draw on Map</button><br/>
-	      <button class="btn btn-xs btn-link" type="button" data-toggle="collapse" data-target="#edit-geometry-div">
-			<span>Edit Geometry</span><span class="caret"/>
-	      </button>
-	      <div id="edit-geometry-div" class="collapse">
-			<textarea name="spatial_bounds" class="form-control"></textarea>
-			<div class="help-block small">
-		  		Any WKT polygon, with longitudes in a 0-360 &deg; range. Example: Ross Sea is between 160 and 210. Read about the WKT format
-		  		<a href="https://en.wikipedia.org/wiki/Well-known_text" target="_blank">here</a>.
-			</div>
-	      </div>
-	    </div>
-
-
-	    <input name="spatial_bounds_interpolated" type="hidden"/>
-	    
-	    <div class="modal fade" id="map-modal" role="dialog">
-	      <div class="modal-dialog" role="document">
-			<div id="modal-contents">
-		  		<div class="modal-content" id="modal-mapbox">
-		    		<div class="modal-body">
-		      			<div id="map">
-							<!--<span id="mouse-position"></span>-->
-							<div id="drawing-buttons">
-			  					<div id="drag-icon" data-mode="None" class="drawing-button draw-active"><img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
-			  					</div>
-			  					<div id="rect-icon" data-mode="Box" class="drawing-button"><img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
-			  					</div>
-			  					<div id="polygon-icon" data-mode="Polygon" class="drawing-button"><img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
-			  					</div>
-							</div>
-		      			</div>
-		    		</div>
-		  		</div><!-- /.modal-content -->
-	 		  	<!--<div class="modal-content" id="mouse-position"></div>-->
-		  
-		  		<div class="modal-content" id="modal-buttons">
-		    		<button type="button" class="btn btn-primary btn-sm" id="clear-polygon">Clear</button>
-		    		<button type="button" class="btn btn-primary btn-sm" id="close-modal" class="close" data-dismiss="modal">Save</button>
-		  		</div>
-			</div>
-	      </div><!-- /.modal-dialog -->
-	    </div><!-- /.modal -->
-	   </div><!-- /.spatial -->
-	</div> <!-- /.row3 -->
-    </fieldset>
-
-  </form>
-</div>
 </div>
 
 {% endblock body %}

@@ -1,6 +1,6 @@
 .container {
-    padding: 16px;
-    width: 300px;
+    padding: 1.15em;
+    width: 21.6em;
     margin: auto;
     border: 3px solid lightgrey;
 }
@@ -18,7 +18,7 @@
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 14px 16px;
+    padding: 1em 1.15em;
     transition: 0.3s;
 }
 
@@ -35,7 +35,7 @@
 /* Style the tab content */
 .tabcontent {
     display: none;
-    padding: 6px 12px;
+    padding: 0.43em 0.86em;
     border: 1px solid #ccc;
     border-top: none;
 }

@@ -66,27 +66,27 @@ var dif_ids = {{json_dumps(dif_ids)}}
        position:relative;
        background-color:white;
        /*border:solid grey 1px;*/
-       width:100px;
-       height:30px;
+       width:7.2em;
+       height:2.1em;
    }
    .select-editable-award select {
        /*position:absolute;*/
        top:0px;
        left:0px;
-       font-size:14px;
+       font-size:1em;
        /*border:none;*/
-       width:100px;
+       width:7.2em;
        margin:0;
        background-color:white;
    }
    .select-editable-award input {
        position:absolute;
-       top:0px;
-       left:3px;
-       width:80px;
-       height:17px;
+       top:0;
+       left:0.21em;
+       width:5.7em;
+       height:1.2em;
        padding:1px;
-       font-size:14px;
+       font-size:1em;
        border:none;
        background-color:white;
    }
@@ -98,27 +98,27 @@ var dif_ids = {{json_dumps(dif_ids)}}
        position:relative;
        background-color:white;
        /*border:solid grey 1px;*/
-       width:300px;
-       height:30px;
+       width:21.6em;
+       height:2.1em;
    }
    .select-editable-dif-id select {
        /*position:absolute;*/
        top:0px;
        left:0px;
-       font-size:14px;
+       font-size:1em;
        /*border:none;*/
-       width:300px;
+       width:21.6em;
        margin:0;
        background-color:white;
    }
    .select-editable-dif-id input {
        position:absolute;
        top:0px;
-       left:3px;
-       width:280px;
-       height:17px;
+       left:0.21em;
+       width:20.16em;
+       height:1.22em;
        padding:1px;
-       font-size:14px;
+       font-size:1em;
        border:none;
        background-color:white;
    }
@@ -127,50 +127,50 @@ var dif_ids = {{json_dumps(dif_ids)}}
    }
 
 </style>
-<div >
+<div>
   <h2 class="title">Metadata DIF browser (beta)</h2>
   <h5> Search includes AMD DIF records managed through USAP-DC.</h5>
   <h5><b>Note:</b> Includes records formerly managed through AGDC. Not all records contain links to datasets.</h5>
 
   <br/>
 
-<form action="{{url_for('dif_browser')}}" method="POST" enctype="multipart/form-data">
-  <div style="margin:5px;"><b>PI Name: </b> 
-    <input type="text" name="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
-    <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
-  </div>
+  <form action="{{url_for('dif_browser')}}" method="POST" enctype="multipart/form-data">
+    <div style="margin:5px;"><b>PI Name: </b> 
+      <input type="text" name="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
+      <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
+    </div>
 
     <div style="margin:5px;"><b>Title Keyword: </b> 
-     <input type="text" name="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
-   </div> 
+       <input type="text" name="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
+    </div> 
 
-   <div style="margin:5px;"><b>Award: </b> 
-    <span class="select-editable-award">
-      <select onchange="this.nextElementSibling.value=this.value">
-      <option value='Any award' {% if award =='' or award =='Any award' %} selected {% endif %}>Any award</option>
-      {% for row in awards %}
-        {% if row['award'] != "" %}
-          <option value="{{row['award']}}" {% if row['award'] == award %} selected {% endif %}> {{row['award']}}</option>
-        {% endif %}
-      {% endfor %}
-    </select>
-    <input name="award" type="text" value="{{award}}" />
-    </span>
-  </div>
+    <div style="margin:5px;"><b>Award: </b> 
+      <span class="select-editable-award">
+        <select onchange="this.nextElementSibling.value=this.value">
+          <option value='Any award' {% if award =='' or award =='Any award' %} selected {% endif %}>Any award</option>
+          {% for row in awards %}
+            {% if row['award'] != "" %}
+              <option value="{{row['award']}}" {% if row['award'] == award %} selected {% endif %}> {{row['award']}}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        <input name="award" type="text" value="{{award}}" />
+      </span>
+    </div>
 
-  <div style="margin:5px;"><b>DIF ID: </b> 
-    <span class="select-editable-dif-id">
-      <select onchange="this.nextElementSibling.value=this.value">
-        <option value='Any DIF ID' {% if award =='' or award =='Any DIF ID' %} selected {% endif %}>Any DIF ID</option>
-        {% for row in dif_ids %}
-          <option value="{{row['dif_id']}}" {% if row['dif_id'] == dif_id %} selected {% endif %}> {{row['dif_id']}}</option>
-        {% endfor %}
-      </select>
-      <input name="dif_id" type="text" value="{{dif_id}}" />
-    </span>
-  </div>
+    <div style="margin:5px;"><b>DIF ID: </b> 
+      <span class="select-editable-dif-id">
+        <select onchange="this.nextElementSibling.value=this.value">
+          <option value='Any DIF ID' {% if award =='' or award =='Any DIF ID' %} selected {% endif %}>Any DIF ID</option>
+          {% for row in dif_ids %}
+            <option value="{{row['dif_id']}}" {% if row['dif_id'] == dif_id %} selected {% endif %}> {{row['dif_id']}}</option>
+          {% endfor %}
+        </select>
+        <input name="dif_id" type="text" value="{{dif_id}}" />
+      </span>
+    </div>
 
-  <div style="margin-top: 10px"><input type="submit" value="Search"/>
+    <div style="margin-top: 10px"><input type="submit" value="Search"/>
   </form>
 
   {% if dif_records|length > 0 %}
@@ -181,74 +181,63 @@ var dif_ids = {{json_dumps(dif_ids)}}
       <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
     </div>
 
-  <div id='dif-browser-table'>
-  <table class='sortable' preserve_style='row'>
+    <div id='dif-browser-table'>
+      <table class='sortable' preserve_style='row'>
     
-      <tr>
-        <th width="20%">DIF ID</th>
-        <th width="7%">NSF Award</th>
-        <th width="8%">Date Created</th>
-        <th width="10%">PI (CoPIs)</th>
-        <th width="20%">Title</th>
-        <th width="25%">List of Datasets</th>
-        <th width="10%">Repositories</th>
-      </tr>
+        <tr>
+          <th width="20%">DIF ID</th>
+          <th width="7%">NSF Award</th>
+          <th width="8%">Date Created</th>
+          <th width="10%">PI (CoPIs)</th>
+          <th width="20%">Title</th>
+          <th width="25%">List of Datasets</th>
+          <th width="10%">Repositories</th>
+        </tr>
     
-      {% for val in dif_records %}
+        {% for val in dif_records %}
    
-      <tr class='w3-border'>
-        {% set dif_url = "https://gcmd.gsfc.nasa.gov/search/Metadata.do?entry=" + val['dif_id'] + "&amp;subset=GCMD" %}
+          <tr class='w3-border'>
+            {% set dif_url = "https://gcmd.gsfc.nasa.gov/search/Metadata.do?entry=" + val['dif_id'] + "&amp;subset=GCMD" %}
 
-       
+            <td><a target='_blank' href='{{dif_url}}'>{{val['dif_id']}}</a></td>
 
-        <td><a target='_blank' href='{{dif_url}}'>{{val['dif_id']}}</a></td>
+            {% if val['award'] != "" %}
+              {% set award_url = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + val['award_7d'] %}
+              <td><a target='_blank' href='{{award_url}}'>{{val['award']}}</a></td>
+            {% else %}
+              <td></td>
+            {% endif %}
+            <td>{{val['date_created']}}</td>
+            <td>{{val['authors']}}</td>
+            <td>{{val['title']}}</td>
 
-        {% if val['award'] != "" %}
-          {% set award_url = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + val['award_7d'] %}
-          <td><a target='_blank' href='{{award_url}}'>{{val['award']}}</a></td>
-        {% else %}
-          <td></td>
-        {% endif %}
-        <td>{{val['date_created']}}</td>
-        <td>{{val['authors']}}</td>
-        <td>{{val['title']}}</td>
+            <td><font size=2>
+              {% if val['datasets']|length == 0 %}
+                No data link provided
+              {% endif %}
+              {% for ds in val['datasets'] %}
+                {% if ds['url'] == '' %}
+                  No data link provided
+                {% else %}
+                  <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
+                {% endif %}
+              {% endfor %}
+            </font></td>
 
-
-        <td><font size=2>
-        {% if val['datasets']|length == 0 %}
-          No data link provided
-        {% endif %}
-        {% for ds in val['datasets'] %}
-          {% if ds['url'] == '' %}
-            No data link provided
-          {% else %}
-            <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
-          {% endif %}
+            <td><font size=2>
+              {% for repo in val['repositories'] %}
+                {{repo}}<br/>
+              {% endfor %}
+            </font></td>
+          </tr>
         {% endfor %}
-        </font></td>
 
-        <td><font size=2>
-        {% for repo in val['repositories'] %}
-          {{repo}}<br/>
-        {% endfor %}
-        </font></td>
-
-
-       
-
-
-      </tr>
-    {% endfor %}
-
-  </table>
-  </div>
-{% else %}
-  <td colspan="4"><br/><br/><i>No records found, please try again.</i></td>
-{% endif %}
-
-
-
+      </table>
+    </div>
+  {% else %}
+    <td colspan="4"><br/><br/><i>No records found, please try again.</i></td>
+  {% endif %}
 </div>
-
+</div>
 
 {% endblock dif_body %}

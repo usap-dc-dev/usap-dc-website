@@ -22,17 +22,17 @@ body{
 .wrapper {
     position:relative;
     /*width:950px;*/
-    padding-top:25px;
-    padding-left:68px;
+    padding-top:1.8em;
+    padding-left:4.9em;
   }
 
 #wrapper {
 /*  width:950px;*/
-  margin: 30px;
+  margin: 2.16em;
 }
 
 .fixed-width {
-  width:950px;
+  width:67.5em;
 }
 
 .usap-dc-banner{ 
@@ -45,29 +45,24 @@ body{
   height:25em;
   width: 100%;
   margin: 0;
-  margin-top:20px;
-  padding-top: 30px;
+  margin-top:1.4em;
+  padding-top:2.2em;
   left: 0;
 }
 
-.center {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-} 
 
 .ieda-header {
     text-align: center;
     height: 9em;
     position: relative;
     background-color: white;
-    min-width:950px;
+    min-width:68.5em;
 
 }
 .ieda-header ieda-banner {
     float: right;
     display: block;
-    width:200px;
+    width:14.4em;
 }
 
 .ieda-header ieda-banner img {
@@ -87,11 +82,11 @@ body{
 
 
 #page-header {
-  padding: 0px 30px;
+  padding: 0 2.16em;
   text-align: left;
   float:left;
-  margin-top: 2px;
-  height: 69px;
+  margin-top: 0.14em;
+  height: 5em;
   position: relative;
   margin: auto;
 }
@@ -108,7 +103,7 @@ body{
 }
 
 #page-header a:hover{
-	border-bottom:1px dotted;
+	border-bottom: 1px dotted;
 }
 	
 
@@ -118,18 +113,18 @@ menu
 */
 div#ieda-menu-wrap {
   background-color: #92b9c5;
-  padding: 0px;
+  padding: 0;
   border: 0;
   float: left;
   width: 100%;
-  height: 50px;
+  height: 3.6em;
   z-index: 999;
   position: relative;
 }
 ul#ieda-menu {
-  height: 50px;
+  height: 3em;
   list-style: none;
-  margin-left: 40px;
+  margin-left: 2.9em;
   font: 100 1.2em/1em Open-Sans, Helvetica-Neue, Helvetica, Arial, sans-serif;
   background-color: #92b9c5;
 }
@@ -138,7 +133,7 @@ ul#ieda-menu li {
   float: left;
   position: relative;
   z-index: 999;
-  line-height: 50px;
+  line-height: 3em;
 }
 ul#ieda-menu li a {
   padding: 0 1.25em 0 1.25em;
@@ -158,7 +153,6 @@ ul#ieda-menu li a img {
 }
 ul#ieda-menu li ul {
   margin-left: 0;
-  padding: 0;
   list-style: none;
   padding: 0.7em 0;
   border-top: none;
@@ -168,7 +162,7 @@ ul#ieda-menu li ul {
   z-index: 999;
   background-color: #92b9c5;
   /*#224488;*/
-  border-radius: 0px 0px 7px 7px;
+  border-radius: 0 0 0.5em 0.5em;
 }
 ul#ieda-menu li ul li {
   margin: 0;
@@ -213,15 +207,15 @@ ul#ieda-menu li.submenu ul {
 }
 #menu_search_button {
   background-color: #A0A0A0 ;
-  padding-left: 15px;
-  padding-right: 15px;
-  margin-top: 10px;
-  height: 30px;
-  line-height: 30px;
+  padding-left: 1.1em;
+  padding-right: 1.1em;
+  margin-top: 0.72em;
+  height: 2.2em;
+  line-height: 2.2em;
   color: #fff;
-  font-size: 18px;
+  font-size: 1.3em;
   display: block;
-  border-radius: 5px;
+  border-radius: 0.36em;
 }
 #menu_search_button:hover {
   background-color: #3b839b;
@@ -235,30 +229,30 @@ ul#ieda-menu li.submenu ul {
 .border{
   width: 100%;
   color: #555;
-  border: 3px solid #92b9c5;
-  border-radius: 10px;
+  border: 0.22em solid #92b9c5;
+  border-radius: 0.72em;
 }
 
 /* homepage big icons*/
 .shadow-container {
   float: center;
-  left: 5px;
-  margin-top: 25px;
-  margin-bottom: 25px;
-  margin-right: 25px;
-  margin-left: 25px;
-  height: 200px;
+  left: 0.36em;
+  margin-top: 1.8em;
+  margin-bottom: 1.8em;
+  margin-right: 1.8em;
+  margin-left: 1.8em;
+  height: 14.4em;
   position: relative;
   text-align: center;
   align: center;
-  border: 10 px;
-  padding-bottom: 40px;
+  border: 0.72em;
+  padding-bottom: 2.88em;
 }
 .shadow-container .container {
   position: relative;
-  height: 200px;
-  padding: 20px;
-  width: 250px;
+  height: 14.4em;
+  padding: 1.44em;
+  width: 18em;
   background-color: #024a61;
   /* #7e4d17;*/
 }
@@ -269,7 +263,7 @@ ul#ieda-menu li.submenu ul {
 .shadow-container a.image {
   text-decoration: none !important;
   border: none !important;
-  padding: 0px !important;
+  padding: 0 !important;
 }
 .shadow-container a.image:hover {
   background-color: transparent !important;
@@ -282,8 +276,8 @@ ul#ieda-menu li.submenu ul {
 footer
 */
 #footer {
-  margin-top: 20px;
-  padding: 5px 10px;
+  margin-top: 1.44em;
+  padding: 0.36em 0.72em;
   background-color: #92b9c5;
   text-align: left;
   font: 100 0.9em Helvetica-Neue, Helvetica, Arial, sans-serif;
@@ -308,33 +302,33 @@ footer
 }
 #footer a.information {
   text-decoration: none;
-  padding-right: 12px;
-  padding-top: 10px;
+  padding-right: 0.86em;
+  padding-top: 0.72em;
   background: transparent url(/imgs/icons/question.png) center right no-repeat;
 }
 #footer a.information span {
   margin: 0;
-  padding: 0 0 4px 0;
-  width: 17px;
-  height: 14px;
+  padding: 0 0 0.29em 0;
+  width: 1.22em;
+  height: 1em;
   display: inline-block;
   background: transparent url(/imgs/icons/question.png) center right no-repeat;
   vertical-align: bottom;
 }
 #footer a.external {
-  padding-right: 13px;
+  padding-right: 0.94em;
   background: transparent url(/imgs/external.gif) center right no-repeat;
 }
 #footer a.external span {
   margin: 0;
-  padding: 0 0 4px 0;
-  width: 10px;
-  height: 14px;
+  padding: 0 0 0.29em 0;
+  width: 0.72em;
+  height: 1em;
   vertical-align: bottom;
 }
 #footer a.top {
   margin: 0;
-  padding: 0 2px 0 18px;
+  padding: 0 0.14em 0 1.3em;
   border-bottom: 1px dotted;
   text-align: right;
   font-size: 0.85em;
@@ -357,9 +351,6 @@ footer
   cursor: help;
 }
 
-
-
-
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Chrome/Safari/Opera */
@@ -376,27 +367,24 @@ footer
 }
 
 .content {
-  margin: 10px 30px 10px 30px;
+  margin: 0.72em 2.16em 0.72em 2.16em;
 }
-
-
-
 
 /*
 content area & common elements
 */
 #content {
   position: relative;
-  margin: 10px 30px 10px 30px;
-  padding: 10px;
-  padding-top: 25px;
+  margin: 0.72em 2.16em 0.72em 2.16em;
+  padding: 0.72em;
+  padding-top: 1.8em;
   text-align: left;
   z-index: 1;
   clear: left;
-  width: 955px;
+  width: 68.76em;
   overflow-x: visible;
   background-color: #FFFFFF;
-  border-radius: 7px;
+  border-radius: 0.5em;
 }
 #content p {
   margin: 0.5em 0 1em 0;
@@ -407,8 +395,8 @@ content area & common elements
   /*#002783;*/
   text-decoration: none;
   font: 100 2.3em/1em Helvetica-Neue, Helvetica, Arial, sans-serif;
-  letter-spacing: -1px;
-  padding-bottom: 2px;
+  letter-spacing: -0.072em;
+  padding-bottom: 0.144em;
   color: #024a61;
   font-weight: 350;
 }
@@ -476,10 +464,10 @@ content area & common elements
 
 #dif-browser-table table {
   width:100%;
-  border:2px solid #024161;
+  border:0.144em solid #024161;
   border-collapse: separate;
   padding:0;
-  margin:5px 5px 10px 5px;
+  margin:0.36em 0.36em 0.72em 0.36em;
   table-layout: fixed;
 }
 
@@ -487,14 +475,14 @@ content area & common elements
   background-color:#92b9c5;
   text-align: left;
   padding-right: 1em; 
-  padding: 2px 5px;
+  padding: 0.14em 0.36em;
   line-height:1.5em; 
   border:1px solid white;
   word-wrap: break-word;
 }
 
 #dif-browser-table table tr {
-  padding: 2px 5px;
+  padding: 0.14em 0.36em;
   line-height:1.5em;
    
 }
@@ -504,7 +492,7 @@ content area & common elements
 }
 
 #dif-browser-table table td {
-  padding:2px;
+  padding:0.14em;
   border:1px solid white;
   word-wrap: break-word;
 }
@@ -557,33 +545,33 @@ content area & common elements
 }
 #content a.information {
   text-decoration: none;
-  padding-right: 12px;
-  padding-top: 10px;
+  padding-right: 0.864em;
+  padding-top: 0.72em;
   background: transparent url(/imgs/icons/question.png) center right no-repeat;
 }
 #content a.information span {
   margin: 0;
-  padding: 0 0 4px 0;
-  width: 17px;
-  height: 14px;
+  padding: 0 0 0.288em 0;
+  width: 1.22em;
+  height: 1em;
   display: inline-block;
   background: transparent url(/imgs/icons/question.png) center right no-repeat;
   vertical-align: bottom;
 }
 #content a.external {
-  padding-right: 13px;
+  padding-right: 0.936em;
   background: transparent url(/imgs/external.gif) center right no-repeat;
 }
 #content a.external span {
   margin: 0;
-  padding: 0 0 4px 0;
-  width: 10px;
-  height: 14px;
+  padding: 0 0 0.288em 0;
+  width: 0.72em;
+  height: 1em;
   vertical-align: bottom;
 }
 #content a.top {
   margin: 0;
-  padding: 0 2px 0 18px;
+  padding: 0 0.14em 0 1.3em;
   border-bottom: 1px dotted;
   text-align: right;
   font-size: 0.85em;
@@ -626,14 +614,14 @@ content area & common elements
 }
 .read-more-button {
   background-color: #92b9c5;
-  height: 180 px;
-  width: 200px;
+  height: 3em;
+  width: 12em;
   color: #fff;
-  font-size: 18px;
+  font-size: 0.96em;
   display: inline-block;
-  margin-top: 30px;
-  margin-bottom: 30px;
-  padding: 15px 23px;
+  margin-top: 2em;
+  margin-bottom: 2em;
+  padding: 1em 1em;
 }
 
 
@@ -642,7 +630,7 @@ content area & common elements
 .split {
   width: 100%;
   /*height:600px;*/
-  margin-top: 10 px;
+  margin-top: 0.72em;
 }
 .left {
   width: 45%;
@@ -670,13 +658,13 @@ content area & common elements
   position: relative;
   /* width: 13em;  - apply for fixed size */
   margin: 0.2em;
-  padding: 0 15px 0 46px;
+  padding: 0 1.08em 0 3.31em;
   border: none;
   text-align: left;
-  line-height: 34px;
+  line-height: 2.45em;
   white-space: nowrap;
   border-radius: 0.2em;
-  font-size: 16px;
+  font-size: 1.15em;
   color: #FFF;
 }
 .loginBtn:before {
@@ -685,28 +673,28 @@ content area & common elements
   position: absolute;
   top: 0;
   left: 0;
-  width: 34px;
+  width: 2.45em;
   height: 100%;
 }
 .loginBtn:focus {
   outline: none;
 }
 .loginBtn:active {
-  box-shadow: inset 0 0 0 32px rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 0 2.3em rgba(0,0,0,0.1);
 }
 
 /* Google */
 .loginBtn--google {
   /*font-family: "Roboto", Roboto, arial, sans-serif;*/
   background: #DD4B39;
-  width: 180px;
+  width: 12.96em;
 }
 .loginBtn--google:before {
   border-right: #BB3F30 1px solid;
   background: url(/static/imgs/Google-post-60x60.gif);
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 32px ;
+  background-size: 2.3em;
  /* background: url(../imgs/icon_google.png) 6px 6px no-repeat;*/
 }
 .loginBtn--google:hover,
@@ -718,14 +706,14 @@ content area & common elements
 .loginBtn--orcid {
   /*font-family: "Roboto", Roboto, arial, sans-serif;*/
   background: rgb(166,206,57);
-  width: 180px;
+  width: 12.96em;
 }
 .loginBtn--orcid:before {
   border-right: #728f24 1px solid;
   background: url(/static/imgs/orcid_logo.gif);
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 32px ;
+  background-size: 2.3em ;
 }
 .loginBtn--orcid:hover,
 .loginBtn--orcid:focus {

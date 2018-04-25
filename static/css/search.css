@@ -10,83 +10,128 @@ div.one_col{
 	width:99%;
 	float:left;
 }
-/*
-#data_link fieldset{
-	margin:0 0 0.5em 0;
-	padding:1em 0.5em;
-}
-	#data_link fieldset label{ display:block; }
-	#data_link fieldset table{
-		text-align:center;
-		border-collapse:collapse;
-	}
-		#data_link fieldset table input{
-			margin:0 2em 0 0;
-			width:4em;
-		}
-		#data_link fieldset table label{ margin-right:2em; }
-	#data_link fieldset em{
-		margin:-1.5em 0 1em 0;
-		display:block;
-		font-size:0.8em;
-		font-family:Verdana, Arial, Helvetica, sans-serif;
-		color:#304983;
-	}
-	#data_link fieldset div.toggle_visible{
-		margin-left:1.5em;
-		padding-left:1em;
-		border-left:1px dotted #a4c6ef;
-	}
-	#data_link fieldset legend{
-		padding:0 0.25em;
-		font:normal 1.2em Georgia, "Times New Roman", Times, serif;
-		color:#304983;
-	}
-	#data_link fieldset legend a:link, #data_link fieldset legend a:visited, #data_link fieldset legend a:hover{
-		border-bottom:none;
-	}
-		#data_link fieldset fieldset{  padding:0.5em 0.5em 0 0.5em; }
-		#data_link fieldset fieldset legend{
-			padding:0 0.25em;
-			font:inherit;
-			color:#005dd0;
-		}
-	#data_link fieldset input, #data_link fieldset select{ margin-bottom:1.25em; }
 
-	#data_link fieldset ul.horz_radio_btns{
-		margin:0 0 1.25em 0;
-		padding:0;
-		list-style:none;
-	}
-		#data_link fieldset ul.horz_radio_btns li{
-			display:inline;
-			margin-right:2em;
-		}
-			#data_link fieldset ul.horz_radio_btns li input{
-				margin:0;
-				vertical-align:middle;
-			}
-			#data_link fieldset ul.horz_radio_btns li label{
-				padding:0 0.25em;
-				display:inline;
-			}
-	#data_link div.center{
-		margin:1em auto;
-		padding:0.5em;
-		text-align:center;
-	}
-	#data_link div.right{
-		margin:1em auto;
-		padding:0.5em;
-		text-align:right;
-	}
-	#data_link div.toggle_message{
-		text-align:center;
-		font:normal 1.2em Georgia, "Times New Roman", Times, serif;
-		color:#7DA8DF;
-	}
-*/
-	
+.content a {
+border-bottom: none !important;
+}
+
+.content a:hover {
+text-decoration:none;
+color:#000000;
+background-color: rgba(0,0,0,0);
+}
+
+.content .ui-state-active a:hover {
+color: #ffffff !important;
+}
+
+.form-group {
+width: 100%;
+}
+
+.row0 {
+ position: static;
+ min-height: 2.9em;
+ margin-left: 0;
+ margin-bottom: 4.3em;
+}
+
+.row1 {
+ position: static;
+ min-height: 2.9em;
+ margin-left: 0;
+ margin-bottom: 4.3em;
+}
+
+.row2 {
+ position: static;
+ min-height: 2.9em;
+ margin-left: 0;
+ margin-bottom: 4.3em;
+
+}
+
+.row3 {
+ position: static;
+ min-height: 2.9em;
+ margin-left: 0;
+ margin-top: 11.5em;
+ margin-bottom: 2.9em;
+}
+
+.col1 {
+	text-align: left;
+margin-left: 0;
+width: 40em;
+position: absolute; 
+}
+
+.col2 {
+margin-left: 20.7em;
+width: 10.8em;
+position: absolute;
+}
+
+.col3 {
+margin-left: 41.4em;
+width: 21.6em;
+position: absolute;
+}
+
+.col3btns {
+margin-left: 41.4em;
+margin-top: 2.2em;
+width: 21.6em;
+position: absolute;
+}
+
+
+.modal, .modal-body, .modal-content, .modal-dialog, .modal-footer, .modal-header {
+padding: 0;
+margin: 0;
+}
+
+
+.modal-content {
+margin:0 auto;
+float: none;
+}
+
+#modal-contents {
+position: relative;
+top: 3.6em;
+}
+
+.modal-footer {
+border-top: none;
+}
+
+
+#modal-buttons {
+width: 8.64em;
+display: flex;
+justify-content: space-around;
+}
+
+#modal-mapbox {
+width:28.8em;
+height:28.8em;
+}
+
+.dropdown-menu {
+max-height: 36em;
+overflow-y: auto;
+}
+
+.tooltip {
+z-index: 10000;
+}
+
+button.dropdown-toggle {
+min-width: 14.4em;
+}
+
+html.wait, html.wait * { cursor: wait !important; }
 
 
 /* set button background-color to always be white */
@@ -111,17 +156,17 @@ div.one_col{
    position:relative;
    background-color:white;
    /*border:solid grey 1px;*/
-   width:225px;
-   height:30px;
+   width:16.2em;
+   height:2.16em;
 }
 
 .select-editable select {
    /*position:absolute;*/
-   top:0px;
-   left:0px;
-   font-size:14px;
+   top:0;
+   left:0;
+   font-size:1em;
    /*border:none;*/
-   width:225;
+   width:16.2em;
    margin:0;
    background-color:blue;
 }
@@ -129,10 +174,10 @@ div.one_col{
    position:absolute;
    top:2px;
    left:1px;
-   width:198px;
-   height:28px;
-   padding:6px;
-   font-size:14px;
+   width:14.2em;
+   height:2.01em;
+   padding:0.43em;
+   font-size:1em;
    border:0;
    background-color:white;
    z-index:2;
@@ -168,13 +213,13 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 
 }
 
-.title { margin-top: 10px;}
-.category,.investigator,.term,.dataseturl { padding-left: 25px;}
-.radio { margin-left: 20px;}
-#id, #title { width: 390px; }
-.paginator { padding: 5px;}
+.title { margin-top: 0.72em;}
+.category,.investigator,.term,.dataseturl { padding-left: 1.8em;}
+.radio { margin-left: 1.44em;}
+#id, #title { width: 28.1em; }
+.paginator { padding: 0.36em;}
 .results {clear:both;}
-.navigation { padding-top: 5px; }
+.navigation { padding-top: 0.36em; }
 
 #drawing-buttons {
     border-radius: 2px;
@@ -186,8 +231,8 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 }
 
 .drawing-button {
-    padding: 2px;
-    padding-top: 4px;
+    padding: 0.144em;
+    padding-top: 0.288em;
     display:inline-block;
     border-radius: 2px;
 }
@@ -201,31 +246,31 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 }
 
 #map {
-    width:400px;
-    height:400px;
+    width:28.8em;
+    height:28.8em;
 }
 
 #map-bounds {
     float: left;
-    margin: 10px;
-    margin-top: 25px;
+    margin: 0.72em;
+    margin-top: 1.58em;
 }
 
 #mouse-position .ol-mouse-position {
     position: absolute;
-    right: 30px;
+    right: 2.16em;
 }
 
 #map-footer {
-    margin:10px;
+    margin:0.72em;
     display: block;
     clear:both;
-    width:400px;
+    width:28.8em;
     position: relative;
 }
 
 .tooltip-inner {
-    width: 300px;
+    width: 21.6em;
 }
 
 .dropdown div {

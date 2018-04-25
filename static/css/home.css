@@ -1,34 +1,24 @@
-#content iframe#map {
-    margin:0 0.5em 2em 1em ;
-    padding:0;
-    width:456px;
-    height:460px;
-    border:0;
-    position:relative;
-    float:right;
-}
-    
 #content h3{ display:inline; }
 #content ul{ margin-top:1em; }
 
 #map {
     position: relative;
     margin: auto;
-    width:800px;
-    height:800px;
+    width:57.6em;
+    height:57.6em;
     border:2px solid black;
 }
 .ol-mouse-position {
     position: absolute;
-    left: 50px;
+    left: 3.6em;
 }
 .layer-switcher .panel {
     font-size: 0.9em;
     opacity: 0.85;
 }
 .layer-switcher button{
-    width:22px;
-    height:22px;
+    width:1.4em;
+    height:1.4em;
     background-size: 100%;
     background-position: center;
 }
@@ -38,14 +28,14 @@
 }
 .map-btn-container {
     margin: auto;
-    width:800px;
+    width:57.6em;
     /*height:34px;*/
 }
 .map-text-container {
-    width:290px;
+    width:2.88em;
     float:right;
     font-size:0.95em;
-    padding-top: 4px;
+    padding-top: 0.288em;
     line-height: 1em;
 }
 /*.ol-zoom {
