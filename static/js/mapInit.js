@@ -456,6 +456,7 @@ function MapClient(zoom) {
 }
 
 $(document).ready(function() {
+    extents = JSON.parse($("#div_extents").text());
     new MapClient();
 
     // $("#expandMap").on('click', function(e) {

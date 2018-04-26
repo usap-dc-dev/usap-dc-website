@@ -1,0 +1,63 @@
+.select-editable-award {
+   position:relative;
+   background-color:white;
+   /*border:solid grey 1px;*/
+   width:7.2em;
+   height:2.1em;
+}
+.select-editable-award select {
+   /*position:absolute;*/
+   top:0px;
+   left:0px;
+   font-size:1em;
+   /*border:none;*/
+   width:7.2em;
+   margin:0;
+   background-color:white;
+}
+.select-editable-award input {
+   position:absolute;
+   top:0;
+   left:0.21em;
+   width:5.7em;
+   height:1.2em;
+   padding:1px;
+   font-size:1em;
+   border:none;
+   background-color:white;
+}
+.select-editable-award select:focus, .select-editable input:focus {
+   outline:none;
+}
+
+.select-editable-dif-id {
+   position:relative;
+   background-color:white;
+   /*border:solid grey 1px;*/
+   width:21.6em;
+   height:2.1em;
+}
+.select-editable-dif-id select {
+   /*position:absolute;*/
+   top:0px;
+   left:0px;
+   font-size:1em;
+   /*border:none;*/
+   width:21.6em;
+   margin:0;
+   background-color:white;
+}
+.select-editable-dif-id input {
+   position:absolute;
+   top:0px;
+   left:0.21em;
+   width:20.16em;
+   height:1.22em;
+   padding:1px;
+   font-size:1em;
+   border:none;
+   background-color:white;
+}
+.select-editable-dif-id select:focus, .select-editable input:focus {
+   outline:none;
+}

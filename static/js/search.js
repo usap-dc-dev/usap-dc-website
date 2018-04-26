@@ -1,3 +1,12 @@
+function capitalizeFirstLetter(string) {
+return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
+
+function capitalizeWords(s) {
+return s.split(/ /).map(capitalizeFirstLetter).join(' ');
+}
+
+
 function fill_opts(menu_name, opts, selected) {
     var $select = $('.selectpicker[name='+'"'+menu_name+'"]');
     $select.selectpicker({width:'225px'});
@@ -61,6 +70,46 @@ $(document).ready(function() {
     $(document).ajaxStart(function () { $("html").addClass("wait"); });
     $(document).ajaxStop(function () { $("html").removeClass("wait"); });
     $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
+
+
+    var titles = JSON.parse($("#titles").text())
+    .map(function(r) { return r.title; })
+    .filter(function(t) { return t; });
+
+    var projects_rows = JSON.parse($("#projects").text());
+    var projects = ["All"];
+    for (var row of projects_rows) {
+    //projects[row['award']] = { 'name': row['name'], 'title': row['title'] };
+    projects.push(row.id);
+    }
+
+    var persons_rows = JSON.parse($("#persons").text());
+    var persons = ["All"];
+    for (row of persons_rows) {
+    persons.push(row.id);
+    }
+
+    var programs_rows = JSON.parse($("#programs").text());
+    var programs = ["All"];
+    for (row of programs_rows) {
+    programs.push(row.id);
+    }
+
+    var parameters = JSON.parse($("#parameters").text())
+    .map(function(r) { return capitalizeWords(r.id); })
+    .filter(function(p) { return p; });
+
+    var awards_rows = JSON.parse($("#nsf_grants").text());
+    var awards = {};
+    var awards_str = ["All"];
+    for (row of awards_rows) {
+    awards[row.award] = { 'name': row.name, 'title': row.title };
+    awards_str.push(row.award+ " " + row.name);
+    }
+
+
+    var search_params = JSON.parse($("#search_params").text());
+
 
 
     var check = $("#entire_region");

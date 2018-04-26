@@ -9,9 +9,10 @@
       window.open($(this).attr('data-url'), '_blank');
     });
   });
-
-  var extents = {{json_dumps(data['spatial_extents'])}};
 </script>
+
+<div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
+
 
 <div id="metadata">
   <div class="header small">

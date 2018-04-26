@@ -950,7 +950,7 @@ def home():
     # get all spatial extents
     (conn, cur) = connect_to_db()
     template_dict['spatial_extents'] = get_spatial_extents(conn=conn, cur=cur)
-    return render_template('home.jnj', **template_dict)
+    return render_template('home.html', **template_dict)
 
 
 # @app.route("/home2")
@@ -1013,11 +1013,11 @@ def abstract_examples():
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     print('in search')
-    print(get_nsf_grants(['award','name','title']))
+    print(get_nsf_grants(['award', 'name', 'title']))
     if request.method == 'GET':
-        return render_template('search.jnj', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award','name','title']), keywords=get_keywords(),
-                                          parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
-                                          persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
+        return render_template('search.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
+                               parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
+                               persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
     elif request.method == 'POST':
         params = request.form.to_dict()
         filtered = filter_datasets(**params)
@@ -1025,8 +1025,9 @@ def search():
         del params['spatial_bounds_interpolated']
         session['filtered_datasets'] = filtered
         session['search_params'] = params
-        
+
         return redirect('/search_result')
+
 
 @app.route('/filter_search_menus', methods=['GET'])
 def filter_search_menus():
@@ -1259,7 +1260,8 @@ def landing_page(dataset_id):
         references.extend(refs)
     metadata['refs'] = references
 
-    return render_template('landing_page.jnj', data=metadata, creator_orcid=creator_orcid)
+    return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
+
 
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
@@ -1639,7 +1641,7 @@ def dif_browser():
     if template_dict['dif_id'] == "":
         template_dict['dif_id'] = "Any DIF ID"
 
-    return render_template('dif_browser.jnj', **template_dict)
+    return render_template('dif_browser.html', **template_dict)
 
 
 @app.route('/NSF-ANT05-37143_datasets')

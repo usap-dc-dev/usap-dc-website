@@ -2,59 +2,15 @@
 {% set cur = "search" %}
 {% block body %}
 
-
-<script type="text/javascript">
-
-  function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-  }
-  
-  function capitalizeWords(s) {
-    return s.split(/ /).map(capitalizeFirstLetter).join(' ');
-  }
-  
-  var titles = {{json_dumps(titles)}}
-  .map(function(r) { return r['title']; })
-  .filter(function(t) { return t; });
-
-  var projects_rows = {{json_dumps(projects)}};
-  var projects = ["All"];
-  for (var row of projects_rows) {
-    //projects[row['award']] = { 'name': row['name'], 'title': row['title'] };
-    projects.push(row['id']);
-  }
-
-  var persons_rows = {{json_dumps(persons)}};
-  var persons = ["All"];
-  for (var row of persons_rows) {
-    persons.push(row['id']);
-  }
-
-  var programs_rows = {{json_dumps(programs)}};
-  var programs = ["All"];
-  for (var row of programs_rows) {
-    programs.push(row['id']);
-  }
-
-  var parameters = {{json_dumps(parameters)}}
-  .map(function(r) { return capitalizeWords(r['id']); })
-  .filter(function(p) { return p; });
-
-  var awards_rows = {{json_dumps(nsf_grants)}};
-  var awards = {};
-  var awards_str = ["All"];
-  for (var row of awards_rows) {
-    awards[row['award']] = { 'name': row['name'], 'title': row['title'] };
-    awards_str.push(row['award']+ " " + row['name']);
-  }
-
-
-  var search_params = {{json_dumps(search_params)}}
-
-</script>
-
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 
+<div id="titles" hidden>{{titles|tojson}}</div>
+<div id="projects" hidden>{{projects|tojson}}</div>
+<div id="persons" hidden>{{persons|tojson}}</div>
+<div id="programs" hidden>{{programs|tojson}}</div>
+<div id="parameters" hidden>{{parameters|tojson}}</div>
+<div id="nsf_grants" hidden>{{nsf_grants|tojson}}</div>
+<div id="search_params" hidden>{{search_params|tojson}}</div>
 
 <div class="border" style="margin:auto;width:64.8em">
   <div class="content">
