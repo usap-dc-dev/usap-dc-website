@@ -2,13 +2,12 @@ import urllib2
 import json
 import xml.dom.minidom as minidom
 from lib.ezid import formatAnvlRequest, issueRequest, encode, MyHTTPErrorProcessor
-#import lxml.etree as ET
 import os
 import psycopg2
 import psycopg2.extras
 import sys
 import requests
-from flask import session
+from flask import session, url_for
 from subprocess import Popen, PIPE
 
 UPLOAD_FOLDER = "upload"
@@ -23,6 +22,7 @@ EZID_FILE = "inc/ezid.json"
 DATACITE_TO_ISO_XSLT = "static/DataciteToISO19139v3.2.xslt"
 ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
 PYTHON = "/opt/rh/python27/root/usr/bin/python"
+LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -52,7 +52,9 @@ def submitToEZID(uid):
         h.add_password("EZID", ezid_details['SERVER'], ezid_details['USER'], ezid_details['PASSWORD'])
         opener.add_handler(h)
 
-        data = formatAnvlRequest(["datacite", "@%s" % datacite_file])
+        landing_page = url_for("landing_page", dataset_id=uid, _external=True)
+        data = formatAnvlRequest(["datacite", "@%s" % datacite_file, "_target", landing_page])
+
         # if using mint to generate random DOI id:
         # response = issueRequest(ezid_details['SERVER'], opener, "shoulder/%s" % encode(ezid_details['SHOULDER']), "POST", data)
         # if using the create option, rather than mint:
@@ -73,13 +75,6 @@ def submitToEZID(uid):
         else:
             doi = response.split(" ")[1]
             doi = doi.replace("doi:", "")
-
-            # move xml to landing page directory (need to rename)
-            # new_file_name = os.path.join(LANDING['LANDING_DIR'], doi[-6:])
-            # cmd = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null %s %s@%s:%s" %\
-            #     (datacite_file, LANDING['REMOTE_USER'], LANDING['REMOTE_HOST'], new_file_name)
-            # print(cmd)
-            # os.system(cmd.encode('utf-8'))
             os.remove(datacite_file)
 
             return("Successfully registered dataset at EZID, doi: %s" % doi)
@@ -180,6 +175,7 @@ def doISOXML(uid):
         xsl_filename = DATACITE_TO_ISO_XSLT
         isoxml_filename = getISOXMLFileName(uid)
 
+        os.environ['LD_LIBRARY_PATH'] = LD_LIBRARY_PATH
         # need to run external script as lxml module doesn't seem to work when running with apache
         process = Popen([PYTHON, ISOXML_SCRIPT, xml_filename, xsl_filename, isoxml_filename], stdout=PIPE)
         (output, err) = process.communicate()
