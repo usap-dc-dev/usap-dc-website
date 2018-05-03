@@ -46,9 +46,29 @@
     <div class="map-btn-container">
       <em>Map shows datasets registered with the USAP-DC. Dots show the locations of the centroid of the geographic bounding box  for each data set or the point locations for datasets from single sites (e.g. ice cores). Click on  centroid locations to view the full bounding box as provided by the contributing scientists as well as more information about the datasets.</em>
     </div>
-    <div id="map"></div>   
+    <div id="map">
+      <div id="drawing-buttons">
+        <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
+          <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
+        </div>
+        <div id="rect-icon" data-mode="Box" class="drawing-button">
+          <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
+        </div>
+        <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
+          <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
+        </div>
+      </div>
+        <form method="post" action="/search">
+          <input name="spatial_bounds" type="hidden"/>
+          <input name="spatial_bounds_interpolated" type="hidden"/>
+          <div id="clear-search-buttons">
+            <button type="submit" class="btn btn-primary btn-sm"  id="search-button">Search</button>
+            <button type="button" class="btn btn-primary btn-sm"  id="clear-button">Clear</button>
+          </div> 
+        </form>
+    </div>  
   </div>
-
+  
 
   <div class="split">
 

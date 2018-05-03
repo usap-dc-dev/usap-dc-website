@@ -5,17 +5,17 @@ function MapClient(zoom) {
     projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
     projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
     var map = new ol.Map({  // set to GMRT SP bounds
-    target: 'map',
-    interactions: ol.interaction.defaults({mouseWheelZoom:false}),
-    view: new ol.View({
-        center: [0,0],
-        zoom: zoom,
-        projection: projection,
-        minZoom: 1,
-        maxZoom: 10
-    }),
-    
+        target: 'map',
+        interactions: ol.interaction.defaults({mouseWheelZoom:false}),
+        view: new ol.View({
+            center: [0,0],
+            zoom: zoom,
+            projection: projection,
+            minZoom: 1,
+            maxZoom: 10
+        }),
     });
+    this.map = map;
 
     var api_url = 'http://api.usap-dc.org:81/wfs?';
 
@@ -443,6 +443,34 @@ function MapClient(zoom) {
     }
     });
 
+    //drawing buttons
+    this.vectorSrc = new ol.source.Vector();
+    var vectorLayer = new ol.layer.Vector({ source: this.vectorSrc });
+    this.map.addLayer(vectorLayer);
+    var self = this;
+    $('.drawing-button').on('click', function(e) {
+        var mode = $(this).attr('data-mode');
+        self.setDrawMode(mode);
+        self.setDrawingTool(mode);
+    });
+
+    $('#clear-button').click(function() {
+        self.vectorSrc.clear();
+    });
+
+    $('#search-button').click(function() {
+        var features = mc.vectorSrc.getFeatures();
+        if (features.length > 0) {
+            var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
+            var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
+            var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
+            $('input[name="spatial_bounds_interpolated"]').val(wkt);
+        } else {
+            $('input[name="spatial_bounds_interpolated"]').val('');
+    }
+    });
+
+
     //this.createLayerSwitcher();
     var layerSwitcher = new ol.control.LayerSwitcher({
         tipLabel: 'Légende'
@@ -455,9 +483,80 @@ function MapClient(zoom) {
     
 }
 
+function interpolateLineString(coords,resolution) {
+    var i,j;
+    var ret = [];
+    for (var i=0, j=1; j < coords.length; i++, j++) {
+    var start = coords[i];
+    var end = coords[j];
+    for (var n = 0; n < resolution; n++) {
+        var t = n/resolution;
+        var x = (1-t)*start[0] + t*end[0];
+        var y = (1-t)*start[1] + t*end[1];
+        ret.push([x,y])
+    }
+    }
+    ret.push(coords[coords.length-1]);
+    return ret;
+}
+
+MapClient.prototype.setDrawingTool = function() {
+    this.map.removeInteraction(this.drawingTool);
+    var value = this.getDrawMode(); 
+    if (value !== 'None') {
+    var maxPoints, geometryFunction;
+    if (value == 'Box') {
+        value = 'LineString';
+        maxPoints = 2;
+        geometryFunction = function(coordinates, geometry) {
+        if (!geometry) {
+            geometry = new ol.geom.Polygon(null);
+        }
+        var start = coordinates[0];
+        var end = coordinates[1];
+        geometry.setCoordinates([
+            [start, [start[0], end[1]], end, [end[0], start[1]], start]
+        ]);
+        return geometry;
+        };
+    }
+    this.drawingTool = new ol.interaction.Draw({
+        source: this.vectorSrc,
+        type: value,
+        geometryFunction: geometryFunction,
+        maxPoints: maxPoints
+    });
+    this.map.addInteraction(this.drawingTool);
+    
+    var self = this;
+    this.drawingTool.on(ol.interaction.DrawEventType.DRAWSTART, function() {self.vectorSrc.clear();});
+
+    this.drawingTool.on(ol.interaction.DrawEventType.DRAWEND, function(e) {
+        var geom = e.feature.getGeometry().clone();
+        geom.transform('EPSG:3031', 'EPSG:4326');
+        var coords = geom.getCoordinates();
+        coords = coords.map(function(ring) { return ring.map(function(xy) { return [Number(xy[0]).toFixed(3), Number(xy[1]).toFixed(3)]; }); });
+        console.log(coords);
+        geom.setCoordinates(coords);
+        $('[name="spatial_bounds"]').val((new ol.format.WKT()).writeGeometry(geom));
+    });
+    }
+};
+
+MapClient.prototype.getDrawMode = function() {
+    return $('.drawing-button.draw-active').attr('data-mode');
+};
+
+MapClient.prototype.setDrawMode = function(str) {
+    $('#drawing-buttons .drawing-button').removeClass('draw-active');
+    $('#drawing-buttons .drawing-button[data-mode="' + str + '"]').addClass('draw-active');
+};
+
+
+
 $(document).ready(function() {
     extents = JSON.parse($("#div_extents").text());
-    new MapClient();
+    mc = new MapClient();
 
     // $("#expandMap").on('click', function(e) {
     //  $("#map").empty();

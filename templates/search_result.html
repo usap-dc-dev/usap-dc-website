@@ -16,7 +16,9 @@
   background: #DEDEDE
   }
 
-  
+  .list-group{
+    margin-bottom: 0;
+  }
 
   .list-group.off {
   display: none;
@@ -51,7 +53,7 @@
 
   .pagination {
   margin-bottom: 10px;
-  margin-top: 0px;
+  margin-top: 0;
   }
 
   .container {
@@ -84,7 +86,6 @@
   }
 
   .list-group .list-group-item .dataset-title {
-
   }
   
 </style>
@@ -92,9 +93,9 @@
 <script type="text/javascript">
   $(document).ready(function() {
   
-  $('.modify_search').click(function() {
-  window.history.back();
-  });
+  // $('.modify_search').click(function() {
+  // window.history.back();
+  // });
 
   var idx = 1;
   
@@ -168,7 +169,7 @@
 
   {% macro results_header() -%}
     <div class="results-header">
-      <a class="modify_search" class="btn btn-default">Modify Search</a>
+      <a class="modify_search" class="btn btn-default" href="{{url_for('search')}}">Modify Search</a>
       <div>
 	{% if len(dataset_grps) > 1 %}
 	  <ul class="pagination">

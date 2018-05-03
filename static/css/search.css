@@ -223,6 +223,7 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 
 #drawing-buttons {
     border-radius: 2px;
+    height: 2.3em;
     background: white;
     position:absolute;
     top: 1em;
@@ -233,6 +234,7 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 .drawing-button {
     padding: 0.144em;
     padding-top: 0.288em;
+    height: 2.3em;
     display:inline-block;
     border-radius: 2px;
 }

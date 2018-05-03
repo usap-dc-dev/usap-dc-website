@@ -43,3 +43,42 @@
     top: 10px;
     left: 10px;
 }*/
+
+#drawing-buttons {
+    border-radius: 2px;
+    background: white;
+    position:absolute;
+    height: 2.3em;
+    top: 1em;
+    left: 46%;
+    z-index: 99;
+}
+
+.drawing-button {
+    height: 2.3em;
+    padding: 0.144em;
+    padding-top: 0.288em;
+    display:inline-block;
+    border-radius: 2px;
+}
+
+.drawing-button:hover {
+    background: rgb(240,240,240);
+}
+
+.drawing-button.draw-active {
+    background: rgb(200,200,200);
+}
+
+#clear-search-buttons {
+    position: absolute;
+    top: 1em;
+    right: 2%;
+    z-index: 99;
+}
+/*#clear-button {
+  display:inline-block;
+}
+#search-button {
+  display:inline-block;
+}*/

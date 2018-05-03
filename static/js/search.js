@@ -48,6 +48,8 @@ function updateMenusWithSelected(selected, reset) {
     success: function(opts) {
         if (reset) {
             document.getElementById("data_link").reset();
+            $("#title").text("");
+            $("#spatial_bounds").text("");
         }
 
         for (var menu_name in opts) {
@@ -62,7 +64,7 @@ function updateMenusWithSelected(selected, reset) {
 }
 
 function resetForm() {
-    updateMenusWithSelected({}, true);
+    updateMenusWithSelected({}, true);    
 }
 
 var mc;
@@ -162,7 +164,7 @@ $(document).ready(function() {
     });
 
     $('#award-input, #project-input, #person-input, #program-input').change(function() {
-        // need to put in a delay so that some broswers (eg Firefox) can catch up wit the focus
+        // need to put in a delay so that some broswers (eg Firefox) can catch up with the focus
         window.setTimeout(function() {
             var el = $(':focus');
             var newVal = el.val();
