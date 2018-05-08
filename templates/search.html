@@ -42,7 +42,7 @@
               <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset title - e.g. type 'ice core' to find all datasets with ice core in the title.">
               Title (free text)</a>
             </label>
-            <input id="title" name="title" autocomplete="off" class="form-control" size="550" data-autoSelect="false" value="{{session.search_params.title}}">
+            <input id="title" name="title" autocomplete="off" class="form-control" size="550" data-autoSelect="false" value="{% if session.search_params %} {{session.search_params.title}} {% endif %}">
           </div>
 
           <!-- Project -->
@@ -99,7 +99,11 @@
                 <span>Edit Geometry</span><span class="caret"></span>
               </button>
               <div id="edit-geometry-div" class="collapse">
-                <textarea id="spatial_bounds" name="spatial_bounds" class="form-control">{{session.search_params.spatial_bounds}}</textarea>
+                <textarea id="spatial_bounds" name="spatial_bounds" class="form-control">
+                  {% if session.search_params %}
+                    {{session.search_params.spatial_bounds}}
+                  {% endif %}
+                </textarea>
                 <div class="help-block small">
                   Any WKT polygon, with longitudes in a 0-360 &deg; range. Example: Ross Sea is between 160 and 210. Read about the WKT format
                   <a href="https://en.wikipedia.org/wiki/Well-known_text" target="_blank">here</a>.

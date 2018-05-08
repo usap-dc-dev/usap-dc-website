@@ -1586,6 +1586,7 @@ def dif_browser():
 
     if request.method == 'POST':
         print(request.form)
+
         template_dict['pi_name'] = request.form.get('pi_name')
         template_dict['title'] = request.form.get('title')
         template_dict['award'] = request.form.get('award')
@@ -1604,6 +1605,7 @@ def dif_browser():
     query += " ORDER BY dif_test.date_created DESC"
 
     query_string = cur.mogrify(query)
+    print(query_string)
     cur.execute(query_string)
     rows = cur.fetchall()
 
@@ -1642,6 +1644,41 @@ def dif_browser():
         template_dict['dif_id'] = "Any DIF ID"
 
     return render_template('dif_browser.html', **template_dict)
+
+
+@app.route('/filter_dif_menus', methods=['GET'])
+def filter_dif_menus():
+    args = request.args.to_dict()
+    # if reseting:
+    if args == {}:
+        session['search_params'] = {}
+
+    (conn, cur) = connect_to_db()
+
+    query_base = "SELECT award, dif_id FROM dif_test"
+
+    if args.get('dif_id') is not None and args['dif_id'] != 'Any DIF ID' and \
+       args['dif_id'] != '':
+        query_string = query_base + " WHERE dif_id = '%s'" % args['dif_id']
+        cur.execute(query_string)
+    else:
+        cur.execute(query_base)
+    dsets = cur.fetchall()
+    awards = set([d['award'] for d in dsets])
+
+    if args.get('award') is not None and args['award'] != 'Any award' and \
+       args['award'] != '':
+        query_string = query_base + " WHERE award = '%s'" % args['award']
+        cur.execute(query_string)
+    else:
+        cur.execute(query_base)
+    dsets = cur.fetchall()
+    dif_ids = set([d['dif_id'] for d in dsets])
+
+    return flask.jsonify({
+        'award': sorted(awards),
+        'dif_id': sorted(dif_ids)
+    })
 
 
 @app.route('/NSF-ANT05-37143_datasets')

@@ -16,17 +16,17 @@
 
   <form action="{{url_for('dif_browser')}}" method="POST" enctype="multipart/form-data">
     <div style="margin:5px;"><b>PI Name: </b> 
-      <input type="text" name="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
+      <input type="text" name="pi_name" id="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
       <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
     </div>
 
     <div style="margin:5px;"><b>Title Keyword: </b> 
-       <input type="text" name="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
+       <input type="text" name="title" id="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
     </div> 
 
     <div style="margin:5px;"><b>Award: </b> 
       <span class="select-editable-award">
-        <select onchange="this.nextElementSibling.value=this.value">
+        <select id="award" onchange="this.nextElementSibling.value=this.value">
           <option value='Any award' {% if award =='' or award =='Any award' %} selected {% endif %}>Any award</option>
           {% for row in awards %}
             {% if row['award'] != "" %}
@@ -34,19 +34,19 @@
             {% endif %}
           {% endfor %}
         </select>
-        <input name="award" type="text" value="{{award}}" />
+        <input name="award" id="award-input" type="text" value="{{award}}" />
       </span>
     </div>
 
     <div style="margin:5px;"><b>DIF ID: </b> 
       <span class="select-editable-dif-id">
-        <select onchange="this.nextElementSibling.value=this.value">
+        <select id="dif_id" onchange="this.nextElementSibling.value=this.value">
           <option value='Any DIF ID' {% if award =='' or award =='Any DIF ID' %} selected {% endif %}>Any DIF ID</option>
           {% for row in dif_ids %}
             <option value="{{row['dif_id']}}" {% if row['dif_id'] == dif_id %} selected {% endif %}> {{row['dif_id']}}</option>
           {% endfor %}
         </select>
-        <input name="dif_id" type="text" value="{{dif_id}}" />
+        <input name="dif_id" id="dif_id-input" type="text" value="{{dif_id}}" />
       </span>
     </div>
 
