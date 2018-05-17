@@ -51,10 +51,6 @@ app.config.update(
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
     DOI_REF_FILE="inc/doi_ref",
-    CURATORS_LIST="inc/curators.txt",
-    EZID_FILE="inc/ezid.json",
-    DATACITE_TO_ISO_XSLT="static/DataciteToISO19139v3.2.xslt",
-    ISO_WATCHDIR_CONFIG_FILE="inc/iso_watchdir_config.json",
     DEBUG=True
 )
 
