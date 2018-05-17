@@ -1,0 +1,2 @@
+00 00 * * * /usr/bin/rsync --archive --itemize-changes --rsh=ssh xxx/watch/isoxml xxx@xxx:xxx/metadata/iso/usap
+00 00 * * * /usr/bin/rsync --archive --itemize-changes --rsh=ssh xxx/watch/dcxml/ xxx@xxx:xxx/metadata/doi
