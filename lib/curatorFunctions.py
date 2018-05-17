@@ -75,7 +75,6 @@ def submitToEZID(uid):
         else:
             doi = response.split(" ")[1]
             doi = doi.replace("doi:", "")
-            os.remove(datacite_file)
 
             return("Successfully registered dataset at EZID, doi: %s" % doi)
 
