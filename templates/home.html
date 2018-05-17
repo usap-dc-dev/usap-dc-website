@@ -2,7 +2,7 @@
 {% set cur = "home" %}
 {% block home %}
 
-<div id="div_extents" hidden>{{json_dumps(spatial_extents)}}</div>;
+<div id="div_extents" hidden>{{json_dumps(spatial_extents)}}</div>
 
 {% if session.googleSignedIn %} 
     <div class="alert alert-danger alert-dismissible" style="width:800;">

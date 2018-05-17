@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
 SUBMITTED_FOLDER = "submitted"
-DCXML_FOLDER = "submitted"
+DCXML_FOLDER = "watch/dcxml"
 ISOXML_FOLDER = "watch/isoxml"
 DOCS_FOLDER = "doc"
 DOI_REF_FILE = "inc/doi_ref"
@@ -130,7 +130,7 @@ def getDataCiteXMLFromFile(uid):
 
 
 def getDCXMLFileName(uid):
-    return os.path.join(DCXML_FOLDER, uid + ".xml")
+    return os.path.join(DCXML_FOLDER, uid)
 
 
 def getISOXMLFromFile(uid):

@@ -48,8 +48,6 @@ app.config.update(
     UPLOAD_FOLDER="upload",
     DATASET_FOLDER="dataset",
     SUBMITTED_FOLDER="submitted",
-    DCXML_FOLDER="submitted",
-    ISOXML_FOLDER="submitted",
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
     DOI_REF_FILE="inc/doi_ref",
