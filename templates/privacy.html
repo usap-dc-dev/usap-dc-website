@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% set cur = "privacy" %}
+{% block body %}
+
+
+<div class="content">
+  
+
+  <h2>Privacy</h2>
+  <h3>When You Visit Our Website</h3>
+  <p>We do not collect personally identifiable information (for example, name, address, phone number, email address) from users, regardless of age, unless you provide it to us (See "Data Contributions and Direct Communication” section below).</p>
+  <h4>Web Statistics</h4>
+  <p>As part of standard internet practice, we collect the standard web log information such as IP address, date/time of access, type of browser and operating system when you visit our site. We use IP addresses to analyze trends, track usage of system features and tools, and gather broad demographic information for aggregate use for reporting and sponsorship purposes. IP addresses are not linked to personally identifiable information.</p>
+  <h4>Sharing</h4> 
+  <p>We will share aggregated demographic information with our sponsors. This is not linked to any personal information that can identify any individual person. We only share this information so that we can secure funding to continue providing this site free of charge.</p>
+  <h4>Links</h4>
+   <p>This Website contains links to other sites. Please be aware that the USAP-DC does not claim any responsibility for the privacy practices of such other sites. This privacy statement applies solely to information collected by this Website.</p>
+
+  <h3>Data Contributions and Direct Communication</h3>
+  <h4>Email Sent to our Help Desk</h4>
+  <p>When you send an electronic mail message to our <a href="{{url_for('contact')}}">Help Desk</a>, you may be sending personal information. In these cases, we retain the information only to respond to your request. We do not share this information with any other organization or entity.</p>
+  <h4>Data Contributions</h4>
+  <p>If you use our webform to contribute data to our repository or if you contact us directly for data submission, we capture the contact information you provide and use it to respond to your comments, requests, and inquiries, to request additional information regarding your submission if needed, and to notify you when your data are accessioned. This information will be maintained for future communications, but to the maximum extent of the law, is not provided to any other organization or entity.</p>
+  <h4>Notification and Correspondence</h4>
+  <p>We notify Data Contributors via email when data are accessioned on our Website. We may contact you to send you newsletters, service updates, and occasional requests for user surveys. If you wish to opt out of notification, please <a href="{{url_for('contact')}}">contact us</a>.</p>   
+
+
+</div>
+
+{% endblock body %}

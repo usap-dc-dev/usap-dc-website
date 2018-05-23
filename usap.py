@@ -164,7 +164,7 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
     if south:
         conds.append(cur.mogrify('%s <= sp.north', (south,)))
     if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_within(st_transform(sp.geometry,3031),st_geomfromewkt('srid=3031;'||%s))",(spatial_bounds_interpolated,)))
+        conds.append(cur.mogrify("st_intersects(st_transform(sp.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))",(spatial_bounds_interpolated,)))
     if start:
         conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
     if stop:
@@ -989,6 +989,11 @@ def legal():
     return render_template('legal.html')
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 @app.route('/terms_of_use')
 def terms_of_use():
     return render_template('terms_of_use.html')
@@ -1007,7 +1012,6 @@ def abstract_examples():
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     print('in search')
-    print(get_nsf_grants(['award', 'name', 'title']))
     if request.method == 'GET':
         return render_template('search.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
                                parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
