@@ -50,6 +50,12 @@
       </span>
     </div>
 
+    <div style="margin:5px;">
+      <input type="radio" name="all_selected" id="all_selected" value="1" {% if all_selected %} checked {% endif %}> All records
+      <input type="radio" name="all_selected" id="usap_selected" value="0" {% if not all_selected %} checked {% endif %}> USAP-DC only
+    </div>
+
+
     <div style="margin-top: 10px"><input type="submit" value="Search"/>
   </form>
 

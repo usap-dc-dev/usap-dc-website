@@ -54,14 +54,14 @@ $(document).ready(function() {
     });
 
 
-  $('#pi_name, #title, #dif_id, #award, #award-input, #dif_id-input').change(function(e) {
+  $('#pi_name, #title, #dif_id, #award, #award-input, #dif_id-input, #all_selected, #usap_selected').change(function(e) {
     $('[data-toggle="tooltip"]').tooltip('hide');
 
     var selected = {
         dif_id: $('#dif_id').val(),
         award: $('#award').val(),
+        all_selected: $('#all_selected:checked').val() ? 1 : 0
     };
-
     updateMenusWithSelected(selected, false);
   });
 

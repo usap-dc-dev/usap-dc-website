@@ -1561,7 +1561,7 @@ def curator_help():
 
 @app.route('/dif_browser', methods=['GET', 'POST'])
 def dif_browser():
-    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': ''}
+    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': '', 'all_selected': True}
     (conn, cur) = connect_to_db()
 
     query = "SELECT award FROM dif_test ORDER BY award"
@@ -1589,7 +1589,9 @@ def dif_browser():
         template_dict['title'] = request.form.get('title')
         template_dict['award'] = request.form.get('award')
         template_dict['dif_id'] = request.form.get('dif_id')
+        template_dict['all_selected'] = bool(int(request.form.get('all_selected')))
 
+        print(bool(int(request.form.get('all_selected'))))
         if (request.form.get('pi_name') != ""):
             query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
         if(request.form.get('title') != ""):
@@ -1598,6 +1600,8 @@ def dif_browser():
             query += " AND dif_test.award = '%s'" % request.form['award']
         if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):
             query += " AND dif_test.dif_id = '%s'" % request.form['dif_id']
+        if not bool(int(request.form.get('all_selected'))):
+            query += " AND dif_test.is_usap_dc = true"
 
     # query += " ORDER BY dif_test.dif_id"
     query += " ORDER BY dif_test.date_created DESC"
@@ -1658,18 +1662,28 @@ def filter_dif_menus():
     if args.get('dif_id') is not None and args['dif_id'] != 'Any DIF ID' and \
        args['dif_id'] != '':
         query_string = query_base + " WHERE dif_id = '%s'" % args['dif_id']
-        cur.execute(query_string)
+        if args.get('all_selected') is not None and args['all_selected'] == '0':
+            query_string += " AND is_usap_dc = true"
     else:
-        cur.execute(query_base)
+        if args.get('all_selected') is not None and args['all_selected'] == '0':
+            query_string = query_base + " WHERE is_usap_dc = true"
+        else:
+            query_string = query_base
+    cur.execute(query_string)
     dsets = cur.fetchall()
     awards = set([d['award'] for d in dsets])
 
     if args.get('award') is not None and args['award'] != 'Any award' and \
        args['award'] != '':
         query_string = query_base + " WHERE award = '%s'" % args['award']
-        cur.execute(query_string)
+        if args.get('all_selected') is not None and args['all_selected'] == '0':
+            query_string += " AND is_usap_dc = true"
     else:
-        cur.execute(query_base)
+        if args.get('all_selected') is not None and args['all_selected'] == '0':
+            query_string = query_base + " WHERE is_usap_dc = true"
+        else:
+            query_string = query_base
+    cur.execute(query_string)
     dsets = cur.fetchall()
     dif_ids = set([d['dif_id'] for d in dsets])
 
