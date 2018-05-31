@@ -167,6 +167,13 @@
   <div style="float:left">
   </div>
 
+  <div>
+    <form action="{{url_for('search_result')}}" method="POST" enctype="multipart/form-data">
+      <input type="checkbox" name="exclude" id="exclude" onClick="this.form.submit();" {% if exclude %} checked {% endif %}> Exclude datasets that cover the whole Antarctic
+    </form>
+    <br/>
+  </div>
+
   {% macro results_header() -%}
     <div class="results-header">
       <a class="modify_search" class="btn btn-default" href="{{url_for('search')}}">Modify Search</a>

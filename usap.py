@@ -1018,6 +1018,7 @@ def search():
                                persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
     elif request.method == 'POST':
         params = request.form.to_dict()
+        print(params)
         filtered = filter_datasets(**params)
 
         del params['spatial_bounds_interpolated']
@@ -1065,29 +1066,40 @@ def filter_search_menus():
     })
 
 
-@app.route('/search_result')
+@app.route('/search_result', methods=['GET', 'POST'])
 def search_result():
     if 'filtered_datasets' not in session:
         return redirect('/search')
     filtered_ids = session['filtered_datasets']
     
+    exclude = False
+    if request.method == 'POST':
+        exclude = request.form.get('exclude') == "on"
+
     datasets = get_datasets(filtered_ids)
+
     grp_size = 50
     dataset_grps = []
     cur_grp = []
+    total_count = 0
     for d in datasets:
+        if exclude and d.get('spatial_extents') and len(d.get('spatial_extents')) > 0 and \
+            ((d.get('spatial_extents')[0].get('east') == 180 and d.get('spatial_extents')[0].get('west') == -180) or \
+            (d.get('spatial_extents')[0].get('east') == 360 and d.get('spatial_extents')[0].get('west') == 0)):
+            continue
         if len(cur_grp) < grp_size:
             cur_grp.append(d)
         else:
             dataset_grps.append(cur_grp)
             cur_grp = []
+        total_count += 1
     if len(cur_grp) > 0:
         dataset_grps.append(cur_grp)
     
-    
     return render_template('search_result.html',
-                                      total_count=len(filtered_ids),
+                                      total_count=total_count,
                                       dataset_grps=dataset_grps,
+                                      exclude=exclude,
                                       search_params=session['search_params'])
 
 
