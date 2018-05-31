@@ -63,6 +63,84 @@ def parse_json(data):
     return data
 
 
+def makeBoundsGeom(north, south, east, west, cross_dateline):
+    # point
+    if (west == east and north == south):
+        geom = "POINT(%s %s)" % (west, north)
+
+    # polygon
+    else:
+        geom = "POLYGON(("
+        n = 10
+        if (cross_dateline):
+            dlon = (-180 - west) / n
+            dlat = (north - south) / n
+            for i in range(n):
+                geom += "%s %s," % (-180 - dlon * i, north)
+
+            for i in range(n):
+                geom += "%s %s," % (west, north - dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (west + dlon * i, south)
+
+            dlon = (180 - east) / n
+            for i in range(n):
+                geom += "%s %s," % (180 - dlon * i, south)
+
+            for i in range(n):
+                geom += "%s %s," % (east, south + dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (east + dlon * i, north)
+            # close the ring ???
+            geom += "%s %s," % (-180, north)
+
+        elif east > west:
+            dlon = (west - east) / n
+            dlat = (north - south) / n
+            for i in range(n):
+                geom += "%s %s," % (west - dlon * i, north)
+
+            for i in range(n):
+                geom += "%s %s," % (east, north - dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (east + dlon * i, south)
+
+            for i in range(n):
+                geom += "%s %s," % (west, south + dlat * i)
+            # close the ring
+            geom += "%s %s," % (west, north)
+
+        else:
+            dlon = (-180 - east) / n
+            dlat = (north - south) / n
+            for i in range(n):
+                geom += "%s %s," % (-180 - dlon * i, north)
+
+            for i in range(n):
+                geom += "%s %s," % (east, north - dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (east + dlon * i, south)
+
+            dlon = (180 - west) / n
+            for i in range(n):
+                geom += "%s %s," % (180 - dlon * i, south)
+
+            for i in range(n):
+                geom += "%s %s," % (west, south + dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (west + dlon * i, north)
+            # close the ring ???
+            geom += "%s %s," % (-180, north)
+
+        geom = geom[:-1] + "))"
+    return geom
+
+
 def make_sql(data, id):
     # --- prepare some parameter
     release_date = data["timestamp"][0:10]
@@ -162,16 +240,20 @@ def make_sql(data, id):
                                (id, data["start"], data["stop"])
         sql_out += line
 
-    if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != ''):
+    if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
         west = float(data["geo_w"])
         east = float(data["geo_e"])
         south = float(data["geo_s"])
         north = float(data["geo_n"])
         mid_point_lat = (south - north) / 2 + north
         mid_point_long = (east - west) / 2 + west
+
+        geometry = "ST_GeomFromText('POINT(%s %s)', 4326)" % (mid_point_long, mid_point_lat)
+        bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
+
         sql_out += "\n--NOTE: need to update geometry; need to add mid x and y\n"
-        line = "--update dataset_spatial_map set geometry = ST_GeomFromText('POINT({} {})', 4326) WHERE dataset_id = '{}';\n\n"\
-                   .format(mid_point_long, mid_point_lat, id)
+        line = "update dataset_spatial_map set (geometry, bounds_geometry) = ({}, {}) WHERE dataset_id = '{}';\n\n"\
+                   .format(geometry, bounds_geometry, id)
         sql_out += line
 
     sql_out += "--NOTE: optional; every dataset does NOT belong to an initiative\n"
