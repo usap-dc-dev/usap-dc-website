@@ -1,7 +1,7 @@
 # Read in GCMD DIF files that have been extracted using the following command for page_num=1 to 4:
 # curl -i "https://cmr.earthdata.nasa.gov/search/collections.dif10?page_num=1&page_size=1000&keyword=AMD/US" >> amd_us_2018_04_25_all.xml
 # and import them in to the database
-# run from main usap directory with >bin/dif2Database.py
+# run from main usap directory with >python bin/dif2Database.py
 
 import xml.etree.ElementTree as ET
 import psycopg2
@@ -138,6 +138,7 @@ def parse_xml(xml_file_name):
     tree = ET.parse(xml_file_name)
     root = tree.getroot()
 
+    dataset_ids = ['GET DATA', 'DATA SET LANDING PAGE', 'VIEW DATA SET LANDING PAGE', 'DOWNLOAD SOFTWARE']
     count = 1
     for result in root.iter('result'):
         for dif_node in list(result):
@@ -256,6 +257,8 @@ def parse_xml(xml_file_name):
             # check if id is already in the DB, if so, just update is_usap_dc, is_nsf, and summary
             if alreadyInDB(name):
                 updateExistingRecord(name, summary)
+            elif alreadyInDB(dif_id):
+                updateExistingRecord(dif_id, summary)
             else:
                 # add record to dif_test table
                 query = """INSERT INTO dif_test (dif_id, award, date_created, date_modified, title, pi_name, co_pi, dif_name, dif_version, summary, is_usap_dc, is_nsf) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, '%s', '%s', '%s');"""\
@@ -270,7 +273,7 @@ def parse_xml(xml_file_name):
                     ds_id = ''
                     ds_repo = ''
 
-                    if 'GET DATA' in dataset[0] and 'www.nsf.gov' not in dataset[1]:
+                    if dataset[0] in dataset_ids and 'www.nsf.gov' not in dataset[1]:
                         ds_title = dataset[1]
                         ds_url = dataset[2]
                         if 'www.usap-dc.org' in ds_url:

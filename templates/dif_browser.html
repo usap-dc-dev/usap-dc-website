@@ -104,6 +104,8 @@
               {% for ds in val['datasets'] %}
                 {% if ds['url'] == '' %}
                   No data link provided
+                {% elif ds['title'] == '' %}
+                  <a target='_blank' href="{{ds['url']}}">Access to data</a><br/>
                 {% else %}
                   <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
                 {% endif %}
