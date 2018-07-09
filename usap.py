@@ -1789,6 +1789,99 @@ def parameter_search():
 def dataset_json(dataset_id):
     return flask.jsonify(get_datasets([dataset_id]))
 
+
+@app.route('/stats', methods=['GET'])
+def stats():
+
+    args = request.args.to_dict()
+
+    template_dict = {}
+    if args.get('start_date'):
+        start_date = args['start_date']
+    else:
+        start_date = '2017-01-01'
+    if args.get('end_date'):
+        end_date = args['end_date']
+    else:
+        end_date = datetime.datetime.now()
+    template_dict['start_date'] = start_date
+    template_dict['end_date'] = end_date
+
+    # get download information from the database
+    (conn,cur) = connect_to_db()
+    query = "SELECT * FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+
+    cur.execute(query)
+    data = cur.fetchall()
+    downloads = {}
+    for row in data:
+        time = row['time']
+        month = "%s-%02d-01" % (time.year, time.month)  
+        bytes = row['resource_size']
+        user = row['remote_host']
+        resource = row['resource_requested']
+        user_file = "%s-%s" % (user, resource) 
+        if downloads.get(month):
+            downloads[month]['bytes'] += bytes
+            downloads[month]['num_files'] += 1 
+            downloads[month]['users'].add(user)
+            downloads[month]['user_files'].add(user_file)
+        else:
+            downloads[month] = {'bytes': bytes, 'num_files': 1, 'users': {user}, 'user_files': {user_file}}
+
+    download_bytes = []
+    download_num_files = []
+    download_users = []
+    download_user_files = []
+    months_list = downloads.keys()
+    months_list.sort()
+    for month in months_list:
+        download_bytes.append([month, downloads[month]['bytes']])
+        download_num_files.append([month, downloads[month]['num_files']])
+        download_users.append([month, len(downloads[month]['users'])])
+        download_user_files.append([month, len(downloads[month]['user_files'])])
+    template_dict['download_bytes'] = download_bytes
+    template_dict['download_num_files'] = download_num_files
+    template_dict['download_users'] = download_users
+    template_dict['download_user_files'] = download_user_files
+
+    # get submission information from the database
+    query ="SELECT dsf.*, d.release_date FROM dataset_file_info dsf JOIN dataset d ON d.id = dsf.dataset_id \
+            WHERE d.release_date >= '%s' AND d.release_date <= '%s';"  % (start_date, end_date)    
+    cur.execute(query)
+    data = cur.fetchall()
+    submissions = {}
+    for row in data:
+        date = row['release_date']
+        if date is None or date.count("-") != 2: continue
+        if int(date[:4]) < 2017: continue #only look at submissions from 2017 onwards
+        month = "%s-01" %date[:7]
+        bytes = row['file_size']
+        num_files = row['file_count']
+        submission = row['dataset_id']
+        if submissions.get(month):
+            submissions[month]['bytes'] += bytes
+            submissions[month]['num_files'] += num_files
+            submissions[month]['submissions'].add(submission)
+        else:
+            submissions[month] = {'bytes': bytes, 'num_files': num_files, 'submissions': {submission}}
+
+    submission_bytes = []
+    submission_num_files = []
+    submission_submissions = []
+    months_list = submissions.keys()
+    months_list.sort()
+    for month in months_list:
+        submission_bytes.append([month, submissions[month]['bytes']])
+        submission_num_files.append([month, submissions[month]['num_files']])
+        submission_submissions.append([month, len(submissions[month]['submissions'])])
+    template_dict['submission_bytes'] = submission_bytes
+    template_dict['submission_num_files'] = submission_num_files
+    template_dict['submission_submissions'] = submission_submissions
+
+    return render_template('statistics.html', **template_dict)
+
+
 def initcap(s):
     parts = re.split('( |_|-|>)+',s)
     return ' '.join([p.lower().capitalize() for p in parts])
