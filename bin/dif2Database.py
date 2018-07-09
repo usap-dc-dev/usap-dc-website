@@ -12,18 +12,38 @@ config = json.loads(open('config.json', 'r').read())
 
 repo_dict = {"www.usap-dc.org": "USAP-DC",
              "www.marine-geo.org": "MGDS",
-             "www.iris.edu": "IRIS",
+             "iris.edu": "IRIS",
              "nsidc.org": "NSIDC",
              "amrc.ssec.wisc.edu": "AMRC",
              "usjgofs.whoi.edu": "JGOF",
-             "www.ncdc.noaa.gov": "NCEI",
+             "noaa.gov": "NCEI",
              "www.ncbi.nlm.nih.gov": "GenBank",
              "www.washington.edu/burkemuseum": "Burke Museum",
-             "accession.nodc.noaa.gov": "NCEI",
-             "www.unavco.org": "UNAVCO",
+             "unavco.org": "UNAVCO",
              "oceaninformatics.ucsd.edu": "PALTER",
-             "www.mcmlter.org": "MCMELTER",
-             "www.arf.fsu.edu": "AMGRF"             
+             "www.mcmlter.org": "LTER",
+             "www.arf.fsu.edu": "AMGRF",
+             "cdiac": "CDIAC",
+             "globec.whoi.edu": "GLOBEC",
+             "ingrid.ld": "INGRID",
+             "bco-dmo.org": "BCO-DMO",
+             "climatedata.ibs": "IBS Center for Climate Physics ICCP",
+             "github.com": "Github",
+             "opentopo.sdsc.org": "OpenTopo",
+             "bpcrc.osu.edu": "USPRR",
+             "antarctica.ice-d.org": "ICE-D",
+             "dx.doi.org/10.1594/IEDA": "EarthChem",
+             "dx.doi.org/10.1594/ieda": "EarthChem",
+             "dx.doi.org/10.1594/PANGAEA": "PANGAEA",
+             "dx.doi.org/10.7288": "EarthRef",
+             "www.earthchem.org": "EarthChem",
+             "pangaea.de": "PANGAEA",
+             "earthref.org": "EarthRef",
+             "data.prbo.org": "CADC",
+             "arf.fsu.edu": "AMGRF",
+             "bicepkeck.org": "Smithsonian",
+             "cedarweb.hao.ucar.edu": "NCAR",
+             "ucar.edu": "UCAR"       
              }
 
 
@@ -221,7 +241,11 @@ def parse_xml(xml_file_name):
                                                 .replace('&HistoricalAwards=false', '')\
                                                 .replace('&amp;HistoricalAwards=false', '')\
                                                 .replace('http://www.nsf.gov/awardsearch/', '')
-                        if 'Description' in sub2.tag:
+                        # get dataset description from Title first, otherwise Description                        
+                        if 'Title' in sub2.tag:
+                            data_desc = sub2.text.replace("'", "''")
+                            print("Title! " + data_desc)
+                        if 'Description' in sub2.tag and data_desc == '':
                             data_desc = sub2.text.replace("'", "''")
                         if 'URL_Content_Type' in sub2.tag:
                             for sub3 in sub2.iter():
@@ -307,5 +331,5 @@ def parse_xml(xml_file_name):
 
 
 if __name__ == '__main__':
-    parse_xml('inc/amd_us_2018_05_22_all.xml')
+    parse_xml('inc/amd_us_2018_07_09_all.xml')
     print('done')
