@@ -149,7 +149,7 @@ def getISOXMLFromFile(uid):
 
 
 def getISOXMLFileName(uid):
-    return os.path.join(ISOXML_FOLDER, "submission-id%siso.xml" % uid)
+    return os.path.join(ISOXML_FOLDER, "%siso.xml" % uid)
 
 
 def isRegisteredWithEZID(uid):
