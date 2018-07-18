@@ -43,7 +43,8 @@ repo_dict = {"www.usap-dc.org": "USAP-DC",
              "arf.fsu.edu": "AMGRF",
              "bicepkeck.org": "Smithsonian",
              "cedarweb.hao.ucar.edu": "NCAR",
-             "ucar.edu": "UCAR"       
+             "ucar.edu": "UCAR",
+             "usgs.gov": "USGS"       
              }
 
 
@@ -241,6 +242,9 @@ def parse_xml(xml_file_name):
                                                 .replace('&HistoricalAwards=false', '')\
                                                 .replace('&amp;HistoricalAwards=false', '')\
                                                 .replace('http://www.nsf.gov/awardsearch/', '')
+                                if award == '[VALUE]':
+                                    #fix issue for a couple of bad award values
+                                    award = dif_id.replace("_", "-").split("-")[1];
                         # get dataset description from Title first, otherwise Description                        
                         if 'Title' in sub2.tag:
                             data_desc = sub2.text.replace("'", "''")
