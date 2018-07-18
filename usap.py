@@ -1599,6 +1599,7 @@ def dif_browser():
 
         template_dict['pi_name'] = request.form.get('pi_name')
         template_dict['title'] = request.form.get('title')
+        template_dict['summary'] = request.form.get('summary')
         template_dict['award'] = request.form.get('award')
         template_dict['dif_id'] = request.form.get('dif_id')
         template_dict['all_selected'] = bool(int(request.form.get('all_selected')))
@@ -1608,6 +1609,8 @@ def dif_browser():
             query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
         if(request.form.get('title') != ""):
             query += " AND dif_test.title ILIKE '%" + request.form['title'] + "%'"
+        if(request.form.get('summary') != ""):
+            query += " AND dif_test.summary ILIKE '%" + request.form['summary'] + "%'"
         if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
             query += " AND dif_test.award = '%s'" % request.form['award']
         if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):

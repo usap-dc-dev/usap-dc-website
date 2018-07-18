@@ -7,7 +7,19 @@
 <div id="awards" hidden>{{awards|tojson}}</div>
 <div id="dif_ids" hidden>{{dif_ids|tojson}}</div>
 
+
+<div id="abstract" hidden>
+  <div id="abstract_header" class="window-header">
+    <span id="abstract_title"></span><span id='close_btn'>X</span>
+  </div>
+  <div id="abstract_body">
+    <p id="abstract_text"></p>
+  </div>
+</div>
+
+
 <div>
+
   <h2 class="title">Metadata DIF browser (beta)</h2>
   <h5> Search includes AMD DIF records managed through USAP-DC.</h5>
   <h5><b>Note:</b> Includes records formerly managed through AGDC. Not all records contain links to datasets.</h5>
@@ -20,8 +32,12 @@
       <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
     </div>
 
-    <div style="margin:5px;"><b>Title Keyword: </b> 
+    <div style="margin:5px;"><b>Title (free text): </b> 
        <input type="text" name="title" id="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
+    </div> 
+
+    <div style="margin:5px;"><b>Abstract (free text): </b> 
+       <input type="text" size="50" name="summary" id="summary" {% if summary != "None" %} value="{{summary}}" {% endif %}/>
     </div> 
 
     <div style="margin:5px;"><b>Award: </b> 
@@ -78,6 +94,7 @@
           <th width="20%">Title</th>
           <th width="25%">List of Datasets</th>
           <th width="10%">Repositories</th>
+          <th width="10%" hidden>Abstract</th>
         </tr>
     
         {% for val in dif_records %}
@@ -95,7 +112,8 @@
             {% endif %}
             <td>{{val['date_created']}}</td>
             <td>{{val['authors']}}</td>
-            <td>{{val['title']}}</td>
+            {% set abstract = val['summary'] | safe %}
+            <td>{{val['title']}}<br/><button type="button" class="abstract-button">Abstract</button></td>
 
             <td><font size=2>
               {% if val['datasets']|length == 0 %}
@@ -117,6 +135,8 @@
                 {{repo}}<br/>
               {% endfor %}
             </font></td>
+
+            <td hidden>{{val['summary']}}</td>
           </tr>
         {% endfor %}
 
@@ -127,5 +147,9 @@
   {% endif %}
 </div>
 </div>
+
+<script type="text/javascript">
+  
+</script>
 
 {% endblock dif_body %}
