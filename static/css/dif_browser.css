@@ -82,14 +82,14 @@
   z-index: 1000;
   overflow: hidden;  
   resize: both;
-  min-height:22em;
+  min-height:24em;
   min-width:22em;
 }
 
 #abstract_text {
   line-height: 1.7em;
   position: absolute;
-  height: 85%;
+  height: 82%;
   overflow: auto; 
   padding: 10px;
 }
