@@ -425,8 +425,18 @@ def dataset():
         session['dataset_metadata'].update(request.form.to_dict())
 
         publications_keys = [s for s in request.form.keys() if "publication" in s]
+        remove_pub_keys = []
         if len(publications_keys) > 0:
             publications_keys.sort()
+            print(publications_keys)
+            #remove any empty values
+            for key in publications_keys:
+                if session['dataset_metadata'][key] == "":
+                    del session['dataset_metadata'][key]
+                    remove_pub_keys.append(key)
+            for k in remove_pub_keys: 
+                publications_keys.remove(k)
+            print(publications_keys)
             session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
 
         session['dataset_metadata']['agree'] = 'agree' in request.form
