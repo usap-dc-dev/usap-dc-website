@@ -24,7 +24,7 @@ import psycopg2.extras
 import requests
 import re
 import copy
-import datetime
+from datetime import datetime
 import csv
 from collections import namedtuple
 import string
@@ -608,7 +608,7 @@ def check_project_registration(msg_data):
     
 
 def format_time():
-    t = datetime.datetime.utcnow()
+    t = datetime.utcnow()
     s = t.strftime('%Y-%m-%dT%H:%M:%S.%f')
     return s[:-5] + 'Z'
         
@@ -1765,6 +1765,7 @@ def polygon_count():
     cur.execute(query)
     return flask.jsonify(cur.fetchall())
 
+
 @app.route('/titles')
 def titles():
     term = request.args.get('term')
@@ -1777,12 +1778,14 @@ def titles():
         titles.append(r['title'])
     return flask.jsonify(titles)
 
+
 @app.route('/geometries')
 def geometries():
     (conn,cur) = connect_to_db()
     query = "SELECT st_asgeojson(st_transform(st_geomfromewkt('srid=4326;' || 'POLYGON((' || west || ' ' || south || ', ' || west || ' ' || north || ', ' || east || ' ' || north || ', ' || east || ' ' || south || ', ' || west || ' ' || south || '))'),3031)) as geom FROM dataset_spatial_map;"
     cur.execute(query)
     return flask.jsonify([row['geom'] for row in cur.fetchall()])
+
 
 @app.route('/parameter_search')
 def parameter_search():
@@ -1798,6 +1801,7 @@ def parameter_search():
 #                       render_template('test_autocomplete.html'),
 #                       render_template('footer.html')])
 
+
 @app.route('/dataset_json/<dataset_id>')
 def dataset_json(dataset_id):
     return flask.jsonify(get_datasets([dataset_id]))
@@ -1809,19 +1813,21 @@ def stats():
     args = request.args.to_dict()
 
     template_dict = {}
+    date_fmt = "%Y-%m-%d"
     if args.get('start_date'):
-        start_date = args['start_date']
+        start_date = datetime.strptime(args['start_date'], date_fmt)
     else:
-        start_date = '2017-01-01'
+        start_date = datetime.strptime('2011-01-01', date_fmt)
     if args.get('end_date'):
-        end_date = args['end_date']
+        end_date = datetime.strptime(args['end_date'], date_fmt)
     else:
-        end_date = datetime.datetime.now()
+        end_date = datetime.now()
+
     template_dict['start_date'] = start_date
     template_dict['end_date'] = end_date
 
     # get download information from the database
-    (conn,cur) = connect_to_db()
+    (conn, cur) = connect_to_db()
     query = "SELECT * FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
     cur.execute(query)
@@ -1842,33 +1848,40 @@ def stats():
         else:
             downloads[month] = {'bytes': bytes, 'num_files': 1, 'users': {user}, 'user_files': {user_file}}
 
-    download_bytes = []
-    download_num_files = []
-    download_users = []
-    download_user_files = []
+    download_numfiles_bytes = []
+    download_users_downloads = []
     months_list = downloads.keys()
     months_list.sort()
     for month in months_list:
-        download_bytes.append([month, downloads[month]['bytes']])
-        download_num_files.append([month, downloads[month]['num_files']])
-        download_users.append([month, len(downloads[month]['users'])])
-        download_user_files.append([month, len(downloads[month]['user_files'])])
-    template_dict['download_bytes'] = download_bytes
-    template_dict['download_num_files'] = download_num_files
-    template_dict['download_users'] = download_users
-    template_dict['download_user_files'] = download_user_files
+        download_numfiles_bytes.append([month, downloads[month]['num_files'], downloads[month]['bytes']])
+        download_users_downloads.append([month, len(downloads[month]['users']), len(downloads[month]['user_files'])])
+    template_dict['download_numfiles_bytes'] = download_numfiles_bytes
+    template_dict['download_users_downloads'] = download_users_downloads
 
     # get submission information from the database
-    query ="SELECT dsf.*, d.release_date FROM dataset_file_info dsf JOIN dataset d ON d.id = dsf.dataset_id \
-            WHERE d.release_date >= '%s' AND d.release_date <= '%s';"  % (start_date, end_date)    
+
+    query = cur.mogrify('''SELECT dsf.*, d.release_date, dt.date_created::text FROM dataset_file_info dsf 
+            JOIN dataset d ON d.id = dsf.dataset_id
+            LEFT JOIN dif_test dt ON d.id_orig = dt.dif_id;''') 
     cur.execute(query)
     data = cur.fetchall()
     submissions = {}
     for row in data:
-        date = row['release_date']
-        if date is None or date.count("-") != 2: continue
-        if int(date[:4]) < 2017: continue #only look at submissions from 2017 onwards
-        month = "%s-01" %date[:7]
+        if row['date_created'] is not None:
+            date = row['date_created']
+        else:
+            date = row['release_date']
+        if date is None or date.count("-") != 2:
+            # if only a year is given, make the date Dec 1st of that year
+            if len(date) == 4:
+                date += "-12-01"
+            else:
+                continue 
+        # throw out any rows not in the chosen date range
+        if (datetime.strptime(date, date_fmt) < start_date or
+           datetime.strptime(date, date_fmt) > end_date):
+            continue
+        month = "%s-01" % date[:7]
         bytes = row['file_size']
         num_files = row['file_count']
         submission = row['dataset_id']

@@ -2,15 +2,9 @@
 {% set cur = "stats" %}
 {% block body %}
 
-<div id="download_bytes" hidden>{{download_bytes|tojson}}</div>
-<div id="download_num_files" hidden>{{download_num_files|tojson}}</div>
-<div id="download_users" hidden>{{download_users|tojson}}</div>
-<div id="download_user_files" hidden>{{download_user_files|tojson}}</div>
-
-<div id="submission_bytes" hidden>{{submission_bytes|tojson}}</div>
-<div id="submission_num_files" hidden>{{submission_num_files|tojson}}</div>
+<div id="download_numfiles_bytes" hidden>{{download_numfiles_bytes|tojson}}</div>
+<div id="download_users_downloads" hidden>{{download_users_downloads|tojson}}</div>
 <div id="submission_submissions" hidden>{{submission_submissions|tojson}}</div>
-
 
 <div class="content">
 
@@ -22,82 +16,52 @@
     <button type="submit">Submit</button>
   </form>
 
-  <div id="dl_bytes_chart_div"></div>
-  <div id="dl_num_files_chart_div"></div>
-  <div id="dl_users_chart_div"></div>
-  <div id="dl_user_files_chart_div"></div>
-  <div id="sm_bytes_chart_div"></div>
-  <div id="sm_num_files_chart_div"></div>
   <div id="sm_submissions_chart_div"></div>
+  <div id="dl_users_downloads_chart_div"></div>
+  <div id="dl_numfiles_bytes_chart_div"></div>
+
 </div>
 
 
 <script type="text/javascript">
   google.load("visualization", "1", {packages: ["corechart","table","annotatedtimeline"] });
 
-  //downloads: MB
-  var dl_bytes_array= JSON.parse($("#download_bytes").text());
-  for (i in dl_bytes_array) {
-    row = dl_bytes_array[i];
-    row[0] = new Date(row[0]);
-    row[1] /= (1024 * 1024); 
+  //downloads: number of files and MB
+  var dl_numfiles_bytes_array= JSON.parse($("#download_numfiles_bytes").text());
+  for (var i in dl_numfiles_bytes_array) {
+    row = dl_numfiles_bytes_array[i];
+    row[0] = makeDate(row[0]);
+    row[2] /= (1024 * 1024); 
   }
 
-  //downloads: number of files
-  var dl_files_array= JSON.parse($("#download_num_files").text());
-  for (i in dl_files_array) {
-    row = dl_files_array[i];
-    row[0] = new Date(row[0]);
-  }  
-
-  //downloads: unique users
-  var dl_users_array= JSON.parse($("#download_users").text());
-  for (i in dl_users_array) {
-    row = dl_users_array[i];
-    row[0] = new Date(row[0]);
+  //downloads: unique ip addresses and unique downloads
+  var dl_users_downloads_array= JSON.parse($("#download_users_downloads").text());
+  for (i in dl_users_downloads_array) {
+    row = dl_users_downloads_array[i];
+    row[0] = makeDate(row[0]);
   }
-
-  //downloads: unique user/file combinations
-  var dl_user_files_array= JSON.parse($("#download_user_files").text());
-  for (i in dl_user_files_array) {
-    row = dl_user_files_array[i];
-    row[0] = new Date(row[0]);
-  }
-
-
-  //submissions: MB
-  var sm_bytes_array= JSON.parse($("#submission_bytes").text());
-  for (i in sm_bytes_array) {
-    row = sm_bytes_array[i];
-    row[0] = new Date(row[0]);
-    row[1] /= (1024 * 1024); 
-  }
-
-  //submissions: number of files
-  var sm_files_array= JSON.parse($("#submission_num_files").text());
-  for (i in sm_files_array) {
-    row = sm_files_array[i];
-    row[0] = new Date(row[0]);
-  }  
 
   //submissions: number of submissions
   var sm_submissions_array= JSON.parse($("#submission_submissions").text());
   for (i in sm_submissions_array) {
     row = sm_submissions_array[i];
-    row[0] = new Date(row[0]);
+    row[0] = makeDate(row[0]);
   }  
 
   google.setOnLoadCallback(function() {
-    drawChart(dl_bytes_array, 'Downloads (MB) from USAP-DC', 'Month', 'MB', 'dl_bytes_chart_div');
-    drawChart(dl_files_array, 'Downloads (Number of files) from USAP-DC', 'Month', 'Number of files', 'dl_num_files_chart_div');
-    drawChart(dl_users_array, 'Downloads (unique users) from USAP-DC', 'Month', 'Number of users', 'dl_users_chart_div');
-    drawChart(dl_user_files_array, 'Downloads (unique user/file combinations) from USAP-DC', 'Month', 'Number of user/file combinations', 'dl_user_files_chart_div');
+    drawChart(sm_submissions_array, 'USAP-DC Monthly Submissions', 'Month', 'Number of submissions', 'sm_submissions_chart_div');
 
-    drawChart(sm_bytes_array, 'Submissions (MB) to USAP-DC', 'Month', 'MB', 'sm_bytes_chart_div');
-    drawChart(sm_files_array, 'Submissions (Number of files) to USAP-DC', 'Month', 'Number of files', 'sm_num_files_chart_div');
-    drawChart(sm_submissions_array, 'Submissions to USAP-DC', 'Month', 'Number of submissions', 'sm_submissions_chart_div');
+    drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div');
 
+    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div');
+   
   });
+
+  function makeDate(date_str) {
+    var date = new Date(date_str);
+    var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset);
+  }
 
   function drawChart(d_array, title, x_title, y_title, target) {
     var d_data = new google.visualization.DataTable();
@@ -112,6 +76,27 @@
         title: y_title,
         viewWindowMode:'explicit'
       }
+    };
+    var d_chart= new google.visualization.AreaChart(document.getElementById(target));
+    d_chart.draw(d_data,d_options);
+  }
+
+
+  function drawChart2(d_array, title, x_title, y_title1, y_title2, legend1, legend2, target) {
+    var d_data = new google.visualization.DataTable();
+    d_data.addColumn('date', 'Month');
+    d_data.addColumn('number', legend1);
+    d_data.addColumn('number', legend2);
+    d_data.addRows(d_array);
+    var d_options = {
+      title: title,
+      hAxis: {title: x_title},
+      vAxes: {0: {title: y_title1, minValue: 0},
+              1: {title: y_title2, minValue: 0},
+  
+      },
+      series: {0: {targetAxisIndex: 0},
+               1: {targetAxisIndex: 1}}
     };
     var d_chart= new google.visualization.AreaChart(document.getElementById(target));
     d_chart.draw(d_data,d_options);
