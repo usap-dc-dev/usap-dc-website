@@ -2,8 +2,8 @@
 $(document).ready(function() {
     $(document).ajaxStart(function () { $("html").addClass("wait"); });
     $(document).ajaxStop(function () { $("html").removeClass("wait"); });
-    $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
-    $('[data-toggle="tooltip"]').tooltip('hide');
+    // $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
+    // $('[data-toggle="tooltip"]').tooltip('hide');
 
 
     var titles = JSON.parse($("#titles").text())
@@ -55,14 +55,33 @@ $(document).ready(function() {
 
 
   $('#pi_name, #title, #dif_id, #award, #award-input, #dif_id-input, #all_selected, #usap_selected').change(function(e) {
-    $('[data-toggle="tooltip"]').tooltip('hide');
+     var el = $(':focus');
+     var newVal = el.val();
 
-    var selected = {
+     switch (el.attr('id')) {
+      case 'dif_id-input':
+        if (dif_ids.indexOf(newVal) == -1) {
+            $('#dif_id').val("");
+        } else {
+            $('#dif_id').val(newVal);
+        }
+        break;
+      case 'award-input':
+        console.log(newVal);
+        console.log(awards.indexOf(newVal));
+        if (awards.indexOf(newVal) == -1) {
+            $('#award').val("");
+        } else {
+            $('#award').val(newVal);
+        }
+        break;
+      }
+      var selected = {
         dif_id: $('#dif_id').val(),
         award: $('#award').val(),
-        all_selected: $('#all_selected:checked').val() ? 1 : 0
-    };
-    updateMenusWithSelected(selected, false);
+        all_selected: 1//$('#all_selected:checked').val() ? 1 : 0
+      };
+     updateMenusWithSelected(selected, false);
   });
 
   $('.abstract-button').click(function(event) {
@@ -258,7 +277,7 @@ function updateMenusWithSelected(selected, reset) {
           fill_opts(menu_name, opts[menu_name], selected[menu_name]);
       }
 
-      $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+      // $('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
     }
   });

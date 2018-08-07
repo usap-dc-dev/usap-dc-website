@@ -503,7 +503,7 @@
 
     mouseleave: function (e) {
       this.mousedover = false;
-      if (!this.focused && this.shown) this.hide();
+      if (!this.focused && this.shown && typeof this.focused !== 'undefined') this.hide();
     },
 
    /**
