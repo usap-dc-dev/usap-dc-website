@@ -117,13 +117,14 @@ cur.execute(query)
 res = cur.fetchall()
 # res = [{'dir_name': 'usap-dc/700078/2018-07-02T16:53:16.3Z/'}]
 # check if dataset contains files in the archive on seafloor
+archive = False
 for row in res:
     if row['dir_name'][0:7] == "archive":
         print("WARNING: %s contains archived files and needs to be bagged seperately" % ds_id)
-        sys.exit(0)
+        archive = True
 
 for row in res:
-    if row.get('dir_name') and row['dir_name'] != "":
+    if row.get('dir_name') and row['dir_name'] != "" and row['dir_name'][0:7] != "archive":
 
         ds_dir = os.path.join(root_dir, file_path, row['dir_name'])
         # check that data dir exists
@@ -157,71 +158,74 @@ except:
     out_text = "Error running database query. \n%s" % sys.exc_info()[1][0]
     print(out_text)
 
-# write the xml to a temporary file
+# write the xml to a file
 xml_file = os.path.join(bag_dir, ds_id + ".xml")
 with open(xml_file, "w") as myfile:
     myfile.write(out_text)
 
 # add some submission meta for the bagit
-sub_meta = {
-    "Source-Organization": "Interdisciplinary Earth Data Alliance (IEDA)",
-    "Organization-Address": "Lamont-Doherty Earth Observatory, 61 Route 9W, Palisades, New York 10964 USA",
-    "Contact-Email": "info@iedadata.org",
-    "Contact-Name": "Data Manager",
-    "External-Description": ds_title,  # encode handles special characters
-    "External-Identifier": "doi:%s" % ds_doi,
-    "Internal-Sender_Description": "United States Antarctic Program Data Center (USAP-DC)"
-}
-bagit.make_bag(bag_dir, sub_meta, checksum=["sha256", "md5"])
+if not archive:
+    sub_meta = {
+        "Source-Organization": "Interdisciplinary Earth Data Alliance (IEDA)",
+        "Organization-Address": "Lamont-Doherty Earth Observatory, 61 Route 9W, Palisades, New York 10964 USA",
+        "Contact-Email": "info@iedadata.org",
+        "Contact-Name": "Data Manager",
+        "External-Description": ds_title,  # encode handles special characters
+        "External-Identifier": "doi:%s" % ds_doi,
+        "Internal-Sender_Description": "United States Antarctic Program Data Center (USAP-DC)"
+    }
+    bagit.make_bag(bag_dir, sub_meta, checksum=["sha256", "md5"])
+    tar_name = "%s_bag.tar.gz" % bag_dir
+else:
+    tar_name = "%s_need_archived_data.tar.gz" % bag_dir
 
 # tar and zip
-tar_name = "%s_bag.tar.gz" % bag_dir
 with tarfile.open(tar_name, "w:gz") as tar:
     tar.add(bag_dir, arcname=os.path.basename(bag_dir))
 shutil.rmtree(bag_dir)
 
 
 # calculate checksums
-hasher = hashlib.sha256()
-hasher_md5 = hashlib.md5()
-with open(tar_name, 'rb') as afile:
-    buf = afile.read()
-    hasher.update(buf)
-    hasher_md5.update(buf)
-    checksum = hasher.hexdigest()
-    checksum_md5 = hasher_md5.hexdigest()
-    # print("INFO: checksum generated for file %s: %s" % (tar_name, checksum))
+if not archive:
+    hasher = hashlib.sha256()
+    hasher_md5 = hashlib.md5()
+    with open(tar_name, 'rb') as afile:
+        buf = afile.read()
+        hasher.update(buf)
+        hasher_md5.update(buf)
+        checksum = hasher.hexdigest()
+        checksum_md5 = hasher_md5.hexdigest()
+        # print("INFO: checksum generated for file %s: %s" % (tar_name, checksum))
 
-# Update Bagit information in database
-bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-conn, cur = connect_to_db()
-query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum) VALUES ('%s', '%s', '%s', '%s',' %s');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
-cur.execute(query)
-cur.execute("COMMIT;")
- 
+    # Update Bagit information in database
+    bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    conn, cur = connect_to_db()
+    query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum) VALUES ('%s', '%s', '%s', '%s',' %s');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+    cur.execute(query)
+    cur.execute("COMMIT;")
+     
+    # upload to AWS S3
+    """
+    try:
+        s3 = boto3.client('s3')
+        s3_name = os.path.basename(tar_name)
+        s3.upload_file(tar_name, BUCKET_NAME, s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'})
 
-# upload to AWS S3
-"""
-try:
-    s3 = boto3.client('s3')
-    s3_name = os.path.basename(tar_name)
-    s3.upload_file(tar_name, BUCKET_NAME, s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'})
+        # check MD5
+        s3_md5sum = s3.head_object(Bucket=BUCKET_NAME, Key=s3_name)['ETag'][1:-1]
+        # print("File MD5: %s\nS3 MD5: %s\n"
+        #             % (checksum_md5, s3_md5sum))
+        data['awsSubmissionStatus'] = 'S3'
+        data['archiveAccessionDate'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        if (s3_md5sum != checksum_md5):
+            print("ERROR: AWS S3 MD5 checksum does not match for %s.\nFile MD5: %s\nS3 MD5: %s\n"
+                  % (tar_name, checksum_md5, s3_md5sum))
+            sys.exit(0)
 
-    # check MD5
-    s3_md5sum = s3.head_object(Bucket=BUCKET_NAME, Key=s3_name)['ETag'][1:-1]
-    # print("File MD5: %s\nS3 MD5: %s\n"
-    #             % (checksum_md5, s3_md5sum))
-    data['awsSubmissionStatus'] = 'S3'
-    data['archiveAccessionDate'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-    if (s3_md5sum != checksum_md5):
-        print("ERROR: AWS S3 MD5 checksum does not match for %s.\nFile MD5: %s\nS3 MD5: %s\n"
-              % (tar_name, checksum_md5, s3_md5sum))
+    except:
+        print("ERROR: unable to upload file %s to AWS S3" % s3_name)
+        print(sys.exc_info()[1])
         sys.exit(0)
-
-except:
-    print("ERROR: unable to upload file %s to AWS S3" % s3_name)
-    print(sys.exc_info()[1])
-    sys.exit(0)
-"""
+    """
 
 print("SUCCESS: %s successfully archived.\n" % ds_id)

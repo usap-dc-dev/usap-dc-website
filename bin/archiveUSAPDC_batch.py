@@ -2,7 +2,7 @@
 """
  Run achiveUSAPDC for all datasets between a start id and an end id
  e.g.
- python /bin/archiveUSAPDC_batch.py 601021 601105
+ python bin/archiveUSAPDC_batch.py 601021 609000
 """
 
 import sys
