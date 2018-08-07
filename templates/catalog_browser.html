@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
-{% set cur = "dif_browser" %}
-{% block dif_body %}
+{% set cur = "catalog_browser" %}
+{% block catalog_body %}
 
 <div id="titles" hidden>{{titles|tojson}}</div>
 <div id="pi_names" hidden>{{pi_names|tojson}}</div>
@@ -10,7 +10,7 @@
 
 <div id="abstract" hidden>
   <div id="abstract_header" class="window-header">
-    <span id="abstract_title"></span><span id='close_btn'>X</span>
+    <span id="abstract_title"></span><span class='close_abstract_btn close_btn'>X</span>
   </div>
   <div id="abstract_body">
     <p id="abstract_text"></p>
@@ -18,15 +18,21 @@
 </div>
 
 
+<div id="geometry">
+  <div id="geometry_header" class="window-header">
+    <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
+  </div>
+  <div id="map"></div>
+</div>
+
 <div>
 
-  <h2 class="title">Metadata DIF browser (beta)</h2>
-  <h5> Search includes AMD DIF records managed through USAP-DC.</h5>
-  <h5><b>Note:</b> Includes records formerly managed through AGDC. Not all records contain links to datasets.</h5>
+  <h2 class="title">Antarctic Project Catalog Browser</h2>
+  <h5>Browse catalog of US projects registered within the Antarctic Master Directory (AMD) managed through USAP-DC and other sources.</h5>
 
   <br/>
 
-  <form action="{{url_for('dif_browser')}}" method="POST" enctype="multipart/form-data">
+  <form action="{{url_for('catalog_browser')}}" method="POST" enctype="multipart/form-data">
     <div style="margin:5px;"><b>PI Name: </b> 
       <input type="text" name="pi_name" id="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
       <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
@@ -54,7 +60,7 @@
       </span>
     </div>
 
-    <div style="margin:5px;"><b>DIF ID: </b> 
+    <div style="margin:5px;"><b>AMD DIF ID#: </b> 
       <span class="select-editable-dif-id">
         <select id="dif_id" onchange="this.nextElementSibling.value=this.value">
           <option value='Any DIF ID' {% if award =='' or award =='Any DIF ID' %} selected {% endif %}>Any DIF ID</option>
@@ -67,8 +73,11 @@
     </div>
 
     <div style="margin:5px;">
-      <input type="radio" name="all_selected" id="all_selected" value="1" {% if all_selected %} checked {% endif %}> All records
-      <input type="radio" name="all_selected" id="usap_selected" value="0" {% if not all_selected %} checked {% endif %}> USAP-DC only
+      <h5>Select to browse records from the AMD/GCMD from US projects.<br/> 
+          <b>Note:</b> records are registered from multiple sources, not all records contain links to datasets and project information varies in completeness.
+      </h5>
+      <input type="radio" name="all_selected" id="all_selected" value="1" {% if all_selected %} checked {% endif %}> All AMD US projects
+      <input type="radio" name="all_selected" id="usap_selected" value="0" {% if not all_selected %} checked {% endif %}> Only records registered through USAP-DC
     </div>
 
 
@@ -94,7 +103,8 @@
           <th width="20%">Title</th>
           <th width="25%">List of Datasets</th>
           <th width="10%">Repositories</th>
-          <th width="10%" hidden>Abstract</th>
+          <th hidden>Abstract</th>
+          <th width="10%" hidden>Geometry</th>
         </tr>
     
         {% for val in dif_records %}
@@ -113,7 +123,15 @@
             <td>{{val['date_created']}}</td>
             <td>{{val['authors']}}</td>
             {% set abstract = val['summary'] | safe %}
-            <td>{{val['title']}}<br/><button type="button" class="abstract-button">Abstract</button></td>
+            <td>
+              {{val['title']}}
+              <br/>
+              <button type="button" class="in-table-button abstract-button">Abstract</button>
+              <br/>
+              {% if val['bounds_geometry'] %}
+                <button type="button" class="in-table-button geometry-button">Show on Map</button>
+              {% endif %}
+            </td>
 
             <td><font size=2>
               {% if val['datasets']|length == 0 %}
@@ -137,6 +155,7 @@
             </font></td>
 
             <td hidden>{{val['summary']}}</td>
+            <td hidden>{{val['bounds_geometry']}}</td>
           </tr>
         {% endfor %}
 
@@ -152,4 +171,4 @@
   
 </script>
 
-{% endblock dif_body %}
+{% endblock catalog_body %}

@@ -244,7 +244,7 @@ def parse_xml(xml_file_name):
                                                 .replace('http://www.nsf.gov/awardsearch/', '')
                                 if award == '[VALUE]':
                                     #fix issue for a couple of bad award values
-                                    award = dif_id.replace("_", "-").split("-")[1];
+                                    award = dif_id.replace("_", "-").split("-")[1]
                         # get dataset description from Title first, otherwise Description                        
                         if 'Title' in sub2.tag:
                             data_desc = sub2.text.replace("'", "''")

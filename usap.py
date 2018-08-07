@@ -1581,9 +1581,10 @@ def curator_help():
     return render_template('curator_help.html', **template_dict)
 
 
-@app.route('/dif_browser', methods=['GET', 'POST'])
-def dif_browser():
-    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': '', 'all_selected': True}
+@app.route('/catalog_browser', methods=['GET', 'POST'])
+def catalog_browser():
+    all_selected = False
+    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': '', 'all_selected': all_selected}
     (conn, cur) = connect_to_db()
 
     query = "SELECT award FROM dif_test ORDER BY award"
@@ -1602,7 +1603,7 @@ def dif_browser():
     cur.execute(query)
     template_dict['pi_names'] = cur.fetchall()
 
-    query = "SELECT DISTINCT dif_test.* FROM dif_test WHERE dif_test.dif_id !=''"
+    query = "SELECT DISTINCT dif_test.*, ST_AsText(dsm.bounds_geometry) AS bounds_geometry FROM dif_test LEFT JOIN dif_spatial_map dsm ON dsm.dif_id = dif_test.dif_id WHERE dif_test.dif_id !=''"
 
     if request.method == 'POST':
         print(request.form)
@@ -1612,7 +1613,8 @@ def dif_browser():
         template_dict['summary'] = request.form.get('summary')
         template_dict['award'] = request.form.get('award')
         template_dict['dif_id'] = request.form.get('dif_id')
-        template_dict['all_selected'] = bool(int(request.form.get('all_selected')))
+        all_selected = bool(int(request.form.get('all_selected')))
+        template_dict['all_selected'] = all_selected
 
         print(bool(int(request.form.get('all_selected'))))
         if (request.form.get('pi_name') != ""):
@@ -1625,10 +1627,10 @@ def dif_browser():
             query += " AND dif_test.award = '%s'" % request.form['award']
         if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):
             query += " AND dif_test.dif_id = '%s'" % request.form['dif_id']
-        if not bool(int(request.form.get('all_selected'))):
-            query += " AND dif_test.is_usap_dc = true"
 
-    # query += " ORDER BY dif_test.dif_id"
+    if not all_selected:
+        query += " AND dif_test.is_usap_dc = true"
+
     query += " ORDER BY dif_test.date_created DESC"
 
     query_string = cur.mogrify(query)
@@ -1670,7 +1672,7 @@ def dif_browser():
     if template_dict['dif_id'] == "":
         template_dict['dif_id'] = "Any DIF ID"
 
-    return render_template('dif_browser.html', **template_dict)
+    return render_template('catalog_browser.html', **template_dict)
 
 
 @app.route('/filter_dif_menus', methods=['GET'])

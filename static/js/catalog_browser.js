@@ -84,13 +84,160 @@ $(document).ready(function() {
     $("#abstract").css({top:y-400+"px", left:x-300+"px"}).show();
   });
 
-  $('#close_btn').click(function() {
+  $('.close_abstract_btn').click(function() {
     $("#abstract").hide();
   });
   
+
+  var map = new MapClient();
+  var styles = [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'rgba(255, 0, 0, 0.8)',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 0, 0, 0.3)'
+      })
+    }),
+    new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 4,
+        stroke: new ol.style.Stroke({
+          color: 'rgba(255, 0, 0, 0.8)',
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 0, 0, 0.3)'
+        })
+      })
+    })
+  ];
+  
+  $('.geometry-button').click(function(event) {
+    var header = $(this).closest('table').find('th');
+    var dif_id_ind, geometry_ind = 999;
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "DIF ID") dif_id_ind = i;
+      if (label == "Geometry") geometry_ind = i;
+    }
+    var row = $(this).closest('tr');
+    var dif_id = row.find('td').eq(dif_id_ind).text();
+    var geometry = row.find('td').eq(geometry_ind).text();
+    $("#geometry_title").text(dif_id);
+    plotGeometry(map, geometry, styles);
+    var x = event.pageX;
+    var y = event.pageY;
+    $("#geometry").css({top:y-400+"px", left:x-300+"px"}).show();
+  });
+
+  $('.close_geom_btn').click(function() {
+    $("#geometry").hide();
+  });
+  
+
   //Make the DIV element draggagle:
   dragElement(document.getElementById(("abstract")));
+  dragElement(document.getElementById(("geometry")));
+
 });
+
+function MapClient() {
+  proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
+  var projection = ol.proj.get('EPSG:3031');
+  projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
+  projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
+  map = new ol.Map({ // set to GMRT SP bounds
+  target: 'map',
+    view: new ol.View({
+        center: [0,0],
+        zoom: 2,
+        projection: projection,
+        minZoom: 1,
+        maxZoom: 10
+    }),  
+  });
+
+  var api_url = 'http://api.usap-dc.org:81/wfs?';
+  var gmrt = new ol.layer.Tile({
+    type: 'base',
+    title: "GMRT Synthesis",
+    source: new ol.source.TileWMS({
+        url: "http://gmrt.marine-geo.org/cgi-bin/mapserv?map=/public/mgg/web/gmrt.marine-geo.org/htdocs/services/map/wms_sp.map",
+        params: {
+        layers: 'South_Polar_Bathymetry'
+        }
+    })
+  });
+  map.addLayer(gmrt);
+
+  var lima = new ol.layer.Tile({
+    title: "LIMA 240m",
+    visible: true,
+    source: new ol.source.TileWMS({
+        url: api_url,
+        params: {
+        layers: "LIMA 240m",
+        transparent: true
+        }
+    })
+  });
+  map.addLayer(lima);
+
+  return map;
+}
+
+function plotGeometry(map, geometry, styles) {
+
+  //first remove previous geometries
+  removeLayerByName(map, "geometry");
+
+  var format = new ol.format.WKT();
+
+  var feature = format.readFeature(geometry, {
+    dataProjection: 'EPSG:4326',
+    featureProjection: 'EPSG:3031'
+  });
+
+  var source = new ol.source.Vector({
+    features: [feature]
+  });
+
+  var layer = new ol.layer.Vector({
+    source: source,
+    style: styles,
+    title: "geometry"
+  });
+
+  map.addLayer(layer);
+
+  var extent = map.getView().getProjection().getExtent();
+  //zoom to polygon
+  if (feature.getGeometry().getType() == "Polygon") {
+    extent = source.getExtent();
+  }
+  map.getView().fit(extent, map.getSize());
+}
+
+/*
+  A function to remove a layer using its name/title
+*/
+function removeLayerByName(map, name) {
+  var layersToRemove = [];
+  map.getLayers().forEach(function (layer) {
+    if (layer.get('title') !== undefined && layer.get('title') === name) {
+        layersToRemove.push(layer);
+    }
+  });
+
+  var len = layersToRemove.length;
+  for(var i = 0; i < len; i++) {
+      map.removeLayer(layersToRemove[i]);
+  }
+}
+
 
 function updateMenusWithSelected(selected, reset) {
   selected = selected || {};
