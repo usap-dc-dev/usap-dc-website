@@ -30,9 +30,17 @@
   <h2 class="title">Antarctic Project Catalog Browser</h2>
   <h5>Browse catalog of US projects registered within the Antarctic Master Directory (AMD) managed through USAP-DC and other sources.</h5>
 
-  <br/>
-
   <form action="{{url_for('catalog_browser')}}" method="POST" enctype="multipart/form-data">
+
+    <div style="margin:5px;" class="bordered_div">
+      <h5>Select to browse records from the AMD/GCMD from US projects.<br/> 
+          <b>Note:</b> records are registered from multiple sources, not all records contain <br/> links to datasets and project information varies in completeness.
+      </h5>
+      <input type="radio" name="all_selected" id="all_selected" value="1" onclick="this.form.submit()" {% if all_selected %} checked {% endif %}> <b>All AMD US projects</b>
+      <input type="radio" name="all_selected" id="usap_selected" value="0" onclick="this.form.submit()" {% if not all_selected %} checked {% endif %}> <b>Only records registered through USAP-DC</b>
+    </div>
+  
+
     <div style="margin:5px;"><b>PI Name: </b> 
       <input type="text" name="pi_name" id="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
       <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
@@ -72,15 +80,6 @@
       </span>
     </div>
 
-    <div style="margin:5px;">
-      <h5>Select to browse records from the AMD/GCMD from US projects.<br/> 
-          <b>Note:</b> records are registered from multiple sources, not all records contain links to datasets and project information varies in completeness.
-      </h5>
-      <input type="radio" name="all_selected" id="all_selected" value="1" {% if all_selected %} checked {% endif %}> All AMD US projects
-      <input type="radio" name="all_selected" id="usap_selected" value="0" {% if not all_selected %} checked {% endif %}> Only records registered through USAP-DC
-    </div>
-
-
     <div style="margin-top: 10px"><input type="submit" value="Search"/>
   </form>
 
@@ -100,7 +99,7 @@
           <th width="7%">NSF Award</th>
           <th width="8%">Date Created</th>
           <th width="10%">PI (CoPIs)</th>
-          <th width="20%">Title</th>
+          <th width="20%">Title/Abstract/Map</th>
           <th width="25%">List of Datasets</th>
           <th width="10%">Repositories</th>
           <th hidden>Abstract</th>
@@ -126,10 +125,10 @@
             <td>
               {{val['title']}}
               <br/>
-              <button type="button" class="in-table-button abstract-button">Abstract</button>
+              <button type="button" class="in-table-button abstract-button"><b>Abstract</b></button>
               <br/>
               {% if val['bounds_geometry'] %}
-                <button type="button" class="in-table-button geometry-button">Show on Map</button>
+                <button type="button" class="in-table-button geometry-button"><b>Show on Map</b></button>
               {% endif %}
             </td>
 

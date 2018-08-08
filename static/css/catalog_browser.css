@@ -133,9 +133,15 @@
 
 #map {
     position: relative;
-    margin:auto;
-    width:300px;
-    height:300px;
-    border:1px solid black;
+    margin: auto;
+    width: 300px;
+    height: 300px;
+    border: 1px solid black;
     z-index: 1;
+}
+
+.bordered_div {
+  border: 1px dotted black;
+  padding: 5px;
+  width: 500px;
 }

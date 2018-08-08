@@ -1581,27 +1581,21 @@ def curator_help():
     return render_template('curator_help.html', **template_dict)
 
 
+def getFromDifTable(col, all_selected):
+    (conn, cur) = connect_to_db()
+    query = "SELECT %s FROM dif_test " % col
+    if not all_selected:
+        query += "WHERE is_usap_dc = true "
+    query += "ORDER BY %s;" % col
+    cur.execute(query)
+    return cur.fetchall()
+
+
 @app.route('/catalog_browser', methods=['GET', 'POST'])
 def catalog_browser():
     all_selected = False
     template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': '', 'all_selected': all_selected}
     (conn, cur) = connect_to_db()
-
-    query = "SELECT award FROM dif_test ORDER BY award"
-    cur.execute(query)
-    template_dict['awards'] = cur.fetchall()
-
-    query = "SELECT dif_id FROM dif_test ORDER BY dif_id"
-    cur.execute(query)
-    template_dict['dif_ids'] = cur.fetchall()
-
-    query = 'SELECT DISTINCT title FROM dif_test ORDER BY title'
-    cur.execute(query)
-    template_dict['titles'] = cur.fetchall()
-
-    query = 'SELECT DISTINCT pi_name FROM dif_test ORDER BY pi_name'
-    cur.execute(query)
-    template_dict['pi_names'] = cur.fetchall()
 
     query = "SELECT DISTINCT dif_test.*, ST_AsText(dsm.bounds_geometry) AS bounds_geometry FROM dif_test LEFT JOIN dif_spatial_map dsm ON dsm.dif_id = dif_test.dif_id WHERE dif_test.dif_id !=''"
 
@@ -1671,6 +1665,13 @@ def catalog_browser():
 
     if template_dict['dif_id'] == "":
         template_dict['dif_id'] = "Any DIF ID"
+
+    # get list of available options for drop downs and autocomplete
+    template_dict['awards'] = getFromDifTable('award', all_selected)
+    template_dict['dif_ids'] = getFromDifTable('dif_id', all_selected)
+    template_dict['titles'] = getFromDifTable('title', all_selected)
+    template_dict['pi_names'] = getFromDifTable('pi_name', all_selected)
+
 
     return render_template('catalog_browser.html', **template_dict)
 
