@@ -1583,7 +1583,7 @@ def curator_help():
 
 def getFromDifTable(col, all_selected):
     (conn, cur) = connect_to_db()
-    query = "SELECT %s FROM dif_test " % col
+    query = "SELECT DISTINCT %s FROM dif_test " % col
     if not all_selected:
         query += "WHERE is_usap_dc = true "
     query += "ORDER BY %s;" % col
