@@ -19,7 +19,11 @@
   <div id="sm_submissions_chart_div"></div>
   <div id="dl_users_downloads_chart_div"></div>
   <div id="dl_numfiles_bytes_chart_div"></div>
-
+  <div>
+    <p><b>
+      * Download statistics collection began in March 2017
+    </b></p>
+  </div>
 </div>
 
 
@@ -51,9 +55,9 @@
   google.setOnLoadCallback(function() {
     drawChart(sm_submissions_array, 'USAP-DC Monthly Submissions', 'Month', 'Number of submissions', 'sm_submissions_chart_div');
 
-    drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div');
+    drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div');
 
-    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div');
+    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests*', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div');
    
   });
 
