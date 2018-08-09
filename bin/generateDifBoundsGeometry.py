@@ -23,6 +23,11 @@ def makeGeom(record):
     south = record['south']
     cross_dateline = record['cross_dateline']
 
+
+    mid_point_lat = (south - north) / 2 + north
+    mid_point_long = (east - west) / 2 + west
+    geometry = "POINT(%s %s)" % (mid_point_long, mid_point_lat)
+
     # point
     if (west == east and north == south):
         geom = "POINT(%s %s)" % (west, north)
@@ -97,18 +102,19 @@ def makeGeom(record):
             geom += "%s %s," % (-180, north)
 
         geom = geom[:-1] + "))"
-    return geom
+    return geometry, geom
 
 
 if __name__ == '__main__':
     conn, cur = connect_to_db()
-    query = "SELECT * FROM dataset_spatial_map"
+    query = "SELECT * FROM dif_spatial_map WHERE dif_id = 'USAP-1443126'"
     cur.execute(query)
     records = cur.fetchall()
     for record in records:
-        geom = makeGeom(record)
-        update = "UPDATE dataset_spatial_map SET bounds_geometry = ST_GeomFromText('%s',4326) WHERE dataset_id='%s' AND gid=%s AND north='%s' AND south='%s' AND east='%s' AND west='%s';" \
-            % (geom, record['dataset_id'], record['gid'], record['north'], record['south'], record['east'], record['west'])
+
+        geometry, bounds_geometry = makeGeom(record)
+        update = "UPDATE dif_spatial_map SET (geometry, bounds_geometry) = (ST_GeomFromText('%s',4326), ST_GeomFromText('%s',4326)) WHERE dif_id='%s' AND gid=%s AND north='%s' AND south='%s' AND east='%s' AND west='%s';" \
+            % (geometry, bounds_geometry, record['dif_id'], record['gid'], record['north'], record['south'], record['east'], record['west'])
         print(update)
         cur.execute(update)
         cur.execute("COMMIT;")
