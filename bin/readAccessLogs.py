@@ -46,7 +46,7 @@ if __name__ == '__main__':
         log_file = os.path.join(LOGS_DIR, filename)
         print(log_file)
         #log_file = "test.log"
-        f = open(log_file)
+        f = open(log_file, 'r')
         entries = f.readlines()
         num = 0
         for entry in entries:
@@ -63,5 +63,5 @@ if __name__ == '__main__':
                     except:
                         #entry already exists, do nothing
                         pass
-        cur.execute("COMMIT;")
+                    cur.execute("COMMIT;")
         print("%s entries added to the database" % num)
