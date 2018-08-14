@@ -77,6 +77,7 @@ if root_dir is None or file_path is None or out_dir is None or ds_id is None:
         sys.exit(0)
 
 out_dir = os.path.join(root_dir, out_dir)
+doc_dir = os.path.join(root_dir, 'doc', ds_id)
 
 
 def connect_to_db():
@@ -143,6 +144,19 @@ for row in res:
             shutil.rmtree(bag_dir)
             sys.exit(0)
 
+# copy readme files from doc directory to bagit directory
+if os.path.exists(doc_dir):
+    readme_files = os.listdir(doc_dir)
+    for file_name in readme_files:
+        full_file_name = os.path.join(doc_dir, file_name)
+        if (os.path.isfile(full_file_name)):
+            try:
+                shutil.copy(full_file_name, bag_dir)
+            except:
+                print("ERROR: Unable to copy readme file %s to Bagit directory %s." % (full_file_name, bag_dir))
+                print(sys.exc_info()[1])
+                shutil.rmtree(bag_dir)
+                sys.exit(0)
 
 # copy the metadata file to the bagit dir
 
