@@ -1,5 +1,6 @@
 """
-Cut down version of archiveUSAPDC.py that will create the tarred, gzipped bagit file and
+Cut down version of archiveUSAPDC.py that will create the tarred, gzipped bagit file,
+calculate the checksums and
 print out the PSQL command to insert in to the dataset_archive table in the database.
 
 Before running, need to run the original version of archiveUSAPDC.py on the USAP-DC server
@@ -12,17 +13,14 @@ Update ds_title, ds_doi and ds_id in the code, then run.
 
 Need to run on a system with the /archive/usap-dc/dataset directory mounted, but that has python 2.7 
 and the bagit package installed.
-
-If checksum calculation doesn't work, due to memory constraints, try using the unix command:
-> openssl sha256 601047_bag.tar.gz
 """
 
 import os
-import hashlib
 import shutil
 import bagit
 import tarfile
 from time import gmtime, strftime
+from subprocess import Popen, PIPE
 
 ROOT_DIR = "/archive/usap-dc/dataset"
 
@@ -49,17 +47,22 @@ with tarfile.open(tar_name, "w:gz") as tar:
 shutil.rmtree(bag_dir)
 print("BAGGIT MADE")
 
-# calculate checksums
-hasher = hashlib.sha256()
-hasher_md5 = hashlib.md5()
-with open(tar_name, 'rb') as afile:
-    buf = afile.read()
-    hasher.update(buf)
-    hasher_md5.update(buf)
-    checksum = hasher.hexdigest()
-    print("SHA256 checksum: " + checksum)
-    checksum_md5 = hasher_md5.hexdigest()
-    print("MD5 checksum: " + checksum_md5)
+# calculate checksums (hashlib libarry won't work on large files, so need to use openssl in unix)
+process = Popen(['openssl', 'sha256', tar_name], stdout=PIPE)
+(output, err) = process.communicate()
+if err:
+    print("Error calculating SHA256 checksum.  %s" % err)
+with open(tar_name + ".sha256", "w") as myfile:
+    checksum = output.split(")= ")[1].replace("\n", "")
+    myfile.write(checksum)
+
+process = Popen(['openssl', 'md5', tar_name], stdout=PIPE)
+(output, err) = process.communicate()
+if err:
+    print("Error calculating MD5 checksum.  %s" % err)
+with open(tar_name + ".md5", "w") as myfile:
+    checksum_md5 = output.split(")= ")[1].replace("\n", "")
+    myfile.write(checksum_md5)
 
 # Print psql query
 bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
