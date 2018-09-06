@@ -635,7 +635,7 @@ def dataset2():
 
         if request.form.get('action') == 'Submit':
             msg_data = copy.copy(session['dataset_metadata'])
-            msg_data['name'] = session['user_info']['name']
+            msg_data['name'] = session['user_info'].get('name')
             del msg_data['action']
 
             cross_dateline = False
@@ -679,7 +679,7 @@ def dataset2():
             os.chmod(submitted_file, 0o664)
 
 
-            """
+            
             # email RT queue
             # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
             message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
@@ -703,7 +703,7 @@ def dataset2():
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
-            """
+            
 
             return redirect('/thank_you/dataset')
         elif request.form['action'] == 'Previous Page':
@@ -839,7 +839,7 @@ def project():
         msg['To'] = ', '.join(recipients)
 
         smtp_details = config['SMTP']
-        """
+        
         s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
         # identify ourselves to smtp client
         s.ehlo()
@@ -850,7 +850,7 @@ def project():
         s.login(smtp_details["USER"], smtp_details["PASSWORD"])
         s.sendmail(sender, recipients, msg.as_string())
         s.quit()
-        """
+        
 
         return redirect('thank_you/project')
     else:
@@ -899,7 +899,8 @@ def authorized(resp):
                   None, headers)
     res = urlopen(req)
     session['user_info'] = json.loads(res.read())
-    print(session['user_info'])
+    if session['user_info'].get('name') is None:
+        session['user_info']['name'] = ""
     return redirect(session['next'])
 
 
