@@ -488,7 +488,10 @@ def dataset():
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
-        return render_template('dataset.html', name=user_info['name'], email=email, error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+        name = ""
+        if user_info.get('name'):
+            email = user_info.get('name')
+        return render_template('dataset.html', name=name, email=email, error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
 
 
 @app.route('/submit/help', methods=['GET', 'POST'])
@@ -547,7 +550,7 @@ Validator = namedtuple('Validator', ['func', 'msg'])
 def check_dataset_submission(msg_data):
     print(msg_data, file=sys.stderr)
     def default_func(field):
-        return lambda data: field in data and bool(data[field])
+        return lambda data: field in data and bool(data[field]) and data[field] != "None"
     def check_spatial_bounds(data):
         if not(data['geo_e'] or data['geo_w'] or data['geo_s'] or data['geo_n']):
             return True
@@ -664,7 +667,7 @@ def dataset2():
             for fname, fobj in fnames.items():
                 fobj.save(os.path.join(upload_dir, fname))
 
-
+            
             # save json file in submitted dir
             submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
             # get next_id
@@ -675,6 +678,8 @@ def dataset2():
                 file.write(json.dumps(msg_data, indent=4, sort_keys=True))
             os.chmod(submitted_file, 0o664)
 
+
+            """
             # email RT queue
             # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
             message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
@@ -698,6 +703,7 @@ def dataset2():
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
+            """
 
             return redirect('/thank_you/dataset')
         elif request.form['action'] == 'Previous Page':
@@ -746,8 +752,10 @@ def dataset2():
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
-        return render_template('dataset2.html', name=user_info['name'], email=email, dataset_metadata=session.get('dataset_metadata', dict()))
-
+        name = ""
+        if user_info.get('name'):
+            email = user_info.get('name')
+        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()))
 
 
 # Read the next doi reference number from the file
@@ -831,6 +839,7 @@ def project():
         msg['To'] = ', '.join(recipients)
 
         smtp_details = config['SMTP']
+        """
         s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
         # identify ourselves to smtp client
         s.ehlo()
@@ -841,6 +850,7 @@ def project():
         s.login(smtp_details["USER"], smtp_details["PASSWORD"])
         s.sendmail(sender, recipients, msg.as_string())
         s.quit()
+        """
 
         return redirect('thank_you/project')
     else:
@@ -889,7 +899,7 @@ def authorized(resp):
                   None, headers)
     res = urlopen(req)
     session['user_info'] = json.loads(res.read())
-
+    print(session['user_info'])
     return redirect(session['next'])
 
 
@@ -898,8 +908,8 @@ def authorized(resp):
 def authorized_orcid(resp):
     session['orcid_access_token'] = resp['access_token']
     session['user_info'] = {
-        'name': resp['name'],
-        'orcid': resp['orcid']
+        'name': resp.get('name'),
+        'orcid': resp.get('orcid')
     }
     return redirect(session['next'])
 
