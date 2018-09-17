@@ -2,7 +2,11 @@
 {% set cur = "dataset" %}
 {% block body %}
 
-<div id="pubs_list" hidden>{{dataset_metadata['publications']|tojson}}</div>
+<div id="pubs_list" hidden>
+{% if dataset_metadata['publications']|length > 0 %}
+  {{dataset_metadata['publications']|tojson}}
+{% endif %}
+</div>
 
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 <script type="text/javascript">
