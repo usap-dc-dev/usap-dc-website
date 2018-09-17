@@ -490,7 +490,7 @@ def dataset():
             email = user_info.get('email')
         name = ""
         if user_info.get('name'):
-            email = user_info.get('name')
+            name = user_info.get('name')
         return render_template('dataset.html', name=name, email=email, error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
 
 
@@ -547,10 +547,13 @@ def thank_you(submission_type):
 
 Validator = namedtuple('Validator', ['func', 'msg'])
 
+
 def check_dataset_submission(msg_data):
     print(msg_data, file=sys.stderr)
+
     def default_func(field):
         return lambda data: field in data and bool(data[field]) and data[field] != "None"
+
     def check_spatial_bounds(data):
         if not(data['geo_e'] or data['geo_w'] or data['geo_s'] or data['geo_n']):
             return True
@@ -562,15 +565,19 @@ def check_dataset_submission(msg_data):
                     abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
             except:
                 return False
-    
+
+    def check_valid_email(data):
+        return re.match("[^@]+@[^@]+\.[^@]+", data['email'])
+
     validators = [
-        Validator(func=default_func('title'),msg='You must include a dataset title for the submission.'),
-        Validator(func=default_func('author'),msg='You must include a dataset author for the submission.'),
-        Validator(func=default_func('email'),msg='You must include a contact email address for the submission.'),
-        Validator(func=default_func('award'),msg='You must select an NSF grant for the submission.'),
+        Validator(func=default_func('title'), msg='You must include a dataset title for the submission.'),
+        Validator(func=default_func('author'), msg='You must include a dataset author for the submission.'),
+        Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
+        Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
+        Validator(func=default_func('award'), msg='You must select an NSF grant for the submission.'),
         Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid."),
-        Validator(func=default_func('filenames'),msg='You must include files in your submission.'),
-        Validator(func=default_func('agree'),msg='You must agree to have your files posted with a DOI.')
+        Validator(func=default_func('filenames'), msg='You must include files in your submission.'),
+        Validator(func=default_func('agree'), msg='You must agree to have your files posted with a DOI.')
     ]
     msg = ""
     for v in validators:
@@ -754,7 +761,7 @@ def dataset2():
             email = user_info.get('email')
         name = ""
         if user_info.get('name'):
-            email = user_info.get('name')
+            name = user_info.get('name')
         return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()))
 
 

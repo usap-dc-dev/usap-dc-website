@@ -2,11 +2,13 @@
 {% set cur = "dataset" %}
 {% block body %}
 
+<div id="pubs_list" hidden>{{dataset_metadata['publications']|tojson}}</div>
 
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 <script type="text/javascript">
 
-  var publications = "{{dataset_metadata['publications']|safe}}".split(',');
+  var publications = JSON.parse($("#pubs_list").text());
+
   $(document).ready(function() {
     var wrapper = $('#more_publications');
     var counter = 1;
@@ -47,9 +49,9 @@
 
 
     // if reloading, populate any added publication fields
-    $('#publication').html(publications[0].split("'")[1]);
+    $('#publication').html(publications[0]);
     for (var i=1; i < publications.length; i++ ) {
-        var publication = publications[i].split("'")[1];
+        var publication = publications[i];
         addRow(publication);
     }
 
@@ -82,6 +84,7 @@
 
 
 </script>
+
 
 <div class="content fixed-width">
 
