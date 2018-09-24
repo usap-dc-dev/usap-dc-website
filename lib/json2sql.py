@@ -44,6 +44,8 @@ def parse_json(data):
         (first, last) = data["name"].split(' ', 1)
         data["name"] = "{}, {}".format(last, first)
         print("corrected submitter: ", data["name"])
+    else:
+        data["name"] = data["author"]
 
     # --- fix award field
     (data["award"], dummy) = data["award"].split(" ", 1)  # throw away the rest of the award string
@@ -192,7 +194,7 @@ def make_sql(data, id):
                       '10.15784/'+id, \
                       data["title"], \
                       data["name"], \
-                      data["author"], \
+                      '; '.join(person_ids), \
                       release_date, \
                       data["abstract"], \
                       '1', \
