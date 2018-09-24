@@ -30,13 +30,14 @@ def parse_json(data):
     # --- checking for required fields, make sure they all have data
     fields = ["abstract", "author", "award", "title", "timestamp",
               "geo_e", "geo_w", "geo_n", "geo_s", "start", "stop",
-              "publication", "publication1", "publication2", "orcid", "email"]
+              "publications", "orcid", "email"]
     # for field in fields:
     #    print(data[field])
 
     # --- fix some json fields
     # TODO Handle multiple authors
-    (first, last) = data["author"].split(' ', 1)
+    data["author"] = data["authors"][0]
+    (first, last) = (data["author"]["first_name"], data["author"]["last_name"])
     data["author"] = "{}, {}".format(last, first)
     print("corrected author: ", data["author"])
     if data["name"] != "":
@@ -153,21 +154,33 @@ def make_sql(data, id):
     sql_out += '--NOTE: include NSF PI(s), submitter, and author(s); email+orcid optional\n'
 
     conn, cur = connect_to_db()
-    query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["author"]
-    cur.execute(query)
-    res = cur.fetchone()
-  
-    if res['count'] == 0 and data["author"] != '':
-        line = "insert into person(id,email,id_orcid) values ('{}','{}','{}');\n".format(data["author"],data["email"],data["orcid"])
-        sql_out += line
 
-    if data["name"] != data["author"] and data["name"] != '':
+    person_ids = []
+    for author in data["authors"]:
+        first_name = author.get("first_name")
+        last_name = author.get("last_name")
+        person_id = "%s, %s" % (last_name, first_name)
+        person_ids.append(person_id)
+
+        query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % person_id
+        cur.execute(query)
+        res = cur.fetchone()
+  
+        if res['count'] == 0 and person_id != "":
+            if author == data["author"]:
+                line = "insert into person(id,first_name, last_name, email,id_orcid) values ('{}','{}','{}',{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
+            else:
+                line = "insert into person(id,first_name, last_name) values ('{}','{}','{}');\n".format(person_id, first_name, last_name)
+
+            sql_out += line
+
+    if data["name"] not in person_ids and data["name"] != '':
         query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["name"]
         cur.execute(query)
         res = cur.fetchone()
         print(res)
         if res['count'] == 0:
-            line = "insert into person(id,email,id_orcid) values ('{}','{}','{}');\n".format(data["name"],data["email"],data["orcid"])
+            line = "insert into person(id,email,id_orcid) values ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
             sql_out += line
     
     sql_out += '\n--NOTE: submitter_id = JSON "name"\n'
@@ -204,14 +217,14 @@ def make_sql(data, id):
                            (id, 'USAP-' + data["award"])
     sql_out += line
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
-    if data["name"] != data["author"] and data["name"] != '':
+    for person_id in person_ids:
+            line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
+                                   (id, person_id)
+            sql_out += line
+
+    if data["name"] not in person_ids and data["name"] != '':
         line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
                                (id, data["name"])
-    
-    sql_out += line
-    if data["author"] != data["name"]:
-        line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n\n" % \
-                               (id, data["author"])
         sql_out += line
     
     sql_out += '\n--NOTE: check the award #\n'
@@ -262,12 +275,9 @@ def make_sql(data, id):
     sql_out += line
 
     sql_out += "\n--NOTE: reference format is free text; insert CRs for multiple references\n"
-    line = "insert into dataset_reference_map(dataset_id,reference) values ('%s','%s');\n" % \
-                           (id, data["publication"])
-    sql_out += line
-    if data["publication1"] != '':
-        line = "insert into dataset_reference_map(dataset_id,reference) values ('%s','%s');\n" % \
-               (id, data["publication1"])
+
+    for publication in data["publications"]:
+        line = "insert into dataset_reference_map(dataset_id,reference) values ('%s','%s');\n" % (id, publication)
         sql_out += line
 
     sql_out += "--NOTE: add keywords\n"

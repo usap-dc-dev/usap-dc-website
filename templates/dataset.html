@@ -2,20 +2,34 @@
 {% set cur = "dataset" %}
 {% block body %}
 
-<div id="pubs_list" hidden>
-{% if dataset_metadata['publications']|length > 0 %}
-  {{dataset_metadata['publications']|tojson}}
-{% endif %}
-</div>
+<div id="authors_list" hidden>{% if dataset_metadata['authors']|length > 0 %}{{dataset_metadata['authors']|tojson}}{% endif %}</div>
+<div id="pubs_list" hidden>{% if dataset_metadata['publications']|length > 0 %}{{dataset_metadata['publications']|tojson}}{% endif %}</div>
+<div id="persons" hidden>{{persons|tojson}}</div>
 
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 <script type="text/javascript">
 
-  var publications = JSON.parse($("#pubs_list").text());
+  var authors = [];
+  if ($("#authors_list").text().length > 0) {
+    authors = JSON.parse($("#authors_list").text());
+  }
+
+  var publications = [];
+  if ($("#pubs_list").text().length > 0) {
+    publications = JSON.parse($("#pubs_list").text());
+  }
+
+  var persons_rows = JSON.parse($("#persons").text());
+  var persons = [];
+  for (row of persons_rows) {
+    persons.push(row.id);
+  }
 
   $(document).ready(function() {
-    var wrapper = $('#more_publications');
-    var counter = 1;
+    var author_wrapper = $('#more_authors');
+    var author_counter = 1;
+    var pub_wrapper = $('#more_publications');
+    var pub_counter = 1;
     var check = $('input[name="entire_region"]');
     var w = $('input[name="geo_w"]');
     var e = $('input[name="geo_e"]');
@@ -33,18 +47,26 @@
         s.val('');
         n.val('');
     }
-});
 
-    $('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('',''); });
-    $('#datepicker').datepicker({
-        format: "yyyy-mm-dd",
-        startView: 2
+    $('#author_name_last').blur(function() {
+      console.log("author_name_last changed")
+      var name = $('#author_name_last').attr('value').split(',');
+      $('#author_name_last').attr('value', name[0]);
+      $('#author_name_first').attr('value', name[1]);
     });
 
-    $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
+  });
 
-    $('#award-dropdown').on('show.bs.dropdown', function() {
-      $(this).find('.help-block').hide();
+  $('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('',''); });
+  $('#datepicker').datepicker({
+      format: "yyyy-mm-dd",
+      startView: 2
+  });
+
+  $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
+
+  $('#award-dropdown').on('show.bs.dropdown', function() {
+    $(this).find('.help-block').hide();
   });
 
     $('#award-dropdown').on('hide.bs.dropdown', function() {
@@ -52,37 +74,71 @@
   });
 
 
-    // if reloading, populate any added publication fields
-    $('#publication').html(publications[0]);
-    for (var i=1; i < publications.length; i++ ) {
-        var publication = publications[i];
-        addRow(publication);
-    }
+  // if reloading, populate any added author fields
+  for (var i=1; i < authors.length; i++ ) {
+      var author = authors[i];
+      addAuthorRow(author);
+  }
 
-    $('#addRow').click(function (e) {
-        //code to add another file
-        e.preventDefault();
-        addRow();
-    });
+  $('#addAuthorRow').click(function (e) {
+      //code to add another author
+      e.preventDefault();
+      addAuthorRow();
+  });
 
-    $(wrapper).on("click","#removeRow", function(e){ //user click on remove field
-        e.preventDefault(); 
-        $(this).parent('div').remove();
-        counter--;
-    });
+  $(author_wrapper).on("click","#removeAuthorRow", function(e){ //user click on remove field
+      e.preventDefault(); 
+      $(this).parent('div').remove();
+      author_counter--;
+  });
 
-    function addRow(publication) {
-        var extraPub = $('.publicationTemplate').clone();
-        //increment the element ids
-        $(extraPub).find('#publication').attr('id', 'publication'+counter).attr('name', 'publication'+counter).html("");
-        $(extraPub).find('#removeRow').show();
-        $(extraPub).find('#extraLine').show();
-        if (publication !== null) {
-            $(extraPub).find('#publication'+counter).html(publication);
-        }
-        $(wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
-        counter++;
-    }
+  function addAuthorRow(author) {
+      var extraAuthor = $('.authorTemplate').clone();
+      //increment the element ids
+      $(extraAuthor).find('#author_name_last').attr({'id': 'author_name_last'+author_counter, 'name': 'author_name_last'+author_counter, 'value': ''});
+      $(extraAuthor).find('#author_name_first').attr({'id': 'author_name_first'+author_counter, 'name': 'author_name_first'+author_counter, 'value': ''});
+      $(extraAuthor).find('#removeAuthorRow').show();
+      $(extraAuthor).find('#extraAuthorLine').show();
+      if (typeof author != 'undefined') {
+       $(extraAuthor).find('#author_name_last'+author_counter).attr('value', author.last_name);
+       $(extraAuthor).find('#author_name_first'+author_counter).attr('value', author.first_name);
+      }
+      $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
+      autocomplete(document.getElementById("author_name_last"+author_counter), document.getElementById("author_name_first"+author_counter), persons);
+      author_counter++;
+  }
+
+  // if reloading, populate any added publication fields
+  $('#publication').html(publications[0]);
+  for (i=1; i < publications.length; i++ ) {
+      var publication = publications[i];
+      addPubRow(publication);
+  }
+
+  $('#addPubRow').click(function (e) {
+      //code to add another file
+      e.preventDefault();
+      addPubRow();
+  });
+
+  $(pub_wrapper).on("click","#removePubRow", function(e){ //user click on remove field
+      e.preventDefault(); 
+      $(this).parent('div').remove();
+      pub_counter--;
+  });
+
+  function addPubRow(publication) {
+      var extraPub = $('.publicationTemplate').clone();
+      //increment the element ids
+      $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html("");
+      $(extraPub).find('#removePubRow').show();
+      $(extraPub).find('#extraPubLine').show();
+      if (publication !== null) {
+          $(extraPub).find('#publication'+pub_counter).html(publication);
+      }
+      $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
+      pub_counter++;
+  }
 
 });
 
@@ -108,7 +164,8 @@
     <h4>{{error}}</h4>
   </div>
   {% endif %}
-   <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+
+   <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
     <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
     <div style="float:right; margin-top: 1.44em;">
       <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
@@ -130,9 +187,21 @@
         <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
         <span class="help-block">As the title should appear in a data citation [<a href="{{url_for('title_examples')}}" target="_new">guidelines and examples</a>]</span>
       </div>
-      <div class="form-group required">
+
+      <div class="form-group required ">
         <label for="author">Dataset Author</label>
-        <input class="form-control" type="text" name="author" value="{{dataset_metadata.get('author','')}}"/>
+        <div class="authorTemplate">
+          <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+          <div class="input-group" style="float:left; width:95%">
+            <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="{{dataset_metadata.get('author_name_last','')}}" placeholder="Last Name" /> 
+            <span  class="input-group-addon">,</span>
+            <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="{{dataset_metadata.get('author_name_first','')}}" placeholder="First Name" />
+          </div>
+          <a href="#authorsForm" id="removeAuthorRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+          <div style="clear:both"></div>
+        </div>
+        <div id="more_authors"></div>
+        <a href="#authorsForm" id="addAuthorRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_author">Add another author</span></a>
       </div>
       
       <div class="form-group">
@@ -164,13 +233,13 @@
         <label for="publication">Relevant Publications</label>
         <span><i>Include DOI where known</i></span>
         <div class="publicationTemplate">
-                <div id='extraLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
-                <textarea id="publication" name="publication" class="form-control" style="float:left; width:95%"></textarea>
-                <a href="#publicationsForm" id="removeRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
-                <div style="clear:both"></div>
+          <div id='extraPubLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+          <textarea id="publication" name="publication" class="form-control" style="float:left; width:95%"></textarea>
+          <a href="#publicationsForm" id="removePubRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+          <div style="clear:both"></div>
         </div>
         <div id="more_publications"></div>
-        <a href="#publicationsForm" id="addRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another">Add another publication</span></a>
+        <a href="#publicationsForm" id="addPubRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_pub">Add another publication</span></a>
       </div>
       
       <div class="form-group">
@@ -199,7 +268,7 @@
       </div>
       
       <div>
-        <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+        <b>Spatial Bounds of Data</b> <br/>Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
         <table style="border:0">
           <tbody>
         <tr>
@@ -246,4 +315,117 @@
   </div>
   
 </div>
+
+
+<script>
+function autocomplete(inp, inp2, arr) {
+  /*the autocomplete function takes three arguments,
+  two text field elements and an array of possible autocompleted values:*/
+  var currentFocus;
+  /*execute a function when someone writes in the text field:*/
+  [inp, inp2].forEach(function(elem) {
+    elem.addEventListener("input", function(e) {
+        var a, b, i, val = this.value;
+        /*close any already open lists of autocompleted values*/
+        closeAllLists();
+        if (!val) { return false;}
+        currentFocus = -1;
+        /*create a DIV element that will contain the items (values):*/
+        a = document.createElement("DIV");
+        a.setAttribute("id", this.id + "autocomplete-list");
+        a.setAttribute("class", "autocomplete-items");
+        /*append the DIV element as a child of the autocomplete container:*/
+        this.parentNode.appendChild(a);
+        /*for each item in the array...*/
+        for (i = 0; i < arr.length; i++) {
+          /*check if the item starts with the same letters as the text field value:*/
+          if (arr[i].toUpperCase().indexOf(val.toUpperCase()) != -1) {
+            /*create a DIV element for each matching element:*/
+            b = document.createElement("DIV");
+            /*make the matching letters bold:*/
+            b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+            b.innerHTML += arr[i].substr(val.length);
+            /*insert a input field that will hold the current array item's value:*/
+            b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+            /*execute a function when someone clicks on the item value (DIV element):*/
+            b.addEventListener("click", function(e) {
+                /*insert the value for the autocomplete text field:*/
+                //split the name at the comma
+                var selected = this.getElementsByTagName("input")[0].value.split(',');
+                inp.value = selected[0].trim();
+                inp2.value = selected[1].trim();
+
+                /*close the list of autocompleted values,
+                (or any other open lists of autocompleted values:*/
+                closeAllLists();
+            });
+            a.appendChild(b);
+          }
+        }
+    });
+
+    /*execute a function presses a key on the keyboard:*/
+    elem.addEventListener("keydown", function(e) {
+        var x = document.getElementById(this.id + "autocomplete-list");
+        if (x) x = x.getElementsByTagName("div");
+        if (e.keyCode == 40) {
+          /*If the arrow DOWN key is pressed,
+          increase the currentFocus variable:*/
+          currentFocus++;
+          /*and and make the current item more visible:*/
+          addActive(x);
+        } else if (e.keyCode == 38) { //up
+          /*If the arrow UP key is pressed,
+          decrease the currentFocus variable:*/
+          currentFocus--;
+          /*and and make the current item more visible:*/
+          addActive(x);
+        } else if (e.keyCode == 13) {
+          /*If the ENTER key is pressed, prevent the form from being submitted,*/
+          e.preventDefault();
+          if (currentFocus > -1) {
+            /*and simulate a click on the "active" item:*/
+            if (x) x[currentFocus].click();
+          }
+        }
+    });
+  });
+
+  function addActive(x) {
+    /*a function to classify an item as "active":*/
+    if (!x) return false;
+    /*start by removing the "active" class on all items:*/
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (x.length - 1);
+    /*add class "autocomplete-active":*/
+    x[currentFocus].classList.add("autocomplete-active");
+  }
+  function removeActive(x) {
+    /*a function to remove the "active" class from all autocomplete items:*/
+    for (var i = 0; i < x.length; i++) {
+      x[i].classList.remove("autocomplete-active");
+    }
+  }
+  function closeAllLists(elmnt) {
+    /*close all autocomplete lists in the document,
+    except the one passed as an argument:*/
+    var x = document.getElementsByClassName("autocomplete-items");
+    for (var i = 0; i < x.length; i++) {
+      if (elmnt != x[i] && elmnt != inp) {
+        x[i].parentNode.removeChild(x[i]);
+      }
+    }
+  }
+  /*execute a function when someone clicks in the document:*/
+  document.addEventListener("click", function (e) {
+      closeAllLists(e.target);
+  });
+}
+
+
+/*initiate the autocomplete function on the "author" elements, and pass along the persons array as possible autocomplete values:*/
+autocomplete(document.getElementById("author_name_last"), document.getElementById("author_name_first"), persons);
+
+</script>
 {% endblock body %}

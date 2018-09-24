@@ -424,6 +424,8 @@ def dataset():
             session['dataset_metadata'] = dict()
         session['dataset_metadata'].update(request.form.to_dict())
 
+        print(request.form.to_dict())
+
         publications_keys = [s for s in request.form.keys() if "publication" in s]
         remove_pub_keys = []
         if len(publications_keys) > 0:
@@ -439,11 +441,35 @@ def dataset():
             print(publications_keys)
             session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
 
+        author_keys = [s for s in request.form.keys() if "author_name_last" in s]
+        remove_author_keys = []
+        if len(author_keys) > 0:
+            session['dataset_metadata']['authors'] = []
+            author_keys.sort()
+            print(author_keys)
+            #remove any empty values
+            for key in author_keys:
+                if session['dataset_metadata'][key] == "":
+                    del session['dataset_metadata'][key]
+                    remove_author_keys.append(key)
+            for k in remove_author_keys: 
+                author_keys.remove(k)
+            print(author_keys)
+            for key in author_keys:
+                last_name = request.form.get(key)
+                first_name = request.form.get(key.replace('last', 'first'))
+                author = {'first_name': first_name, 'last_name': last_name}
+                session['dataset_metadata']['authors'].append(author) 
+            
+            print(session['dataset_metadata']['authors'])
+
         session['dataset_metadata']['agree'] = 'agree' in request.form
         flash('test message')
 
         if request.form.get('action') == "Previous Page":
-            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
+                                   dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons())
 
         elif request.form.get('action') == "save":
             # save to file
@@ -460,7 +486,9 @@ def dataset():
                     success = "Saved dataset form"
                 except Exception as e:
                     error = "Unable to save dataset."
-            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
+                                   dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons())
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -480,7 +508,9 @@ def dataset():
                     error = "Unable to restore dataset."
             else:
                 error = "Unable to restore dataset."
-            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+            return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
+                                   dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons())
 
         return redirect('/submit/dataset2')
 
@@ -491,7 +521,9 @@ def dataset():
         name = ""
         if user_info.get('name'):
             name = user_info.get('name')
-        return render_template('dataset.html', name=name, email=email, error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects())
+        return render_template('dataset.html', name=name, email=email, error=error, success=success, 
+                               dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
+                               only_inhabited=False), projects=get_projects(), persons=get_persons())
 
 
 @app.route('/submit/help', methods=['GET', 'POST'])
@@ -571,7 +603,8 @@ def check_dataset_submission(msg_data):
 
     validators = [
         Validator(func=default_func('title'), msg='You must include a dataset title for the submission.'),
-        Validator(func=default_func('author'), msg='You must include a dataset author for the submission.'),
+        Validator(func=default_func('author_name_last'), msg='You must include a dataset author (both first and last name) for the submission.'),
+        Validator(func=default_func('author_name_first'), msg='You must include a dataset author (both first and last name) for the submission.'),
         Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
         Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
         Validator(func=default_func('award'), msg='You must select an NSF grant for the submission.'),
@@ -1259,6 +1292,7 @@ def landing_page(dataset_id):
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
+    print(metadata)
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
