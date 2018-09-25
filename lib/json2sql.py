@@ -28,7 +28,7 @@ def connect_to_db():
 def parse_json(data):
 
     # --- checking for required fields, make sure they all have data
-    fields = ["abstract", "author", "award", "title", "timestamp",
+    fields = ["abstract", "authors", "awards", "title", "timestamp",
               "geo_e", "geo_w", "geo_n", "geo_s", "start", "stop",
               "publications", "orcid", "email"]
     # for field in fields:
@@ -48,7 +48,8 @@ def parse_json(data):
         data["name"] = data["author"]
 
     # --- fix award field
-    (data["award"], dummy) = data["award"].split(" ", 1)  # throw away the rest of the award string
+    for i in range(len(data["awards"])):
+        (data["awards"][i], dummy) = data["awards"][i].split(" ", 1)  # throw away the rest of the award string
 
     # --- should add something here to check lat lon fields
 
@@ -206,18 +207,7 @@ def make_sql(data, id):
                       'In Work')
     sql_out += sql_line
 
-    query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % data["award"]
-    cur.execute(query)
-    res = cur.fetchone()
-    if res['count'] == 0:
-        sql_out += '\n--NOTE: DIF may already exist if a previous Dataset has been submitted\n'
-        line = "insert into dif(dif_id) values ('%s');\n" % \
-                               ('USAP-' + data["award"])
-        sql_out += line
 
-    line = "insert into dataset_dif_map(dataset_id,dif_id) values ('%s','%s');\n" % \
-                           (id, 'USAP-' + data["award"])
-    sql_out += line
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
             line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
@@ -228,18 +218,35 @@ def make_sql(data, id):
         line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
                                (id, data["name"])
         sql_out += line
-    
-    sql_out += '\n--NOTE: check the award #\n'
-    line = "insert into dataset_award_map(dataset_id,award_id) values ('%s','%s');\n" % \
-                           (id, data["award"])
-    sql_out += line
-    sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(data["award"])
-    sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Earth Sciences');\n".format(data["award"])
-    sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Glaciology');\n".format(data["award"])
-    sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Organisms and Ecosystems');\n".format(data["award"])
-    sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Integrated System Science');\n".format(data["award"])
-    sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(data["award"])
-    sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(data["award"])
+  
+    sql_out += '\n--NOTE: AWARDS functions:\n'
+    for award in data['awards']:
+        query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % award
+        cur.execute(query)
+        res = cur.fetchone()
+        if res['count'] == 0:
+            sql_out += '\n--NOTE: DIF may already exist if a previous Dataset has been submitted\n'
+            line = "insert into dif(dif_id) values ('%s');\n" % \
+                ('USAP-' + award)
+            sql_out += line
+
+        line = "insert into dataset_dif_map(dataset_id,dif_id) values ('%s','%s');\n" % \
+            (id, 'USAP-' + award)
+        sql_out += line
+
+
+        sql_out += '\n--NOTE: check the award #\n'
+
+        line = "insert into dataset_award_map(dataset_id,award_id) values ('%s','%s');\n" % \
+                           (id, award)
+        sql_out += line
+        sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(award)
+        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Earth Sciences');\n".format(award)
+        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Glaciology');\n".format(award)
+        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Organisms and Ecosystems');\n".format(award)
+        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Integrated System Science');\n".format(award)
+        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(award)
+        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(award)
 
     sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
 

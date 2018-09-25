@@ -430,28 +430,42 @@ def dataset():
         remove_pub_keys = []
         if len(publications_keys) > 0:
             publications_keys.sort()
-            print(publications_keys)
             #remove any empty values
             for key in publications_keys:
                 if session['dataset_metadata'][key] == "":
-                    del session['dataset_metadata'][key]
                     remove_pub_keys.append(key)
+                del session['dataset_metadata'][key]
             for k in remove_pub_keys: 
                 publications_keys.remove(k)
             print(publications_keys)
             session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
+
+        awards_keys = [s for s in request.form.keys() if "award" in s]
+        remove_award_keys = []
+        if len(awards_keys) > 0:
+            awards_keys.sort()
+            print(awards_keys)
+            #remove any empty values
+            for key in awards_keys:
+                if session['dataset_metadata'][key] == "":
+                    remove_award_keys.append(key)
+                del session['dataset_metadata'][key]
+            for k in remove_award_keys: 
+                awards_keys.remove(k)
+            print(awards_keys)
+            session['dataset_metadata']['awards'] = [request.form.get(key) for key in awards_keys]
 
         author_keys = [s for s in request.form.keys() if "author_name_last" in s]
         remove_author_keys = []
         if len(author_keys) > 0:
             session['dataset_metadata']['authors'] = []
             author_keys.sort()
-            print(author_keys)
             #remove any empty values
             for key in author_keys:
                 if session['dataset_metadata'][key] == "":
-                    del session['dataset_metadata'][key]
                     remove_author_keys.append(key)
+                del session['dataset_metadata'][key]
+                del session['dataset_metadata'][key.replace('last', 'first')]
             for k in remove_author_keys: 
                 author_keys.remove(k)
             print(author_keys)
@@ -601,13 +615,26 @@ def check_dataset_submission(msg_data):
     def check_valid_email(data):
         return re.match("[^@]+@[^@]+\.[^@]+", data['email'])
 
+    def check_valid_author(data):
+        if data.get('authors') is None:
+            return False
+        for author in data['authors']:
+            if author.get('last_name') is None or author.get('last_name') == "":
+                return False
+            if author.get('first_name') is None or author.get('first_name') == "": 
+                return False
+        return True
+
+    def check_valid_award(data):
+        return data.get('awards') is not None and data['awards'] != "None" and data['awards'] != ""
+
     validators = [
         Validator(func=default_func('title'), msg='You must include a dataset title for the submission.'),
-        Validator(func=default_func('author_name_last'), msg='You must include a dataset author (both first and last name) for the submission.'),
-        Validator(func=default_func('author_name_first'), msg='You must include a dataset author (both first and last name) for the submission.'),
+        Validator(func=check_valid_author, msg='You must include at least one dataset author (both first and last name) for the submission.' +
+                  '  All authors must have a first and a last name.'),
         Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
         Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
-        Validator(func=default_func('award'), msg='You must select an NSF grant for the submission.'),
+        Validator(func=check_valid_award, msg='You must select at least one NSF grant for the submission.'),
         Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid."),
         Validator(func=default_func('filenames'), msg='You must include files in your submission.'),
         Validator(func=default_func('agree'), msg='You must agree to have your files posted with a DOI.')
@@ -698,7 +725,7 @@ def dataset2():
             msg_data['timestamp'] = timestamp
             check_dataset_submission(msg_data)
 
-            nsfid = 'NSF' + msg_data['award'].split(' ')[0]
+            # nsfid = 'NSF' + msg_data['awards'][0].split(' ')[0]
             upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
             msg_data['upload_directory'] = upload_dir
             if not os.path.exists(upload_dir):
@@ -706,8 +733,7 @@ def dataset2():
 
             for fname, fobj in fnames.items():
                 fobj.save(os.path.join(upload_dir, fname))
-
-            
+          
             # save json file in submitted dir
             submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
             # get next_id
@@ -717,9 +743,7 @@ def dataset2():
             with open(submitted_file, 'w') as file:
                 file.write(json.dumps(msg_data, indent=4, sort_keys=True))
             os.chmod(submitted_file, 0o664)
-
-
-            
+          
             # email RT queue
             # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
             message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
@@ -742,8 +766,7 @@ def dataset2():
             s.ehlo()
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
-            s.quit()
-            
+            s.quit()          
 
             return redirect('/thank_you/dataset')
         elif request.form['action'] == 'Previous Page':

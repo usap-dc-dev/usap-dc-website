@@ -3,6 +3,7 @@
 {% block body %}
 
 <div id="authors_list" hidden>{% if dataset_metadata['authors']|length > 0 %}{{dataset_metadata['authors']|tojson}}{% endif %}</div>
+<div id="awards_list" hidden>{% if dataset_metadata['awards']|length > 0 %}{{dataset_metadata['awards']|tojson}}{% endif %}</div>
 <div id="pubs_list" hidden>{% if dataset_metadata['publications']|length > 0 %}{{dataset_metadata['publications']|tojson}}{% endif %}</div>
 <div id="persons" hidden>{{persons|tojson}}</div>
 
@@ -12,6 +13,11 @@
   var authors = [];
   if ($("#authors_list").text().length > 0) {
     authors = JSON.parse($("#authors_list").text());
+  }
+
+  var awards = [];
+  if ($("#awards_list").text().length > 0) {
+    awards = JSON.parse($("#awards_list").text());
   }
 
   var publications = [];
@@ -28,6 +34,8 @@
   $(document).ready(function() {
     var author_wrapper = $('#more_authors');
     var author_counter = 1;
+    var award_wrapper = $('#more_awards');
+    var award_counter = 1;
     var pub_wrapper = $('#more_publications');
     var pub_counter = 1;
     var check = $('input[name="entire_region"]');
@@ -48,16 +56,11 @@
         n.val('');
     }
 
-    $('#author_name_last').blur(function() {
-      console.log("author_name_last changed")
-      var name = $('#author_name_last').attr('value').split(',');
-      $('#author_name_last').attr('value', name[0]);
-      $('#author_name_first').attr('value', name[1]);
-    });
 
   });
 
-  $('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('',''); });
+  $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+  
   $('#datepicker').datepicker({
       format: "yyyy-mm-dd",
       startView: 2
@@ -65,11 +68,11 @@
 
   $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
 
-  $('#award-dropdown').on('show.bs.dropdown', function() {
+  $('.dropdown').on('show.bs.dropdown', function() {
     $(this).find('.help-block').hide();
   });
 
-    $('#award-dropdown').on('hide.bs.dropdown', function() {
+    $('.dropdown').on('hide.bs.dropdown', function() {
       $(this).find('.help-block').show();
   });
 
@@ -107,6 +110,45 @@
       autocomplete(document.getElementById("author_name_last"+author_counter), document.getElementById("author_name_first"+author_counter), persons);
       author_counter++;
   }
+
+
+  // if reloading, populate any added award fields
+  $('#award').attr('value', awards[0]);
+  for (i=1; i < awards.length; i++ ) {
+      var award = awards[i];
+      addAwardRow(award);
+  }
+
+  $('#addAwardRow').click(function (e) {
+      //code to add another file
+      e.preventDefault();
+      addAwardRow();
+  });
+
+  $(award_wrapper).on("click","#removeAwardRow", function(e){ //user click on remove field
+      e.preventDefault(); 
+      $(this).parent('div').parent('div').remove();
+      award_counter--;
+  });
+
+  function addAwardRow(award) {
+      var extraAward = $('.awardTemplate').clone();
+      //increment the element ids
+      $(extraAward).find('#award-dropdown').attr({'id': 'award-dropdown'+award_counter});
+      $(extraAward).find('#award').attr({'id': 'award'+award_counter, 'name': 'award'+award_counter, 'value': ''});
+      $(extraAward).find('#award_dropdown').attr({'id': 'award_dropdown'+award_counter}).html('None <span class="caret"></span>');
+      $(extraAward).find('#removeAwardRow').show();
+      $(extraAward).find('#extraAwardLine').show();
+      if (award !== null) {
+          $(extraAward).find('#award'+award_counter).attr('value', award);
+      }
+      $(award_wrapper).append($('<div/>', {'class' : 'extraAward', html: extraAward.html()}));
+      award_counter++;
+
+      $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+      $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+  }
+
 
   // if reloading, populate any added publication fields
   $('#publication').html(publications[0]);
@@ -193,9 +235,10 @@
         <div class="authorTemplate">
           <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
           <div class="input-group" style="float:left; width:95%">
-            <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="{{dataset_metadata.get('author_name_last','')}}" placeholder="Last Name" /> 
+            {% set author = dataset_metadata.get('authors',"") | first%}
+            <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="{{author.last_name}}" placeholder="Last Name" /> 
             <span  class="input-group-addon">,</span>
-            <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="{{dataset_metadata.get('author_name_first','')}}" placeholder="First Name" />
+            <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="{{author.first_name}}" placeholder="First Name" />
           </div>
           <a href="#authorsForm" id="removeAuthorRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
           <div style="clear:both"></div>
@@ -213,20 +256,27 @@
       <!-- Award -->
       <div class="form-group required">
         <label for="award">Award</label>
-        <div class="dropdown" id="award-dropdown">
-          <input type="hidden" name="award" value="{{dataset_metadata.get('award')}}"/>
-          <button type="button" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control">
-            {{dataset_metadata.get('award','All')}}
-            <span class="caret"></span>
-          </button>
 
-          <ul class="dropdown-menu">
-            {% for grant in nsf_grants %}
-              {% set s = grant['award'] + " " + grant['name'] %}
-              <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
-            {% endfor %}
-          </ul>
+        <div class="awardTemplate">
+          <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+          <div class="dropdown" id="award-dropdown">
+            <input type="hidden" id="award" name="award" value="{{dataset_metadata.get('award')}}"/>
+            <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control" style="float:left; width:95%">
+              {{dataset_metadata.get('award','All')}}
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              {% for grant in nsf_grants %}
+                {% set s = grant['award'] + " " + grant['name'] %}
+                <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
+              {% endfor %}
+            </ul>
+            <a href="#awardForm" id="removeAwardRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+            <div style="clear:both"></div>
+          </div>
         </div>
+        <div id="more_awards"></div>
+        <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add another award</span></a>
       </div>
       
       <div class="form-group" name="publicationsForm">
