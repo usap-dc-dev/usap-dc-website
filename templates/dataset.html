@@ -78,6 +78,10 @@
 
 
   // if reloading, populate any added author fields
+  if (authors.length > 0) {
+    $('#author_name_last').attr('value', authors[0].last_name);
+    $('#author_name_first').attr('value', authors[0].first_name);
+  }
   for (var i=1; i < authors.length; i++ ) {
       var author = authors[i];
       addAuthorRow(author);
@@ -151,7 +155,10 @@
 
 
   // if reloading, populate any added publication fields
-  $('#publication').html(publications[0]);
+  if (publications.length > 0) {
+    $('#publication').html(publications[0].text);
+    $('#pub_doi').attr('value', publications[0].doi);
+  }
   for (i=1; i < publications.length; i++ ) {
       var publication = publications[i];
       addPubRow(publication);
@@ -172,11 +179,13 @@
   function addPubRow(publication) {
       var extraPub = $('.publicationTemplate').clone();
       //increment the element ids
-      $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html("");
+      $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html('');
+      $(extraPub).find('#pub_doi').attr({'id': 'pub_doi'+pub_counter, 'name': 'pub_doi'+pub_counter, 'value': ''});
       $(extraPub).find('#removePubRow').show();
       $(extraPub).find('#extraPubLine').show();
-      if (publication !== null) {
-          $(extraPub).find('#publication'+pub_counter).html(publication);
+      if (typeof publication != 'undefined') {
+          $(extraPub).find('#publication'+pub_counter).html(publication.text);
+          $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
       }
       $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
       pub_counter++;
@@ -234,13 +243,12 @@
         <label for="author">Dataset Author</label>
         <div class="authorTemplate">
           <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
-          <div class="input-group" style="float:left; width:95%">
-            {% set author = dataset_metadata.get('authors',"") | first%}
-            <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="{{author.last_name}}" placeholder="Last Name" /> 
+          <div class="input-group removable">
+            <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="" placeholder="Last Name" /> 
             <span  class="input-group-addon">,</span>
-            <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="{{author.first_name}}" placeholder="First Name" />
+            <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="" placeholder="First Name" />
           </div>
-          <a href="#authorsForm" id="removeAuthorRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+          <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
           <div style="clear:both"></div>
         </div>
         <div id="more_authors"></div>
@@ -253,7 +261,7 @@
         <span class="help-block">Describe this specific dataset, not the overall project [<a href="{{url_for('abstract_examples')}}" target="_new">guidelines and examples</a>]</span>
       </div>
       
-      <!-- Award -->
+      <!-- Awards -->
       <div class="form-group required">
         <label for="award">Award</label>
 
@@ -261,7 +269,7 @@
           <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
           <div class="dropdown" id="award-dropdown">
             <input type="hidden" id="award" name="award" value="{{dataset_metadata.get('award')}}"/>
-            <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control" style="float:left; width:95%">
+            <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control removable">
               {{dataset_metadata.get('award','All')}}
               <span class="caret"></span>
             </button>
@@ -271,7 +279,7 @@
                 <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
               {% endfor %}
             </ul>
-            <a href="#awardForm" id="removeAwardRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+            <a href="#awardForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
             <div style="clear:both"></div>
           </div>
         </div>
@@ -279,18 +287,29 @@
         <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add another award</span></a>
       </div>
       
+      
+
+
+      <!-- Publications -->
       <div class="form-group" name="publicationsForm">
         <label for="publication">Relevant Publications</label>
         <span><i>Include DOI where known</i></span>
         <div class="publicationTemplate">
-          <div id='extraPubLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
-          <textarea id="publication" name="publication" class="form-control" style="float:left; width:95%"></textarea>
-          <a href="#publicationsForm" id="removePubRow" style="display:none; float:right; width:5%"><i class="fa fa-remove"></i></a>
+          <div id='extraPubLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+          <textarea id="publication" name="publication" class="form-control removable" ></textarea>
+          <a href="#publicationsForm" id="removePubRow" class="remover"><i class="fa fa-remove"></i></a>
+          <input class="input-sm form-control removable" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
+          
           <div style="clear:both"></div>
         </div>
         <div id="more_publications"></div>
         <a href="#publicationsForm" id="addPubRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_pub">Add another publication</span></a>
       </div>
+
+
+
+
+
       
       <div class="form-group">
         <label for="related_fields">Related Field Event IDs</label>

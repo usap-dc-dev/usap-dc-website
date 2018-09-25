@@ -58,3 +58,14 @@ input, textarea {
   background-color: DodgerBlue !important; 
   color: #ffffff; 
 }
+
+.removable {
+  float:left; 
+  width:95%
+}
+
+.remover {
+  display:none; 
+  float:right; 
+  width:5%
+}

@@ -286,7 +286,12 @@ def make_sql(data, id):
     sql_out += "\n--NOTE: reference format is free text; insert CRs for multiple references\n"
 
     for publication in data["publications"]:
-        line = "insert into dataset_reference_map(dataset_id,reference) values ('%s','%s');\n" % (id, publication)
+        if publication.get('doi') and publication['doi'] != "":
+            line = "insert into dataset_reference_map(dataset_id,reference,doi) values ('%s','%s','%s');\n" % \
+                (id, publication.get('text'), publication.get('doi'))
+        else:
+            line = "insert into dataset_reference_map(dataset_id,reference) values ('%s','%s');\n" % \
+                (id, publication.get('text'))
         sql_out += line
 
     sql_out += "--NOTE: add keywords\n"
@@ -300,7 +305,28 @@ def make_sql(data, id):
     sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
     sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
     sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','{}');\n".format(id, data["user_keywords"])
+
+    # user keywords
+    sql_out += "--NOTE: add user keywords\n"
+    for keyword in data["user_keywords"].split(','):
+        keyword = keyword.strip()
+        # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
+        query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
+        cur.execute(query)
+        res = cur.fetchone()
+        if res is not None:
+            sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(id, res['keyword_id'], keyword)
+        else:
+            #if not found, add to keyword_usap
+            # first work out the last keyword_id used
+            query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+            cur.execute(query)
+            res = cur.fetchone()
+            last_id = res['keyword_id'].replace('uk-', '')
+            next_id = int(last_id) + 1
+            sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
+                (next_id, keyword)
+            sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(id, next_id)
 
     sql_out += '\nCOMMIT;\n'
 

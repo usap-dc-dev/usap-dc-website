@@ -429,22 +429,26 @@ def dataset():
         publications_keys = [s for s in request.form.keys() if "publication" in s]
         remove_pub_keys = []
         if len(publications_keys) > 0:
+            session['dataset_metadata']['publications'] = []
             publications_keys.sort()
             #remove any empty values
             for key in publications_keys:
                 if session['dataset_metadata'][key] == "":
                     remove_pub_keys.append(key)
                 del session['dataset_metadata'][key]
+                del session['dataset_metadata'][key.replace('publication', 'pub_doi')]
             for k in remove_pub_keys: 
                 publications_keys.remove(k)
-            print(publications_keys)
-            session['dataset_metadata']['publications'] = [request.form.get(key) for key in publications_keys]
+            for key in publications_keys:
+                pub_text = request.form.get(key)
+                pub_doi = request.form.get(key.replace('publication', 'pub_doi'))
+                publication = {'text': pub_text, 'doi': pub_doi}
+                session['dataset_metadata']['publications'].append(publication)
 
         awards_keys = [s for s in request.form.keys() if "award" in s]
         remove_award_keys = []
         if len(awards_keys) > 0:
             awards_keys.sort()
-            print(awards_keys)
             #remove any empty values
             for key in awards_keys:
                 if session['dataset_metadata'][key] == "":
@@ -452,7 +456,6 @@ def dataset():
                 del session['dataset_metadata'][key]
             for k in remove_award_keys: 
                 awards_keys.remove(k)
-            print(awards_keys)
             session['dataset_metadata']['awards'] = [request.form.get(key) for key in awards_keys]
 
         author_keys = [s for s in request.form.keys() if "author_name_last" in s]
