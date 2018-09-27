@@ -236,19 +236,28 @@ def make_sql(data, id):
 
 
         sql_out += '\n--NOTE: check the award #\n'
-
         line = "insert into dataset_award_map(dataset_id,award_id) values ('%s','%s');\n" % \
                            (id, award)
         sql_out += line
-        sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(award)
-        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Earth Sciences');\n".format(award)
-        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Glaciology');\n".format(award)
-        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Organisms and Ecosystems');\n".format(award)
-        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Integrated System Science');\n".format(award)
-        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(award)
-        sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(award)
 
-    sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
+        # look up award to see if already mapped to a program
+        query = "SELECT program_id FROM award_program_map WHERE award_id = '%s';" % award
+        cur.execute(query)
+        res = cur.fetchone()
+  
+        if res is None:
+            sql_out += "\n--NOTE: Need to map award to a program."
+            sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(award)
+            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Earth Sciences');\n".format(award)
+            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Glaciology');\n".format(award)
+            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Organisms and Ecosystems');\n".format(award)
+            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Integrated System Science');\n".format(award)
+            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(award)
+            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(award)
+
+            sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
+        else:
+            sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','{}');\n\n".format(id, res['program_id'])
 
     sql_out += "--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
     sql_out += "update dataset set review_person='Nitsche' where id='{}';\n".format(id)
@@ -301,32 +310,29 @@ def make_sql(data, id):
     sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0067'); -- Snow Ice\n".format(id)
     sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0031'); -- Glaciology\n".format(id)
     sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0032'); -- Ice Core Records\n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- \n".format(id)
 
     # user keywords
-    sql_out += "--NOTE: add user keywords\n"
-    for keyword in data["user_keywords"].split(','):
-        keyword = keyword.strip()
-        # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-        query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-        cur.execute(query)
-        res = cur.fetchone()
-        if res is not None:
-            sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(id, res['keyword_id'], keyword)
-        else:
-            #if not found, add to keyword_usap
-            # first work out the last keyword_id used
-            query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+    if data["user_keywords"] != "":
+        sql_out += "--NOTE: add user keywords\n"
+        for keyword in data["user_keywords"].split(','):
+            keyword = keyword.strip()
+            # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
+            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
             cur.execute(query)
             res = cur.fetchone()
-            last_id = res['keyword_id'].replace('uk-', '')
-            next_id = int(last_id) + 1
-            sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
-                (next_id, keyword)
-            sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(id, next_id)
+            if res is not None:
+                sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(id, res['keyword_id'], keyword)
+            else:
+                #if not found, add to keyword_usap
+                # first work out the last keyword_id used
+                query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                cur.execute(query)
+                res = cur.fetchone()
+                last_id = res['keyword_id'].replace('uk-', '')
+                next_id = int(last_id) + 1
+                sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
+                    (next_id, keyword)
+                sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(id, next_id)
 
     sql_out += '\nCOMMIT;\n'
 
