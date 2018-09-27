@@ -33,7 +33,7 @@ import urllib
 import lib.json2sql as json2sql
 import shutil
 from lib.curatorFunctions import isCurator, isRegisteredWithEZID, submitToEZID, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
-    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists
+    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported
 
 app = Flask(__name__)
 
@@ -1435,6 +1435,27 @@ def curator():
             template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
             template_dict['tab'] = "json"
+
+            # for each keyword_type, get all keywords from database and 
+            (conn, cur) = connect_to_db()
+            query = "SELECT REPLACE(keyword_type_id, '-', '_') AS id, * FROM keyword_type;"
+            cur.execute(query)
+            keyword_types = cur.fetchall()
+            for kw_type in keyword_types:
+                query = "SELECT keyword_id, keyword_label, keyword_description FROM keyword_ieda " + \
+                    "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id']) + \
+                    "UNION " + \
+                    "SELECT keyword_id, keyword_label, keyword_description FROM keyword_usap " + \
+                    "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id'])
+                cur.execute(query)
+                keywords = cur.fetchall()
+                kw_type['keywords'] = sorted(keywords, key=lambda k: k['keyword_label'].upper())
+
+            template_dict['keywords'] = sorted(keyword_types, key=lambda k: k['keyword_type_label'].upper())
+
+            # check whether dataset as already been imported to database
+            template_dict['db_imported'] = isDatabaseImported(uid)
+
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
                 # read in json and convert to sql
@@ -1466,6 +1487,7 @@ def curator():
 
                         template_dict['message'].append("Successfully imported to database")
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
+                        template_dict['db_imported'] = True
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -1510,6 +1532,7 @@ def curator():
 
                         template_dict['message'].append("Successfully imported to database")
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
+                        template_dict['db_imported'] = True
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -1580,6 +1603,21 @@ def curator():
                         template_dict['message'].append("Successfully updated Read Me file")
                     except:
                         template_dict['error'] = "Error updating Read Me file"
+
+
+                # assign keywords in database
+                elif request.form.get('submit') == "assign_keywords":
+                    template_dict['tab'] = "keywords"
+                    assigned_keywords = request.form.getlist('assigned_keyword')
+                    print(assigned_keywords)
+                    (msg, status) = addKeywordsToDatabase(uid, assigned_keywords)
+                    print (status)
+                    print (msg)
+                    if status == 0:
+                        template_dict['error'] = msg
+                    else:
+                        template_dict['message'].append(msg)
+
 
                 # Standalone EZID DOI submission
                 elif request.form.get('submit') == "submit_to_ezid":

@@ -209,3 +209,54 @@ def isCurator():
     curator_file = open(CURATORS_LIST, 'r')
     curators = curator_file.read().split('\n')
     return userid in curators
+
+
+def addKeywordsToDatabase(uid, keywords):
+    (conn, cur) = connect_to_db()
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        # query the database to get the XML for the submission ID
+        try:
+            for kw in keywords:
+                # check for new keywords to be added. These will have an id that starts with 'nk'
+                print(kw)
+                if kw[0:2] == 'nk':
+                    # kw will contiain all the information needed to create the keyword entry
+                    # in the keyword_usap table, using ::: as a separator
+                    (kw_id, label, description, type_id, source) = kw.split(':::')
+                    # first work out the last keyword_id used
+                    query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    last_id = res['keyword_id'].replace('uk-', '')
+                    next_id = int(last_id) + 1
+                    # now insert new record into db
+                    sql_cmd = "INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_description, keyword_type_id, source) VALUES ('uk-%s', '%s', '%s', '%s', '%s');" % \
+                        (next_id, label, description, type_id, source)
+                    print(sql_cmd)
+                    cur.execute(sql_cmd)
+                    kw = 'uk-' + str(next_id)
+
+                # update dataset_keyword_map 
+                sql_cmd = "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('%s','%s');" % (uid, kw)
+                print(sql_cmd)
+                cur.execute(sql_cmd)
+            cur.execute('COMMIT;')
+            out_text = "Keywords successfully assigned in database"    
+        except:
+            out_text = "Error running database query. \n%s" % sys.exc_info()[1][0]
+            print(out_text)
+            status = 0
+
+    return (out_text, status)
+
+
+def isDatabaseImported(uid):
+    (conn, cur) = connect_to_db()
+    query = "SELECT COUNT(*) from dataset WHERE id = '%s'" % uid
+    cur.execute(query)
+    res = cur.fetchone()
+    return res['count'] > 0

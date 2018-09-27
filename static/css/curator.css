@@ -40,4 +40,93 @@
     border-top: none;
 }
 
+.ck-button {
+    margin:4px;
+    background-color:white;
+    border-radius:25px;
+    border:1px solid #757575;
+    overflow:auto;
+    float:left;
+}
+
+.ck-button label {
+    float:left;
+    margin: 0;
+}
+
+.ck-button label span {
+    text-align:center;
+    padding: 3px 7px 2px 7px;
+    display:block;
+}
+
+.ck-button label input {
+    position:absolute;
+    top:-20px;
+}
+
+.ck-button input:checked + span {
+    background-color: #92B9C5;
+    color:#fff;
+}
+
+.assigned_kw {
+    display: inline-block;
+    margin:4px;
+    background-color:white;
+    border-radius:25px;
+    border:1px solid #757575;  
+    text-align:left;
+    padding: 3px 7px 2px 7px;
+    width:auto;
+}
+
+.bordered-div {
+    margin: 5px;
+    padding: 5px;
+    border:2px solid #000;  
+}
+
+.kw-type-btn {
+    margin: 1px;
+    width: 100%;
+    background-color: #024a61;
+    text-align: left;
+    color: white;
+}
+
+
+#add_keyword_div {
+  background: #fff;
+  border: 2px solid #000;
+  position: absolute;
+  font-family: arial;
+  height: auto;
+  padding: 0.5em;
+  width: 30em;
+  z-index: 1000;
+}
+
+.window-header {
+    padding: 10px;
+    cursor: move;
+    z-index: 61;
+    background-color: #92b9c5;
+    color: #000;
+}
+
+.add_keyword_body {
+    margin: 5px;
+    padding: 5px 5px 30px 5px;
+}
+
+.close-add-keyword-btn{
+    position: absolute;
+    right: 10px;
+    margin: 10px;
+}
+
+textarea {
+    resize: vertical;
+}
 html.wait, html.wait * { cursor: wait !important; }

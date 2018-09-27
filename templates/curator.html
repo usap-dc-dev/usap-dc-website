@@ -56,6 +56,7 @@
         <button class="tablinks" onclick="openTab(event, 'jsonTab')" {% if tab == 'json' %} id="defaultOpen" {% endif %}>JSON</button>
         <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
         <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
+        <button class="tablinks" onclick="openTab(event, 'keywordsTab')"  {% if tab == 'keywords' %} id="defaultOpen" {% endif %}>Assign Keywords</button>
         <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
         <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
       </div>
@@ -97,6 +98,55 @@
            </td>
         </tr>
         </table>
+      </div>
+
+      <div id="keywordsTab", class="tabcontent">
+        {% if db_imported %}
+          <div id="add_keyword_div" hidden>
+            <div id="add_keyword_header" class="window-header">
+              <span id="add_keyword_title"></span>
+            </div>
+            <div class="add_keyword_body">
+                Label:<input id="new_keyword_label" class="form-control" type="text" name="label"/>
+                Description:<textarea id="new_keyword_description" rows="2" class="form-control" type="text" name="description"></textarea>
+                Type ID:<input id="new_keyword_type_id" class="form-control" type="text" value=""/>
+                Source:<input id="new_keyword_source" class="form-control" type="text" value="Curator Keyword"/>
+                <button type="button" class='close-add-keyword-btn close_btn'>Add</button>
+            </div>
+            
+          </div>
+
+          <h4>Assign keywords for {{uid}}</h4>
+          <div class="bordered-div">
+            <div id="assigned">
+              <h5>Selected keywords:</h5>
+            </div>
+            <button type="submit" name="submit" value="assign_keywords" onclick="waitCursor()">Add to Database</button>
+          </div>
+          {% for kw_type in keywords %}
+            <button type="button" id="btn_{{kw_type.id|safe}}" class="btn kw-type-btn">
+              <span style="color:white" data-toggle="popover" data-placement="right" data-content="<b>Description:</b> {{kw_type.keyword_type_description}} <br/><b>Source:</b> {{kw_type.keyword_type_source}}">{{kw_type.keyword_type_label}}</span>
+            </button>
+            <br/>
+            <div id="{{kw_type.id|safe}}" class="w3-container w3-hide">
+              <div id="kw_button_wrapper_{{kw_type.keyword_type_id|safe}}">
+                {% for kw in kw_type.keywords %}      
+                  <div id="kw_button_div" class="ck-button" data-toggle="popover" data-placement="top" data-content="<b>Description:</b> {{kw.keyword_description}}">
+                    <label>
+                      <input type="checkbox" name="assigned_keyword" id="{{kw.keyword_id|safe}}" value="{{kw.keyword_id|safe}}" label="{{kw.keyword_label|safe}}" class="kw-btn">
+                        <span>{{kw.keyword_label}}</span>
+                      </input>
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+              <div style="clear:both"></div>
+              <button type="button" class="add-keyword-btn" id="add_{{kw_type.keyword_type_id}}_btn" name="{{kw_type.keyword_type_label}}"><b>Add keyword</b></button>
+            </div>
+          {% endfor %}
+        {% else %}
+          <h4>You will be able to assign keywords after Database import</h4>
+        {% endif %}
       </div>
 
       <div id="dcxmlTab", class="tabcontent">
@@ -159,6 +209,11 @@
 
 <script>
 
+  $(document).ready(function(){
+      $('[data-toggle="popover"]').popover({html: true, container: 'body', trigger:"hover"});
+      new_kw_counter = 1;
+  });
+
   function waitCursor() {
     $("html").addClass("wait");
   }
@@ -185,5 +240,77 @@
   }
   // Get the element with id="defaultOpen" and click on it
   if (document.getElementById("defaultOpen")) document.getElementById("defaultOpen").click();
+
+  //accordian function for keyword types
+  function keywordAccordian(id) {
+    var x = document.getElementById(id);
+    if (x.className.indexOf("w3-show") == -1) {
+        x.className += " w3-show";
+    } else { 
+        x.className = x.className.replace(" w3-show", "");
+    }
+  }
+
+  function assignKeyword(id, label) {
+    var wrapper = $('#assigned');
+    var kw_btn = $('#'+id);
+    if (kw_btn.is(':checked')) {
+      var kw = $('<span/>', {'class' : 'assigned_kw', 'id': 'as_'+id, 'html': label});
+      $(wrapper).append(kw);
+    } else {
+      $('#as_'+id).remove();
+    }
+  }
+
+  $('.kw-type-btn').each(function(){
+    $(this).click(function(){
+      keywordAccordian($(this).attr('id').replace('btn_',''));
+    });
+  });
+
+  $('.kw-btn').each(function(){
+    $(this).click(function(e){
+       assignKeyword($(this).attr('id'), $(this).attr('label'));
+    });
+  });
+
+  // open add keyword window
+  $('.add-keyword-btn').click(function(event) {
+    $("#add_keyword_title").text("Add new keyword for keyword type: " + $(this).attr('name'));
+    $('#new_keyword_label').val('');
+    $('#new_keyword_description').val('');
+    var type_id = $(this).attr('id').replace('add_','').replace('_btn', '');
+    $("#new_keyword_type_id").attr('value', type_id);
+
+    var x = event.pageX;
+    var y = event.pageY;
+    $("#add_keyword_div").css({top:y-400+"px", left:x+"px"}).show();
+  });
+
+
+  // add new keyword button
+  $('.close-add-keyword-btn').click(function() {
+    var label = $('#new_keyword_label').val();
+    if (label !== '') {
+      var description = $('#new_keyword_description').val();
+      var type_id = $('#new_keyword_type_id').val();
+      var source = $('#new_keyword_source').val();
+      // create a new keyword button
+      var new_button = $('#kw_button_div').clone();
+      var id = 'nk-' + new_kw_counter;
+      // put all information needed to create a new keyword in the DB in the value field
+      // use ::: as a separator
+      $(new_button).find('input').attr({'id': id, 'value': id+':::'+label+':::'+description+':::'+type_id+':::'+source, 'label': label});
+      $(new_button).find('span').html(label);
+      $(new_button).find('input').click(function(e){
+        assignKeyword($(this).attr('id'), $(this).attr('label'));
+      });
+      $(new_button).attr('data-content', '<b>Description:</b> ' + description).popover({html: true, container: 'body', trigger:"hover"});
+      $('#kw_button_wrapper_'+type_id).append(new_button);
+      new_kw_counter++;
+    }
+
+    $("#add_keyword_div").hide();
+  });
 </script>
 {% endblock body %}
