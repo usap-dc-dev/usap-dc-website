@@ -33,7 +33,7 @@ import urllib
 import lib.json2sql as json2sql
 import shutil
 from lib.curatorFunctions import isCurator, isRegisteredWithEZID, submitToEZID, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
-    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported
+    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap
 
 app = Flask(__name__)
 
@@ -596,24 +596,23 @@ def thank_you(submission_type):
 
 Validator = namedtuple('Validator', ['func', 'msg'])
 
+def check_spatial_bounds(data):
+    if not(data['geo_e'] or data['geo_w'] or data['geo_s'] or data['geo_n']):
+        return True
+    else:
+        try:
+            return \
+                abs(float(data['geo_w'])) <= 180 and \
+                abs(float(data['geo_e'])) <= 180 and \
+                abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
+        except:
+            return False
 
 def check_dataset_submission(msg_data):
     print(msg_data, file=sys.stderr)
 
     def default_func(field):
         return lambda data: field in data and bool(data[field]) and data[field] != "None"
-
-    def check_spatial_bounds(data):
-        if not(data['geo_e'] or data['geo_w'] or data['geo_s'] or data['geo_n']):
-            return True
-        else:
-            try:
-                return \
-                    abs(float(data['geo_w'])) <= 180 and \
-                    abs(float(data['geo_e'])) <= 180 and \
-                    abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
-            except:
-                return False
 
     def check_valid_email(data):
         return re.match("[^@]+@[^@]+\.[^@]+", data['email'])
@@ -1435,8 +1434,9 @@ def curator():
             template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
             template_dict['tab'] = "json"
+            template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
-            # for each keyword_type, get all keywords from database and 
+            # for each keyword_type, get all keywords from database  
             (conn, cur) = connect_to_db()
             query = "SELECT REPLACE(keyword_type_id, '-', '_') AS id, * FROM keyword_type;"
             cur.execute(query)
@@ -1455,6 +1455,14 @@ def curator():
 
             # check whether dataset as already been imported to database
             template_dict['db_imported'] = isDatabaseImported(uid)
+
+            # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
+            if template_dict['db_imported']:
+                query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid
+                cur.execute(query)
+                coords = cur.fetchone()
+                if coords is not None:
+                    template_dict['coords'] = coords 
 
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
@@ -1604,20 +1612,35 @@ def curator():
                     except:
                         template_dict['error'] = "Error updating Read Me file"
 
-
                 # assign keywords in database
                 elif request.form.get('submit') == "assign_keywords":
                     template_dict['tab'] = "keywords"
                     assigned_keywords = request.form.getlist('assigned_keyword')
                     print(assigned_keywords)
                     (msg, status) = addKeywordsToDatabase(uid, assigned_keywords)
-                    print (status)
-                    print (msg)
                     if status == 0:
                         template_dict['error'] = msg
                     else:
                         template_dict['message'].append(msg)
 
+                # update spatial bounds in database
+                elif request.form.get('submit') == "spatial_bounds":
+                    template_dict['tab'] = "spatial"
+                    coords = {'geo_n': request.form.get('geo_n'), 
+                              'geo_e': request.form.get('geo_e'), 
+                              'geo_w': request.form.get('geo_w'),
+                              'geo_s': request.form.get('geo_s'), 
+                              'cross_dateline': request.form.get('cross_dateline') is not None}
+                    print(coords)
+                    template_dict['coords'] = coords
+                    if check_spatial_bounds(coords):
+                        (msg, status) = updateSpatialMap(uid, coords)
+                        if status == 0:
+                            template_dict['error'] = msg
+                        else:
+                            template_dict['message'].append(msg)
+                    else:
+                        template_dict['error'] = 'Invalid bounds'
 
                 # Standalone EZID DOI submission
                 elif request.form.get('submit') == "submit_to_ezid":

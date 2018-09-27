@@ -9,6 +9,7 @@ import sys
 import requests
 from flask import session, url_for
 from subprocess import Popen, PIPE
+from json2sql import makeBoundsGeom
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -260,3 +261,51 @@ def isDatabaseImported(uid):
     cur.execute(query)
     res = cur.fetchone()
     return res['count'] > 0
+
+
+def updateSpatialMap(uid, data):
+    (conn, cur) = connect_to_db()
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        # query the database to get the XML for the submission ID
+        try:
+            if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
+                west = float(data["geo_w"])
+                east = float(data["geo_e"])
+                south = float(data["geo_s"])
+                north = float(data["geo_n"])
+                mid_point_lat = (south - north) / 2 + north
+                mid_point_long = (east - west) / 2 + west
+
+                geometry = "ST_GeomFromText('POINT(%s %s)', 4326)" % (mid_point_long, mid_point_lat)
+                bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
+
+                # update record if already in the database
+                query = "SELECT COUNT(*) FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid
+                cur.execute(query)
+                count = cur.fetchone()
+                if count['count'] > 0:
+                    sql_cmd = "UPDATE dataset_spatial_map SET (west,east,south,north,cross_dateline, geometry, bounds_geometry) = (%s, %s, %s, %s, %s, %s, %s) WHERE dataset_id = '%s';"\
+                        % (west, east, south, north, data['cross_dateline'], geometry, bounds_geometry, uid)
+                    out_text = "Spatial bounds successfully updated"
+                # otherwise insert record
+                else:
+                    sql_cmd = "INSERT INTO dataset_spatial_map (dataset_id, west,east,south,north,cross_dateline, geometry, bounds_geometry) VALUES ('%s', %s, %s, %s, %s, %s, %s, %s);"\
+                        % (uid, west, east, south, north, data['cross_dateline'], geometry, bounds_geometry)
+                    out_text = "Spatial bounds successfully inserted"
+                print(sql_cmd)
+                cur.execute(sql_cmd)
+                cur.execute('COMMIT;')
+                
+            else:
+                out_text = "Error updating spatial bounds. Not all coordinate information present"
+                status = 0
+        except:
+            out_text = "Error updating database. \n%s" % sys.exc_info()[1][0]
+            print(out_text)
+            status = 0
+
+    return (out_text, status)

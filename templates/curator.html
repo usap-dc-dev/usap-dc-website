@@ -57,6 +57,7 @@
         <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
         <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
         <button class="tablinks" onclick="openTab(event, 'keywordsTab')"  {% if tab == 'keywords' %} id="defaultOpen" {% endif %}>Assign Keywords</button>
+        <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds</button>
         <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
         <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
       </div>
@@ -149,6 +150,37 @@
         {% endif %}
       </div>
 
+      <div id="spatialTab", class="tabcontent">
+        {% if db_imported %}
+          <div>
+            <b>Spatial Bounds of Data</b> <br/>Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+            <table style="border:0">
+              <tbody>
+                <tr>
+                  <td align="center">
+                    &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{coords.get('geo_n','')}}"> <br>
+                    W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{coords.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{coords.get('geo_e','')}}"> <br>
+                    S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{coords.get('geo_s','')}}">
+                  </td>
+                  <td>
+                    <span style="margin: 20px">
+                      <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
+                    </span>
+                    <span style="margin: 20px">
+                     <input type="checkbox" name="cross_dateline" {% if coords.get('cross_dateline') %}checked{% endif %}> Check if your bounds cross the International Date Line</input>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br/>
+            <button type="submit" name="submit" value="spatial_bounds" onclick="waitCursor()">Update Database</button>
+          </div>
+        {% else %}
+          <h4>You will be able to update spatial bounds after Database import</h4>
+        {% endif %}
+      </div>
+
       <div id="dcxmlTab", class="tabcontent">
         <h4>DataCite XML for {{uid}}</h4>
         <input type="hidden" name="dcxml_file" value="{{dcxml_file}}">
@@ -210,8 +242,29 @@
 <script>
 
   $(document).ready(function(){
-      $('[data-toggle="popover"]').popover({html: true, container: 'body', trigger:"hover"});
-      new_kw_counter = 1;
+    //for keywords tab
+    $('[data-toggle="popover"]').popover({html: true, container: 'body', trigger:"hover"});
+    new_kw_counter = 1;
+
+    //for spatial bounds tab
+    var check = $('input[name="entire_region"]');
+    var w = $('input[name="geo_w"]');
+    var e = $('input[name="geo_e"]');
+    var s = $('input[name="geo_s"]');
+    var n = $('input[name="geo_n"]');
+    check.on('click', function() {
+      if (check.prop('checked')) {
+        w.val('-180');
+        e.val('180');
+        s.val('-90');
+        n.val('-60');
+      } else {
+          w.val('');
+          e.val('');
+          s.val('');
+          n.val('');
+      }
+    });
   });
 
   function waitCursor() {
