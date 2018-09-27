@@ -112,7 +112,8 @@
                 Description:<textarea id="new_keyword_description" rows="2" class="form-control" type="text" name="description"></textarea>
                 Type ID:<input id="new_keyword_type_id" class="form-control" type="text" value=""/>
                 Source:<input id="new_keyword_source" class="form-control" type="text" value="Curator Keyword"/>
-                <button type="button" class='close-add-keyword-btn close_btn'>Add</button>
+                <button type="button" id="kw_cancel_btn" class='cancel-add-keyword-btn'>Cancel</button>
+                <button type="button" id="kw_add_btn" class='do-add-keyword-btn'>Add</button>
             </div>
             
           </div>
@@ -342,7 +343,7 @@
 
 
   // add new keyword button
-  $('.close-add-keyword-btn').click(function() {
+  $('#kw_add_btn').click(function() {
     var label = $('#new_keyword_label').val();
     if (label !== '') {
       var description = $('#new_keyword_description').val();
@@ -365,5 +366,10 @@
 
     $("#add_keyword_div").hide();
   });
+
+  $('#kw_cancel_btn').click(function() {
+    $("#add_keyword_div").hide();
+  });
+
 </script>
 {% endblock body %}
