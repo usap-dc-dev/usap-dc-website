@@ -73,6 +73,16 @@
 		<h3>README</h3>
 		<p>The README tab will display the text from the README_{dataset_id}.txt file in the doc directory ({{doc_dir}}). This is populated with certain fields from the JSON file.  The curator should check the text and make sure it looks OK.  If there are any changes to be made, they can be made on the screen.  Clicking the <i>Save Readme File</i> button will save the changes.</p>
 
+		<h3>Assign Keywords</h3>
+		<p>This tab allows the curator to assign keywords (both IEDA and USAP) to a dataset after it has been imported to the database.  The available keywords are grouped by keyword type, which are listed alphabetically. Hovering over a keyword type will display the description and source for that type from the database.  Clicking on a keyword type will display all the available keywords for that type, listed alphabetically.  Clicking again on the keyword type will hide its keywords.</p>
+		<p>Hovering over a keyword will display its description from the database.  The keywords to be assigned to the dataset can be selected by clicking on them. The keyword button will change color to indicate that it is selected.  Clicking again on the keyword will de-select it.  A list of the selected keywords is displayed at the top of the screen.</p>
+		<p>To add a new keyword, click the Add Keyword button under each keyword type. This will open up a box that will allow you to enter a label and description. You can also modify the Type ID and Source if you wish.  New keywords will be added to the list under that keyword type and can be selected in the same way as the existing keywords.</p>
+		<p>When all the appropriate keywords have been selected, click the Add to Database button at the bottom of the Selected Keywords box.  This will assign the chosen keywords to the dataset in the database.  Any new keywords will be added to the keyword_usap table.</p>
+
+		<h3>Update Spatial Bounds</h3>
+		<p>This tab allows the curator to enter or update the spatial bounds for the dataset after it has been imported to the database.  If the dataset already contains spatial bounds, these will be displayed.  If not, the N, E, S, and W boxes will be blank.</p>
+		<p>The curator can enter the new spatial bounds and click Update Database. This will update the dataset_spatial_map table in the database and also calculate the mid-point and boundary geometry for the dataset.  Any existing values will be replaced.</p> 
+
 		<h3>DataCite XML</h3>
 		<p>If there was a problem with the EZID submission when running the Full Workflow, the curator can work on fixing it in this tab. The database submission must be performed before this can be run.</p>
 		<p>Click the <i>Generate DataCite XML from DB</i> button to generate the DataCite XML using the database script. This can then be viewed and edited, if needed.  Click the <i>Submit to EZID</i> button to submit the XML to EZID and register the DOI.  A success or error message will be displayed.</p>
