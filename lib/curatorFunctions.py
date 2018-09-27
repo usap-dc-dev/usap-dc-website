@@ -309,3 +309,29 @@ def updateSpatialMap(uid, data):
             status = 0
 
     return (out_text, status)
+
+
+def getCoordsFromDatabase(uid):
+    (conn, cur) = connect_to_db()
+    query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid
+    cur.execute(query)
+    return cur.fetchone()
+
+
+def getKeywordsFromDatabase():
+    # for each keyword_type, get all keywords from database  
+    (conn, cur) = connect_to_db()
+    query = "SELECT REPLACE(keyword_type_id, '-', '_') AS id, * FROM keyword_type;"
+    cur.execute(query)
+    keyword_types = cur.fetchall()
+    for kw_type in keyword_types:
+        query = "SELECT keyword_id, keyword_label, keyword_description FROM keyword_ieda " + \
+            "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id']) + \
+            "UNION " + \
+            "SELECT keyword_id, keyword_label, keyword_description FROM keyword_usap " + \
+            "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id'])
+        cur.execute(query)
+        keywords = cur.fetchall()
+        kw_type['keywords'] = sorted(keywords, key=lambda k: k['keyword_label'].upper())
+
+    return sorted(keyword_types, key=lambda k: k['keyword_type_label'].upper())

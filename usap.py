@@ -33,7 +33,8 @@ import urllib
 import lib.json2sql as json2sql
 import shutil
 from lib.curatorFunctions import isCurator, isRegisteredWithEZID, submitToEZID, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
-    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap
+    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
+    getCoordsFromDatabase, getKeywordsFromDatabase
 
 app = Flask(__name__)
 
@@ -1436,31 +1437,15 @@ def curator():
             template_dict['tab'] = "json"
             template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
-            # for each keyword_type, get all keywords from database  
-            (conn, cur) = connect_to_db()
-            query = "SELECT REPLACE(keyword_type_id, '-', '_') AS id, * FROM keyword_type;"
-            cur.execute(query)
-            keyword_types = cur.fetchall()
-            for kw_type in keyword_types:
-                query = "SELECT keyword_id, keyword_label, keyword_description FROM keyword_ieda " + \
-                    "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id']) + \
-                    "UNION " + \
-                    "SELECT keyword_id, keyword_label, keyword_description FROM keyword_usap " + \
-                    "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id'])
-                cur.execute(query)
-                keywords = cur.fetchall()
-                kw_type['keywords'] = sorted(keywords, key=lambda k: k['keyword_label'].upper())
-
-            template_dict['keywords'] = sorted(keyword_types, key=lambda k: k['keyword_type_label'].upper())
+            # for each keyword_type, get all keywords from database 
+            template_dict['keywords'] = getKeywordsFromDatabase()
 
             # check whether dataset as already been imported to database
             template_dict['db_imported'] = isDatabaseImported(uid)
 
             # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
             if template_dict['db_imported']:
-                query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid
-                cur.execute(query)
-                coords = cur.fetchone()
+                coords = getCoordsFromDatabase(uid)
                 if coords is not None:
                     template_dict['coords'] = coords 
 
@@ -1494,6 +1479,9 @@ def curator():
                         cur.execute(sql_str)
 
                         template_dict['message'].append("Successfully imported to database")
+                        coords = getCoordsFromDatabase(uid)
+                        if coords is not None:
+                            template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
                     except Exception as err:
@@ -1539,6 +1527,9 @@ def curator():
                         cur.execute(sql_str)
 
                         template_dict['message'].append("Successfully imported to database")
+                        coords = getCoordsFromDatabase(uid)
+                        if coords is not None:
+                            template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
                     except Exception as err:
@@ -1631,7 +1622,6 @@ def curator():
                               'geo_w': request.form.get('geo_w'),
                               'geo_s': request.form.get('geo_s'), 
                               'cross_dateline': request.form.get('cross_dateline') is not None}
-                    print(coords)
                     template_dict['coords'] = coords
                     if check_spatial_bounds(coords):
                         (msg, status) = updateSpatialMap(uid, coords)
