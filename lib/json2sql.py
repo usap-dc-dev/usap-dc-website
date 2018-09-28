@@ -152,6 +152,8 @@ def make_sql(data, id):
     url = 'http://www.usap-dc.org/dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
     # print(url)
     
+    curator = "Nitsche"
+
     sql_out = ""
     sql_out += 'START TRANSACTION;\n\n'
     sql_out += '--NOTE: include NSF PI(s), submitter, and author(s); email+orcid optional\n'
@@ -258,9 +260,11 @@ def make_sql(data, id):
             sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
         else:
             sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','{}');\n\n".format(id, res['program_id'])
+            if res['program_id'] == 'Antarctic Glaciology':
+                curator = 'Bauer'
 
     sql_out += "--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
-    sql_out += "update dataset set review_person='Nitsche' where id='{}';\n".format(id)
+    sql_out += "update dataset set review_person='{}' where id='{}';\n".format(curator,id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
     line = "insert into dataset_spatial_map(dataset_id,west,east,south,north,cross_dateline) values  ('%s','%s','%s','%s','%s','%s');\n" % \
