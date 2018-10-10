@@ -335,3 +335,17 @@ def getKeywordsFromDatabase():
         kw_type['keywords'] = sorted(keywords, key=lambda k: k['keyword_label'].upper())
 
     return sorted(keyword_types, key=lambda k: k['keyword_type_label'].upper())
+
+
+def getDatasetKeywords(uid):
+    (conn, cur) = connect_to_db()
+    query = "SELECT dkm.keyword_id, ku.keyword_label FROM dataset_keyword_map dkm " + \
+            "JOIN keyword_usap ku ON ku.keyword_id = dkm.keyword_id " + \
+            "WHERE dkm.dataset_id = '%s' " % uid + \
+            "UNION " +\
+            "SELECT dkm.keyword_id, ki.keyword_label FROM dataset_keyword_map dkm " + \
+            "JOIN keyword_ieda ki ON ki.keyword_id = dkm.keyword_id " + \
+            "WHERE dkm.dataset_id = '%s' " % uid + \
+            "ORDER BY keyword_label;"
+    cur.execute(query)
+    return cur.fetchall() 

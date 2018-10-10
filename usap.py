@@ -34,7 +34,7 @@ import lib.json2sql as json2sql
 import shutil
 from lib.curatorFunctions import isCurator, isRegisteredWithEZID, submitToEZID, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
     getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
-    getCoordsFromDatabase, getKeywordsFromDatabase
+    getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords
 
 app = Flask(__name__)
 
@@ -629,7 +629,8 @@ def check_dataset_submission(msg_data):
         return True
 
     def check_valid_award(data):
-        return data.get('awards') is not None and data['awards'] != "None" and data['awards'] != ""
+        print(data.get('awards'))
+        return data.get('awards') is not None and data['awards'] != ["None"] and data['awards'] != [""]
 
     validators = [
         Validator(func=default_func('title'), msg='You must include a dataset title for the submission.'),
@@ -1448,6 +1449,7 @@ def curator():
                 coords = getCoordsFromDatabase(uid)
                 if coords is not None:
                     template_dict['coords'] = coords 
+                template_dict['dataset_keywords'] = getDatasetKeywords(uid)
 
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
@@ -1484,6 +1486,7 @@ def curator():
                             template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
+                        template_dict['dataset_keywords'] = getDatasetKeywords(uid)
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -1532,6 +1535,7 @@ def curator():
                             template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
+                        template_dict['dataset_keywords'] = getDatasetKeywords(uid)
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -1613,6 +1617,7 @@ def curator():
                         template_dict['error'] = msg
                     else:
                         template_dict['message'].append(msg)
+                        template_dict['dataset_keywords'] = getDatasetKeywords(uid)
 
                 # update spatial bounds in database
                 elif request.form.get('submit') == "spatial_bounds":

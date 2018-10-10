@@ -81,6 +81,17 @@
     width:auto;
 }
 
+.assigned_kw_db {
+    display: inline-block;
+    margin:4px;
+    background-color: #d7dbdd;
+    border-radius:25px;
+    border:1px solid #757575;  
+    text-align:left;
+    padding: 3px 7px 2px 7px;
+    width:auto;
+}
+
 .bordered-div {
     margin: 5px;
     padding: 5px;

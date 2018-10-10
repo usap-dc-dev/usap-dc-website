@@ -122,7 +122,12 @@
           <div class="bordered-div">
             <div id="assigned">
               <h5>Selected keywords:</h5>
+              <i>Keywords already in the database are shown in grey and can not be removed</i><br/>
+              {% for kw in dataset_keywords %}
+                <span class="assigned_kw_db">{{kw.keyword_label}}</span>
+              {% endfor %}  
             </div>
+            <br/>
             <button type="submit" name="submit" value="assign_keywords" onclick="waitCursor()">Add to Database</button>
           </div>
           {% for kw_type in keywords %}
@@ -132,7 +137,7 @@
             <br/>
             <div id="{{kw_type.id|safe}}" class="w3-container w3-hide">
               <div id="kw_button_wrapper_{{kw_type.keyword_type_id|safe}}">
-                {% for kw in kw_type.keywords %}      
+                {% for kw in kw_type.keywords if kw.keyword_id not in dataset_keywords|safe %}
                   <div id="kw_button_div" class="ck-button" data-toggle="popover" data-placement="top" data-content="<b>Description:</b> {{kw.keyword_description}}">
                     <label>
                       <input type="checkbox" name="assigned_keyword" id="{{kw.keyword_id|safe}}" value="{{kw.keyword_id|safe}}" label="{{kw.keyword_label|safe}}" class="kw-btn">
@@ -140,6 +145,9 @@
                       </input>
                     </label>
                   </div>
+                {% endfor %}
+                {% for kw in kw_type.keywords if kw.keyword_id in dataset_keywords|safe %}
+                  <span class="assigned_kw_db">{{kw.keyword_label}}</span>
                 {% endfor %}
               </div>
               <div style="clear:both"></div>
