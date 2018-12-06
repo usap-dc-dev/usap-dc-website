@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+{% set cur = "project_browser" %}
+{% block catalog_body %}
+
+
+<div id="titles" hidden>{{titles|tojson}}</div>
+<div id="pi_names" hidden>{{pi_names|tojson}}</div>
+<div id="awards" hidden>{{awards|tojson}}</div>
+<div id="dif_ids" hidden>{{dif_ids|tojson}}</div>
+
+
+<div id="abstract" hidden>
+  <div id="abstract_header" class="window-header">
+    <span id="abstract_title"></span><span class='close_abstract_btn close_btn'>X</span>
+  </div>
+  <div id="abstract_body">
+    <p id="abstract_text"></p>
+  </div>
+</div>
+
+
+<div id="geometry">
+  <div id="geometry_header" class="window-header">
+    <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
+  </div>
+  <div id="map"></div>
+</div>
+
+<div>
+
+  <h2 class="title">Antarctic Project Browser</h2>
+
+  <form action="{{url_for('project_browser')}}" method="POST" enctype="multipart/form-data"> 
+
+    <div style="margin:5px;"><b>PI Name: </b> 
+      <input type="text" name="pi_name" id="pi_name" {% if pi_name != "None" %} value="{{pi_name}}" {% endif %}/> 
+      <i> <font size=2>(Last Name OR First Name OR Last Name, First Initial)</font></i>
+    </div>
+
+    <div style="margin:5px;"><b>Title (free text): </b> 
+       <input type="text" name="title" id="title" {% if title != "None" %} value="{{title}}" {% endif %}/>
+    </div> 
+
+    <div style="margin:5px;"><b>Abstract (free text): </b> 
+       <input type="text" size="50" name="summary" id="summary" {% if summary != "None" %} value="{{description}}" {% endif %}/>
+    </div> 
+
+    <div style="margin:5px;"><b>Award: </b> 
+      <span class="select-editable-award">
+        <select id="award" onchange="this.nextElementSibling.value=this.value">
+          <option value='Any award' {% if award =='' or award =='Any award' %} selected {% endif %}>Any award</option>
+          {% for row in awards %}
+            {% if row['award'] != "" %}
+              <option value="{{row['award']}}" {% if row['award'] == award %} selected {% endif %}> {{row['award']}}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        <input name="award" id="award-input" type="text" value="{{award}}" />
+      </span>
+    </div>
+
+    <div style="margin-top: 10px"><input type="submit" value="Search"/>
+  </form>
+
+  {% if proj_records|length > 0 %}
+
+    <div>
+      <i><font size=2 color=gray>({{proj_records|length}} Project record(s)) </font></i>
+
+      <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
+    </div>
+
+    <div id='dif-browser-table'>
+      <table class='sortable' preserve_style='row'>
+    
+        <tr>
+          <th width="20%">Project Title/Abstract/Map</th>
+          <th width="7%">NSF Award(s)</th>
+          <th width="8%">Date Created</th>
+          <th width="10%">PI (CoPIs)</th>
+          <th width="25%">List of Datasets</th>
+          <th width="10%">Status Indicator</th>
+          <th hidden>Abstract</th>
+          <th width="10%" hidden>Geometry</th>
+        </tr>
+    
+        {% for val in proj_records %}
+   
+          <tr class='w3-border'>
+            <td>             
+              <a href="{{url_for('project_landing_page', project_id=val.proj_uid)}}">{{val.title}}</a>
+              <br/>
+              <button type="button" class="in-table-button abstract-button"><b>Abstract</b></button>
+              <br/>
+              {% if val.bounds_geometry %}
+                <button type="button" class="in-table-button geometry-button"><b>Show on Map</b></button>
+              {% endif %}</td>
+            {% if val.awards != "" %}
+              <td>
+                {% for award in val.awards_7d %}
+                  {% set award_url = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
+                  <a target='_blank' href='{{award_url}}'>{{award}}</a><br/>
+                {% endfor %}
+              </td>
+            {% else %}
+              <td></td>
+            {% endif %}
+            <td>{{val.date_created}}</td>
+            <td>{{val.authors}}</td>
+            {% set abstract = val.description | safe %}
+
+
+            <td><font size=2>
+              {% if val['datasets']|length == 0 %}
+                No data link provided
+              {% endif %}
+              {% for ds in val['datasets'] %}
+                {% if ds['url'] == '' %}
+                  No data link provided
+                {% elif ds['title'] == '' %}
+                  <a target='_blank' href="{{ds['url']}}">Access to data</a><br/>
+                {% else %}
+                  <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
+                {% endif %}
+              {% endfor %}
+            </font></td>
+
+            <td><font size=2>
+              {% if val['datasets']|length == 0 %}
+                No data link provided
+              {% endif %}
+              {% for ds in val['datasets'] %}
+                {{ds.status}}<br/>
+              {% endfor %}
+            </font></td>
+
+            <td hidden>{{val['description']}}</td>
+            <td hidden>{{val['bounds_geometry']}}</td>
+          </tr>
+        {% endfor %}
+
+      </table>
+    </div>
+  {% else %}
+    <td colspan="4"><br/><br/><i>No records found, please try again.</i></td>
+  {% endif %}
+</div>
+</div>
+
+<script type="text/javascript">
+  
+</script>
+
+{% endblock catalog_body %}

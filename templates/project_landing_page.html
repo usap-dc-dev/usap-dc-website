@@ -1,0 +1,271 @@
+{% extends "layout.html" %}
+{% set cur = "project_landing_page" %}
+{% block body %}
+
+
+<div id="div_extents" hidden>{{json_dumps(data['spatial_bounds'])}}</div>
+
+
+
+<div id="metadata">
+  <div class="header small">
+    Project Metadata
+  </div>
+
+  <table class="borderless-table">
+    <tr>
+     <td width="75%">
+        <div class="lprow-no-margin ">
+          <div class="value-inline proj-title">
+            <b>{{data.title}}</b>
+          </div>
+        </div>
+
+        {% if data.short_name %}
+          <div class="lprow-no-margin">
+            <div class="field">
+              Short Title:
+            </div>
+            <div class="value-inline">
+              {{data.short_name}}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.start_date %}
+          <div class="lprow-no-margin">
+            <div class="field">
+              Start Date:
+            </div>
+            <div class="value-inline">
+              {{data.start_date}}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.end_date %}
+          <div class="lprow-no-margin">
+            <div class="field">
+              End Date:
+            </div>
+            <div class="value-inline">
+              {{data.end_date}}
+            </div>
+          </div>
+        {% endif %}
+ 
+        {% if data.feature %}
+          <div class="lprow-no-margin">
+            <div class="field">
+              Project Location(s)
+            </div>
+            <div class="value">
+              {% for f in data.feature %}
+                {{f.feature_name}}<br/>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="lprow">
+          <div class="field">
+            Program:
+          </div>
+          <div class="value-inline">
+            {% if data.initiatives %}
+              {% for i in data.initiatives %}
+                {{i.id}}
+              {% endfor %}
+            {% else %}
+              Unaffiliated
+            {% endif %}
+          </div>
+        </div>
+
+
+        {% if data.website %}
+          <div class="lprow-no-margin">
+            <div class="field">
+              Project Website(s)
+            </div>
+            <div class="value">
+              {% for w in data.website %}
+                <a target="_blank" href="{{w.url}}">{{w.title}}</a><br/>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.description %}
+          <div class="lprow">
+            <div class="field">
+              Description/Abstract
+            </div>
+            <div class="value">
+              {{data.description}}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.persons %}
+          <div class="lprow">
+            <div class="field">
+              Personnel
+            </div>
+            <div class="value">
+              <table class="data-table">
+                <tr>
+                  <th>Person</th>
+                  <th>Role</th>
+                </tr>
+                {% for p in data.persons %}
+                  <tr>
+                    <td>{{p.id}}</td>
+                    <td>{{p.role}}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.funding %}
+          <div class="lprow">
+            <div class="field">
+              Funding
+            </div>
+            <div class="value">
+              <table class="borderless-table">
+                {% for f in data.funding %}
+                  <tr>
+                    <td>
+                      {% if f.program %}
+                        {{f.program}}
+                      {% else %}
+                        Unknown Program
+                      {% endif %}
+                    </td> 
+                    <td>
+                      Award # <a target="_blank" href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{f.award}}">{{f.award}}</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.dif_records %}
+          <div class="lprow">
+            <div class="field">
+              AMD - DIF Record(s)
+            </div>
+            <div class="value">
+              {% for record in data.dif_records %}
+              <a target="_blank" href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record.dif_id}}">{{record.dif_id}}</a><br/>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.deployment %}
+          <div class="lprow">
+            <div class="field">
+              Deployment
+            </div>
+            <div class="value">
+              <table class="data-table">
+                <tr>
+                  <th>Deployment</th>
+                  <th>Type</th>
+                </tr>
+                {% for d in data.deployment %}
+                  <tr>
+                    <td>
+                      {% if d.url %}
+                        <a target="_blank" href="{{d.url}}">{{d.deployment_id}}</a></td>
+                      {% else %}
+                        {{d.deployment_id}}
+                      {% endif %}
+                    <td>{{d.deployment_type}}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="lprow">
+          <div class="field">
+            Data Management Plan
+          </div>
+          <div class="value">
+            {% if not data.dmps %}
+              None in the Database
+            {% else %}
+              {% for dmp in data.dmps %}
+                <form method="post" target="_blank" action="{{url_for('data_management_plan')}}" class="inline">
+                  <input type="hidden" name="dmp_link" value="{{dmp}}">
+                  <button type="submit" name="submit_param" value="submit_value" class="link-button">
+                    {{dmp.split('/')[-1]}}
+                  </button>
+                </form>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+
+        {% if data.datasets %}
+          <div class="lprow">
+            <div class="field">
+              Datasets
+            </div>
+            <div class="value">
+              <table class="data-table">
+                <tr>
+                  <th>Repository</th>
+                  <th>Title (link)</th>
+                  <th>Status</th>
+                </tr>
+                {% for d in data.datasets %}
+                  <tr>
+                    <td>{{d.repository}}</td>
+                    <td><a target="_blank" href="{{d.url}}">{{d.title}}</a></td>
+                    <td>{{d.status}}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if data.reference_list %}
+          <div class="lprow">
+            <div class="field">
+            	Publications
+            </div>
+            <div class="value">
+            	<ol>
+               {% for r in data.reference_list %}
+               <li>
+                 {{r.ref_text}} (<a target="=_blank" href="https://doi.org/{{r.doi}}">{{r.doi}}</a>)
+               </li>
+               {% endfor %}
+             </ol>
+           </div>
+          </div>
+        {% endif %}
+
+      </td>
+
+      {% if data.spatial_bounds %}
+        <td valign="top">
+          <div id="map"></div>
+        </td>
+      {% endif %}
+
+    </tr>
+  </table>
+</div>
+
+{% endblock body %}
