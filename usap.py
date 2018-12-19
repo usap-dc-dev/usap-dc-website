@@ -106,7 +106,7 @@ def get_nsf_grants(columns, award=None, only_inhabited=True):
     
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
-    query_string +=  ' ORDER BY name,award'
+    query_string += ' ORDER BY name,award'
     cur.execute(query_string)
     return cur.fetchall()
 
@@ -407,6 +407,14 @@ def get_projects(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM initiative'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_orgs(conn=None, cur=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM organizations ORDER BY name'
     cur.execute(query)
     return cur.fetchall()
 
@@ -918,13 +926,18 @@ def project():
         s.sendmail(sender, recipients, msg.as_string())
         s.quit()
         
-
         return redirect('thank_you/project')
     else:
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
-        return render_template('project.html',name=user_info['name'],email=email,nsf_grants=get_nsf_grants(['award','name'],only_inhabited=False), locations=get_location_menu(), parameters=get_parameter_menu())
+        (conn, cur) = connect_to_db()
+        q = "SELECT id FROM initiative ORDER BY id;"
+        cur.execute(q)
+        programs = cur.fetchall()
+        return render_template('project.html', name=user_info['name'], email=email, programs=programs, persons=get_persons(),
+                               nsf_grants=get_nsf_grants(['award', 'name'], only_inhabited=False), 
+                               locations=get_location_menu(), parameters=get_parameter_menu(), orgs=get_orgs())
 
 
 @app.route('/submit/projectinfo',methods=['GET'])
@@ -1806,7 +1819,6 @@ def catalog_browser():
     template_dict['titles'] = getFromDifTable('title', all_selected)
     template_dict['pi_names'] = getFromDifTable('pi_name', all_selected)
 
-
     return render_template('catalog_browser.html', **template_dict)
 
 
@@ -2045,8 +2057,185 @@ def stats():
     return render_template('statistics.html', **template_dict)
 
 
+@app.route('/view/project/<project_id>')
+def project_landing_page(project_id):
+    metadata = get_project(project_id)
+    if metadata is None:
+        return redirect(url_for('not_found'))
+
+    # make a list of all the unique Data Management Plans
+    dmps = set()
+    for f in metadata['funding']:
+        if f.get('dmp_link') and f['dmp_link'] != 'None':
+            dmps.add(f['dmp_link'])
+    if len(dmps) == 0:
+        dmps = None
+    metadata['dmps'] = dmps
+
+    return render_template('project_landing_page.html', data=metadata)
+
+
+@app.route('/data_management_plan', methods=['POST'])
+def data_management_plan():
+    if request.method != 'POST':
+        return redirect(url_for('not_found'))
+
+    dmp_link = request.form.get('dmp_link')
+    if dmp_link.startswith('/'):
+        dmp_link = dmp_link[1:]
+    try:
+        return send_file(os.path.join(current_app.root_path, dmp_link),
+                         attachment_filename=os.path.basename(dmp_link))
+    except:
+        return redirect(url_for('not_found'))
+
+
+def get_project(project_id):
+    if project_id is None:
+        return None
+    else:
+        (conn, cur) = connect_to_db()
+        query_string = cur.mogrify('''SELECT *
+                        FROM
+                        project p
+                        LEFT JOIN (
+                            SELECT pam.proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link)) funding
+                            FROM project_award_map pam 
+                            JOIN award a ON a.award=pam.award_id
+                            LEFT JOIN award_program_map apm ON apm.award_id=a.award
+                            LEFT JOIN program prog ON prog.id=apm.program_id
+                            WHERE a.award != 'XXXXXXX'
+                            GROUP BY pam.proj_uid
+                        ) a ON (p.proj_uid = a.proj_uid)
+                        LEFT JOIN (
+                            SELECT pperm.proj_uid, json_agg(json_build_object('role', pperm.role ,'id', per.id)) persons
+                            FROM project_person_map pperm JOIN person per ON (per.id=pperm.person_id)
+                            GROUP BY pperm.proj_uid
+                        ) per ON (p.proj_uid = per.proj_uid)
+                        LEFT JOIN (
+                            SELECT pdifm.proj_uid, json_agg(dif) dif_records
+                            FROM project_dif_map pdifm JOIN dif ON (dif.dif_id=pdifm.dif_id)
+                            GROUP BY pdifm.proj_uid
+                        ) dif ON (p.proj_uid = dif.proj_uid)
+                        LEFT JOIN (
+                            SELECT pim.proj_uid, json_agg(init) initiatives
+                            FROM project_initiative_map pim JOIN initiative init ON (init.id=pim.initiative_id)
+                            GROUP BY pim.proj_uid
+                        ) init ON (p.proj_uid = init.proj_uid)
+                        LEFT JOIN (
+                            SELECT prefm.proj_uid, json_agg(ref) reference_list
+                            FROM project_ref_map prefm JOIN reference ref ON (ref.ref_uid=prefm.ref_uid)
+                            GROUP BY prefm.proj_uid
+                        ) ref ON (p.proj_uid = ref.proj_uid)
+                        LEFT JOIN (
+                            SELECT pdm.proj_uid, json_agg(dataset) datasets
+                            FROM project_dataset_map pdm JOIN project_dataset dataset ON (dataset.dataset_id=pdm.dataset_id)
+                            GROUP BY pdm.proj_uid
+                        ) dataset ON (p.proj_uid = dataset.proj_uid)
+                        LEFT JOIN (
+                            SELECT pw.proj_uid, json_agg(pw) website
+                            FROM project_website pw
+                            GROUP BY pw.proj_uid
+                        ) website ON (p.proj_uid = website.proj_uid)
+                        LEFT JOIN (
+                            SELECT pdep.proj_uid, json_agg(pdep) deployment
+                            FROM project_deployment pdep
+                            GROUP BY pdep.proj_uid
+                        ) deployment ON (p.proj_uid = deployment.proj_uid)
+                         LEFT JOIN (
+                            SELECT pf.proj_uid, json_agg(pf) feature
+                            FROM project_feature pf
+                            GROUP BY pf.proj_uid
+                        ) feature ON (p.proj_uid = feature.proj_uid)                       
+                        LEFT JOIN (
+                            SELECT psm.proj_uid, json_agg(psm) spatial_bounds
+                            FROM project_spatial_map psm
+                            GROUP BY psm.proj_uid
+                        ) sb ON (p.proj_uid = sb.proj_uid)
+                        WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
+        cur.execute(query_string)
+        return cur.fetchone()
+
+
+@app.route('/project_browser', methods=['GET', 'POST'])
+def project_browser():
+    template_dict = {'pi_name': '', 'title': '', 'award': '', 'summary': ''}
+    (conn, cur) = connect_to_db()
+
+    query = "SELECT DISTINCT project.*, per.persons, a.awards, ST_AsText(psm.bounds_geometry) AS bounds_geometry " + \
+            "FROM project " + \
+            "LEFT JOIN project_spatial_map psm ON psm.proj_uid = project.proj_uid " + \
+            "LEFT JOIN (" + \
+            "SELECT pperm.proj_uid, string_agg(per.id, '; ') persons " + \
+            "FROM project_person_map pperm JOIN person per ON per.id=pperm.person_id " + \
+            "WHERE pperm.role ILIKE '%investigator%' " + \
+            "GROUP BY pperm.proj_uid) per ON per.proj_uid = project.proj_uid " + \
+            "LEFT JOIN ( " + \
+            "SELECT pam.proj_uid, string_agg(a.award,'; ') awards " + \
+            "FROM project_award_map pam JOIN award a ON a.award=pam.award_id " + \
+            "GROUP BY pam.proj_uid) a ON a.proj_uid = project.proj_uid " + \
+            "WHERE project.proj_uid !=''"
+
+    if request.method == 'POST':
+        template_dict['pi_name'] = request.form.get('pi_name')
+        template_dict['title'] = request.form.get('title')
+        template_dict['summary'] = request.form.get('summary')
+        template_dict['award'] = request.form.get('award')
+
+        if (request.form.get('pi_name') != ""):
+            query += " AND per.persons ~* '%s'" % request.form['pi_name']
+        if(request.form.get('title') != ""):
+            query += " AND project.title ILIKE '%" + request.form['title'] + "%'"
+        if(request.form.get('summary') != ""):
+            query += " AND project.description ILIKE '%" + request.form['summary'] + "%'"
+        if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
+            query += " AND a.awards ~* '%s'" % request.form['award']
+
+    query += " ORDER BY project.date_created DESC"
+
+    query_string = cur.mogrify(query)
+    cur.execute(query_string)
+    rows = cur.fetchall()
+
+    for row in rows:
+        authors = row['persons']
+        row['authors'] = authors
+        if row['awards'] != "":
+            awards = row['awards'].split('; ')
+            row['awards_7d'] = []
+            for award in awards:
+                row['awards_7d'].append("%07d" % int(award))
+        ds_query = "SELECT * FROM project_dataset pd " + \
+                   "LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = pd.dataset_id " + \
+                   "WHERE pdm.proj_uid = '%s'" % row['proj_uid']
+        ds_query_string = cur.mogrify(ds_query)
+        cur.execute(ds_query_string)
+        datasets = cur.fetchall()
+        row['datasets'] = datasets
+
+    template_dict['proj_records'] = rows
+
+    if template_dict['award'] == "":
+        template_dict['award'] = "Any award"
+
+    # get list of available options for drop downs and autocomplete
+    query = "SELECT DISTINCT award_id as award FROM project_award_map ORDER BY award_id;"
+    cur.execute(query)
+    template_dict['awards'] = cur.fetchall()
+    query = "SELECT DISTINCT title FROM project ORDER BY title;"
+    cur.execute(query)
+    template_dict['titles'] = cur.fetchall()
+    query = "SELECT DISTINCT person_id as pi_name FROM project_person_map pperm " + \
+            "WHERE pperm.role ILIKE '%investigator%' ORDER BY person_id;"
+    cur.execute(query)
+    template_dict['pi_names'] = cur.fetchall()
+    template_dict['dif_ids'] = getFromDifTable('dif_id', True)
+
+    return render_template('project_browser.html', **template_dict)
+
+
 def initcap(s):
-    parts = re.split('( |_|-|>)+',s)
+    parts = re.split('( |_|-|>)+', s)
     return ' '.join([p.lower().capitalize() for p in parts])
 
 

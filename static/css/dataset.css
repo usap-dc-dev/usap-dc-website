@@ -69,3 +69,7 @@ input, textarea {
   float:right; 
   width:5%
 }
+
+.input-group-addon {
+  padding:5px;
+}

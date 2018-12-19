@@ -67,8 +67,6 @@ $(document).ready(function() {
         }
         break;
       case 'award-input':
-        console.log(newVal);
-        console.log(awards.indexOf(newVal));
         if (awards.indexOf(newVal) == -1) {
             $('#award').val("");
         } else {
@@ -100,7 +98,12 @@ $(document).ready(function() {
     $("#abstract_text").text(abstract);
     var x = event.pageX;
     var y = event.pageY;
-    $("#abstract").css({top:y-400+"px", left:x-300+"px"}).show();
+    if (abstract_ind == 6) {
+      $("#abstract_title").text('Project Abstract');
+      $("#abstract").css({top:y-400+"px", left:x+"px"}).show();
+    } else {
+      $("#abstract").css({top:y-400+"px", left:x-300+"px"}).show();
+    }
   });
 
   $('.close_abstract_btn').click(function() {
@@ -149,7 +152,12 @@ $(document).ready(function() {
     plotGeometry(map, geometry, styles);
     var x = event.pageX;
     var y = event.pageY;
-    $("#geometry").css({top:y-400+"px", left:x-300+"px"}).show();
+    if (geometry_ind == 7) {
+      $("#geometry_title").text('Project Spatial Bounds');
+      $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
+    } else {
+      $("#geometry").css({top:y-400+"px", left:x-300+"px"}).show();
+    }
   });
 
   $('.close_geom_btn').click(function() {
@@ -260,6 +268,7 @@ function removeLayerByName(map, name) {
 
 function updateMenusWithSelected(selected, reset) {
   selected = selected || {};
+  if (selected.dif_id === undefined) return;
   return $.ajax({
     method: 'GET',
     url: 'http://' + window.location.hostname + '/filter_dif_menus',

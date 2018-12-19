@@ -1,29 +1,8 @@
 {% extends "layout.html" %}
 {% set cur = "project" %}
 {% block body %}
-<script type="text/javascript">
-  $(document).ready(function() {
 
-    var check = $('input[name="entire_region"]');
-    var w = $('input[name="geo_w"]');
-    var e = $('input[name="geo_e"]');
-    var s = $('input[name="geo_s"]');
-    var n = $('input[name="geo_n"]');
-    check.on('click', function() {
-      if (check.prop('checked')) {
-        w.val('-180');
-        e.val('180');
-        s.val('-90');
-        n.val('-60');
-      } else {
-        w.val('');
-        e.val('');
-        s.val('');
-        n.val('');
-      }
-  });
-  });
-</script>
+<div id="persons" hidden>{{persons|tojson}}</div>
 
 <div class="content fixed-width">
 
@@ -39,47 +18,166 @@
         <div style="clear:both"></div>
 
         <form method="post" action="/submit/project" method="POST" enctype="multipart/form-data" name="entry" id="entry" onLoad=reset()>
+
+          <b>Main Award</b>
+          <div class="awardTemplate">
+            <div id='extraAwardLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+              <select name="award" id="award" >
+                <option value="" id="award_opt">(Select Award #)</option>
+                {% for grant in nsf_grants %}
+                  {% set s = grant['award'] + " " + grant['name'] %}
+                  <option value="{{grant['award']}}">{{s}}</option>
+                {% endfor %}
+              </select>
+              <i>(from NSF FastLane database)</i>
+              <a href="#awardsForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
+            <div style="clear:both"></div>
+          </div>
+          <div id="more_awards"></div>
+          <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add additional award linked to project</span></a>
           <br>
-          <select name="award" id="award">
-            <option value="">(Select Award #)</option>
-            {% for grant in nsf_grants %}
-            {% set s = grant['award'] + " " + grant['name'] %}
-            <option value="{{grant['award']}}">{{s}}</option>
+
+          <br>
+          <b>Title:</b><br>
+          <textarea class="form-group" name="title" id="title" rows="1"></textarea>
+          <br>
+          <b>Short Title:</b><br>
+          <input class="form-group" type="text" name="short_title" id="short_title">
+          <br>
+          
+          <div class="form-group" style="margin:10px 0 10px 0">
+            <b>Main Contact:</b><br>
+            <div class="input-group">
+              <input class="input-sm form-control" type="text" size=8 id="pi_name_last" name="pi_name_last" value="" placeholder="Last Name" /> 
+              <span  class="input-group-addon">,</span>
+              <input class="input-sm form-control" type="text" size=8 id="pi_name_first" name="pi_name_first" value="" placeholder="First Name" />
+            </div>
+          </div>
+
+          <b>Institution:</b><br>
+          <!-- <textarea class="form-group" name="org" id="org" rows="1"></textarea> -->
+          <select name="org" id="org" >
+            <option value="" id="org_opt">(Select Institution)</option>
+            {% for org in orgs %}
+              <option value="{{org.name}}">{{org.name}}</option>
             {% endfor %}
           </select>
 
-          <i>(from NSF FastLane database)</i>
-          <br>
-          <b>Title:</b><br>
-          <textarea name="title" id="title" rows="1" cols="80"></textarea>
-          <br>
-          <b>PI Name:</b><br>
-          <input type="text" name="name" id="name" size="40">
-          <br>
-          <b>Institution:</b><br>
-          <textarea name="org" id="org" rows="1" cols="80"></textarea>
           <br>
           <b>Email:</b><br>
-          <input type="text" name="email" id="email" size="40" value="{{email}}">
+          <input class="form-group" type="text" name="email" id="email" value="{{email}}">
           <br>
-          <b>Co-PI(s):</b>  <i>(at your institution only)</i><br>
-          <input type="text" name="copi" id="copi" size="40">
+   
+          <div class="form-group" style="margin:10px 0 10px 0">
+            <label for="author">Additional Personnel: </label> 
+            <div class="authorTemplate" >
+              <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+              <div class="input-group removable">
+                <input class="input-sm form-control" type="text" size=50 id="copi_name_last" name="copi_name_last" value="" placeholder="Last Name" /> 
+                <span  class="input-group-addon">,</span>
+                <input class="input-sm form-control" type="text" size=50 id="copi_name_first" name="copi_name_first" value="" placeholder="First Name" />
+                <span  class="input-group-addon"></span>
+                <input class="input-sm form-control" type="text" size=30 id="copi_role" name="copi_role" value="" placeholder="Role(s)" />  
+                <span  class="input-group-addon"></span>
+                <select  class="input-sm form-control" name="copi_org" id="copi_org" >
+                  <option value="" id="copi_org_opt">(Select Institution)</option>
+                  {% for org in orgs %}
+                    <option value="{{org.name}}">{{org.name}}</option>
+                  {% endfor %}
+                </select>
+                <!-- <input class="input-sm form-control" type="text" size=20 id="copi_inst" name="copi_inst" value="" placeholder="Institution" />       -->
+              </div>
+              <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
+              <div style="clear:both"></div>
+            </div>
+            <div id="more_authors"></div>
+            <a href="#authorsForm" id="addAuthorRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_author">Add another author</span></a>
+          </div>
+
+          <table>
+            <tr>
+              <th>Start Date:</th>
+              <th width="40px"></th>
+              <th>End Date:</th>
+            </tr>
+            <tr>
+              <td><input type="date" name="start" id="start" size="20"></td>
+              <td></td>
+              <td><input type="date" name="end" id="end" size="20"></td>
+            </tr>
+          </table>
+
           <br>
-          <b>Start Date:</b><br>
-          <input type="text" name="start" id="start" size="10">
+          <b>Program:</b><br>
+          <select name="program" id="program">
+            <option value="">(Select Program)</option>
+            {% for p in programs %}
+              <option value="{{p}}">{{p.id}}</option>
+            {% endfor %}
+          </select><br><br>
+
+          <div class="form-group" name="websiteForm">
+            <label for="website">Project Website:</label>
+            <div class="websiteTemplate">
+              <div id='extraWebsiteLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+              <table>
+                <tr>
+                  <td width="10%"><i>Title&nbsp;</i></td>
+                  <td><input class="removable" type="text" name="website_title" id="website_title" size="90" style="margin-bottom:2px">
+                      <a href="#websiteForm" id="removeWebsiteRow" class="remover"><i class="fa fa-remove"></i></a></td>
+                </tr>
+                <tr>
+                  <td><i>URL&nbsp;</i></td>
+                  <td><input class="removable" type="text" name="website_url" id="website_url" size="90"></td>
+                </tr>
+              </table>
+              <div style="clear:both"></div>
+            </div>
+            <div id="more_websites"></div>
+            <a href="#websitesForm" id="addWebsiteRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_website">Add another website</span></a>
+          </div>
+        
+          <div class="form-group" name="deploymentForm">
+            <label for="deployment">Deployment:</label>
+            <div class="deploymentTemplate">
+              <div id='extraDeploymentLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+              <table>
+                <tr>
+                  <td width="10%"><i>Name&nbsp;</i></td>
+                  <td><input class="removable" type="text" name="deployment_name" id="deployment_name" size="90" style="margin-bottom:2px">
+                      <a href="#deploymentForm" id="removeDeploymentRow" class="remover"><i class="fa fa-remove"></i></a></td>
+                </tr>
+                <tr>
+                  <td><i>Description&nbsp;</i></td>
+                  <td><textarea class="removable" name="deployment_desc" id="deployment_desc" rows="2" cols="49"></textarea></td>
+                </tr>
+              </table>
+              <div style="clear:both"></div>
+            </div>
+            <div id="more_deployments"></div>
+            <a href="#deploymentsForm" id="addDeploymentRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_deployment">Add another deployment</span></a>
+          </div>
+
+          <div>
+            <b>Upload Data Management Plan</b>
+            <br>
+            <input type="file" name="dmp" style="font-size: 1em;">
+          </div>
           <br>
-          <b>End Date:</b><br>
-          <input type="text" name="end" id="end" size="10">
-          &nbsp; &nbsp; &nbsp; <input type="checkbox" name="iscr" id="iscr"> Collaborative Research
-          &nbsp; &nbsp; &nbsp; <input type="checkbox" name="isipy" id="isipy"> IPY Project
-          <br>
-          <b>Abstract:</b> <i>(Please modify the original NSF award abstract to better describe the project results, if applicable)</i><br>
+
+          <input type="checkbox" name="iscr" id="iscr"> Collaborative Research
+          &nbsp; &nbsp; &nbsp; <input type="checkbox" name="isfw" id="isfw"> Includes Field Work
+          &nbsp; &nbsp; &nbsp; <input type="checkbox" name="islw" id="islw"> Includes Lab Work or Modelling
+          <br><br>
+
+          <b>Abstract:</b> <br>
+          <i>(Please modify the original NSF award abstract to better describe the project results, if applicable)</i><br>
           <textarea name="sum" id="sum" rows="10" cols="80"></textarea>
 
           <br><br>
           <b>Location(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
           <div id="locations">
-            <select name="location1" id="location1">
+            <select name="location1" id="location1" style="margin-bottom: 3px">
               <option value="">(Select Term 1)</option>
               {% for k in locations %}
               {% set s = ' > '.join(k['terms']) %}
@@ -89,12 +187,14 @@
           </div>
           <button type="button" id="add-location">Add Term</button>
 
-        </td></tr></tbody></table>
+          <br><br>
+          <b>Location(s) - not GCMD:</b> &nbsp;<i>(Free text, separated by commas)</i>
+          <textarea class="form-group" name="location_free" id="location_free" rows="1"></textarea>
 
         <br>
-        <b>Data Type(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
+        <b>GCMD Keyword(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
         <div id="parameters">
-          <select name="parameter1" id="parameter1" style="width:40em">
+          <select name="parameter1" id="parameter1" style="width:40em;margin-bottom: 3px">
             <option value="">(Select Term 1)</option>
             {% for k in parameters %}
 
@@ -106,38 +206,77 @@
         <button type="button" id="add-parameter">Add Term</button>
         <br><br>
 
-            <div>
-              <b>Spatial Bounds of Data</b> <br />Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
-              <table style="border:0">
-                <tbody>
-            <tr>
-              <td align="center">
-                N: <input type="text" name="geo_n" id="geo_n" size="5" value=""> <br>
-                W: <input type="text" name="geo_w" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value=""> <br>
-                S: <input type="text" name="geo_s" id="geo_s" size="5" value="">
-              </td>
-              <td>
-                <span style="margin: 20px">
-                  <input type="checkbox" name="entire_region"> Entire Antarctic Region</input>
-                </span>
-              </td>
-            </tr>
-                </tbody>
-              </table>
-            </div>
-            <br>
-        <b>Repository:</b><br>
-        <div id="repositories">
-          <div id="repo1">
-            <input type="radio" name="repo1" value="USAP-DC"> I submitted my data to USAP-DC (this Web site).<br>
-            <input type="radio" name="repo1" value="other"> I submitted my data to a <a href=/repo_list>different repository</a>:<br>
-            &nbsp; &nbsp; &nbsp; <input type="text" name="repo_other_name1" size="40"> Name<br>
-            &nbsp; &nbsp; &nbsp; <input type="text" name="repo_other_id1" size="40"> Dataset URL<br>
-          </div>
+        <div>
+          <b>Spatial Bounds of Data</b> <br/>Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+          <table style="border:0">
+            <tbody>
+              <tr>
+                <td align="center">
+                  &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value=""> <br>
+                  W: <input type="text" name="geo_w" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value=""> <br>
+                  S: <input type="text" name="geo_s" id="geo_s" size="5" value="">
+                </td>
+                <td>
+                  <span style="margin: 20px">
+                    <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
+                  </span>
+                  <span style="margin: 20px">
+                   <input type="checkbox" name="cross_dateline"> Check if your bounds cross the International Date Line</input>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
+        <br>
+        <div class="form-group" name="publicationsForm">
+          <label for="publication">Relevant Publications</label>
+          <span><i>Include DOI where known</i></span>
+          <div class="publicationTemplate">
+            <div id='extraPubLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+            <textarea id="publication" name="publication" class="form-control removable" style="margin-bottom:2px"></textarea>
+            <a href="#publicationsForm" id="removePubRow" class="remover"><i class="fa fa-remove"></i></a>
+            <input class="input-sm form-control removable" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
+            <div style="clear:both"></div>
+          </div>
+          <div id="more_publications"></div>
+          <a href="#publicationsForm" id="addPubRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_pub">Add another publication</span></a>
+        </div>
+
+        <div class="form-group" name="datasetsForm">
+          <label for="datasets">Datasets</label>
+          <span><i>Include DOI where known</i></span>
+          <div class="datasetTemplate">
+            <div id='extraDatasetLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+            <table>
+              <tr>
+                <td width="20%"><i>Repository</i></td>
+                <td><input class="input-sm form-control removable" type="text" id="ds_repo" name="ds_repo"  style="margin-bottom:2px"/>
+                  <a href="#datasetForm" id="removeDatasetRow" class="remover"><i class="fa fa-remove"></i></a></td>
+              </tr>
+
+              <tr>
+                <td><i>Title</i></td>
+                <td><textarea class="input-sm form-control removable" name="ds_title" id="ds_title" rows="1" cols="74" style="margin-bottom:2px"></textarea></td>
+              </tr>
+              <tr>
+                <td><i>URL</i></td>
+                <td><textarea class="input-sm form-control removable" name="ds_url" id="ds_url" rows="1" cols="74" style="margin-bottom:2px"></textarea></td>
+              </tr>
+              <tr>
+                <td><i>DOI</i></td>
+                <td><input class="input-sm form-control removable" type="text" id="ds_doi" name="ds_doi" style="margin-bottom:2px"/></td>
+              </tr>
+            </table>
+            <div style="clear:both"></div>
+          </div>
+          <div id="more_datasets"></div>
+          <a href="#datasetsForm" id="addDatasetRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_dataset">Add another dataset</span></a>
+        </div>
         <input type="radio" name="nodata"> This is an interim report - my data aren't ready yet.
         <br><br>
+
         <b>Other comments relevant for data submission:</b><br>
         <textarea name="other_comments" rows="3" cols="80"></textarea><br>
         <br>
@@ -145,8 +284,9 @@
         <button value="Submit" name="entry">Submit</button>
       </form>
 
-
     </div>
   </div>
-</div></div>
-  {% endblock body %}
+</div>
+</div>
+
+{% endblock body %}
