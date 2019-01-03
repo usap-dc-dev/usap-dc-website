@@ -20,6 +20,10 @@ input, textarea {
     width: 75%;
 }
 
+.disabled {
+  color: #ccc;
+}
+
 #sidebar {
     padding: 0;
 }

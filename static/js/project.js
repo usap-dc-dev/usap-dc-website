@@ -12,7 +12,6 @@ to_yyyymmdd = function(date_in) {
 
 
 $(document).ready(function() {
-
     var persons_rows = JSON.parse($("#persons").text());
     var persons = [];
     for (var r in persons_rows) {
@@ -20,9 +19,18 @@ $(document).ready(function() {
         persons.push(row.id);
     }
 
+    var orgs_rows = JSON.parse($("#orgs").text());
+    var orgs = [];
+    for (r in orgs_rows) {
+      org = orgs_rows[r];
+      orgs.push(org.name);
+    }
+
     /*initiate the autocomplete function on the "author" elements, and pass along the persons array as possible autocomplete values:*/
     autocomplete(document.getElementById("copi_name_last"), document.getElementById("copi_name_first"), persons);
     autocomplete(document.getElementById("pi_name_last"), document.getElementById("pi_name_first"), persons);
+    autocomplete(document.getElementById("org"), null, orgs);
+    autocomplete(document.getElementById("copi_org"), null, orgs);
 
     var author_wrapper = $('#more_authors');
     var author_counter = 1;
@@ -35,7 +43,7 @@ $(document).ready(function() {
     var website_wrapper = $('#more_websites');
     var website_counter = 1;
     var deployment_wrapper = $('#more_deployments');
-    var deployment_counter = 1
+    var deployment_counter = 1;
 
 
     var check = $('input[name="entire_region"]');
@@ -55,6 +63,26 @@ $(document).ready(function() {
         s.val('');
         n.val('');
       }
+    });
+
+    // NOT NEEDED IF WE GET RID OF THE INTERIM REPORT CHECKBOX
+    // var no_data_check = $('input[name="nodata"]');
+    // no_data_check.on('click', function() {
+    //   if (no_data_check.prop('checked')) {
+    //     $("#datasets *").prop('disabled',true);
+    //   } else {
+    //     $("#datasets *").prop('disabled',false);
+    //   }
+
+    // });
+
+    var fieldwork_check = $('#isfw');
+    $("#deployments *").prop('disabled',!fieldwork_check.prop('checked'));
+    $("#deployments *").addClass('disabled');
+
+    fieldwork_check.on('click', function() {
+      $("#deployments *").prop('disabled',!fieldwork_check.prop('checked'));
+      $("#deployments *").toggleClass('disabled');
     });
 
     $('#award').change(function() {
@@ -92,7 +120,7 @@ $(document).ready(function() {
             $("#entry textarea[name='title']").val(msg.title);
             $("#entry input[name='pi_name_last']").val(pi[0]);
             $("#entry input[name='pi_name_first']").val(pi[1]);
-            $("#entry textarea[name='org']").val(msg.org);
+            $("#entry input[name='org']").val(msg.org);
             $("#entry input[name='email']").val(msg.email);
             $("#entry input[name='copi']").val(msg.copi);
             $("#entry input[name='start']").val(to_yyyymmdd(msg.start));
@@ -107,35 +135,37 @@ $(document).ready(function() {
     });
 
     $('#add-location').click(function() {
-    var $cloned = $("#locations select[name='location1']").clone();
-    var idx = $('#locations').children().length+1;
-    $cloned.attr('name','location'+idx);
-    $cloned.attr('id', 'location'+idx);
-    $cloned.children().first().text('(Select Term ' + idx + ')');
-    $('#locations').append($cloned);
+      var $cloned = $("#locations select[name='location1']").clone();
+      var idx = $('#locations').children().length+1;
+      $cloned.attr('name','location'+idx);
+      $cloned.attr('id', 'location'+idx);
+      $cloned.removeAttr('required');
+      $cloned.children().first().text('(Select Term ' + idx + ')');
+      $('#locations').append($cloned);
     
     });
 
     $('#add-parameter').click(function() {
-    var $cloned = $("#parameters select[name='parameter1']").clone();
-    var idx = $('#parameters').children().length+1;
-    $cloned.attr('name','parameter'+idx);
-    $cloned.attr('id', 'parameter'+idx);
-    $cloned.children().first().text('(Select Term ' + idx + ')');
-    $('#parameters').append($cloned);   
+      var $cloned = $("#parameters select[name='parameter1']").clone();
+      var idx = $('#parameters').children().length+1;
+      $cloned.attr('name','parameter'+idx);
+      $cloned.attr('id', 'parameter'+idx);
+      $cloned.removeAttr('required');
+      $cloned.children().first().text('(Select Term ' + idx + ')');
+      $('#parameters').append($cloned);   
     });
 
     $('#add_repo').click(function() {
-    var repos = $('#repositories');
-    var idx = repos.length+1;
-    var new_repo = $('#repo1').clone();
-    new_repo.attr('id', 'repo'+idx);
-    new_repo.find('input[name="repo1"]').attr('name','repo'+idx).prop('checked', false);
-    new_repo.find('input[name="repo_name_other1"]').attr('name','repo_name_other'+idx);
-    new_repo.find('input[name="repo_id_other1"]').attr('name', 'repo_id_other'+idx);
-    repos.append('<hr>');
-    repos.append(new_repo);
-    });
+      var repos = $('#repositories');
+      var idx = repos.length+1;
+      var new_repo = $('#repo1').clone();
+      new_repo.attr('id', 'repo'+idx);
+      new_repo.find('input[name="repo1"]').attr('name','repo'+idx).prop('checked', false);
+      new_repo.find('input[name="repo_name_other1"]').attr('name','repo_name_other'+idx);
+      new_repo.find('input[name="repo_id_other1"]').attr('name', 'repo_id_other'+idx);
+      repos.append('<hr>');
+      repos.append(new_repo);
+      });
 
     $('input[name="repos"]').change(function() {
     if ($(this).prop('checked')) {
@@ -168,6 +198,8 @@ $(document).ready(function() {
           //increment the element ids
           $(extraAuthor).find('#copi_name_last').attr({'id': 'copi_name_last'+author_counter, 'name': 'copi_name_last'+author_counter, 'value': ''});
           $(extraAuthor).find('#copi_name_first').attr({'id': 'copi_name_first'+author_counter, 'name': 'copi_name_first'+author_counter, 'value': ''});
+          $(extraAuthor).find('#copi_role').attr({'id': 'copi_role'+author_counter, 'name': 'copi_role'+author_counter, 'value': ''});
+          $(extraAuthor).find('#copi_org').attr({'id': 'copi_org'+author_counter, 'name': 'copi_org'+author_counter, 'value': ''});
           $(extraAuthor).find('#removeAuthorRow').show();
           $(extraAuthor).find('#extraAuthorLine').show();
           if (typeof author != 'undefined') {
@@ -176,6 +208,7 @@ $(document).ready(function() {
           }
           $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
           autocomplete(document.getElementById("copi_name_last"+author_counter), document.getElementById("copi_name_first"+author_counter), persons);
+          autocomplete(document.getElementById("copi_org"+author_counter), null, orgs);
           author_counter++;
     }
 
@@ -194,10 +227,10 @@ $(document).ready(function() {
     function addDatasetRow() {
       var extraDataset = $('.datasetTemplate').clone();
       //increment the element ids
-      $(extraDataset).find('#dataset_repo').attr({'id': 'dataset_repo'+ds_counter, 'name': 'dataset_repo'+ds_counter, 'value': ''});
-      $(extraDataset).find('#dataset_title').attr('id', 'dataset_title'+ds_counter).attr('name', 'dataset_title'+ds_counter).html('');
-      $(extraDataset).find('#dataset_url').attr('id', 'dataset_url'+ds_counter).attr('name', 'dataset_url'+ds_counter).html('');
-      $(extraDataset).find('#dataset_doi').attr({'id': 'dataset_doi'+ds_counter, 'name': 'dataset_doi'+ds_counter, 'value': ''});
+      $(extraDataset).find('#ds_repo').attr({'id': 'ds_repo'+ds_counter, 'name': 'ds_repo'+ds_counter, 'value': ''});
+      $(extraDataset).find('#ds_title').attr('id', 'ds_title'+ds_counter).attr('name', 'ds_title'+ds_counter).html('');
+      $(extraDataset).find('#ds_url').attr('id', 'ds_url'+ds_counter).attr('name', 'ds_url'+ds_counter).html('');
+      $(extraDataset).find('#ds_doi').attr({'id': 'ds_doi'+ds_counter, 'name': 'ds_doi'+ds_counter, 'value': ''});
       $(extraDataset).find('#removeDatasetRow').show();
       $(extraDataset).find('#extraDatasetLine').show();
       // if (typeof publication != 'undefined') {
@@ -237,7 +270,6 @@ $(document).ready(function() {
   }
 
 
-
   $('#addAwardRow').click(function (e) {
       //code to add another file
       e.preventDefault();
@@ -253,7 +285,7 @@ $(document).ready(function() {
   function addAwardRow() {
       var extraAward = $('.awardTemplate').clone();
       //increment the element ids
-      $(extraAward).find('#award').attr('id', 'award'+award_counter).attr('name', 'award'+award_counter).html('');
+      $(extraAward).find('#award').attr('id', 'award'+award_counter).attr('name', 'award'+award_counter).html('').removeAttr('required');
       $('#award').find('option').clone().appendTo($(extraAward).find('#award'+award_counter));
       $(extraAward).find('#removeAwardRow').show();
       $(extraAward).find('#extraAwardLine').show();
@@ -287,6 +319,7 @@ $(document).ready(function() {
 
 
     $('#addDeploymentRow').click(function (e) {
+      if ($(this).hasClass('disabled')) return;
       //code to add another dataset
       e.preventDefault();
       addDeploymentRow();
@@ -317,6 +350,7 @@ function autocomplete(inp, inp2, arr) {
   var currentFocus;
   /*execute a function when someone writes in the text field:*/
   [inp, inp2].forEach(function(elem) {
+    if (elem === null) return;
     elem.addEventListener("input", function(e) {
         var a, b, i, val = this.value;
         /*close any already open lists of autocompleted values*/
@@ -342,12 +376,18 @@ function autocomplete(inp, inp2, arr) {
             b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
             /*execute a function when someone clicks on the item value (DIV element):*/
             b.addEventListener("click", function(e) {
-                /*insert the value for the autocomplete text field:*/
-                //split the name at the comma
-                var selected = this.getElementsByTagName("input")[0].value.split(',');
-                inp.value = selected[0].trim();
-                inp2.value = selected[1].trim();
-
+                var selected;
+                if (inp2 !== null) {
+                  /*insert the value for the autocomplete text field:*/
+                  //split the name at the comma
+                  selected = this.getElementsByTagName("input")[0].value.split(',');
+                  inp.value = selected[0].trim();
+                  inp2.value = selected[1].trim();
+                }
+                else {
+                  selected = this.getElementsByTagName("input")[0].value;
+                  inp.value = selected;
+                }
                 /*close the list of autocompleted values,
                 (or any other open lists of autocompleted values:*/
                 closeAllLists();

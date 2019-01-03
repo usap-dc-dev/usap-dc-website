@@ -52,6 +52,7 @@ app.config.update(
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
     DOI_REF_FILE="inc/doi_ref",
+    PROJECT_REF_FILE="inc/project_ref",
     DEBUG=True
 )
 
@@ -656,7 +657,8 @@ def check_dataset_submission(msg_data):
         if not v.func(msg_data):
             msg += "<p>" + v.msg
     if len(msg) > 0:
-        raise BadSubmission(msg,'/submit/dataset')
+        raise BadSubmission(msg, '/submit/dataset')
+
 
 @app.route('/repo_list')
 def repo_list():
@@ -669,32 +671,37 @@ def not_found():
 
 
 def check_project_registration(msg_data):
+    # CURRENTLY REDUNDANT - All checking done in HTML template
     def default_func(field):
         return lambda data: field in data and bool(data[field])
-    
     validators = [
-        Validator(func=default_func('award'),msg="You must select an award #"),
-        Validator(func=default_func("title"),msg="You must provide a title for the project"),
-        Validator(func=default_func("name"),msg="You must provide the PI's name for the project"),
-        Validator(func=default_func('email'),msg='You must include a contact email address for the submission.'),
-        Validator(func=lambda data: 'repos' in data and (len(data['repos'])>0 or data['repos'] == 'nodata'),msg="You must provide info about the repository where you submitted the dataset"),
-        Validator(func=lambda data: 'locations' in data and len(data['locations'])>0,msg="You must provide at least one location term"),
-        Validator(func=lambda data: 'parameters' in data and len(data['parameters'])>0,msg="You must provide at least one keyword term")
+        Validator(func=default_func('award'), msg="You must select an award #"),
+        Validator(func=default_func("title"), msg="You must provide a title for the project"),
+        Validator(func=default_func("pi_name_first"), msg="You must provide the PI's first name for the project"),
+        Validator(func=default_func("pi_name_last"), msg="You must provide the PI's last name for the project"),
+        Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
+        Validator(func=default_func('start'), msg='You must include a start date for the project'),
+        Validator(func=default_func('end'), msg='You must include an end date for the project'),
+        Validator(func=default_func('sum'), msg='You must include an abstract for the project'),
+        # Validator(func=lambda data: 'repos' in data and (len(data['repos']) > 0 or data['repos'] == 'nodata'), msg="You must provide info about the repository where you submitted the dataset"),
+        Validator(func=lambda data: 'locations' in data and len(data['locations']) > 0, msg="You must provide at least one location term"),
+        Validator(func=lambda data: 'parameters' in data and len(data['parameters']) > 0, msg="You must provide at least one keyword term")
     ]
     msg = ""
     for v in validators:
         if not v.func(msg_data):
             msg += "<p>" + v.msg
     if len(msg) > 0:
-        raise BadSubmission(msg,'/submit/project')
+        raise BadSubmission(msg, '/submit/project')
     
 
 def format_time():
     t = datetime.utcnow()
     s = t.strftime('%Y-%m-%dT%H:%M:%S.%f')
     return s[:-5] + 'Z'
-        
-@app.route('/submit/dataset2',methods=['GET','POST'])
+   
+
+@app.route('/submit/dataset2', methods=['GET', 'POST'])
 def dataset2():
     error = ""
     success = ""
@@ -845,7 +852,20 @@ def updateNextDOIRef():
         refFile.write(str(newRef))
 
 
-@app.route('/submit/project',methods=['GET','POST'])
+# Read the next project reference number from the file
+def getNextProjectRef():
+    ref = open(app.config['PROJECT_REF_FILE'], 'r').readline().strip()
+    return 'p%0*d' % (7, int(ref))
+
+
+# increment the next project reference number in the file
+def updateNextProjectRef():
+    newRef = int(getNextProjectRef().replace('p', '')) + 1
+    with open(app.config['PROJECT_REF_FILE'], 'w') as refFile:
+        refFile.write(str(newRef))
+
+
+@app.route('/submit/project', methods=['GET', 'POST'])
 def project():
     user_info = session.get('user_info')
     if user_info is None:
@@ -861,54 +881,150 @@ def project():
         #     msg_data['email'] = session['user_info']['email']
         msg_data.update(request.form.to_dict())
 
+        # handle multiple parameters, awards, co-authors, etc
         parameters = []
         idx = 1
         key = 'parameter1'
         while key in msg_data:
-            parameters.append(msg_data[key])
+            if msg_data[key] != "":
+                parameters.append(msg_data[key])
             del msg_data[key]
             idx += 1
-            key = 'parameter'+str(idx)
+            key = 'parameter' + str(idx)
         msg_data['parameters'] = parameters
+
+        other_awards = []
+        idx = 1
+        key = 'award1'
+        while key in msg_data:
+            if msg_data[key] != "":
+                other_awards.append(msg_data[key])
+            del msg_data[key]
+            idx += 1
+            key = 'award' + str(idx)
+        msg_data['other_awards'] = other_awards
+
+        copis = []
+        idx = 0
+        key = 'copi_name_last'
+        while key in msg_data:
+            if msg_data[key] != "":
+                copi = {'name_last': msg_data[key],
+                        'name_first': msg_data[key.replace('last', 'first')],
+                        'role': msg_data[key.replace('name_last', 'role')],
+                        'org': msg_data[key.replace('name_last', 'org')]
+                        }
+                copis.append(copi)
+            del msg_data[key], msg_data[key.replace('last', 'first')], msg_data[key.replace('name_last', 'role')], msg_data[key.replace('name_last', 'org')]
+            idx += 1
+            key = 'copi_name_last' + str(idx)
+        msg_data['copis'] = copis
+
+        websites = []
+        idx = 0
+        key = 'website_url'
+        while key in msg_data:
+            if msg_data[key] != "":
+                website = {'url': msg_data[key], 'title': msg_data[key.replace('url', 'title')]}
+                websites.append(website)
+            del msg_data[key], msg_data[key.replace('url', 'title')]
+            idx += 1
+            key = 'website_url' + str(idx)
+        msg_data['websites'] = websites
+
+
+        print(msg_data)
+        deployments = []
+        idx = 0
+        key = 'deployment_name'
+        while key in msg_data:
+            if msg_data[key] != "":
+                depl = {'name': msg_data[key], 'description': msg_data[key.replace('name', 'desc')]}
+                deployments.append(depl)
+            del msg_data[key], msg_data[key.replace('name', 'desc')]
+            idx += 1
+            key = 'deployment_name' + str(idx)
+        msg_data['deployments'] = deployments
+
+        publications = []
+        idx = 0
+        key = 'publication'
+        while key in msg_data:
+            if msg_data[key] != "":
+                pub = {'name': msg_data[key], 'doi': msg_data[key.replace('publication', 'pub_doi')]}
+                publications.append(pub)
+            del msg_data[key], msg_data[key.replace('publication', 'pub_doi')]
+            idx += 1
+            key = 'publication' + str(idx)
+        msg_data['publications'] = publications
 
         locations = []
         idx = 1
         key = 'location1'
         while key in msg_data:
-            locations.append(msg_data[key])
+            if msg_data[key] != "":
+                locations.append(msg_data[key])
             del msg_data[key]
             idx += 1
-            key = 'location'+str(idx)
+            key = 'location' + str(idx)
         msg_data['locations'] = locations
 
-        if 'nodata' in msg_data:
-            repos = 'nodata'
-            del msg_data['nodata']
-        else:
-            repos = []
-            idx = 1
-            key = 'repo1'
-            while key in msg_data:
-                if msg_data[key] == 'USAP-DC':
-                    repos.append({'name':'USAP-DC'})
-                else:
-                    d = dict()
-                    if 'repo_other_name'+str(idx) in msg_data:
-                        d['name'] = msg_data['repo_other_name'+str(idx)]
-                    if 'repo_other_id'+str(idx) in msg_data:
-                        d['id'] = msg_data['repo_other_id'+str(idx)]
-                    repos.append(d)
-                idx+=1
-                key = 'repo'+str(idx)
-        msg_data = {k:v for k,v in msg_data.iteritems() if k[:4] != 'repo'}   
+        # if 'nodata' in msg_data:
+        #     msg_data['repos'] = 'nodata'
+        #     del msg_data['nodata']
+        # else:
+        repos = []
+        idx = 0
+        key = 'ds_repo'
+        while key in msg_data:
+            if msg_data[key] != "":
+                repo = {'repository': msg_data[key],
+                        'title': msg_data[key.replace('repo', 'title')],
+                        'url': msg_data[key.replace('repo', 'url')],
+                        'doi': msg_data[key.replace('repo', 'doi')]}
+                repos.append(repo)
+            del msg_data[key], msg_data[key.replace('repo', 'title')], msg_data[key.replace('repo', 'url')], msg_data[key.replace('repo', 'doi')]
+            idx += 1
+            key = 'ds_repo' + str(idx)
         msg_data['repos'] = repos
 
-        msg_data['timestamp'] = format_time()
+        timestamp = format_time()
+        msg_data['timestamp'] = timestamp
+
         msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
         check_project_registration(msg_data)
 
+        # get the data management plan and save it in the upload folder
+        dmp = request.files.get('dmp')
+        if dmp is not None:
+            dmp_fname = secure_filename(dmp.filename)
+            msg_data['dmp_file'] = dmp_fname
+
+            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
+            msg_data['upload_directory'] = upload_dir
+            if not os.path.exists(upload_dir):
+                os.makedirs(upload_dir)
+
+            dmp.save(os.path.join(upload_dir, dmp_fname))
+      
+        # save json file in submitted dir
+        submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+        # get next_id for project
+        next_id = getNextProjectRef()
+        updateNextProjectRef()
+        submitted_file = os.path.join(submitted_dir, next_id + ".json")
+        with open(submitted_file, 'w') as file:
+            file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+        os.chmod(submitted_file, 0o664)
+
+        # email RT queue
+        # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
+        message = "New project submission.\n\nDataset JSON: %scurator?uid=%s\n" \
+            % (request.url_root, next_id)
+        msg = MIMEText(message)
+
         sender = msg_data.get('email')
-        recipients = ['info@usap-dc.org']
+        recipients = ['ns3131@columbia.edu'] #['info@usap-dc.org']
         msg['Subject'] = 'USAP-DC Project Submission'
         msg['From'] = sender
         msg['To'] = ', '.join(recipients)
@@ -940,7 +1056,7 @@ def project():
                                locations=get_location_menu(), parameters=get_parameter_menu(), orgs=get_orgs())
 
 
-@app.route('/submit/projectinfo',methods=['GET'])
+@app.route('/submit/projectinfo', methods=['GET'])
 def projectinfo():
     award_id = request.args.get('award')
     if award_id is not None:       
