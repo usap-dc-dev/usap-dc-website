@@ -1,7 +1,5 @@
-import urllib2
 import json
 import xml.dom.minidom as minidom
-from lib.ezid import formatAnvlRequest, issueRequest, encode, MyHTTPErrorProcessor
 import os
 import psycopg2
 import psycopg2.extras
@@ -20,7 +18,6 @@ ISOXML_FOLDER = "watch/isoxml"
 DOCS_FOLDER = "doc"
 DOI_REF_FILE = "inc/doi_ref"
 CURATORS_LIST = "inc/curators.txt"
-EZID_FILE = "inc/ezid.json"
 DATACITE_CONFIG = "inc/datacite.json"
 DATACITE_TO_ISO_XSLT = "static/DataciteToISO19139v3.2.xslt"
 ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
@@ -106,57 +103,6 @@ def submitToDataCite(uid):
         return("Error generating DOI: %s" % str(e))
 
 
-#OBSOLETE - no longer using EZID
-def submitToEZID(uid):
-
-    datacite_file = getDCXMLFileName(uid)
-    # Read in EZID connection details
-    with open(EZID_FILE) as ezid_file:
-        ezid_details = json.load(ezid_file)
-
-    # Submit the datacite file to EZID to get the DOI
-    try:
-        opener = urllib2.build_opener(MyHTTPErrorProcessor())
-        h = urllib2.HTTPBasicAuthHandler()
-        h.add_password("EZID", ezid_details['SERVER'], ezid_details['USER'], ezid_details['PASSWORD'])
-        opener.add_handler(h)
-
-        landing_page = url_for("landing_page", dataset_id=uid, _external=True)
-        data = formatAnvlRequest(["datacite", "@%s" % datacite_file, "_target", landing_page])
-
-        # if using mint to generate random DOI id:
-        # response = issueRequest(ezid_details['SERVER'], opener, "shoulder/%s" % encode(ezid_details['SHOULDER']), "POST", data)
-        # if using the create option, rather than mint:
-        id = ezid_details['SHOULDER'] + uid
-
-        response = issueRequest(ezid_details['SERVER'], opener, "id/%s" % encode(id), "PUT", data)
-        # print("RESPONSE: %s" % response)
-        if response == "Error: bad request - unrecognized DOI shoulder\n":
-            return("Error: unrecognized DOI shoulder")
-
-        elif "Missing child element" in response:
-            return("Error generating DOI: missing required DataCite fields.<br/>" +
-                   "Make sure the following are all populated:<br/>Publisher<br/>Year<br/>Resource Type<br/>Title<br/>Author")
-
-        elif "doi" not in response:
-            return("Error generating DOI. Returned response from EZID: %s" % response)
-
-        else:
-            doi = response.split(" ")[1]
-            doi = doi.replace("doi:", "")
-
-            return("Successfully registered dataset at EZID, doi: %s" % doi)
-
-    except urllib2.HTTPError as e:
-        return("Error: Failed to authenticate with EZID server")
-
-    except urllib2.URLError as e:
-        return("Error connecting to EZID server")
-
-    except Exception as e:
-        return("Error generating DOI: %s" % str(e))
-
-
 def getDataCiteXML(uid):
     print('in getDataCiteXML')
     status = 1
@@ -221,16 +167,6 @@ def getISOXMLFileName(uid):
     return os.path.join(ISOXML_FOLDER, "%siso.xml" % uid)
 
 
-# OBSOLETE - no longer using EZID
-def isRegisteredWithEZID(uid):
-    with open(EZID_FILE) as ezid_file:
-        ezid_details = json.load(ezid_file)
-    id = ezid_details['SHOULDER'] + uid
-    ezid_url = ezid_details['SERVER'] + '/id/' + id
-    r = requests.get(ezid_url)
-    return r.status_code == 200
-
-
 def isRegisteredWithDataCite(uid):
     with open(DATACITE_CONFIG) as dc_file:
         dc_details = json.load(dc_file)
@@ -276,7 +212,7 @@ def ISOXMLExists(uid):
 #             (isoxml_file, ISO['REMOTE_USER'], ISO['REMOTE_HOST'], new_file_name)
 #         print(cmd)
 #         return os.system(cmd.encode('utf-8'))
-        # os.remove(isoxml_file)
+#         os.remove(isoxml_file)
 
 
 def isCurator():
