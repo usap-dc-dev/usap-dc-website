@@ -10,6 +10,7 @@ import requests
 from flask import session, url_for
 from subprocess import Popen, PIPE
 from json2sql import makeBoundsGeom
+import base64
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -20,6 +21,7 @@ DOCS_FOLDER = "doc"
 DOI_REF_FILE = "inc/doi_ref"
 CURATORS_LIST = "inc/curators.txt"
 EZID_FILE = "inc/ezid.json"
+DATACITE_CONFIG = "inc/datacite.json"
 DATACITE_TO_ISO_XSLT = "static/DataciteToISO19139v3.2.xslt"
 ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
 PYTHON = "/opt/rh/python27/root/usr/bin/python"
@@ -39,6 +41,72 @@ def connect_to_db():
     return (conn, cur)
 
 
+def submitToDataCite(uid):
+    datacite_file = getDCXMLFileName(uid)
+    # Read in Datacite connection details
+    try:
+        with open(DATACITE_CONFIG) as dc_file:
+            dc_details = json.load(dc_file)
+    except Exception as e:
+        return("Error opening Datacite config file: %s" % str(e))
+
+    try:
+        doi = dc_details['SHOULDER'] + uid
+        landing_page = url_for("landing_page", dataset_id=uid, _external=True)
+    except Exception as e:
+        return("Error generating DOI: %s" % str(e))
+ 
+    # read in datacite xml file
+    try:
+        with open(datacite_file, "r") as f:
+            xml = f.read()
+    except Exception as e:
+        return("Error reading DataCite XML file: %s" % str(e))
+
+    # apply base64 encoding
+    try:
+        xml_b64 = base64.b64encode(xml)
+    except Exception as e:
+        return("Error encoding DataCite XML: %s" % str(e))
+
+    # create the DOI json object
+    try:
+        doi_json = {"data": {
+                    "type": "dois",
+                    "attributes": {
+                        "doi": doi,
+                        "event": "publish",
+                        "url": landing_page,
+                        "xml": xml_b64
+                    },
+                    "relationships": {
+                        "client": {
+                            "data": {
+                                "type": "clients",
+                                "id": dc_details['USER']
+                            }
+                        }
+                    }
+                    }
+                    }
+    except Exception as e:
+        return("Error generating DOI json object: %s" % str(e))
+
+    # Send DOI Create request to DataCite
+    try:
+        headers = {'Content-Type': 'application/vnd.api+json'}
+        response = requests.post(dc_details['SERVER'], headers=headers, data=json.dumps(doi_json), auth=(dc_details['USER'], dc_details['PASSWORD']))
+
+        if response.status_code != 201:
+            return("Error with request to create DOI at DataCite.  Status code: %s\n Error: %s" % (response.status_code, response.json()))
+
+        return("Successfully registered dataset at DataCite, DOI: %s" % doi)
+
+    except Exception as e:
+        return("Error generating DOI: %s" % str(e))
+
+
+#OBSOLETE - no longer using EZID
 def submitToEZID(uid):
 
     datacite_file = getDCXMLFileName(uid)
@@ -153,12 +221,22 @@ def getISOXMLFileName(uid):
     return os.path.join(ISOXML_FOLDER, "%siso.xml" % uid)
 
 
+# OBSOLETE - no longer using EZID
 def isRegisteredWithEZID(uid):
     with open(EZID_FILE) as ezid_file:
         ezid_details = json.load(ezid_file)
     id = ezid_details['SHOULDER'] + uid
     ezid_url = ezid_details['SERVER'] + '/id/' + id
     r = requests.get(ezid_url)
+    return r.status_code == 200
+
+
+def isRegisteredWithDataCite(uid):
+    with open(DATACITE_CONFIG) as dc_file:
+        dc_details = json.load(dc_file)
+    id = dc_details['SHOULDER'] + uid
+    dc_url = dc_details['SERVER'] + '/' + id
+    r = requests.get(dc_url)
     return r.status_code == 200
 
 

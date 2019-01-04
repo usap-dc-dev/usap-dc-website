@@ -32,7 +32,7 @@ import humanize
 import urllib
 import lib.json2sql as json2sql
 import shutil
-from lib.curatorFunctions import isCurator, isRegisteredWithEZID, submitToEZID, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
+from lib.curatorFunctions import isCurator, isRegisteredWithDataCite, submitToDataCite, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
     getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
     getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords
 
@@ -1546,8 +1546,8 @@ def curator():
                     landing_page = ''
                 else:
                     landing_page = '/view/dataset/%s' % dataset_id
-                    if not isRegisteredWithEZID(dataset_id):
-                        status = "Not yet registered with EZID"
+                    if not isRegisteredWithDataCite(dataset_id):
+                        status = "Not yet registered with DataCite"
                     elif not ISOXMLExists(dataset_id):
                         status = "ISO XML file missing"
                     else:
@@ -1695,14 +1695,14 @@ def curator():
                                 problem = True
 
                     if not problem:
-                        # EZID DOI submission
-                        print('EZID DOI submission')
+                        # DataCite DOI submission
+                        print('DataCite DOI submission')
                         datacite_file, status = getDataCiteXML(uid)
                         if status == 0:
                             template_dict['error'] = "Error: Unable to get DataCiteXML from database."
                             problem = True
                         else:
-                            msg = submitToEZID(uid)
+                            msg = submitToDataCite(uid)
                             template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
                             if msg.find("Error") >= 0:
                                 template_dict['error'] = msg
@@ -1766,8 +1766,8 @@ def curator():
                     else:
                         template_dict['error'] = 'Invalid bounds'
 
-                # Standalone EZID DOI submission
-                elif request.form.get('submit') == "submit_to_ezid":
+                # Standalone DataCite DOI submission
+                elif request.form.get('submit') == "submit_to_datacite":
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "dcxml"
                     xml_str = request.form.get('dcxml').encode('utf-8')
@@ -1776,14 +1776,14 @@ def curator():
                         with open(datacite_file, 'w') as out_file:
                             out_file.write(xml_str)
                         os.chmod(datacite_file, 0o664)
-                        msg = submitToEZID(uid)
+                        msg = submitToDataCite(uid)
                         if msg.find("Error") >= 0:
                             template_dict['error'] = msg
                             problem = True
                         else:
                             template_dict['message'].append(msg)
                     except Exception as err:
-                        template_dict['error'] = "Error updating DataCite XML file: " + str(err) + datacite_file
+                        template_dict['error'] = "Error updating DataCite XML file: " + str(err) + " " + datacite_file
 
                 # Standalone DataCite XML generation
                 elif request.form.get('submit') == "generate_dcxml":
