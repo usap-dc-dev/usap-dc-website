@@ -9,6 +9,7 @@ from flask import session, url_for
 from subprocess import Popen, PIPE
 from json2sql import makeBoundsGeom
 import base64
+from shutil import copyfile
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -16,6 +17,7 @@ SUBMITTED_FOLDER = "submitted"
 DCXML_FOLDER = "watch/dcxml"
 ISOXML_FOLDER = "watch/isoxml"
 DOCS_FOLDER = "doc"
+AWARDS_FOLDER = "award"
 DOI_REF_FILE = "inc/doi_ref"
 CURATORS_LIST = "inc/curators.txt"
 DATACITE_CONFIG = "inc/datacite.json"
@@ -23,6 +25,7 @@ DATACITE_TO_ISO_XSLT = "static/DataciteToISO19139v3.2.xslt"
 ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
 PYTHON = "/opt/rh/python27/root/usr/bin/python"
 LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
+PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -363,3 +366,174 @@ def getDatasetKeywords(uid):
             "ORDER BY keyword_label;"
     cur.execute(query)
     return cur.fetchall() 
+
+
+def projectJson2sql(data, uid):
+
+    conn, cur = connect_to_db()
+
+    sql_out = ""
+    sql_out += "START TRANSACTION;\n\n"
+
+    # project table
+    sql_out += "--NOTE: populate project table\n"
+    sql_out += "INSERT INTO project (proj_uid, title, short_name, description, start_date, end_date, date_created, date_modified) " \
+               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], data['sum'].replace("'", "''"),  
+                                                                                 data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10])
+
+    # Add PI to person table, if necessary, and project_person_map
+    pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
+    pi_id = pi_id.replace(',  ', ', ')
+    query = "SELECT * FROM person WHERE id = '%s'" % pi_id
+    cur.execute(query)
+    res = cur.fetchall()
+    if len(res) == 0:
+        sql_out += "--NOTE: adding PI to person table\n"
+        sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
+                   "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
+                   (pi_id, data['pi_name_first'], data['pi_name_last'], data['email'], data['org'])
+    else:
+        if res[0]['email'] != data['email']:
+            sql_out += "--NOTE: updating email for PI %s to %s\n" % (pi_id, data['email'])
+            sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], pi_id)
+        if res[0]['organization'] != data['org']:
+            sql_out += "--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
+            sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], pi_id)
+
+    sql_out += "--NOTE: adding PI %s to project_person_map\n" % pi_id
+    sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n\n" % \
+               (uid, pi_id)
+    
+    # add org to Organizations table if necessary
+    query = "SELECT COUNT(*) FROM organizations WHERE name = '%s'" % data['org']
+    cur.execute(query)
+    res = cur.fetchall()
+    if res[0]['count'] == 0:
+        sql_out += "--NOTE: adding %s to organizations table\n" % data['org']
+        sql_out += "INSERT INTO organizations name='%s';\n\n" % data['org']
+
+    # Add other personnel to the person table, if necessary, and project_person_map
+    for co_pi in data['copis']:
+        co_pi_id = co_pi['name_last'] + ', ' + co_pi['name_first']
+        co_pi_id = co_pi_id.replace(',  ', ', ')
+        query = "SELECT * FROM person WHERE id = '%s'" % co_pi_id
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) == 0:
+            sql_out += "--NOTE: adding %s to person table\n" % co_pi_id
+            sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
+                       "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
+                       (co_pi_id, co_pi['name_first'], co_pi['name_last'], co_pi['org'])
+        elif res[0]['organization'] != co_pi['org']:
+            sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
+            sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
+        
+        sql_out += "--NOTE: adding %s to project_person_map\n" % co_pi_id
+        sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
+                   (uid, co_pi_id, co_pi.get('role'))
+
+        # add org to Organizations table if necessary
+        query = "SELECT COUNT(*) FROM organizations WHERE name = '%s'" % co_pi['org']
+        cur.execute(query)
+        res = cur.fetchall()
+        if res[0]['count'] == 0:
+            sql_out += "--NOTE: adding %s to orgainzations table\n" % co_pi['org']
+            sql_out += "INSERT INTO organizations name='%s';\n\n" % co_pi['org']
+
+    # Move data management plan to award directory and update award table
+    if data.get('dmp_file') is not None and data['dmp_file'] != '' and data.get('upload_directory') is not None and data.get('award') is not None:
+        src = os.path.join(data['upload_directory'], data['dmp_file'])
+        dst_dir = os.path.join(AWARDS_FOLDER, data['award'])
+        if not os.path.exists(dst_dir):
+            os.mkdir(dst_dir)
+        dst = os.path.join(dst_dir, data['dmp_file'])
+        try:
+            copyfile(src, dst)
+        except Exception as e:
+            return ("ERROR: unable to copy data management plan to award directory. \n" + str(e))
+        sql_out += "--NOTE: updating dmp link for award %s\n" % data['award']
+        sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n\n" % (dst, data['award'])
+
+
+    # Add awards to project_award_map
+    data['other_awards'].append(data['award'])
+    sql_out += "--NOTE: adding awards to project_award_map\n"
+    for award in data['other_awards']:
+        sql_out += "INSERT INTO project_award_map (proj_uid, award_id) VALUES ('%s', '%s');\n" % \
+            (uid, award)
+
+    # Add initiatives to project_initiative_map
+    initiative = json.loads(data["program"].replace("\'", "\""))['id']
+    sql_out += "\n--NOTE: adding initiative to project_initiative_map\n"
+    sql_out += "INSERT INTO project_initiative_map (proj_uid, initiative_id) VALUES ('%s', '%s');\n\n" % \
+        (uid, initiative)
+
+    # Add references
+    #first find the highest ref_uid already in the table
+    query = "SELECT MAX(ref_uid) FROM reference;"
+    cur.execute(query)
+    res = cur.fetchall()
+    old_uid = int(res[0]['max'].replace('ref_', ''))
+
+    for pub in data['publications']:
+        # see if they are already in the references table
+        query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub['doi'], pub['name'])
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) == 0:
+            sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
+            old_uid += 1
+            ref_uid = 'ref_%0*d' % (7, old_uid)
+            sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
+                (ref_uid, pub['name'], pub['doi'])
+        else:
+            ref_uid = res['ref_uid']
+        sql_out += "--NOTE: adding reference %s to project_ref_map\n" % ref_uid
+        sql_out += "INSERT INTO project_ref_map (proj_uid, ref_uid) VALUES ('%s', '%s');\n" % \
+            (uid, ref_uid)
+
+    sql_out += "\n"
+
+    # Add datasets
+    for ds in data['datasets']:
+        # see if they are already in the project_dataset table
+        query = "SELECT * FROM project_dataset WHERE repository = '%s' AND title = '%s'" % (ds['repository'], ds['title'])
+        if ds.get('doi') is not None and ds['doi'] != '':
+            query += " AND doi = '%s'"
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) == 0:
+            sql_out += "--NOTE: adding dataset %s to project_dataset table\n" % ds['title']
+            if ds.get('doi') is not None and ds['doi'] != '':
+                # first try and get the dataset id from the dataset table, using the DOI
+                query = "SELECT id FROM dataset WHERE doi = '%s';" % ds['doi']
+                cur.execute(query)
+                res2 = cur.fetchall()
+                if len(res2) == 1:
+                    ds_id = res2[0]['id']
+                else:
+                    ds_id = getNextProjectDatasetID()
+            else:
+                ds_id = getNextProjectDatasetID()
+            sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, doi) VALUES ('%s', '%s', '%s', '%s', '%s');\n" % \
+                (ds_id, ds['repository'], ds['title'], ds['url'], ds['doi'])
+        else:
+            ds_id = res[0]['dataset_id']
+        sql_out += "--NOTE: adding dataset %s to project_dataset_map\n" % ds_id
+        sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s')" % (uid, ds_id)
+
+        
+
+
+
+    return sql_out
+
+
+# Read the next project dataset reference number from the file (for non-USAP-DC datasets)
+def getNextProjectDatasetID():
+    ds_id = open(PROJECT_DATASET_ID_FILE, 'r').readline().strip()
+    new_ds_id = int(ds_id) + 1
+    with open(PROJECT_DATASET_ID_FILE, 'w') as refFile:
+        refFile.write(str(new_ds_id))
+    return ds_id 
+

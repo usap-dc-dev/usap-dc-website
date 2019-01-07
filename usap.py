@@ -34,7 +34,7 @@ import lib.json2sql as json2sql
 import shutil
 from lib.curatorFunctions import isCurator, isRegisteredWithDataCite, submitToDataCite, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
     getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
-    getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords
+    getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords, projectJson2sql
 
 app = Flask(__name__)
 
@@ -671,15 +671,20 @@ def not_found():
 
 
 def check_project_registration(msg_data):
-    # CURRENTLY REDUNDANT - All checking done in HTML template
+    # MOSTLY REDUNDANT - All checking done in HTML template, except for valid email address
     def default_func(field):
         return lambda data: field in data and bool(data[field])
+
+    def check_valid_email(data):
+        return re.match("[^@]+@[^@]+\.[^@]+", data['email'])
+
     validators = [
         Validator(func=default_func('award'), msg="You must select an award #"),
         Validator(func=default_func("title"), msg="You must provide a title for the project"),
         Validator(func=default_func("pi_name_first"), msg="You must provide the PI's first name for the project"),
         Validator(func=default_func("pi_name_last"), msg="You must provide the PI's last name for the project"),
         Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
+        Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
         Validator(func=default_func('start'), msg='You must include a start date for the project'),
         Validator(func=default_func('end'), msg='You must include an end date for the project'),
         Validator(func=default_func('sum'), msg='You must include an abstract for the project'),
@@ -932,8 +937,6 @@ def project():
             key = 'website_url' + str(idx)
         msg_data['websites'] = websites
 
-
-        print(msg_data)
         deployments = []
         idx = 0
         key = 'deployment_name'
@@ -973,7 +976,7 @@ def project():
         #     msg_data['repos'] = 'nodata'
         #     del msg_data['nodata']
         # else:
-        repos = []
+        datasets = []
         idx = 0
         key = 'ds_repo'
         while key in msg_data:
@@ -982,11 +985,11 @@ def project():
                         'title': msg_data[key.replace('repo', 'title')],
                         'url': msg_data[key.replace('repo', 'url')],
                         'doi': msg_data[key.replace('repo', 'doi')]}
-                repos.append(repo)
+                datasets.append(repo)
             del msg_data[key], msg_data[key.replace('repo', 'title')], msg_data[key.replace('repo', 'url')], msg_data[key.replace('repo', 'doi')]
             idx += 1
             key = 'ds_repo' + str(idx)
-        msg_data['repos'] = repos
+        msg_data['datasets'] = datasets
 
         timestamp = format_time()
         msg_data['timestamp'] = timestamp
@@ -1559,12 +1562,19 @@ def curator():
         if request.args.get('uid') is not None:
             uid = request.args.get('uid')
             template_dict['uid'] = uid
+            # check is project or dataset
+            if uid[0] == 'p':
+                template_dict['type'] = 'project'
+                template_dict['tab'] = "project_json"
+            else:
+                template_dict['type'] = 'dataset'
+                template_dict['tab'] = "json"
+
             submission_file = os.path.join(submitted_dir, uid + ".json")
             template_dict['filename'] = submission_file
             template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
-            template_dict['tab'] = "json"
             template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
             # for each keyword_type, get all keywords from database 
@@ -1818,6 +1828,21 @@ def curator():
                     if isoxml.find("Error") >= 0:
                         template_dict['error'] = "Error: Unable to generate ISO XML."
                     template_dict['isoxml'] = isoxml
+
+
+                # PROJECT CURATION
+
+                # read in json and convert to sql
+                if request.form.get('submit') == 'make_project_sql':
+                    json_str = request.form.get('json').encode('utf-8')
+                    json_data = json.loads(json_str)
+                    template_dict['json'] = json_str
+                    sql = projectJson2sql(json_data, uid)
+                    template_dict['sql'] = sql
+                    template_dict['tab'] = "project_sql"
+   
+
+
 
             else:
                 # display submission json file

@@ -53,13 +53,19 @@
 
     <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
       <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'jsonTab')" {% if tab == 'json' %} id="defaultOpen" {% endif %}>JSON</button>
-        <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
-        <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
-        <button class="tablinks" onclick="openTab(event, 'keywordsTab')"  {% if tab == 'keywords' %} id="defaultOpen" {% endif %}>Assign Keywords</button>
-        <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds</button>
-        <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
-        <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
+        {% if type == 'dataset' %}
+          <button class="tablinks" onclick="openTab(event, 'jsonTab')" {% if tab == 'json' %} id="defaultOpen" {% endif %}>JSON</button>
+          <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
+          <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
+          <button class="tablinks" onclick="openTab(event, 'keywordsTab')"  {% if tab == 'keywords' %} id="defaultOpen" {% endif %}>Assign Keywords</button>
+          <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds</button>
+          <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
+          <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
+        {% elif type == 'project' %}
+          <button class="tablinks" onclick="openTab(event, 'projectJsonTab')" {% if tab == 'project_json' %} id="defaultOpen" {% endif %}>JSON</button>
+          <button class="tablinks" onclick="openTab(event, 'projectSqlTab')" {% if tab == 'project_sql' %} id="defaultOpen" {% endif %}>SQL</button>
+        {% endif %}
+
       </div>
     <form method="post" enctype="multipart/form-data">
 
@@ -217,6 +223,35 @@
         </tr>
         </table>
       </div>
+
+
+
+
+      <div id="projectJsonTab", class="tabcontent active">
+          <h4>{{filename}}</h4>
+        <button type="submit" name="submit" value="make_project_sql" onclick="waitCursor()">Create SQL</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="json" name="json" cols="130" rows="50">{{ json }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+      <div id="projectSqlTab", class="tabcontent">
+        <h4>SQL for {{filename}}</h4>
+        <button type="submit" name="submit" value="import_project_to_db" title="Import to DB" onclick="waitCursor()">Import to Database</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="sql" name="sql" cols="130" rows="50">{{ sql }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+
 
     </form>
 
