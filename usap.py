@@ -51,6 +51,7 @@ app.config.update(
     SUBMITTED_FOLDER="submitted",
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
+    AWARDS_FOLDER = "awards",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     DEBUG=True
@@ -277,40 +278,15 @@ def get_datasets(dataset_ids):
         cur.execute(query_string)
         return cur.fetchall()
 
-# def get_dataset_old(dataset_id):
-#     (conn, cur) = connect_to_db()
-#     data = dict()
-#     cur.execute('SELECT * FROM dataset d WHERE id=%s', (dataset_id,))
-#     data.update(cur.fetchall()[0])
-#     data['keywords'] = get_keywords(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['parameters'] = get_parameters(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['locations'] = get_locations(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['persons'] = get_persons(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['sensors'] = get_sensors(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['references'] = get_references(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['spatial_extents'] = get_spatial_extents(conn=conn, cur=cur, dataset_id=dataset_id)
-#     data['temporal_extents'] = get_temporal_extents(conn=conn, cur=cur, dataset_id=dataset_id)
-#     return data
-    
-def get_parameter_menu(conn=None, cur=None):
-    if not (conn and cur):
-        (conn, cur) = connect_to_db()
-    cur.execute('SELECT terms FROM parameter_menu_orig')
-    return cur.fetchall()
-
-def get_location_menu(conn=None, cur=None):
-    if not (conn and cur):
-        (conn, cur) = connect_to_db()
-    cur.execute('SELECT * FROM location_menu')
-    return cur.fetchall()
 
 def get_parameters(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT DISTINCT parameter_id AS id FROM dataset_parameter_map'
+    query = 'SELECT DISTINCT id FROM gcmd_science_key'
     query += cur.mogrify(' ORDER BY id')
     cur.execute(query)
     return cur.fetchall()
+
 
 def get_titles(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
@@ -319,13 +295,15 @@ def get_titles(conn=None, cur=None, dataset_id=None):
     cur.execute(query)
     return cur.fetchall()
 
+
 def get_locations(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT DISTINCT location_id AS id FROM dataset_location_map'
+    query = 'SELECT DISTINCT id FROM gcmd_location'
     query += cur.mogrify(' ORDER BY id')
     cur.execute(query)
     return cur.fetchall()
+
 
 def get_keywords(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
@@ -337,6 +315,7 @@ def get_keywords(conn=None, cur=None, dataset_id=None):
     cur.execute(query)
     return cur.fetchall()
 
+
 def get_platforms(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
@@ -346,6 +325,7 @@ def get_platforms(conn=None, cur=None, dataset_id=None):
     query += cur.mogrify(' ORDER BY id')
     cur.execute(query)
     return cur.fetchall()
+
 
 def get_persons(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
@@ -357,6 +337,7 @@ def get_persons(conn=None, cur=None, dataset_id=None):
     cur.execute(query)
     return cur.fetchall()
 
+
 def get_sensors(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
@@ -367,6 +348,7 @@ def get_sensors(conn=None, cur=None, dataset_id=None):
     cur.execute(query)
     return cur.fetchall()
 
+
 def get_references(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
@@ -375,6 +357,7 @@ def get_references(conn=None, cur=None, dataset_id=None):
         query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
     cur.execute(query)
     return cur.fetchall()
+
 
 def get_spatial_extents(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
@@ -416,6 +399,22 @@ def get_orgs(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM organizations ORDER BY name'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_roles(conn=None, cur=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT id FROM role'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_deployment_types(conn=None, cur=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM deployment_type ORDER BY deployment_type'
     cur.execute(query)
     return cur.fetchall()
 
@@ -885,6 +884,9 @@ def project():
         # if 'email' in session['user_info']:
         #     msg_data['email'] = session['user_info']['email']
         msg_data.update(request.form.to_dict())
+        del msg_data['entry']
+        if msg_data.get('entire_region') is not None:
+            del msg_data['entire_region']
 
         # handle multiple parameters, awards, co-authors, etc
         parameters = []
@@ -915,12 +917,18 @@ def project():
         while key in msg_data:
             if msg_data[key] != "":
                 copi = {'name_last': msg_data[key],
-                        'name_first': msg_data[key.replace('last', 'first')],
-                        'role': msg_data[key.replace('name_last', 'role')],
-                        'org': msg_data[key.replace('name_last', 'org')]
+                        'name_first': msg_data.get(key.replace('last', 'first')),
+                        'role': msg_data.get(key.replace('name_last', 'role')),
+                        'org': msg_data.get(key.replace('name_last', 'org'))
                         }
                 copis.append(copi)
-            del msg_data[key], msg_data[key.replace('last', 'first')], msg_data[key.replace('name_last', 'role')], msg_data[key.replace('name_last', 'org')]
+            del msg_data[key]
+            if msg_data.get(key.replace('last', 'first')): 
+                del msg_data[key.replace('last', 'first')]
+            if msg_data.get(key.replace('name_last', 'role')): 
+                del msg_data[key.replace('name_last', 'role')] 
+            if msg_data.get(key.replace('name_last', 'org')): 
+                del msg_data[key.replace('name_last', 'org')]
             idx += 1
             key = 'copi_name_last' + str(idx)
         msg_data['copis'] = copis
@@ -930,21 +938,29 @@ def project():
         key = 'website_url'
         while key in msg_data:
             if msg_data[key] != "":
-                website = {'url': msg_data[key], 'title': msg_data[key.replace('url', 'title')]}
+                website = {'url': msg_data[key], 'title': msg_data.get(key.replace('url', 'title'))}
                 websites.append(website)
-            del msg_data[key], msg_data[key.replace('url', 'title')]
+            del msg_data[key]
+            if msg_data.get(key.replace('url', 'title')): 
+                del msg_data[key.replace('url', 'title')]
             idx += 1
             key = 'website_url' + str(idx)
         msg_data['websites'] = websites
+
+        print(msg_data)
 
         deployments = []
         idx = 0
         key = 'deployment_name'
         while key in msg_data:
             if msg_data[key] != "":
-                depl = {'name': msg_data[key], 'description': msg_data[key.replace('name', 'desc')]}
+                depl = {'name': msg_data[key], 'type': msg_data.get(key.replace('name', 'type')), 'url': msg_data.get(key.replace('name', 'url'))}
                 deployments.append(depl)
-            del msg_data[key], msg_data[key.replace('name', 'desc')]
+            del msg_data[key]
+            if msg_data.get(key.replace('name', 'type')):
+                del msg_data[key.replace('name', 'type')]
+            if msg_data.get(key.replace('name', 'url')):
+                del msg_data[key.replace('name', 'url')] 
             idx += 1
             key = 'deployment_name' + str(idx)
         msg_data['deployments'] = deployments
@@ -954,9 +970,11 @@ def project():
         key = 'publication'
         while key in msg_data:
             if msg_data[key] != "":
-                pub = {'name': msg_data[key], 'doi': msg_data[key.replace('publication', 'pub_doi')]}
+                pub = {'name': msg_data[key], 'doi': msg_data.get(key.replace('publication', 'pub_doi'))}
                 publications.append(pub)
-            del msg_data[key], msg_data[key.replace('publication', 'pub_doi')]
+            del msg_data[key]
+            if msg_data.get(key.replace('publication', 'pub_doi')): 
+                del msg_data[key.replace('publication', 'pub_doi')]
             idx += 1
             key = 'publication' + str(idx)
         msg_data['publications'] = publications
@@ -982,14 +1000,25 @@ def project():
         while key in msg_data:
             if msg_data[key] != "":
                 repo = {'repository': msg_data[key],
-                        'title': msg_data[key.replace('repo', 'title')],
-                        'url': msg_data[key.replace('repo', 'url')],
-                        'doi': msg_data[key.replace('repo', 'doi')]}
+                        'title': msg_data.get(key.replace('repo', 'title')),
+                        'url': msg_data.get(key.replace('repo', 'url')),
+                        'doi': msg_data.get(key.replace('repo', 'doi'))}
                 datasets.append(repo)
-            del msg_data[key], msg_data[key.replace('repo', 'title')], msg_data[key.replace('repo', 'url')], msg_data[key.replace('repo', 'doi')]
+            del msg_data[key] 
+            if msg_data.get(key.replace('repo', 'title')):
+                del msg_data[key.replace('repo', 'title')]
+            if msg_data.get(key.replace('repo', 'url')):
+                del msg_data[key.replace('repo', 'url')]
+            if msg_data.get(key.replace('repo', 'doi')):
+                del msg_data[key.replace('repo', 'doi')]
             idx += 1
             key = 'ds_repo' + str(idx)
         msg_data['datasets'] = datasets
+
+        cross_dateline = False
+        if msg_data.get('cross_dateline') == 'on':
+            cross_dateline = True
+        msg_data['cross_dateline'] = cross_dateline
 
         timestamp = format_time()
         msg_data['timestamp'] = timestamp
@@ -1055,8 +1084,8 @@ def project():
         cur.execute(q)
         programs = cur.fetchall()
         return render_template('project.html', name=user_info['name'], email=email, programs=programs, persons=get_persons(),
-                               nsf_grants=get_nsf_grants(['award', 'name'], only_inhabited=False), 
-                               locations=get_location_menu(), parameters=get_parameter_menu(), orgs=get_orgs())
+                               nsf_grants=get_nsf_grants(['award', 'name'], only_inhabited=False), deployment_types=get_deployment_types(),
+                               locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles())
 
 
 @app.route('/submit/projectinfo', methods=['GET'])
@@ -1542,20 +1571,28 @@ def curator():
         submissions = []
         for f in files:
             if f.find(".json") > 0:
-                dataset_id = f.split(".json")[0]
-                # if a submission has a landing page, then set the status to Complete, otherwise Pending
-                if len(get_datasets([dataset_id])) == 0:
-                    status = "Pending"
-                    landing_page = ''
-                else:
-                    landing_page = '/view/dataset/%s' % dataset_id
-                    if not isRegisteredWithDataCite(dataset_id):
-                        status = "Not yet registered with DataCite"
-                    elif not ISOXMLExists(dataset_id):
-                        status = "ISO XML file missing"
+                uid = f.split(".json")[0]
+                if uid[0] == 'p':
+                    if get_project(uid) is None:
+                        status = "Pending"
+                        landing_page = ''
                     else:
-                        status = "Completed"
-                submissions.append({'id': dataset_id, 'status': status, 'landing_page': landing_page})
+                        status = "Ingested"
+                        landing_page = '/view/project/%s' % uid
+                else:
+                    # if a submission has a landing page, then set the status to Complete, otherwise Pending
+                    if len(get_datasets([uid])) == 0:
+                        status = "Pending"
+                        landing_page = ''
+                    else:
+                        landing_page = '/view/dataset/%s' % uid
+                        if not isRegisteredWithDataCite(uid):
+                            status = "Not yet registered with DataCite"
+                        elif not ISOXMLExists(uid):
+                            status = "ISO XML file missing"
+                        else:
+                            status = "Completed"
+                submissions.append({'id': uid, 'status': status, 'landing_page': landing_page})
         submissions.sort(reverse=True)
         template_dict['submissions'] = submissions
 
@@ -1833,7 +1870,7 @@ def curator():
                 # PROJECT CURATION
 
                 # read in json and convert to sql
-                if request.form.get('submit') == 'make_project_sql':
+                elif request.form.get('submit') == 'make_project_sql':
                     json_str = request.form.get('json').encode('utf-8')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
@@ -1841,6 +1878,48 @@ def curator():
                     template_dict['sql'] = sql
                     template_dict['tab'] = "project_sql"
    
+
+                # read in sql and submit to the database only
+                elif request.form.get('submit') == 'import_project_to_db':
+                    sql_str = request.form.get('sql').encode('utf-8')
+                    template_dict['tab'] = "project_sql"
+                    problem = False
+                    print("IMPORTING TO DB")
+                    try:
+                        # run sql to import data into the database
+                        (conn, cur) = connect_to_db()
+                        cur.execute(sql_str)
+
+                        template_dict['message'].append("Successfully imported to database")
+                        # coords = getCoordsFromDatabase(uid)
+                        # if coords is not None:
+                        #     template_dict['coords'] = coords
+                        template_dict['landing_page'] = '/view/project/%s' % uid
+                        template_dict['db_imported'] = True
+                    except Exception as err:
+                        template_dict['error'] = "Error Importing to database: " + str(err)
+                        print(err)
+                        problem = True
+
+                    if not problem:
+                        # copy uploaded files to their permanent home
+                        print('Copying uploaded files')
+                        json_str = request.form.get('json').encode('utf-8')
+                        json_data = json.loads(json_str)
+                        if json_data.get('dmp_file') is not None and json_data['dmp_file'] != '' and \
+                           json_data.get('upload_directory') is not None and json_data.get('award') is not None:
+                            
+                            src = os.path.join(json_data['upload_directory'], json_data['dmp_file'])
+                            dst_dir = os.path.join(app.config['AWARDS_FOLDER'], json_data['award'])
+                            try:
+                                if not os.path.exists(dst_dir):
+                                    os.mkdir(dst_dir)
+                                dst = os.path.join(dst_dir, json_data['dmp_file'])
+                                shutil.copyfile(src, dst)
+                            except Exception as e:
+                                return ("ERROR: unable to copy data management plan to award directory. \n" + str(e))
+                                problem = True
+
 
 
 

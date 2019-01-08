@@ -65,26 +65,6 @@ $(document).ready(function() {
       }
     });
 
-    // NOT NEEDED IF WE GET RID OF THE INTERIM REPORT CHECKBOX
-    // var no_data_check = $('input[name="nodata"]');
-    // no_data_check.on('click', function() {
-    //   if (no_data_check.prop('checked')) {
-    //     $("#datasets *").prop('disabled',true);
-    //   } else {
-    //     $("#datasets *").prop('disabled',false);
-    //   }
-
-    // });
-
-    var fieldwork_check = $('#isfw');
-    $("#deployments *").prop('disabled',!fieldwork_check.prop('checked'));
-    $("#deployments *").addClass('disabled');
-
-    fieldwork_check.on('click', function() {
-      $("#deployments *").prop('disabled',!fieldwork_check.prop('checked'));
-      $("#deployments *").toggleClass('disabled');
-    });
-
     $('#award').change(function() {
       var title = pi = institution = email = copi = start = end = cr = ipy = null;
       var val = $('#award').val();
@@ -189,7 +169,7 @@ $(document).ready(function() {
 
     $(author_wrapper).on("click","#removeAuthorRow", function(e){ //user click on remove field
           e.preventDefault(); 
-          $(this).parent('div').remove();
+          $(this).parent().closest('div').remove();
           author_counter--;
     });
 
@@ -335,7 +315,9 @@ $(document).ready(function() {
       var extraDeployment = $('.deploymentTemplate').clone();
       //increment the element ids
       $(extraDeployment).find('#deployment_name').attr({'id': 'deployment_name'+deployment_counter, 'name': 'deployment_name'+deployment_counter, 'value': ''});
-      $(extraDeployment).find('#deployment_desc').attr('id', 'deployment_desc'+deployment_counter).attr('name', 'deployment_desc'+deployment_counter).html('');
+      $(extraDeployment).find('#deployment_type').attr('id', 'deployment_type'+deployment_counter).attr('name', 'deployment_type'+deployment_counter).html('');
+      $('#deployment_type').find('option').clone().appendTo($(extraDeployment).find('#deployment_type'+deployment_counter));
+      $(extraDeployment).find('#deployment_url').attr('id', 'deployment_url'+deployment_counter).attr('name', 'deployment_url'+deployment_counter).html('');
       $(extraDeployment).find('#removeDeploymentRow').show();
       $(extraDeployment).find('#extraDeploymentLine').show();
       $(deployment_wrapper).append($('<div/>', {'class' : 'extraDeployment', html: extraDeployment.html()}));

@@ -41,7 +41,7 @@
        
           <div class="form-group required">
             <b>Title:</b><br>
-            <textarea required class="form-control" name="title" id="title" rows="1"></textarea>
+            <textarea required class="form-control" name="title" id="title" rows="2"></textarea>
           </div>
 
           <div class="form-group">
@@ -70,20 +70,44 @@
             <input class="form-control" type="text" name="email" id="email" value="{{email}}" required>
           </div>
 
-          <div class="form-group" style="margin:10px 0 10px 0">
-            <label for="author">Additional Personnel: </label> 
-            <div class="authorTemplate" >
+
+          <div class="form-group" name="copiForm">
+            <label for="author">Additional Personnel:</label> 
+            <div class="authorTemplate">
               <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
-              <div class="input-group removable">
-                <input class="input-sm form-control" type="text" size=50 id="copi_name_last" name="copi_name_last" value="" placeholder="Last Name" /> 
-                <span  class="input-group-addon">,</span>
-                <input class="input-sm form-control" type="text" size=50 id="copi_name_first" name="copi_name_first" value="" placeholder="First Name" />
-                <span  class="input-group-addon"></span>
-                <input class="input-sm form-control" type="text" size=30 id="copi_role" name="copi_role" value="" placeholder="Role(s)" />  
-                <span  class="input-group-addon"></span>
-                <input class="input-sm form-control" type="text" size=70 id="copi_org" name="copi_org" value="" placeholder="Institution"/> 
-              </div>
-              <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
+     
+              <table>
+                <tr>
+                  <td width="10%"><i>Name&nbsp;</i></td>
+                  <td>
+                    <div class="input-group removable" style="margin-bottom:2px">
+                      <input class="input-sm form-control" type="text" size=50 id="copi_name_last" name="copi_name_last" value="" placeholder="Last Name"/> 
+                      <span  class="input-group-addon">,</span>
+                      <input class="input-sm form-control" type="text" size=50 id="copi_name_first" name="copi_name_first" value="" placeholder="First Name"/>
+                    </div>
+                    <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
+                  </td>
+                </tr>
+                <tr>
+                  <td><i>Institution&nbsp;</i></td>
+                  <td>
+                    <div class="input-group removable">
+                      <input class="input-sm form-control" type="text" size=70 id="copi_org" name="copi_org" value="" placeholder="Institution" style="margin-bottom:2px"/> 
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><i>Role&nbsp;</i></td>
+                  <td>
+                    <select class="input-sm form-control removable" name="copi_role" id="copi_role" style="margin-bottom:6px">
+                      <option value="">(Select Role)</option>
+                      {% for r in roles %}
+                        <option value="{{r.id}}">{{r.id}}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+              </table>             
               <div style="clear:both"></div>
             </div>
             <div id="more_authors"></div>
@@ -134,11 +158,6 @@
             <a href="#websitesForm" id="addWebsiteRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_website">Add another website</span></a>
           </div>
         
-          <input type="checkbox" name="iscr" id="iscr"> Collaborative Research
-          &nbsp; &nbsp; &nbsp; <input type="checkbox" name="isfw" id="isfw"> Includes Field Work
-          &nbsp; &nbsp; &nbsp; <input type="checkbox" name="islw" id="islw"> Includes Lab Work or Modelling
-          <br>
-          <br>
           <div id="deployments" class="form-group" name="deploymentForm">
             <b>Deployment:</b><br>
             <i>add only if project has field work</i><br>
@@ -151,8 +170,19 @@
                       <a href="#deploymentForm" id="removeDeploymentRow" class="remover"><i class="fa fa-remove"></i></a></td>
                 </tr>
                 <tr>
-                  <td><i>Description&nbsp;</i></td>
-                  <td><textarea class="removable" name="deployment_desc" id="deployment_desc" rows="2" cols="49"></textarea></td>
+                  <td><i>Type&nbsp;</i></td>
+                  <td>          
+                    <select name="deployment_type" id="deployment_type">
+                      <option value="">(Select Type)</option>
+                      {% for t in deployment_types %}
+                        <option value="{{t.deployment_type}}">{{t.deployment_type}}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td><i>URL&nbsp;</i></td>
+                  <td><input class="removable" type="text" name="deployment_url" id="deployment_url" size="90"></td>
                 </tr>
               </table>
               <div style="clear:both"></div>
@@ -176,11 +206,10 @@
           <div class="form-group required">
             <b>Location(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
             <div id="locations">
-              <select required name="location1" id="location1" style="margin-bottom: 3px">
+              <select required name="location1" id="location1" style="width:40em;margin-bottom: 3px">
                 <option value="">(Select Term 1)</option>
                 {% for k in locations %}
-                {% set s = ' > '.join(k['terms']) %}
-                <option value="{{s}}">{{s}}</option>
+                <option value="{{k.id}}">{{k.id}}</option>
                 {% endfor %}
               </select>
             </div>
@@ -198,9 +227,7 @@
             <select required name="parameter1" id="parameter1" style="width:40em;margin-bottom: 3px">
               <option value="">(Select Term 1)</option>
               {% for k in parameters %}
-
-              {% set s = ' > '.join(k['terms']) %}
-              <option value="{{s}}">{{s}}</option>
+                <option value="{{k.id}}">{{k.id}}</option>
               {% endfor %}
             </select>
           </div>
