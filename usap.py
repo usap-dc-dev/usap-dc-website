@@ -34,7 +34,8 @@ import lib.json2sql as json2sql
 import shutil
 from lib.curatorFunctions import isCurator, isRegisteredWithDataCite, submitToDataCite, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
     getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
-    getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords, projectJson2sql
+    getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords, projectJson2sql, updateProjectSpatialMap, isProjectImported, \
+    getProjectCoordsFromDatabase
 
 app = Flask(__name__)
 
@@ -1573,7 +1574,7 @@ def curator():
             if f.find(".json") > 0:
                 uid = f.split(".json")[0]
                 if uid[0] == 'p':
-                    if get_project(uid) is None:
+                    if not isProjectImported(uid):
                         status = "Pending"
                         landing_page = ''
                     else:
@@ -1581,7 +1582,7 @@ def curator():
                         landing_page = '/view/project/%s' % uid
                 else:
                     # if a submission has a landing page, then set the status to Complete, otherwise Pending
-                    if len(get_datasets([uid])) == 0:
+                    if not isDatabaseImported(uid):
                         status = "Pending"
                         landing_page = ''
                     else:
@@ -1595,6 +1596,7 @@ def curator():
                 submissions.append({'id': uid, 'status': status, 'landing_page': landing_page})
         submissions.sort(reverse=True)
         template_dict['submissions'] = submissions
+        template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
         if request.args.get('uid') is not None:
             uid = request.args.get('uid')
@@ -1603,29 +1605,33 @@ def curator():
             if uid[0] == 'p':
                 template_dict['type'] = 'project'
                 template_dict['tab'] = "project_json"
+                # check whether dataset as already been imported to database
+                template_dict['db_imported'] = isProjectImported(uid)
+                # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
+                if template_dict['db_imported']:
+                    coords = getProjectCoordsFromDatabase(uid)
+                    if coords is not None:
+                        template_dict['coords'] = coords 
+
             else:
                 template_dict['type'] = 'dataset'
                 template_dict['tab'] = "json"
+                # check whether dataset as already been imported to database
+                template_dict['db_imported'] = isDatabaseImported(uid)
+                # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
+                if template_dict['db_imported']:
+                    coords = getCoordsFromDatabase(uid)
+                    if coords is not None:
+                        template_dict['coords'] = coords 
+                    template_dict['dataset_keywords'] = getDatasetKeywords(uid)
 
             submission_file = os.path.join(submitted_dir, uid + ".json")
             template_dict['filename'] = submission_file
             template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
-            template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
-
             # for each keyword_type, get all keywords from database 
             template_dict['keywords'] = getKeywordsFromDatabase()
-
-            # check whether dataset as already been imported to database
-            template_dict['db_imported'] = isDatabaseImported(uid)
-
-            # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
-            if template_dict['db_imported']:
-                coords = getCoordsFromDatabase(uid)
-                if coords is not None:
-                    template_dict['coords'] = coords 
-                template_dict['dataset_keywords'] = getDatasetKeywords(uid)
 
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
@@ -1878,10 +1884,10 @@ def curator():
                     template_dict['sql'] = sql
                     template_dict['tab'] = "project_sql"
    
-
                 # read in sql and submit to the database only
                 elif request.form.get('submit') == 'import_project_to_db':
-                    sql_str = request.form.get('sql').encode('utf-8')
+                    sql_str = request.form.get('proj_sql').encode('utf-8')
+                    template_dict['sql'] = sql_str
                     template_dict['tab'] = "project_sql"
                     problem = False
                     print("IMPORTING TO DB")
@@ -1898,7 +1904,6 @@ def curator():
                         template_dict['db_imported'] = True
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
-                        print(err)
                         problem = True
 
                     if not problem:
@@ -1920,7 +1925,23 @@ def curator():
                                 return ("ERROR: unable to copy data management plan to award directory. \n" + str(e))
                                 problem = True
 
-
+                # update spatial bounds in database
+                elif request.form.get('submit') == "project_spatial_bounds":
+                    template_dict['tab'] = "spatial"
+                    coords = {'geo_n': request.form.get('proj_geo_n'), 
+                              'geo_e': request.form.get('proj_geo_e'), 
+                              'geo_w': request.form.get('proj_geo_w'),
+                              'geo_s': request.form.get('proj_geo_s'), 
+                              'cross_dateline': request.form.get('proj_cross_dateline') is not None}
+                    template_dict['coords'] = coords
+                    if check_spatial_bounds(coords):
+                        (msg, status) = updateProjectSpatialMap(uid, coords)
+                        if status == 0:
+                            template_dict['error'] = msg
+                        else:
+                            template_dict['message'].append(msg)
+                    else:
+                        template_dict['error'] = 'Invalid bounds'
 
 
             else:

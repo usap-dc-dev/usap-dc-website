@@ -64,6 +64,7 @@
         {% elif type == 'project' %}
           <button class="tablinks" onclick="openTab(event, 'projectJsonTab')" {% if tab == 'project_json' %} id="defaultOpen" {% endif %}>JSON</button>
           <button class="tablinks" onclick="openTab(event, 'projectSqlTab')" {% if tab == 'project_sql' %} id="defaultOpen" {% endif %}>SQL</button>
+          <button class="tablinks" onclick="openTab(event, 'projectSpatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds</button>
         {% endif %}
 
       </div>
@@ -245,13 +246,42 @@
         <table>
         <tr>
            <td>
-               <textarea id="sql" name="sql" cols="130" rows="50">{{ sql }}</textarea>
+               <textarea id="proj_sql" name="proj_sql" cols="130" rows="50">{{ sql }}</textarea>
            </td>
         </tr>
         </table>
       </div>
 
-
+      <div id="projectSpatialTab", class="tabcontent">
+        {% if db_imported %}
+          <div>
+            <b>Spatial Bounds of Data</b> <br/>Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+            <table style="border:0">
+              <tbody>
+                <tr>
+                  <td align="center">
+                    &nbsp;N: <input type="text" name="proj_geo_n" id="proj_geo_n" size="5" value="{{coords.get('geo_n','')}}"> <br>
+                    W: <input type="text" name="proj_geo_w" id="proj_geo_w" size="6" value="{{coords.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="proj_geo_e" id="proj_geo_e" size="6" value="{{coords.get('geo_e','')}}"> <br>
+                    S: <input type="text" name="proj_geo_s" id="proj_geo_s" size="5" value="{{coords.get('geo_s','')}}">
+                  </td>
+                  <td>
+                    <span style="margin: 20px">
+                      <input type="checkbox" name="proj_entire_region"> Entire Antarctic Region</input><br/>
+                    </span>
+                    <span style="margin: 20px">
+                     <input type="checkbox" name="proj_cross_dateline" {% if coords.get('cross_dateline') %}checked{% endif %}> Check if your bounds cross the International Date Line</input>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br/>
+            <button type="submit" name="submit" value="project_spatial_bounds" onclick="waitCursor()">Update Database</button>
+          </div>
+        {% else %}
+          <h4>You will be able to update spatial bounds after Database import</h4>
+        {% endif %}
+      </div>
 
     </form>
 
@@ -307,6 +337,25 @@
           e.val('');
           s.val('');
           n.val('');
+      }
+    });
+
+    var proj_check = $('input[name="proj_entire_region"]');
+    var proj_w = $('input[name="proj_geo_w"]');
+    var proj_e = $('input[name="proj_geo_e"]');
+    var proj_s = $('input[name="proj_geo_s"]');
+    var proj_n = $('input[name="proj_geo_n"]');
+    proj_check.on('click', function() {
+      if (proj_check.prop('checked')) {
+        proj_w.val('-180');
+        proj_e.val('180');
+        proj_s.val('-90');
+        proj_n.val('-60');
+      } else {
+          proj_w.val('');
+          proj_e.val('');
+          proj_s.val('');
+          proj_n.val('');
       }
     });
   });

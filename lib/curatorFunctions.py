@@ -279,6 +279,14 @@ def isDatabaseImported(uid):
     return res['count'] > 0
 
 
+def isProjectImported(uid):
+    (conn, cur) = connect_to_db()
+    query = "SELECT COUNT(*) from project WHERE proj_uid = '%s'" % uid
+    cur.execute(query)
+    res = cur.fetchone()
+    return res['count'] > 0
+
+
 def updateSpatialMap(uid, data):
     (conn, cur) = connect_to_db()
     status = 1
@@ -327,9 +335,64 @@ def updateSpatialMap(uid, data):
     return (out_text, status)
 
 
+def updateProjectSpatialMap(uid, data):
+    (conn, cur) = connect_to_db()
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        # query the database to get the XML for the submission ID
+        try:
+            if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
+                west = float(data["geo_w"])
+                east = float(data["geo_e"])
+                south = float(data["geo_s"])
+                north = float(data["geo_n"])
+                mid_point_lat = (south - north) / 2 + north
+                mid_point_long = (east - west) / 2 + west
+
+                geometry = "ST_GeomFromText('POINT(%s %s)', 4326)" % (mid_point_long, mid_point_lat)
+                bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
+
+                # update record if already in the database
+                query = "SELECT COUNT(*) FROM project_spatial_map WHERE proj_uid = '%s';" % uid
+                cur.execute(query)
+                count = cur.fetchone()
+                if count['count'] > 0:
+                    sql_cmd = "UPDATE project_spatial_map SET (west,east,south,north,cross_dateline, geometry, bounds_geometry) = (%s, %s, %s, %s, %s, %s, %s) WHERE proj_uid = '%s';"\
+                        % (west, east, south, north, data['cross_dateline'], geometry, bounds_geometry, uid)
+                    out_text = "Spatial bounds successfully updated"
+                # otherwise insert record
+                else:
+                    sql_cmd = "INSERT INTO projct_spatial_map (proj_uid, west,east,south,north,cross_dateline, geometry, bounds_geometry) VALUES ('%s', %s, %s, %s, %s, %s, %s, %s);"\
+                        % (uid, west, east, south, north, data['cross_dateline'], geometry, bounds_geometry)
+                    out_text = "Spatial bounds successfully inserted"
+                print(sql_cmd)
+                cur.execute(sql_cmd)
+                cur.execute('COMMIT;')
+                
+            else:
+                out_text = "Error updating spatial bounds. Not all coordinate information present"
+                status = 0
+        except:
+            out_text = "Error updating database. \n%s" % sys.exc_info()[1][0]
+            print(out_text)
+            status = 0
+
+    return (out_text, status)
+
+
 def getCoordsFromDatabase(uid):
     (conn, cur) = connect_to_db()
     query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid
+    cur.execute(query)
+    return cur.fetchone()
+
+
+def getProjectCoordsFromDatabase(uid):
+    (conn, cur) = connect_to_db()
+    query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM project_spatial_map WHERE proj_uid = '%s';" % uid
     cur.execute(query)
     return cur.fetchone()
 
@@ -500,7 +563,7 @@ def projectJson2sql(data, uid):
             # see if they are already in the project_dataset table
             query = "SELECT * FROM project_dataset WHERE repository = '%s' AND title = '%s'" % (ds['repository'], ds['title'])
             if ds.get('doi') is not None and ds['doi'] != '':
-                query += " AND doi = '%s'"
+                query += " AND doi = '%s'" % ds['doi']
             cur.execute(query)
             res = cur.fetchall()
             if len(res) == 0:
