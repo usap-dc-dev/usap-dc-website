@@ -3,19 +3,14 @@ from __future__ import print_function
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
-
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, g, jsonify, flash, send_from_directory, send_file, current_app
-from flask_session import Session
-import random
+from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app
 from random import randint
-from OpenSSL import SSL
-import binascii, os
-from flask_oauth import OAuth, OAuthException
+import os
+from flask_oauth import OAuth
 import json
-from urllib2 import Request, urlopen, URLError
-import sys
+from urllib2 import Request, urlopen
 from werkzeug.utils import secure_filename
 import smtplib
 from email.mime.text import MIMEText
@@ -27,15 +22,15 @@ import copy
 from datetime import datetime
 import csv
 from collections import namedtuple
-import string
 import humanize
 import urllib
 import lib.json2sql as json2sql
 import shutil
-from lib.curatorFunctions import isCurator, isRegisteredWithDataCite, submitToDataCite, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
-    getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
-    getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords, projectJson2sql, updateProjectSpatialMap, isProjectImported, \
-    getProjectCoordsFromDatabase
+import lib.curatorFunctions as cf
+# from lib.curatorFunctions import isCurator, isRegisteredWithDataCite, submitToDataCite, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
+#     getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
+#     getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords, projectJson2sql, updateProjectSpatialMap, isProjectImported, \
+#     getProjectCoordsFromDatabase, getDifXML
 
 app = Flask(__name__)
 
@@ -52,7 +47,7 @@ app.config.update(
     SUBMITTED_FOLDER="submitted",
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
-    AWARDS_FOLDER = "awards",
+    AWARDS_FOLDER="awards",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     DEBUG=True
@@ -606,6 +601,7 @@ def thank_you(submission_type):
 
 Validator = namedtuple('Validator', ['func', 'msg'])
 
+
 def check_spatial_bounds(data):
     if not(data['geo_e'] or data['geo_w'] or data['geo_s'] or data['geo_n']):
         return True
@@ -617,6 +613,7 @@ def check_spatial_bounds(data):
                 abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
         except:
             return False
+
 
 def check_dataset_submission(msg_data):
     print(msg_data, file=sys.stderr)
@@ -1560,7 +1557,7 @@ def curator():
     template_dict['message'] = []
 
     # login
-    if (not isCurator()):
+    if (not cf.isCurator()):
         session['next'] = request.url
         template_dict['need_login'] = True
     else:
@@ -1574,7 +1571,7 @@ def curator():
             if f.find(".json") > 0:
                 uid = f.split(".json")[0]
                 if uid[0] == 'p':
-                    if not isProjectImported(uid):
+                    if not cf.isProjectImported(uid):
                         status = "Pending"
                         landing_page = ''
                     else:
@@ -1582,14 +1579,14 @@ def curator():
                         landing_page = '/view/project/%s' % uid
                 else:
                     # if a submission has a landing page, then set the status to Complete, otherwise Pending
-                    if not isDatabaseImported(uid):
+                    if not cf.isDatabaseImported(uid):
                         status = "Pending"
                         landing_page = ''
                     else:
                         landing_page = '/view/dataset/%s' % uid
-                        if not isRegisteredWithDataCite(uid):
+                        if not cf.isRegisteredWithDataCite(uid):
                             status = "Not yet registered with DataCite"
-                        elif not ISOXMLExists(uid):
+                        elif not cf.ISOXMLExists(uid):
                             status = "ISO XML file missing"
                         else:
                             status = "Completed"
@@ -1606,10 +1603,10 @@ def curator():
                 template_dict['type'] = 'project'
                 template_dict['tab'] = "project_json"
                 # check whether dataset as already been imported to database
-                template_dict['db_imported'] = isProjectImported(uid)
+                template_dict['db_imported'] = cf.isProjectImported(uid)
                 # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
                 if template_dict['db_imported']:
-                    coords = getProjectCoordsFromDatabase(uid)
+                    coords = cf.getProjectCoordsFromDatabase(uid)
                     if coords is not None:
                         template_dict['coords'] = coords 
 
@@ -1617,21 +1614,21 @@ def curator():
                 template_dict['type'] = 'dataset'
                 template_dict['tab'] = "json"
                 # check whether dataset as already been imported to database
-                template_dict['db_imported'] = isDatabaseImported(uid)
+                template_dict['db_imported'] = cf.isDatabaseImported(uid)
                 # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
                 if template_dict['db_imported']:
-                    coords = getCoordsFromDatabase(uid)
+                    coords = cf.getCoordsFromDatabase(uid)
                     if coords is not None:
                         template_dict['coords'] = coords 
-                    template_dict['dataset_keywords'] = getDatasetKeywords(uid)
+                    template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
 
             submission_file = os.path.join(submitted_dir, uid + ".json")
             template_dict['filename'] = submission_file
             template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
-            template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
+            template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
             # for each keyword_type, get all keywords from database 
-            template_dict['keywords'] = getKeywordsFromDatabase()
+            template_dict['keywords'] = cf.getKeywordsFromDatabase()
 
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
@@ -1663,12 +1660,12 @@ def curator():
                         cur.execute(sql_str)
 
                         template_dict['message'].append("Successfully imported to database")
-                        coords = getCoordsFromDatabase(uid)
+                        coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
                             template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
-                        template_dict['dataset_keywords'] = getDatasetKeywords(uid)
+                        template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -1712,12 +1709,12 @@ def curator():
                         cur.execute(sql_str)
 
                         template_dict['message'].append("Successfully imported to database")
-                        coords = getCoordsFromDatabase(uid)
+                        coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
                             template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
-                        template_dict['dataset_keywords'] = getDatasetKeywords(uid)
+                        template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -1750,13 +1747,13 @@ def curator():
                     if not problem:
                         # DataCite DOI submission
                         print('DataCite DOI submission')
-                        datacite_file, status = getDataCiteXML(uid)
+                        datacite_file, status = cf.getDataCiteXML(uid)
                         if status == 0:
                             template_dict['error'] = "Error: Unable to get DataCiteXML from database."
                             problem = True
                         else:
-                            msg = submitToDataCite(uid)
-                            template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
+                            msg = cf.submitToDataCite(uid)
+                            template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
                             if msg.find("Error") >= 0:
                                 template_dict['error'] = msg
                                 problem = True
@@ -1766,8 +1763,8 @@ def curator():
                     if not problem:
                         # generate ISO XML file and place in watch dir for geoportal.
                         print('Generating ISO XML file')
-                        msg = doISOXML(uid)
-                        template_dict['isoxml'] = getISOXMLFromFile(uid)
+                        msg = cf.doISOXML(uid)
+                        template_dict['isoxml'] = cf.getISOXMLFromFile(uid)
                         print(msg)
                         if msg.find("Error") >= 0:
                             template_dict['error'] = msg
@@ -1794,12 +1791,12 @@ def curator():
                     template_dict['tab'] = "keywords"
                     assigned_keywords = request.form.getlist('assigned_keyword')
                     print(assigned_keywords)
-                    (msg, status) = addKeywordsToDatabase(uid, assigned_keywords)
+                    (msg, status) = cf.addKeywordsToDatabase(uid, assigned_keywords)
                     if status == 0:
                         template_dict['error'] = msg
                     else:
                         template_dict['message'].append(msg)
-                        template_dict['dataset_keywords'] = getDatasetKeywords(uid)
+                        template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
 
                 # update spatial bounds in database
                 elif request.form.get('submit') == "spatial_bounds":
@@ -1811,7 +1808,7 @@ def curator():
                               'cross_dateline': request.form.get('cross_dateline') is not None}
                     template_dict['coords'] = coords
                     if check_spatial_bounds(coords):
-                        (msg, status) = updateSpatialMap(uid, coords)
+                        (msg, status) = cf.updateSpatialMap(uid, coords)
                         if status == 0:
                             template_dict['error'] = msg
                         else:
@@ -1824,12 +1821,12 @@ def curator():
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "dcxml"
                     xml_str = request.form.get('dcxml').encode('utf-8')
-                    datacite_file = getDCXMLFileName(uid)
+                    datacite_file = cf.getDCXMLFileName(uid)
                     try:
                         with open(datacite_file, 'w') as out_file:
                             out_file.write(xml_str)
                         os.chmod(datacite_file, 0o664)
-                        msg = submitToDataCite(uid)
+                        msg = cf.submitToDataCite(uid)
                         if msg.find("Error") >= 0:
                             template_dict['error'] = msg
                             problem = True
@@ -1842,18 +1839,18 @@ def curator():
                 elif request.form.get('submit') == "generate_dcxml":
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "dcxml"
-                    datacite_file, status = getDataCiteXML(uid)
+                    datacite_file, status = cf.getDataCiteXML(uid)
                     if status == 0:
                         template_dict['error'] = "Error: Unable to get DataCiteXML from database."
                     else:
-                        template_dict['dcxml'] = getDataCiteXMLFromFile(uid)
+                        template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
 
                 # Standalone save ISO XML to watch dir
                 elif request.form.get('submit') == "save_isoxml":
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "isoxml"
                     xml_str = request.form.get('isoxml').encode('utf-8')
-                    isoxml_file = getISOXMLFileName(uid)
+                    isoxml_file = cf.getISOXMLFileName(uid)
                     try:
                         with open(isoxml_file, 'w') as out_file:
                             out_file.write(xml_str)
@@ -1867,7 +1864,7 @@ def curator():
                 elif request.form.get('submit') == "generate_isoxml":
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "isoxml"
-                    isoxml = getISOXMLFromFile(uid)
+                    isoxml = cf.getISOXMLFromFile(uid)
                     if isoxml.find("Error") >= 0:
                         template_dict['error'] = "Error: Unable to generate ISO XML."
                     template_dict['isoxml'] = isoxml
@@ -1880,7 +1877,7 @@ def curator():
                     json_str = request.form.get('json').encode('utf-8')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
-                    sql = projectJson2sql(json_data, uid)
+                    sql = cf.projectJson2sql(json_data, uid)
                     template_dict['sql'] = sql
                     template_dict['tab'] = "project_sql"
    
@@ -1935,14 +1932,48 @@ def curator():
                               'cross_dateline': request.form.get('proj_cross_dateline') is not None}
                     template_dict['coords'] = coords
                     if check_spatial_bounds(coords):
-                        (msg, status) = updateProjectSpatialMap(uid, coords)
+                        (msg, status) = cf.updateProjectSpatialMap(uid, coords)
                         if status == 0:
                             template_dict['error'] = msg
                         else:
                             template_dict['message'].append(msg)
                     else:
                         template_dict['error'] = 'Invalid bounds'
+                
+                # generate DIF XML from JSON file
+                elif request.form.get('submit') == "generate_difxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "difxml"
+                    proj_data = get_project(uid)
+                    difxml = cf.getDifXML(proj_data, uid)
+                    if difxml.find("Error") >= 0:
+                        template_dict['error'] = "Error: Unable to generate DIF XML."
+                    template_dict['difxml'] = difxml
 
+                # save changes to DIF XML in watch directory
+                elif request.form.get('submit') == "save_difxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "difxml"
+                    xml_str = request.form.get('difxml').encode('utf-8')
+                    difxml_file = cf.getDifXMLFileName(uid)
+                    try:
+                        with open(difxml_file, 'w') as out_file:
+                            out_file.write(xml_str)
+                            template_dict['message'].append("DIF XML file saved to watch directory.")
+                        os.chmod(difxml_file, 0o664)
+
+                    except Exception as err:
+                        template_dict['error'] = "Error saving DIF XML file to watch directory: " + str(err)
+
+                # add DIF to DB
+                elif request.form.get('submit') == "dif_to_db":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "difxml"
+                    (msg, status) = cf.addDifToDB(uid)
+                    if status == 0:
+                        template_dict['error'] = msg
+                    else:
+                        template_dict['message'].append(msg)
 
             else:
                 # display submission json file
@@ -2340,7 +2371,8 @@ def get_project(project_id):
                         FROM
                         project p
                         LEFT JOIN (
-                            SELECT pam.proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link)) funding
+                            SELECT pam.proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link, 
+                            'is_main_award', pam.is_main_award)) funding
                             FROM project_award_map pam 
                             JOIN award a ON a.award=pam.award_id
                             LEFT JOIN award_program_map apm ON apm.award_id=a.award
@@ -2349,7 +2381,8 @@ def get_project(project_id):
                             GROUP BY pam.proj_uid
                         ) a ON (p.proj_uid = a.proj_uid)
                         LEFT JOIN (
-                            SELECT pperm.proj_uid, json_agg(json_build_object('role', pperm.role ,'id', per.id)) persons
+                            SELECT pperm.proj_uid, json_agg(json_build_object('role', pperm.role ,'id', per.id, 'name_last', per.last_name, 
+                            'name_first', per.first_name, 'org', per.organization, 'email', per.email)) persons
                             FROM project_person_map pperm JOIN person per ON (per.id=pperm.person_id)
                             GROUP BY pperm.proj_uid
                         ) per ON (p.proj_uid = per.proj_uid)
@@ -2393,6 +2426,16 @@ def get_project(project_id):
                             FROM project_spatial_map psm
                             GROUP BY psm.proj_uid
                         ) sb ON (p.proj_uid = sb.proj_uid)
+                        LEFT JOIN (
+                            SELECT pgskm.proj_uid, json_agg(gsk) parameters
+                            FROM project_gcmd_science_key_map pgskm JOIN gcmd_science_key gsk ON (gsk.id=pgskm.gcmd_key_id)
+                            GROUP BY pgskm.proj_uid
+                        ) parameters ON (p.proj_uid = parameters.proj_uid)
+                        LEFT JOIN (
+                            SELECT pglm.proj_uid, json_agg(gl) locations
+                            FROM project_gcmd_location_map pglm JOIN gcmd_location gl ON (gl.id=pglm.loc_id)
+                            GROUP BY pglm.proj_uid
+                        ) locations ON (p.proj_uid = locations.proj_uid)
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
