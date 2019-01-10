@@ -102,7 +102,7 @@
               Description/Abstract
             </div>
             <div class="value">
-              {{data.description}}
+              {{data.description|safe}}
             </div>
           </div>
         {% endif %}
@@ -162,7 +162,7 @@
             </div>
             <div class="value">
               {% for record in data.dif_records %}
-              <a target="_blank" href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record.dif_id}}">{{record.dif_id}}</a><br/>
+              <a target="_blank" href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record.dif_id.split('_')[0]}}">{{record.dif_id}}</a><br/>
               {% endfor %}
             </div>
           </div>

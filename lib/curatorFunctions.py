@@ -673,7 +673,7 @@ def getDifID(uid):
     query = "SELECT award_id FROM project_award_map WHERE is_main_award = 'True' AND proj_uid = '%s';" % uid
     cur.execute(query)
     res = cur.fetchone()
-    return "USAP-%s" % res['award_id']  
+    return "USAP-%s_1" % res['award_id']  
 
 
 def getDifXMLFileName(uid):
@@ -690,7 +690,7 @@ def getDifXML(data, uid):
     # --- entry and title
     xml_entry = ET.SubElement(root, "Entry_ID")
     short_id = ET.SubElement(xml_entry, "Short_Name")
-    short_id.text = getDifID(uid)
+    short_id.text = getDifID(uid).split('_')[0]
     version = ET.SubElement(xml_entry, "Version")
     version.text = "1"
     xml_entry = ET.SubElement(root, "Entry_Title")
@@ -701,7 +701,7 @@ def getDifXML(data, uid):
         name_last, name_first = person.get('id').split(',')
         xml_pi = ET.SubElement(root, "Personnel")
         xml_pi_role = ET.SubElement(xml_pi, "Role")
-        xml_pi_role.text = person.get('role')
+        xml_pi_role.text = "INVESTIGATOR"
         xml_pi_contact = ET.SubElement(xml_pi, "Contact_Person")
         xml_pi_contact_fname = ET.SubElement(xml_pi_contact, "First_Name")
         xml_pi_contact_fname.text = name_first.strip()
@@ -870,10 +870,8 @@ def getDifXML(data, uid):
         xml_url_type.text = "GET DATA"
         xml_url_url = ET.SubElement(xml_url, "URL")
         xml_url_url.text = ds.get('url')
-        xml_url_title = ET.SubElement(xml_url, "Title")
-        xml_url_title.text = ds.get('title')
         xml_url_desc = ET.SubElement(xml_url, "Description")
-        xml_url_desc.text = "Repository: %s; DOI: %s" % (ds.get('repository'), ds.get('doi'))
+        xml_url_desc.text = ds.get('title')
 
     # --- IDN nodes
     xml_idn = ET.SubElement(root, "IDN_Node")
@@ -929,12 +927,15 @@ def addDifToDB(uid):
             query = "SELECT * FROM dif WHERE dif_id = '%s';" % dif_id
             cur.execute(query)
             res = cur.fetchall()
-
             if len(res) == 0:
                 sql_cmd += "INSERT INTO dif (dif_id) VALUES ('%s');" % dif_id
 
             # add to project_dif_map
-            sql_cmd += "INSERT INTO project_dif_map (proj_uid, dif_id) VALUES ('%s', '%s');" % (uid, dif_id)
+            query = "SELECT * FROM project_dif_map WHERE proj_uid = '%s' AND dif_id = '%s';" % (uid, dif_id)
+            cur.execute(query)
+            res = cur.fetchall()
+            if len(res) == 0:
+                sql_cmd += "INSERT INTO project_dif_map (proj_uid, dif_id) VALUES ('%s', '%s');" % (uid, dif_id)
 
             sql_cmd += "COMMIT;"
 
