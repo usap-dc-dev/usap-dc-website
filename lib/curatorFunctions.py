@@ -570,6 +570,13 @@ def projectJson2sql(data, uid):
     # Add datasets
     if data.get('datasets') is not None and len(data['datasets']) > 0:
         sql_out += "--NOTE: adding project_datasets\n"
+
+        #first find the highest non-USAP-DC dataset_id already in the table
+        query = "SELECT MAX(dataset_id) FROM project_dataset WHERE dataset_id::integer < 600000;"
+        cur.execute(query)
+        res = cur.fetchall()
+        dataset_id = int(res[0]['max'])
+
         for ds in data['datasets']:
             # see if they are already in the project_dataset table
             query = "SELECT * FROM project_dataset WHERE repository = '%s' AND title = '%s'" % (ds['repository'], ds['title'])
@@ -587,9 +594,11 @@ def projectJson2sql(data, uid):
                     if len(res2) == 1:
                         ds_id = res2[0]['id']
                     else:
-                        ds_id = getNextProjectDatasetID()
+                        dataset_id += 1
+                        ds_id = dataset_id
                 else:
-                    ds_id = getNextProjectDatasetID()
+                    dataset_id += 1
+                    ds_id = dataset_id
                 sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, doi) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
                     (ds_id, ds.get('repository'), ds.get('title'), ds.get('url'), ds.get('doi'))
             else:
@@ -657,15 +666,6 @@ def projectJson2sql(data, uid):
     sql_out += '\nCOMMIT;\n'
     
     return sql_out
-
-
-# Read the next project dataset reference number from the file (for non-USAP-DC datasets)
-def getNextProjectDatasetID():
-    ds_id = open(PROJECT_DATASET_ID_FILE, 'r').readline().strip()
-    new_ds_id = int(ds_id) + 1
-    with open(PROJECT_DATASET_ID_FILE, 'w') as refFile:
-        refFile.write(str(new_ds_id))
-    return ds_id 
 
 
 def getDifID(uid):

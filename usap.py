@@ -1874,7 +1874,7 @@ def curator():
 
                 # read in json and convert to sql
                 elif request.form.get('submit') == 'make_project_sql':
-                    json_str = request.form.get('json').encode('utf-8')
+                    json_str = request.form.get('proj_json').encode('utf-8')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
                     sql = cf.projectJson2sql(json_data, uid)
@@ -1894,9 +1894,6 @@ def curator():
                         cur.execute(sql_str)
 
                         template_dict['message'].append("Successfully imported to database")
-                        # coords = getCoordsFromDatabase(uid)
-                        # if coords is not None:
-                        #     template_dict['coords'] = coords
                         template_dict['landing_page'] = '/view/project/%s' % uid
                         template_dict['db_imported'] = True
                     except Exception as err:
