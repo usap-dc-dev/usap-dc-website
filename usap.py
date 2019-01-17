@@ -1054,7 +1054,7 @@ def project():
         msg = MIMEText(message)
 
         sender = msg_data.get('email')
-        recipients = ['ns3131@columbia.edu'] #['info@usap-dc.org']
+        recipients = ['info@usap-dc.org']
         msg['Subject'] = 'USAP-DC Project Submission'
         msg['From'] = sender
         msg['To'] = ', '.join(recipients)
@@ -1868,7 +1868,6 @@ def curator():
                     if isoxml.find("Error") >= 0:
                         template_dict['error'] = "Error: Unable to generate ISO XML."
                     template_dict['isoxml'] = isoxml
-
 
                 # PROJECT CURATION
 
