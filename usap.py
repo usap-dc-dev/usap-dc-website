@@ -100,7 +100,7 @@ def connect_to_db():
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn,cur) = connect_to_db()
-    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award::integer<1700000 and a.award::integer>0400000' % ','.join(columns)
+    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award::integer<8000000 and a.award::integer>0400000' % ','.join(columns)
     
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
