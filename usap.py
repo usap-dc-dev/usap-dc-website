@@ -1099,6 +1099,8 @@ def projectinfo():
 
 @app.route('/login')
 def login():
+    if session.get('next') is None:
+        session['next'] = '/home'
     return render_template('login.html')
 
 
