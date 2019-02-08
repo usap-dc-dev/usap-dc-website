@@ -250,12 +250,21 @@
                     <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
                   </span>
                   <span style="margin: 20px">
-                   <input type="checkbox" name="cross_dateline"> Check if your bounds cross the International Date Line</input>
+                   <input type="checkbox" name="cross_dateline" id="cross_dateline"> Check if your bounds cross the International Date Line</input>
                   </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                   <br><button id="show_on_map_btn" type ="button" class="btn btn-default btn-sm map-btn">Show on Map</button>
+                 </td>
+               </tr>
+             </tbody>
+           </table>
+           
+
+          <div id="geometry">
+            <div id="geometry_header" class="window-header">
+              <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
+            </div>
+            <div id="map"></div>
+          </div>
         </div>
 
         <br>

@@ -27,7 +27,7 @@
 
   var persons_rows = JSON.parse($("#persons").text());
   var persons = [];
-  for (row of persons_rows) {
+  for (var row of persons_rows) {
     persons.push(row.id);
   }
 
@@ -50,29 +50,29 @@
         s.val('-90');
         n.val('-60');
       } else {
-          w.val('');
-          e.val('');
-          s.val('');
-          n.val('');
+        w.val('');
+        e.val('');
+        s.val('');
+        n.val('');
       }
     });
 
-  $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
-  
-  $('#datepicker').datepicker({
+    $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+
+    $('#datepicker').datepicker({
       format: "yyyy-mm-dd",
       startView: 2
-  });
+    });
 
-  $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
+    $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
 
-  $('.dropdown').on('show.bs.dropdown', function() {
-    $(this).find('.help-block').hide();
-  });
+    $('.dropdown').on('show.bs.dropdown', function() {
+      $(this).find('.help-block').hide();
+    });
 
     $('.dropdown').on('hide.bs.dropdown', function() {
       $(this).find('.help-block').show();
-  });
+    });
 
 
   // if reloading, populate any added author fields
@@ -81,24 +81,24 @@
     $('#author_name_first').attr('value', authors[0].first_name);
   }
   for (var i=1; i < authors.length; i++ ) {
-      var author = authors[i];
-      addAuthorRow(author);
+    var author = authors[i];
+    addAuthorRow(author);
   }
 
   $('#addAuthorRow').click(function (e) {
       //code to add another author
       e.preventDefault();
       addAuthorRow();
-  });
+    });
 
   $(author_wrapper).on("click","#removeAuthorRow", function(e){ //user click on remove field
-      e.preventDefault(); 
-      $(this).parent('div').remove();
-      author_counter--;
+    e.preventDefault(); 
+    $(this).parent('div').remove();
+    author_counter--;
   });
 
   function addAuthorRow(author) {
-      var extraAuthor = $('.authorTemplate').clone();
+    var extraAuthor = $('.authorTemplate').clone();
       //increment the element ids
       $(extraAuthor).find('#author_name_last').attr({'id': 'author_name_last'+author_counter, 'name': 'author_name_last'+author_counter, 'value': ''});
       $(extraAuthor).find('#author_name_first').attr({'id': 'author_name_first'+author_counter, 'name': 'author_name_first'+author_counter, 'value': ''});
@@ -107,34 +107,34 @@
       if (typeof author != 'undefined') {
        $(extraAuthor).find('#author_name_last'+author_counter).attr('value', author.last_name);
        $(extraAuthor).find('#author_name_first'+author_counter).attr('value', author.first_name);
-      }
-      $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
-      autocomplete(document.getElementById("author_name_last"+author_counter), document.getElementById("author_name_first"+author_counter), persons);
-      author_counter++;
-  }
+     }
+     $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
+     autocomplete(document.getElementById("author_name_last"+author_counter), document.getElementById("author_name_first"+author_counter), persons);
+     author_counter++;
+   }
 
 
   // if reloading, populate any added award fields
   $('#award').attr('value', awards[0]);
   for (i=1; i < awards.length; i++ ) {
-      var award = awards[i];
-      addAwardRow(award);
+    var award = awards[i];
+    addAwardRow(award);
   }
 
   $('#addAwardRow').click(function (e) {
       //code to add another file
       e.preventDefault();
       addAwardRow();
-  });
+    });
 
   $(award_wrapper).on("click","#removeAwardRow", function(e){ //user click on remove field
-      e.preventDefault(); 
-      $(this).parent('div').parent('div').remove();
-      award_counter--;
+    e.preventDefault(); 
+    $(this).parent('div').parent('div').remove();
+    award_counter--;
   });
 
   function addAwardRow(award) {
-      var extraAward = $('.awardTemplate').clone();
+    var extraAward = $('.awardTemplate').clone();
       //increment the element ids
       $(extraAward).find('#award-dropdown').attr({'id': 'award-dropdown'+award_counter});
       $(extraAward).find('#award').attr({'id': 'award'+award_counter, 'name': 'award'+award_counter, 'value': ''});
@@ -142,14 +142,14 @@
       $(extraAward).find('#removeAwardRow').show();
       $(extraAward).find('#extraAwardLine').show();
       if (award !== null) {
-          $(extraAward).find('#award'+award_counter).attr('value', award);
+        $(extraAward).find('#award'+award_counter).attr('value', award);
       }
       $(award_wrapper).append($('<div/>', {'class' : 'extraAward', html: extraAward.html()}));
       award_counter++;
 
       $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
       $('[data-toggle="tooltip"]').tooltip({container: 'body'});
-  }
+    }
 
 
   // if reloading, populate any added publication fields
@@ -158,39 +158,38 @@
     $('#pub_doi').attr('value', publications[0].doi);
   }
   for (i=1; i < publications.length; i++ ) {
-      var publication = publications[i];
-      addPubRow(publication);
+    var publication = publications[i];
+    addPubRow(publication);
   }
 
   $('#addPubRow').click(function (e) {
       //code to add another file
       e.preventDefault();
       addPubRow();
-  });
+    });
 
   $(pub_wrapper).on("click","#removePubRow", function(e){ //user click on remove field
-      e.preventDefault(); 
-      $(this).parent('div').remove();
-      pub_counter--;
+    e.preventDefault(); 
+    $(this).parent('div').remove();
+    pub_counter--;
   });
 
   function addPubRow(publication) {
-      var extraPub = $('.publicationTemplate').clone();
+    var extraPub = $('.publicationTemplate').clone();
       //increment the element ids
       $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html('');
       $(extraPub).find('#pub_doi').attr({'id': 'pub_doi'+pub_counter, 'name': 'pub_doi'+pub_counter, 'value': ''});
       $(extraPub).find('#removePubRow').show();
       $(extraPub).find('#extraPubLine').show();
       if (typeof publication != 'undefined') {
-          $(extraPub).find('#publication'+pub_counter).html(publication.text);
-          $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
+        $(extraPub).find('#publication'+pub_counter).html(publication.text);
+        $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
       }
       $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
       pub_counter++;
-  }
+    }
 
-});
-
+  });
 
 </script>
 
@@ -203,212 +202,222 @@
       {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9" >
-  {% if success|length > 0 %}
-    <div class="alert alert-success" style="width:800;">
-      <h4>{{success}}</h4>
-    </div>
-  {% endif %}
-  {% if error|length > 0 %}
-  <div class="alert alert-danger" style="width:800;">
-    <h4>{{error}}</h4>
-  </div>
-  {% endif %}
-
-   <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
-    <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
-    <div style="float:right; margin-top: 1.44em;">
-      <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
-      <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
-      <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
-    </div>
-
-    <div style="clear:both"></div>
-    <div class="title" style="font-size: 1em;">Page 1 of 2</div>
-    <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
-   
-      <div class="form-group required">
-        <label for="email">Contact Email</label>
-        <input class="form-control" type="text" name="email" value="{{dataset_metadata.get('email',email)}}"/>
-      </div>
-
-      <div class="form-group required">
-        <label for="title">Dataset Title</label>
-        <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
-        <span class="help-block">As the title should appear in a data citation [<a href="{{url_for('title_examples')}}" target="_new">guidelines and examples</a>]</span>
-      </div>
-
-      <div class="form-group required ">
-        <label for="author">Dataset Author</label>
-        <div class="authorTemplate">
-          <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
-          <div class="input-group removable">
-            <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="" placeholder="Last Name" /> 
-            <span  class="input-group-addon">,</span>
-            <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="" placeholder="First Name" />
-          </div>
-          <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
-          <div style="clear:both"></div>
+        {% if success|length > 0 %}
+        <div class="alert alert-success" style="width:800;">
+          <h4>{{success}}</h4>
         </div>
-        <div id="more_authors"></div>
-        <a href="#authorsForm" id="addAuthorRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_author">Add another author</span></a>
-      </div>
-      
-      <div class="form-group">
-        <label for="abstract">Abstract</label>
-        <textarea name="abstract" class="form-control">{{dataset_metadata.get('abstract','')}}</textarea>
-        <span class="help-block">Describe this specific dataset, not the overall project [<a href="{{url_for('abstract_examples')}}" target="_new">guidelines and examples</a>]</span>
-      </div>
-      
-      <!-- Awards -->
-      <div class="form-group required">
-        <label for="award">Award</label>
+        {% endif %}
+        {% if error|length > 0 %}
+        <div class="alert alert-danger" style="width:800;">
+          <h4>{{error}}</h4>
+        </div>
+        {% endif %}
 
-        <div class="awardTemplate">
-          <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
-          <div class="dropdown" id="award-dropdown">
-            <input type="hidden" id="award" name="award" value="{{dataset_metadata.get('award')}}"/>
-            <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control removable">
-              {{dataset_metadata.get('award','All')}}
-              <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu">
-              {% for grant in nsf_grants %}
-                {% set s = grant['award'] + " " + grant['name'] %}
-                <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
+        <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
+          <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
+          <div style="float:right; margin-top: 1.44em;">
+            <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
+            <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
+            <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+          </div>
+
+          <div style="clear:both"></div>
+          <div class="title" style="font-size: 1em;">Page 1 of 2</div>
+          <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
+
+          <div class="form-group required">
+            <label for="email">Contact Email</label>
+            <input class="form-control" type="text" name="email" value="{{dataset_metadata.get('email',email)}}"/>
+          </div>
+
+          <div class="form-group required">
+            <label for="title">Dataset Title</label>
+            <input class="form-control" type="text" name="title" value="{{dataset_metadata.get('title','')}}"/>
+            <span class="help-block">As the title should appear in a data citation [<a href="{{url_for('title_examples')}}" target="_new">guidelines and examples</a>]</span>
+          </div>
+
+          <div class="form-group required ">
+            <label for="author">Dataset Author</label>
+            <div class="authorTemplate">
+              <div id='extraAuthorLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+              <div class="input-group removable">
+                <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="" placeholder="Last Name" /> 
+                <span  class="input-group-addon">,</span>
+                <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="" placeholder="First Name" />
+              </div>
+              <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
+              <div style="clear:both"></div>
+            </div>
+            <div id="more_authors"></div>
+            <a href="#authorsForm" id="addAuthorRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_author">Add another author</span></a>
+          </div>
+
+          <div class="form-group">
+            <label for="abstract">Abstract</label>
+            <textarea name="abstract" class="form-control">{{dataset_metadata.get('abstract','')}}</textarea>
+            <span class="help-block">Describe this specific dataset, not the overall project [<a href="{{url_for('abstract_examples')}}" target="_new">guidelines and examples</a>]</span>
+          </div>
+
+          <!-- Awards -->
+          <div class="form-group required">
+            <label for="award">Award</label>
+
+            <div class="awardTemplate">
+              <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+              <div class="dropdown" id="award-dropdown">
+                <input type="hidden" id="award" name="award" value="{{dataset_metadata.get('award')}}"/>
+                <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control removable">
+                  {{dataset_metadata.get('award','All')}}
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  {% for grant in nsf_grants %}
+                  {% set s = grant['award'] + " " + grant['name'] %}
+                  <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
+                  {% endfor %}
+                </ul>
+                <a href="#awardForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
+                <div style="clear:both"></div>
+              </div>
+            </div>
+            <div id="more_awards"></div>
+            <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add another award</span></a>
+          </div>
+
+          <!-- Publications -->
+          <div class="form-group" name="publicationsForm">
+            <label for="publication">Relevant Publications</label>
+            <span><i>Include DOI where known</i></span>
+            <div class="publicationTemplate">
+              <div id='extraPubLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
+              <textarea id="publication" name="publication" class="form-control removable" ></textarea>
+              <a href="#publicationsForm" id="removePubRow" class="remover"><i class="fa fa-remove"></i></a>
+              <input class="input-sm form-control removable" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
+
+              <div style="clear:both"></div>
+            </div>
+            <div id="more_publications"></div>
+            <a href="#publicationsForm" id="addPubRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_pub">Add another publication</span></a>
+          </div>
+
+          <div class="form-group">
+            <label for="related_fields">Related Field Event IDs</label>
+            <textarea name="related_fields" class="form-control">{{dataset_metadata.get('related_fields','')}}</textarea>
+            <span class="help-block">eg. Cruise ID, Seismic Network ID, Flight #</span>
+          </div>
+
+          <div class="form-group">
+            <label for="project">Science Project</label><br/>
+            <select class="form-control selectpicker" name="project" data-width="225px">
+              <option value="None" selected="selected">None</option>
+              {% for project in projects |sort %}
+              {% set proj = project['id'] %}
+              <option value="{{proj}}" {% if proj == dataset_metadata.get('project','') %} selected="selected" {% endif %}>{{proj}}</option>
+
               {% endfor %}
-            </ul>
-            <a href="#awardForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
-            <div style="clear:both"></div>
+            </select>
+          </div>
+
+
+          <div class="form-group">
+            <label for="user_keywords">User Keywords</label>
+            <textarea name="user_keywords" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
+            <span class="help-block">Enter comma separated non-geographic keywords, eg. volitiles, mantle melting, CO2 fluxes.</span>
+          </div>
+
+          <div>
+            <b>Spatial Bounds of Data</b> <br/>Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
+            <table style="border:0">
+              <tbody>
+                <tr>
+                  <td align="center">
+                    &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{dataset_metadata.get('geo_n','')}}"> <br>
+                    W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{dataset_metadata.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{dataset_metadata.get('geo_e','')}}"> <br>
+                    S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{dataset_metadata.get('geo_s','')}}">
+                  </td>
+                  <td>
+                    <span style="margin: 20px">
+                      <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
+                    </span>
+                    <span style="margin: 20px">
+                      <input type="checkbox" name="cross_dateline" id="cross_dateline" {% if dataset_metadata.get('cross_dateline') %}checked{% endif %}> Check if your bounds cross the International Date Line</input>
+                   </span>
+                   <br><button id="show_on_map_btn" type ="button" class="btn btn-default btn-sm map-btn">Show on Map</button>
+                 </td>
+               </tr>
+             </tbody>
+           </table>
+           
+
+          <div id="geometry">
+            <div id="geometry_header" class="window-header">
+              <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
+            </div>
+            <div id="map"></div>
+          </div>
+
+         </div>
+
+         <div class="form-group">
+          <label>Temporal Bounds</label>
+          <div class="input-daterange input-group" id="datepicker">
+            <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('start','')}}"/>
+            <span class="input-group-addon">to</span>
+            <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('stop','')}}"/>
           </div>
         </div>
-        <div id="more_awards"></div>
-        <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add another award</span></a>
-      </div>
-    
-      <!-- Publications -->
-      <div class="form-group" name="publicationsForm">
-        <label for="publication">Relevant Publications</label>
-        <span><i>Include DOI where known</i></span>
-        <div class="publicationTemplate">
-          <div id='extraPubLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
-          <textarea id="publication" name="publication" class="form-control removable" ></textarea>
-          <a href="#publicationsForm" id="removePubRow" class="remover"><i class="fa fa-remove"></i></a>
-          <input class="input-sm form-control removable" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
-          
-          <div style="clear:both"></div>
+
+        <div class="form-group">
+          <label for="feature_name">Region Feature Name</label>
+          <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
         </div>
-        <div id="more_publications"></div>
-        <a href="#publicationsForm" id="addPubRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_pub">Add another publication</span></a>
-      </div>
-      
-      <div class="form-group">
-        <label for="related_fields">Related Field Event IDs</label>
-        <textarea name="related_fields" class="form-control">{{dataset_metadata.get('related_fields','')}}</textarea>
-        <span class="help-block">eg. Cruise ID, Seismic Network ID, Flight #</span>
-      </div>
 
-      <div class="form-group">
-        <label for="project">Science Project</label><br/>
-        <select class="form-control selectpicker" name="project" data-width="225px">
-            <option value="None" selected="selected">None</option>
-            {% for project in projects |sort %}
-                {% set proj = project['id'] %}
-                <option value="{{proj}}" {% if proj == dataset_metadata.get('project','') %} selected="selected" {% endif %}>{{proj}}</option>
-                
-            {% endfor %}
-        </select>
-      </div>
+        <button class="btn btn-default" type="submit" name="action" value="next">Next page</button>
+        <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
 
+      </form>
 
-      <div class="form-group">
-        <label for="user_keywords">User Keywords</label>
-        <textarea name="user_keywords" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
-        <span class="help-block">Enter comma separated non-geographic keywords, eg. volitiles, mantle melting, CO2 fluxes.</span>
-      </div>
-      
-      <div>
-        <b>Spatial Bounds of Data</b> <br/>Use decimal degrees. Longitudes must be in -180 to 180 range. Example:<br /> Ross Sea is between 160 and -150
-        <table style="border:0">
-          <tbody>
-        <tr>
-          <td align="center">
-            &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{dataset_metadata.get('geo_n','')}}"> <br>
-            W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{dataset_metadata.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{dataset_metadata.get('geo_e','')}}"> <br>
-            S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{dataset_metadata.get('geo_s','')}}">
-          </td>
-          <td>
-            <span style="margin: 20px">
-              <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
-            </span>
-            <span style="margin: 20px">
-             <input type="checkbox" name="cross_dateline" {% if dataset_metadata.get('cross_dateline') %}checked{% endif %}> Check if your bounds cross the International Date Line</input>
-            </span>
-          </td>
-        </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="form-group">
-        <label>Temporal Bounds</label>
-        <div class="input-daterange input-group" id="datepicker">
-          <input type="text" class="input-sm form-control" name="start" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('start','')}}"/>
-          <span class="input-group-addon">to</span>
-          <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('stop','')}}"/>
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="feature_name">Region Feature Name</label>
-        <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
-      </div>
-      
-      <button class="btn btn-default" type="submit" name="action" value="next">Next page</button>
-      <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
-      
-    </form>
-    
-      </div>
-      
     </div>
+
   </div>
-  
+</div>
+
 </div>
 
 
 <script>
-function autocomplete(inp, inp2, arr) {
+  function autocomplete(inp, inp2, arr) {
   /*the autocomplete function takes three arguments,
   two text field elements and an array of possible autocompleted values:*/
   var currentFocus;
   /*execute a function when someone writes in the text field:*/
   [inp, inp2].forEach(function(elem) {
     elem.addEventListener("input", function(e) {
-        var a, b, i, val = this.value;
-        /*close any already open lists of autocompleted values*/
-        closeAllLists();
-        if (!val) { return false;}
-        currentFocus = -1;
-        /*create a DIV element that will contain the items (values):*/
-        a = document.createElement("DIV");
-        a.setAttribute("id", this.id + "autocomplete-list");
-        a.setAttribute("class", "autocomplete-items");
-        /*append the DIV element as a child of the autocomplete container:*/
-        this.parentNode.appendChild(a);
-        /*for each item in the array...*/
-        for (i = 0; i < arr.length; i++) {
-          /*check if the item starts with the same letters as the text field value:*/
-          if (arr[i].toUpperCase().indexOf(val.toUpperCase()) != -1) {
-            /*create a DIV element for each matching element:*/
-            b = document.createElement("DIV");
-            /*make the matching letters bold:*/
-            b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
-            b.innerHTML += arr[i].substr(val.length);
-            /*insert a input field that will hold the current array item's value:*/
-            b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-            /*execute a function when someone clicks on the item value (DIV element):*/
-            b.addEventListener("click", function(e) {
-                /*insert the value for the autocomplete text field:*/
+      var a, b, i, val = this.value;
+      /*close any already open lists of autocompleted values*/
+      closeAllLists();
+      if (!val) { return false;}
+      currentFocus = -1;
+      /*create a DIV element that will contain the items (values):*/
+      a = document.createElement("DIV");
+      a.setAttribute("id", this.id + "autocomplete-list");
+      a.setAttribute("class", "autocomplete-items");
+      /*append the DIV element as a child of the autocomplete container:*/
+      this.parentNode.appendChild(a);
+      /*for each item in the array...*/
+      for (i = 0; i < arr.length; i++) {
+        /*check if the item starts with the same letters as the text field value:*/
+        if (arr[i].toUpperCase().indexOf(val.toUpperCase()) != -1) {
+          /*create a DIV element for each matching element:*/
+          b = document.createElement("DIV");
+          /*make the matching letters bold:*/
+          b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+          b.innerHTML += arr[i].substr(val.length);
+          /*insert a input field that will hold the current array item's value:*/
+          b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+          /*execute a function when someone clicks on the item value (DIV element):*/
+          b.addEventListener("click", function(e) {
+            /*insert the value for the autocomplete text field:*/
                 //split the name at the comma
                 var selected = this.getElementsByTagName("input")[0].value.split(',');
                 inp.value = selected[0].trim();
@@ -417,17 +426,17 @@ function autocomplete(inp, inp2, arr) {
                 /*close the list of autocompleted values,
                 (or any other open lists of autocompleted values:*/
                 closeAllLists();
-            });
-            a.appendChild(b);
-          }
+              });
+          a.appendChild(b);
         }
+      }
     });
 
     /*execute a function presses a key on the keyboard:*/
     elem.addEventListener("keydown", function(e) {
-        var x = document.getElementById(this.id + "autocomplete-list");
-        if (x) x = x.getElementsByTagName("div");
-        if (e.keyCode == 40) {
+      var x = document.getElementById(this.id + "autocomplete-list");
+      if (x) x = x.getElementsByTagName("div");
+      if (e.keyCode == 40) {
           /*If the arrow DOWN key is pressed,
           increase the currentFocus variable:*/
           currentFocus++;
@@ -447,7 +456,7 @@ function autocomplete(inp, inp2, arr) {
             if (x) x[currentFocus].click();
           }
         }
-    });
+      });
   });
 
   function addActive(x) {
@@ -478,7 +487,7 @@ function autocomplete(inp, inp2, arr) {
   }
   /*execute a function when someone clicks in the document:*/
   document.addEventListener("click", function (e) {
-      closeAllLists(e.target);
+    closeAllLists(e.target);
   });
 }
 

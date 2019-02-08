@@ -20,7 +20,7 @@
 
 
   {% if cur=='home' or cur=='search' or cur=='map' or cur == 'landing_page' or cur == 'catalog_browser' 
-     or cur == 'project_landing_page' or cur == 'project_browser' %}
+     or cur == 'project_landing_page' or cur == 'project_browser' or cur == "project_browser" or cur == "dataset" or cur == "project" %}
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3/ol.css')}}" />
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.css')}}"/>
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
@@ -163,11 +163,14 @@
   </script> 
 
   {% if cur=='home' or cur=='search' or cur=='map' or cur == 'landing_page' or cur == 'catalog_browser' 
-     or cur == 'project_landing_page' or cur == 'project_browser' %}
+     or cur == 'project_landing_page' or cur == 'project_browser' or cur == 'project_browser' or cur == 'dataset' or cur == 'project' %}
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/proj4/dist/proj4.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3/ol-debug.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.js')}}"></script>
+  {% endif %}
+  {% if cur == 'dataset' or cur == 'project' %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/display_bounds.js') }}"></script>
   {% endif %}
   <script src="https://apis.google.com/js/platform.js" async defer></script>
   {% if cur=='home' or cur=='map' %}
@@ -191,7 +194,7 @@
   <script src="{{ url_for('static', filename='js/search.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
   {% endif %}
-  {% if cur=='catalog_browser' or cur=='project_browser' %}
+  {% if cur=='catalog_browser' or cur=='project_browser' or cur == 'project_browser' %}
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/sprintf/dist/sprintf.min.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery-ui/jquery-ui.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
@@ -236,8 +239,9 @@
   {% if cur in ['dataset', 'dataset_error', 'project', 'thank_you'] %}
   <link rel="stylesheet" type="text/css" href="/static/css/dataset.css" media="screen, projection" />
   {% endif %}
-  {% if cur =="catalog_browser" or cur=="project_browser"%}
+  {% if cur =="catalog_browser" or cur=="project_browser" or cur=="joint_browser"%}
   <link rel="stylesheet" type="text/css" href="/static/css/catalog_browser.css" media="screen, projection" />
+  <link rel="stylesheet" type="text/css" href="/static/css/search.css" media="screen, projection" />
   {% endif %}
   {% if cur =="curator" %}
   <link rel="stylesheet" type="text/css" href="/static/css/curator.css" media="screen, projection" />
@@ -341,7 +345,7 @@
 
     {% block home %}{%endblock home %}
 
-    {% elif cur == "catalog_browser" or cur == "project_browser" %}
+    {% elif cur == "catalog_browser" or cur == "project_browser" or cur == "joint_browser"%}
       <div class="content">
         {% block catalog_body %}{%endblock catalog_body %}
       </div>

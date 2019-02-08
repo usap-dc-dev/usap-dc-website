@@ -77,3 +77,54 @@ input, textarea {
 .input-group-addon {
   padding:5px;
 }
+
+.map-btn {
+  margin:5px 5px 5px 20px;
+  padding:3px;
+}
+
+.window-header {
+    padding: 10px;
+    cursor: move;
+    z-index: 61;
+    background-color: #92b9c5;
+    color: #000;
+}
+
+#geometry {
+  background: #fff;
+  border: 2px solid #000;
+  position: absolute;
+  font-family: arial;
+  height: 360px;
+  padding: 0.5em;
+  top: -1000px;
+  left: -1000px;
+  width: 318px;
+  z-index: 1000;
+}
+
+.close_btn {
+    float:right;
+    display:inline-block;
+    padding:2px 5px;
+    background:#ccc;
+    cursor: pointer;
+}
+
+.close_btn:hover {
+    float:right;
+    display:inline-block;
+    padding:2px 5px;
+    background:#ccc;
+    color:#fff;
+}
+
+#map {
+    position: relative;
+    margin: auto;
+    width: 300px;
+    height: 300px;
+    border: 1px solid black;
+    z-index: 1;
+}
