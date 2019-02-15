@@ -137,23 +137,23 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
                    '''
     conds = []
     if dataset_id:
-        conds.append(cur.mogrify('d.id=%s',(dataset_id,)))
+        conds.append(cur.mogrify('d.id=%s', (dataset_id,)))
     if title:
-        conds.append(cur.mogrify('d.title ILIKE %s',('%'+title+'%',)))
+        conds.append(cur.mogrify('d.title ILIKE %s', ('%' + title + '%',)))
     if award:
-        [num, name] = award.split(' ',1)
-        conds.append(cur.mogrify('a.award=%s',(num,)))
-        conds.append(cur.mogrify('a.name=%s',(name,)))
+        [num, name] = award.split(' ', 1)
+        conds.append(cur.mogrify('a.award=%s', (num,)))
+        conds.append(cur.mogrify('a.name=%s', (name,)))
     if parameter:
-        conds.append(cur.mogrify('par.id ILIKE %s',('%'+parameter+'%',)))
+        conds.append(cur.mogrify('par.id ILIKE %s', ('%' + parameter + '%',)))
     if location:
-        conds.append(cur.mogrify('l.id=%s',(location,)))
+        conds.append(cur.mogrify('l.id=%s', (location,)))
     if person:
-        conds.append(cur.mogrify('per.id=%s',(person,)))
+        conds.append(cur.mogrify('per.id=%s', (person,)))
     if platform:
-        conds.append(cur.mogrify('pl.id=%s',(platform,)))
+        conds.append(cur.mogrify('pl.id=%s', (platform,)))
     if sensor:
-        conds.append(cur.mogrify('sen.id=%s',(sensor,)))
+        conds.append(cur.mogrify('sen.id=%s', (sensor,)))
     if west:
         conds.append(cur.mogrify('%s <= sp.east', (west,)))
     if east:
@@ -163,7 +163,7 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
     if south:
         conds.append(cur.mogrify('%s <= sp.north', (south,)))
     if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_intersects(st_transform(sp.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))",(spatial_bounds_interpolated,)))
+        conds.append(cur.mogrify("st_intersects(st_transform(sp.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
     if start:
         conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
     if stop:
@@ -179,6 +179,7 @@ def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, 
 
     cur.execute(query_string)
     return [d['id'] for d in cur.fetchall()]
+
 
 def get_datasets(dataset_ids):
     if len(dataset_ids) == 0:
@@ -1260,7 +1261,6 @@ def abstract_examples():
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
-    print('in search')
     if request.method == 'GET':
         return render_template('search.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
                                parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
@@ -1311,7 +1311,8 @@ def filter_search_menus():
         'parameter': sorted(parameters),
         'program': sorted(programs),
         'award': [a[1] + ' ' + a[0] for a in sorted(awards)],
-        'project': sorted(projects)
+        'project': sorted(projects),
+        'sci_program': sorted(projects)
     })
 
 
@@ -2441,6 +2442,16 @@ def get_project(project_id):
 
 @app.route('/project_browser', methods=['GET', 'POST'])
 def project_browser():
+
+    if request.method == 'POST':
+        params = request.form.to_dict()
+        print(params)
+        filtered = filter_datasets(**params)
+
+        del params['spatial_bounds_interpolated']
+        session['filtered_datasets'] = filtered
+        session['search_params'] = params
+
     template_dict = {'pi_name': '', 'title': '', 'award': '', 'summary': ''}
     (conn, cur) = connect_to_db()
 
@@ -2514,6 +2525,135 @@ def project_browser():
     template_dict['dif_ids'] = getFromDifTable('dif_id', True)
 
     return render_template('project_browser.html', **template_dict)
+
+
+@app.route('/joint_browser', methods=['GET'])
+def joint_browser():
+
+    template_dict = {}
+    params = request.args.to_dict()
+    rows = filter_datasets_projects(**params)
+    print(params)
+    session['search_params'] = params
+
+    # refresh the dataset and project view to make sure it is up to date
+    (conn, cur) = connect_to_db()
+    query = "REFRESH MATERIALIZED VIEW dataset_project_view;"
+    cur.execute(query)
+
+    for row in rows:
+        if row['type'] == 'Project':
+            ds_query = "SELECT * FROM project_dataset pd " + \
+                       "LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = pd.dataset_id " + \
+                       "WHERE pdm.proj_uid = '%s'" % row['uid']
+            ds_query_string = cur.mogrify(ds_query)
+            cur.execute(ds_query_string)
+            datasets = cur.fetchall()
+            row['datasets'] = datasets
+        elif row['type'] == 'Dataset':
+            proj_query = "SELECT p.*, pd.repository FROM project p " + \
+                         "LEFT JOIN project_dataset_map pdm ON pdm.proj_uid = p.proj_uid " + \
+                         "JOIN project_dataset pd ON pd.dataset_id = pdm.dataset_id " + \
+                         "WHERE pdm.dataset_id = '%s'" % row['uid']
+            proj_query_string = cur.mogrify(proj_query)
+            cur.execute(proj_query_string)
+            projects = cur.fetchall()
+  
+            row['projects'] = projects
+            if len(projects) > 0:
+                row['repo'] = projects[0]['repository']                         
+
+    template_dict['records'] = rows
+
+    template_dict['search_params'] = session.get('search_params')
+
+    return render_template('joint_browser.html', **template_dict)  
+
+
+@app.route('/filter_joint_menus', methods=['GET'])
+def filter_joint_menus():
+    keys = ['person', 'free_text', 'sci_program', 'award', 'dp_title', 'nsf_program', 'spatial_bounds_interpolated', 'dp_type']
+    params = request.args.to_dict()
+    # if reseting:
+    if params == {}:
+        session['search_params'] = {}
+
+    dp_titles = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_title'})
+    titles = set([d['title'] for d in dp_titles])
+
+    dp_persons = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'person'})
+    persons = set()
+    for d in dp_persons:
+        if d['persons']:
+            for p in d['persons'].split(';'):
+                persons.add(p.strip())
+
+    dp_sci_programs = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'sci_program'})
+    sci_programs = set()
+    for d in dp_sci_programs:
+        if d['science_programs']:
+            for p in d['science_programs'].split(';'):
+                sci_programs.add(p.strip())
+
+    dp_nsf_programs = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'nsf_program'})
+    nsf_programs = set()
+    for d in dp_nsf_programs:
+        if d['nsf_funding_programs']:
+            for p in d['nsf_funding_programs'].split(';'):
+                nsf_programs.add(p.strip())
+
+    dp_awards = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'award'})
+    awards = set()
+    for d in dp_awards:
+        if d['awards']:
+            for p in d['awards'].split(';'):
+                awards.add(p.strip())
+
+    dp_dptypes = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_type'})
+    dp_types = set([d['type'] for d in dp_dptypes])
+
+    return flask.jsonify({
+        'dp_title': sorted(titles),
+        'person': sorted(persons),
+        'nsf_program': sorted(nsf_programs),
+        'award': sorted(awards),
+        'sci_program': sorted(sci_programs),
+        'dp_type': sorted(dp_types)
+    })
+
+
+def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None, person=None, spatial_bounds_interpolated=None, sci_program=None,
+                             nsf_program=None, dp_type=None, spatial_bounds=None, exclude=False):
+
+    (conn, cur) = connect_to_db()
+    query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM dataset_project_view dpv'''
+    conds = []
+    if uid:
+        conds.append(cur.mogrify('dpv.uid=%s', (uid,)))
+    if dp_title:
+        conds.append(cur.mogrify('dpv.title ILIKE %s', ('%' + dp_title + '%',)))
+    if award:
+        conds.append(cur.mogrify('dpv.awards~*%s', (award,)))
+    if person:
+        conds.append(cur.mogrify('dpv.persons~*%s', (person,)))
+    if spatial_bounds_interpolated:
+        conds.append(cur.mogrify("st_intersects(st_transform(dpv.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
+    if exclude:
+        conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
+    if sci_program:
+        conds.append(cur.mogrify('dpv.science_programs~*%s ', (sci_program,)))
+    if nsf_program:
+        conds.append(cur.mogrify('dpv.nsf_funding_programs~*%s ', (nsf_program,)))
+    if dp_type and dp_type != 'Both':
+        conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
+    if free_text:
+        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s)", (free_text, free_text, free_text, free_text)))
+    conds = ['(' + c + ')' for c in conds]
+    if len(conds) > 0:
+        query_string += ' WHERE ' + ' AND '.join(conds)
+
+    cur.execute(query_string)
+    return cur.fetchall()
 
 
 def initcap(s):
