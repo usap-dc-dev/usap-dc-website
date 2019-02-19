@@ -2533,7 +2533,6 @@ def joint_browser():
     template_dict = {}
     params = request.args.to_dict()
     rows = filter_datasets_projects(**params)
-    print(params)
     session['search_params'] = params
 
     # refresh the dataset and project view to make sure it is up to date
@@ -2542,26 +2541,14 @@ def joint_browser():
     cur.execute(query)
 
     for row in rows:
-        if row['type'] == 'Project':
-            ds_query = "SELECT * FROM project_dataset pd " + \
-                       "LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = pd.dataset_id " + \
-                       "WHERE pdm.proj_uid = '%s'" % row['uid']
-            ds_query_string = cur.mogrify(ds_query)
-            cur.execute(ds_query_string)
-            datasets = cur.fetchall()
-            row['datasets'] = datasets
-        elif row['type'] == 'Dataset':
-            proj_query = "SELECT p.*, pd.repository FROM project p " + \
-                         "LEFT JOIN project_dataset_map pdm ON pdm.proj_uid = p.proj_uid " + \
-                         "JOIN project_dataset pd ON pd.dataset_id = pdm.dataset_id " + \
-                         "WHERE pdm.dataset_id = '%s'" % row['uid']
-            proj_query_string = cur.mogrify(proj_query)
-            cur.execute(proj_query_string)
-            projects = cur.fetchall()
-  
-            row['projects'] = projects
-            if len(projects) > 0:
-                row['repo'] = projects[0]['repository']                         
+        if row['datasets_or_projects']:
+            items = json.loads(row['datasets_or_projects'])
+            if row['type'] == 'Project':
+                row['datasets'] = items
+            elif row['type'] == 'Dataset':
+                row['projects'] = items
+                if len(items) > 0:
+                    row['repo'] = items[0]['repository']                         
 
     template_dict['records'] = rows
 
@@ -2647,7 +2634,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if dp_type and dp_type != 'Both':
         conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     if free_text:
-        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s)", (free_text, free_text, free_text, free_text)))
+        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR datasets_or_projects ~* %s)", 
+                                 (free_text, free_text, free_text, free_text, free_text)))
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)

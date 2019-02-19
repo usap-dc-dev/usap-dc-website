@@ -29,8 +29,8 @@
  <form method="get" action="{{url_for('joint_browser')}}" id="data_link" onLoad="resetForm()">
 
       <div class="row0">
-        <div class="col1">
-          <h2>Search Projects And Datasets<a name="top"></a></h2>
+        <div class="col100">
+          <h2>Search Projects And Datasets Hosted At USAP-DC<a name="top"></a></h2>
         </div>
 
       </div>
@@ -39,7 +39,7 @@
         <div class="row1">
           <div class="form-group col1">
             <label for="free_text">
-              <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset or project title, abstract, people, or keywords">
+              <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset or project title, abstract, people, keywords, or linked projects or datasets">
               Free Text Search</a>
             </label>
             <input id="free_text" name="free_text" class="form-control free_text_search"  value="{% if session.search_params %}{{session.search_params.free_text}}{% endif %}">
@@ -123,7 +123,7 @@
                 </div>
               </div>
               <div>
-               <input type="checkbox" name="exclude" id="exclude"  {% if session.search_params.exclude == 'on' %} checked {% endif %}> Exclude datasets that cover the whole Antarctic
+               <input type="checkbox" name="exclude" id="exclude"  {% if session.search_params.exclude == 'on' %} checked {% endif %}> Exclude datasets that cover the whole Antarctic from map-based search
              </div>
             </div>
 
