@@ -42,7 +42,7 @@
               <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset or project title, abstract, people, keywords, or linked projects or datasets">
               Free Text Search</a>
             </label>
-            <input id="free_text" name="free_text" class="form-control free_text_search"  value="{% if session.search_params %}{{session.search_params.free_text}}{% endif %}">
+            <input id="free_text" name="free_text" class="form-control"  value="{% if session.search_params %}{{session.search_params.free_text}}{% endif %}">
           </div>
 
                     <!-- Dataset / Project -->
@@ -85,21 +85,21 @@
             </div>
           </div>
 
-          <!-- NSF Program -->
-          <div class="form-group col2" id="nsf_program-group">
-            <label for="nsf_program">NSF Funding Program</label>
-            <div class="select-editable">
-              <select class="form-control selectpicker" id="nsf_program" name="nsf_program" data-title="All" data-width="225px"></select>
-              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="nsf_program-input" type="text"/>
-            </div>
-          </div>
-
           <!-- Award -->
-          <div class="form-group col3" id="award-group">
+          <div class="form-group col2" id="award-group">
             <label for="award-input">Award</label>
             <div class="select-editable">
               <select class="form-control selectpicker" id="award" name="award" data-title="All" data-width="225px"></select>
               <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="award-input" type="text"/>
+            </div>
+          </div>
+
+          <!-- NSF Program -->
+          <div class="form-group col3" id="nsf_program-group">
+            <label for="nsf_program">NSF Funding Program</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="nsf_program" name="nsf_program" data-title="All" data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="nsf_program-input" type="text"/>
             </div>
           </div>
         </div>
@@ -194,14 +194,14 @@
     
         <tr>
           <th width="5%">Type</th>
-          <th width="20%">Title/Abstract/Map</th>
+          <th width="30%">Title/Abstract/Map</th>
           <th width="7%">NSF Award(s)</th>
           <th width="8%">Date Created</th>
           <th width="10%">PI (CoPIs)</th>
-          <th width="25%">Dataset or Project Links</th>
-          <th width="10%">Repository</th>
+          <th width="30%">Dataset or Project Links and Repositories</th>
+          <!-- <th width="10%">Repository</th> -->
           <th hidden>Abstract</th>
-          <th width="10%" hidden>Geometry</th>
+          <th hidden>Geometry</th>
         </tr>
     
         {% for val in records %}
@@ -241,26 +241,44 @@
             <td><font size=2>
               {% if val['datasets']|length == 0 and val['projects']|length == 0 %}
                 No data link provided
-              {% endif %}
+              {% else %}
+              <table style="width:98%" class="nested_table">
               {% for ds in val['datasets'] %}
+              <tr>
+                <td width="80%">
                 {% if ds['url'] == '' %}
                   No data link provided
                 {% elif ds['title'] == '' %}
                   <a target='_blank' href="{{ds['url']}}">Access to data</a><br/>
                 {% else %}
-                  <a target='_blank' href="{{ds['url']}}">{{ds['title']}}</a><br/>
+                  <a target='_blank' href="{{ds['url']}}">{{ds.title}}</a><br/>
                 {% endif %}
+                </td>
+                <td width="20%" align="center">
+                  {{ds.repository}}
+                </td>
+              </tr>
               {% endfor %}
               {% for p in val['projects'] %}
+              <tr>
+                <td width="80%">
                 {% if p['title'] == '' %}
                   <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Project Landing Page</a><br/>
                 {% else %}
-                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p['title']}}</a><br/>
+                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br/>
                 {% endif %}
+                </td>
+                <td width="20%" align="center">
+                  {{p.repository}}
+                </td>
+              </tr>
               {% endfor %}
+
+            </table>
+            {% endif %}
             </font></td>
 
-            <td><font size=2>
+<!--             <td><font size=2>
               {% if val.type == 'Project' %}
                 {% if val['datasets']|length == 0 %}
                   No data link provided
@@ -275,7 +293,7 @@
               {% endif %}
 
 
-            </font></td>
+            </font></td> -->
 
             <td hidden>{{val['description']}}</td>
             <td hidden>{{val['bounds_geometry']}}</td>

@@ -178,9 +178,9 @@ width: 100%;
 }
 
 .free_text_search {
-  width:15em; 
+  /*width:15em; */
   height:1.7em; 
-  font-size: 1.5em;
+  /*font-size: 1.5em;*/
   margin-bottom: 40px;
 }
 
@@ -449,3 +449,14 @@ div.autocomplete ul li.selected { background-color: #ffb;}
     display: block;
 }
 
+.nested_table {
+ border-collapse: collapse !important;
+}
+
+.nested_table tr:nth-child(even) {
+  background-color: inherit !important;
+}
+
+.nested_table td {
+  border:1px solid lightgrey !important;
+}
