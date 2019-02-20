@@ -1258,11 +1258,11 @@ def title_examples():
 def abstract_examples():
     return render_template('abstract_examples.html')
 
-
-@app.route('/search', methods=['GET', 'POST'])
-def search():
+#DEPRECATED
+@app.route('/search_old', methods=['GET', 'POST'])
+def search_old():
     if request.method == 'GET':
-        return render_template('search.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
+        return render_template('search_old.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
                                parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
                                persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
     elif request.method == 'POST':
@@ -1277,6 +1277,7 @@ def search():
         return redirect('/search_result')
 
 
+#DEPRECATED
 @app.route('/filter_search_menus', methods=['GET'])
 def filter_search_menus():
     keys = ['person', 'parameter', 'program', 'award', 'title', 'project']
@@ -1315,11 +1316,11 @@ def filter_search_menus():
         'sci_program': sorted(projects)
     })
 
-
+# DEPRECATED
 @app.route('/search_result', methods=['GET', 'POST'])
 def search_result():
     if 'filtered_datasets' not in session:
-        return redirect('/search')
+        return redirect('/search_old')
     filtered_ids = session['filtered_datasets']
     
     exclude = False
@@ -2440,6 +2441,7 @@ def get_project(project_id):
         return cur.fetchone()
 
 
+#DEPRECATED
 @app.route('/project_browser', methods=['GET', 'POST'])
 def project_browser():
 
@@ -2527,8 +2529,8 @@ def project_browser():
     return render_template('project_browser.html', **template_dict)
 
 
-@app.route('/joint_browser', methods=['GET'])
-def joint_browser():
+@app.route('/search', methods=['GET'])
+def search():
 
     template_dict = {}
     params = request.args.to_dict()
@@ -2554,7 +2556,7 @@ def joint_browser():
 
     template_dict['search_params'] = session.get('search_params')
 
-    return render_template('joint_browser.html', **template_dict)  
+    return render_template('search.html', **template_dict)  
 
 
 @app.route('/filter_joint_menus', methods=['GET'])

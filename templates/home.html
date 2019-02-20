@@ -58,7 +58,7 @@
           <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
         </div>
       </div>
-        <form method="post" action="/search">
+        <form method="get" action="/search">
           <input name="spatial_bounds" type="hidden"/>
           <input name="spatial_bounds_interpolated" type="hidden"/>
           <div id="clear-search-buttons">

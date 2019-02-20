@@ -1,11 +1,361 @@
-function capitalizeFirstLetter(string) {
-return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+
+var persons = [];
+var titles = [];
+var sci_programs = [];
+var nsf_programs = [];
+var awards = [];
+
+$(document).ready(function() {
+    $(document).ajaxStart(function () { $("html").addClass("wait"); });
+    $(document).ajaxStop(function () { $("html").removeClass("wait"); });
+    $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
+
+    var search_params = JSON.parse($("#search_params").text());
+
+    $('#dp_title').typeahead({autoSelect: false});
+    $('#sci_program-input').typeahead({autoSelect: false});
+    $('#person-input').typeahead({autoSelect: false});
+    $('#nsf_program-input').typeahead({autoSelect: false});
+    $('#award-input').typeahead({autoSelect: false});
+
+    
+    $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type').change(function(e) {
+
+        $('[data-toggle="tooltip"]').tooltip('hide');
+
+        var selected = {
+            person: $('.selectpicker[name="person"]').val(),
+            db_type: $('.selectpicker[name="db_type"]').val(),
+            nsf_program: $('.selectpicker[name="nsf_program"]').val(),
+            award: $('.selectpicker[name="award"]').val(),
+            sci_program: $('.selectpicker[name="sci_program"]').val(),
+        };
+         updateMenusWithSelected(selected, false);
+    });
+
+    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #dp_type-input').focus(function() {
+        var el = $(this);
+        var newVal = el.val();
+        if (newVal == "All") {
+            el.val("");
+        }
+    });
+
+    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #dp_type-input').blur(function() {
+        var bluredElement = $(this);
+        if (bluredElement.val() === "") {
+            bluredElement.val("All");
+        }
+    });
+
+    $('#award-input, #sci_program-input, #person-input, #nsf_program-input').change(function() {
+        // need to put in a delay so that some browsers (eg Firefox) can catch up with the focus
+        window.setTimeout(function() {
+            var el = $(':focus');
+            var newVal = el.val();
+            switch (el.attr('id')) {
+                case 'sci_program-input':
+                    if (sci_programs.indexOf(newVal) == -1) {
+                        $('#sci_program-input').val("All");
+                        $('.selectpicker[name="sci_program"]').val("");
+                    } else {
+                        $('.selectpicker[name="sci_program"]').val(newVal);
+                    }
+                    break;
+                case 'award-input':
+                    if (awards.indexOf(newVal) == -1) {
+                        $('#award-input').val("All");
+                        $('.selectpicker[name="award"]').val("");
+                    } else {
+                        $('.selectpicker[name="award"]').val(newVal);
+                    }
+                    break;
+                case 'person-input':
+                    if (persons.indexOf(newVal) == -1) {
+                        $('#person-input').val("All");
+                        $('.selectpicker[name="person"]').val("");
+                    } else {
+                        $('.selectpicker[name="person"]').val(newVal);
+                    }
+                    break;
+                case 'nsf_program-input':
+                    if (nsf_programs.indexOf(newVal) == -1) {
+                        $('#nsf_program-input').val("All");
+                        $('.selectpicker[name="nsf_program"]').val("");
+                    } else {
+                        $('.selectpicker[name="nsf_program"]').val(newVal);
+                    }
+                    break;
+                default:
+                    return;
+            }
+
+            var selected = {
+                person: $('.selectpicker[name="person"]').val(),
+                db_type: $('.selectpicker[name="db_type"]').val(),
+                nsf_program: $('.selectpicker[name="nsf_program"]').val(),
+                award: $('.selectpicker[name="award"]').val(),
+                sci_program: $('.selectpicker[name="sci_program"]').val(),
+            };
+            updateMenusWithSelected(selected, false);   
+        }, 300);
+    });
+
+
+
+    mc = new MapClient();
+
+
+    $('#data_link').submit(function() {
+    var features = mc.vectorSrc.getFeatures();
+    if (features.length > 0) {
+        var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
+        var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
+        var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
+        $('input[name="spatial_bounds_interpolated"]').val(wkt);
+    } else {
+        $('input[name="spatial_bounds_interpolated"]').val('');
+    }
+    });
+
+
+
+
+    $('#map-modal').on('shown.bs.modal', function() {
+      mc.map.updateSize();
+    });
+  
+  $('.abstract-button').click(function(event) {
+    var header = $(this).closest('table').find('th');
+    var abstract_ind, type_ind = 999;
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "Abstract") abstract_ind = i;
+      if (label == "Type") type_ind = i;
+    }
+    var row = $(this).closest('tr');
+    var abstract = row.children('td').eq(abstract_ind).text();
+    $("#abstract_text").html(abstract);
+    var x = event.pageX;
+    var y = event.pageY;
+
+    var type = row.children('td').eq(type_ind).text();
+    $("#abstract_title").text(type +' Abstract');
+    $("#abstract").css({top:y-400+"px", left:x+"px"}).show();
+
+  });
+
+  $('.close_abstract_btn').click(function() {
+    $("#abstract").hide();
+  });
+  
+
+  var map = new MapClient2();
+  var styles = [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'rgba(255, 0, 0, 0.8)',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 0, 0, 0.3)'
+      })
+    }),
+    new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 4,
+        stroke: new ol.style.Stroke({
+          color: 'rgba(255, 0, 0, 0.8)',
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 0, 0, 0.3)'
+        })
+      })
+    })
+  ];
+  
+  $('.geometry-button').click(function(event) {
+    var header = $(this).closest('table').find('th');
+    var dif_id_ind, geometry_ind, type_ind = 999;
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "Geometry") geometry_ind = i;
+      if (label == "Type") type_ind = i;
+    }
+    var row = $(this).closest('tr');
+    var geometry = row.children('td').eq(geometry_ind).text();
+    plotGeometry(map, geometry, styles);
+    var x = event.pageX;
+    var y = event.pageY;
+
+    var type = row.find('td').eq(type_ind).text();
+    $("#geometry_title").text(type +' Spatial Bounds');
+    $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
+
+  });
+
+  $('.close_geom_btn').click(function() {
+    $("#geometry").hide();
+  });
+  
+
+  //Make the DIV element draggagle:
+  dragElement(document.getElementById(("abstract")));
+  dragElement(document.getElementById(("geometry")));
+
+  updateMenusWithSelected(search_params, false);
+
+});
+
+function MapClient2() {
+  proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
+  var projection = ol.proj.get('EPSG:3031');
+  projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
+  projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
+  map = new ol.Map({ // set to GMRT SP bounds
+  target: 'show_on_map',
+    view: new ol.View({
+        center: [0,0],
+        zoom: 2,
+        projection: projection,
+        minZoom: 1,
+        maxZoom: 10
+    }),  
+  });
+
+  var api_url = 'http://api.usap-dc.org:81/wfs?';
+  var gmrt = new ol.layer.Tile({
+    type: 'base',
+    title: "GMRT Synthesis",
+    source: new ol.source.TileWMS({
+        url: "http://gmrt.marine-geo.org/cgi-bin/mapserv?map=/public/mgg/web/gmrt.marine-geo.org/htdocs/services/map/wms_sp.map",
+        params: {
+        layers: 'South_Polar_Bathymetry'
+        }
+    })
+  });
+  map.addLayer(gmrt);
+
+  var lima = new ol.layer.Tile({
+    title: "LIMA 240m",
+    visible: true,
+    source: new ol.source.TileWMS({
+        url: api_url,
+        params: {
+        layers: "LIMA 240m",
+        transparent: true
+        }
+    })
+  });
+  map.addLayer(lima);
+
+  return map;
 }
 
-function capitalizeWords(s) {
-return s.split(/ /).map(capitalizeFirstLetter).join(' ');
+function plotGeometry(map, geometry, styles) {
+
+  //first remove previous geometries
+  removeLayerByName(map, "geometry");
+
+  var format = new ol.format.WKT();
+
+  var feature = format.readFeature(geometry, {
+    dataProjection: 'EPSG:4326',
+    featureProjection: 'EPSG:3031'
+  });
+
+  var source = new ol.source.Vector({
+    features: [feature]
+  });
+
+  var layer = new ol.layer.Vector({
+    source: source,
+    style: styles,
+    title: "geometry"
+  });
+
+  map.addLayer(layer);
+
+  var extent = map.getView().getProjection().getExtent();
+  //zoom to polygon
+  if (feature.getGeometry().getType() == "Polygon") {
+    extent = source.getExtent();
+  }
+  map.getView().fit(extent, map.getSize());
 }
 
+/*
+  A function to remove a layer using its name/title
+*/
+function removeLayerByName(map, name) {
+  var layersToRemove = [];
+  map.getLayers().forEach(function (layer) {
+    if (layer.get('title') !== undefined && layer.get('title') === name) {
+        layersToRemove.push(layer);
+    }
+  });
+
+  var len = layersToRemove.length;
+  for(var i = 0; i < len; i++) {
+      map.removeLayer(layersToRemove[i]);
+  }
+}
+
+
+function updateMenusWithSelected(selected, reset) {
+    selected = selected || {};
+
+    return $.ajax({
+      method: 'GET',
+      url: 'http://' + window.location.hostname + '/filter_joint_menus',
+      data: selected,
+
+      success: function(opts) {
+
+        for (var menu_name in opts) {
+            // console.log('filling opts: ' + menu_name +", " + selected[menu_name]);
+            fill_opts(menu_name, opts[menu_name], selected[menu_name]);
+        }
+
+        $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+        persons = opts.person;
+        titles = opts.dp_title;
+        sci_programs = opts.sci_program;
+        nsf_programs = opts.nsf_program;
+        awards = opts.award;
+
+        $('#dp_title').data('typeahead').source = makeAutocompleteSource(titles);
+        $('#sci_program-input').data('typeahead').source = makeAutocompleteSource(sci_programs);
+        $('#nsf_program-input').data('typeahead').source = makeAutocompleteSource(nsf_programs);
+        $('#person-input').data('typeahead').source = makeAutocompleteSource(persons);
+        $('#award-input').data('typeahead').source = makeAutocompleteSource(awards);
+      }
+    });
+}
+
+
+function makeAutocompleteSource(wordlist) {
+  return function(term, responseFn) {
+      var re = new RegExp($.ui.autocomplete.escapeRegex(term),'i');
+      var ret = wordlist.filter(function(t) {return re.test(t); });
+      ret.unshift(term);
+      return responseFn(ret);
+  };
+}
+
+function resetForm() {
+    document.getElementById("data_link").reset();
+    $("#free_text").val("");
+    $("#dp_title").val("");
+    $("#spatial_bounds").text("");
+    $('#clear-polygon').click();
+    $("#exclude").prop('checked', false);
+    $("#search_btn").click();
+}
 
 function fill_opts(menu_name, opts, selected) {
     var $select = $('.selectpicker[name='+'"'+menu_name+'"]');
@@ -21,14 +371,17 @@ function fill_opts(menu_name, opts, selected) {
         case 'award':
             if(!selected) $('#award-input').val("All"); else $('#award-input').val(selected);
             break;
-        case 'project':
-            if(!selected) $('#project-input').val("All"); else $('#project-input').val(selected);
+        case 'sci_program':
+            if(!selected) $('#sci_program-input').val("All"); else $('#sci_program-input').val(selected);
             break;
         case 'person':
             if(!selected) $('#person-input').val("All"); else $('#person-input').val(selected);
             break;
-        case 'program':
-            if(!selected) $('#program-input').val("All"); else $('#program-input').val(selected);
+        case 'nsf_program':
+            if(!selected) $('#nsf_program-input').val("All"); else $('#nsf_program-input').val(selected);
+            break;
+        case 'dp_type':
+            if(!selected) $('#dp_type-input').val("All"); else $('#dp_type-input').val(selected);
             break;
     }
 
@@ -37,262 +390,48 @@ function fill_opts(menu_name, opts, selected) {
     
 }
 
+/*
+  functions to hangle dragging an element by its header
+*/
+function dragElement(elmnt) {
+  if (elmnt === null) return;
+  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  if (document.getElementById(elmnt.id + "_header")) {
+    /* if present, the header is where you move the DIV from:*/
+    document.getElementById(elmnt.id + "_header").onmousedown = dragMouseDown;
+  } else {
+    /* otherwise, move the DIV from anywhere inside the DIV:*/
+    elmnt.onmousedown = dragMouseDown;
+  }
 
-function updateMenusWithSelected(selected, reset) {
-    selected = selected || {};
-    return $.ajax({
-    method: 'GET',
-    url: 'http://' + window.location.hostname + '/filter_search_menus',
-    data: selected,
+  function dragMouseDown(e) {
+    e = e || window.event;
+    // get the mouse cursor position at startup:
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    // call a function whenever the cursor moves:
+    document.onmousemove = elementDrag;
+  }
 
-    success: function(opts) {
-        if (reset) {
-            document.getElementById("data_link").reset();
-            $("#title").text("");
-            $("#spatial_bounds").text("");
-        }
+  function elementDrag(e) {
+    e = e || window.event;
+    // calculate the new cursor position:
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    // set the element's new position:
+    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+  }
 
-        for (var menu_name in opts) {
-            // console.log('filling opts: ' + menu_name +", " + selected[menu_name]);
-            fill_opts(menu_name, opts[menu_name], selected[menu_name]);
-        }
-
-        $('[data-toggle="tooltip"]').tooltip({container: 'body'});
-
-        }
-    });
+  function closeDragElement() {
+    /* stop moving when mouse button is released:*/
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
 }
-
-function resetForm() {
-    updateMenusWithSelected({}, true);    
-}
-
-var mc;
-$(document).ready(function() {
-    $(document).ajaxStart(function () { $("html").addClass("wait"); });
-    $(document).ajaxStop(function () { $("html").removeClass("wait"); });
-    $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
-
-
-    var titles = JSON.parse($("#titles").text())
-    .map(function(r) { return r.title; })
-    .filter(function(t) { return t; });
-
-    var projects_rows = JSON.parse($("#projects").text());
-    var projects = ["All"];
-    for (var row of projects_rows) {
-    //projects[row['award']] = { 'name': row['name'], 'title': row['title'] };
-    projects.push(row.id);
-    }
-
-    var persons_rows = JSON.parse($("#persons").text());
-    var persons = ["All"];
-    for (row of persons_rows) {
-    persons.push(row.id);
-    }
-
-    var programs_rows = JSON.parse($("#programs").text());
-    var programs = ["All"];
-    for (row of programs_rows) {
-    programs.push(row.id);
-    }
-
-    var parameters = JSON.parse($("#parameters").text())
-    .map(function(r) { return capitalizeWords(r.id); })
-    .filter(function(p) { return p; });
-
-    var awards_rows = JSON.parse($("#nsf_grants").text());
-    var awards = {};
-    var awards_str = ["All"];
-    for (row of awards_rows) {
-    awards[row.award] = { 'name': row.name, 'title': row.title };
-    awards_str.push(row.award+ " " + row.name);
-    }
-
-
-    var search_params = JSON.parse($("#search_params").text());
-
-
-
-    var check = $("#entire_region");
-    var w = $('input[name="west"]');
-    var e = $('input[name="east"]');
-    var s = $('input[name="south"]');
-    var n = $('input[name="north"]');
-    check.on('click', function() {
-      if (check.prop('checked')) {
-        w.val('-180');
-        e.val('180');
-        s.val('-90');
-        n.val('-60');
-      } else {
-        w.val('');
-        e.val('');
-        s.val('');
-        n.val('');
-      }
-    });
-
-    
-    $('#person, #parameter, #program, #award, #project').change(function(e) {
-
-        $('[data-toggle="tooltip"]').tooltip('hide');
-
-        var selected = {
-            person: $('.selectpicker[name="person"]').val(),
-            parameter: $('.selectpicker[name="parameter"]').val(),
-            program: $('.selectpicker[name="program"]').val(),
-            award: $('.selectpicker[name="award"]').val(),
-            project: $('.selectpicker[name="project"]').val(),
-        };
-         updateMenusWithSelected(selected, false);
-    });
-
-    $('#award-input, #project-input, #person-input, #program-input').focus(function() {
-        var el = $(this);
-        var newVal = el.val();
-        if (newVal == "All") {
-            el.val("");
-        }
-    });
-
-    $('#award-input, #project-input, #person-input, #program-input').blur(function() {
-        var bluredElement = $(this);
-        if (bluredElement.val() === "") {
-            bluredElement.val("All");
-        }
-    });
-
-    $('#award-input, #project-input, #person-input, #program-input').change(function() {
-        // need to put in a delay so that some broswers (eg Firefox) can catch up with the focus
-        window.setTimeout(function() {
-            var el = $(':focus');
-            var newVal = el.val();
-            switch (el.attr('id')) {
-                case 'project-input':
-                    if (projects.indexOf(newVal) == -1) {
-                        $('#project-input').val("All");
-                        $('.selectpicker[name="project"]').val("");
-                    } else {
-                        $('.selectpicker[name="project"]').val(newVal);
-                    }
-                    break;
-                case 'award-input':
-                    if (awards_str.indexOf(newVal) == -1) {
-                        $('#award-input').val("All");
-                        $('.selectpicker[name="award"]').val("");
-                    } else {
-                        $('.selectpicker[name="award"]').val(newVal);
-                    }
-                    break;
-                case 'person-input':
-                    if (persons.indexOf(newVal) == -1) {
-                        $('#person-input').val("All");
-                        $('.selectpicker[name="person"]').val("");
-                    } else {
-                        $('.selectpicker[name="person"]').val(newVal);
-                    }
-                    break;
-                case 'program-input':
-                    if (programs.indexOf(newVal) == -1) {
-                        $('#program-input').val("All");
-                        $('.selectpicker[name="program"]').val("");
-                    } else {
-                        $('.selectpicker[name="program"]').val(newVal);
-                    }
-                    break;
-                default:
-                    return;
-            }
-
-            var selected = {
-                person: $('.selectpicker[name="person"]').val(),
-                parameter: $('.selectpicker[name="parameter"]').val(),
-                program: $('.selectpicker[name="program"]').val(),
-                award: $('.selectpicker[name="award"]').val(),
-                project: $('.selectpicker[name="project"]').val(),
-            };
-            updateMenusWithSelected(selected, false);   
-        }, 300);
-    });
-
-
-
-    mc = new MapClient();
-
-    //$('#spatial-tabs').tabs();
-
-    $('#data_link').submit(function() {
-    var features = mc.vectorSrc.getFeatures();
-    if (features.length > 0) {
-        var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
-        var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
-        var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
-        $('input[name="spatial_bounds_interpolated"]').val(wkt);
-    } else {
-        $('input[name="spatial_bounds_interpolated"]').val('');
-    }
-    });
-
-    /*$('[name="title"]').autocomplete({source: 'http://www.usap-dc.org/titles'});
-      $('[name="parameter"]').autocomplete({source: 'http://www.usap-dc.org/parameter_search'});*/
-
-    function makeAutocompleteSource(wordlist) {
-        return function(term, responseFn) {
-            var re = new RegExp($.ui.autocomplete.escapeRegex(term),'i');
-            var ret = wordlist.filter(function(t) {return re.test(t); });
-            ret.unshift(term);
-            return responseFn(ret);
-        };
-    }
-    
-
-    $('[name="title"]').typeahead({
-    source: makeAutocompleteSource(titles),
-    autoSelect: false
-    });
- //    $('[name="parameter"]').typeahead({
-    // source: makeAutocompleteSource(projects),
-    // autoSelect: false
- //    });
-
-
-    $('#project-input').typeahead({
-    source: makeAutocompleteSource(projects),
-    autoSelect: false
-    });
-    $('#person-input').typeahead({
-    source: makeAutocompleteSource(persons),
-    autoSelect: false
-    });
-    $('#program-input').typeahead({
-    source: makeAutocompleteSource(programs),
-    autoSelect: false
-    });
-    $('#award-input').typeahead({
-    source: makeAutocompleteSource(awards_str),
-    autoSelect: false
-    });
-
-    $('#datepicker').datepicker({
-    format: "yyyy-mm-dd",
-    startView: 2
-    });
-
-    $('#map-modal').on('shown.bs.modal', function() {
-    mc.map.updateSize();
-    });
-
-    $('.selectpicker').selectpicker({
-    title: 'All',
-    width: 'fit'
-    });
-
-    updateMenusWithSelected(search_params, false);
-    
-    //$('.dropdown').each(function(i,elem) { $(elem).makeDropdownIntoSelect('','All'); });
-});
-
 
 
 
@@ -325,19 +464,6 @@ function MapClient() {
     })
     });
     this.map.addLayer(gmrt);
-
- //    var modis = new ol.layer.Tile({
-    // title: "MODIS Mosaic",
-    // visible: false,
-    // source: new ol.source.TileWMS({
-    //     url: api_url,
-    //     params: {
-    //  layers: 'MODIS',
-    //  transparent: true
-    //     }
-    // })
- //    });
- //    this.map.addLayer(modis);
 
     var lima = new ol.layer.Tile({
     // type: 'base',
@@ -424,10 +550,6 @@ function MapClient() {
     })
     });
 
-
-//    var zoomcontrol = new ol.control.Zoom();
-    //    map.addControl(zoomcontrol);
-
     var mousePosition = new ol.control.MousePosition({
         //coordinateFormat: ol.coordinate.createStringXY(2),
         projection: 'EPSG:4326',
@@ -441,8 +563,6 @@ function MapClient() {
     }
     });
     this.map.addControl(mousePosition);
-
-
 
     var popup = new ol.Overlay.Popup({"panMapIfOutOfView":false});
     this.map.addOverlay(popup);
@@ -473,8 +593,6 @@ function MapClient() {
             layers += ',Integrated';
         if (layers.charAt(0) == ',') 
             layers = layers.substring(1);
-    //  if (tracks.getVisible())
-    //      layers += ',Entries';
         if (layers.length > 0) {
             $.ajax({
                 type: "GET",
@@ -522,146 +640,51 @@ function MapClient() {
     }
     });
 
-
-
-
     this.vectorSrc = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({ source: this.vectorSrc });
     this.map.addLayer(vectorLayer);
     var self = this;
+
+    if ($('#spatial_bounds').val() !== '') {
+      try {
+          var geom = (new ol.format.WKT()).readGeometry($('#spatial_bounds').val());
+          geom.transform('EPSG:4326', 'EPSG:3031');
+          self.vectorSrc.clear();
+          self.vectorSrc.addFeature(new ol.Feature(geom));
+      } catch (e) {
+          console.log('invalid wkt geometry');
+      }
+    }
+    
     $('.drawing-button').on('click', function(e) {
-    var mode = $(this).attr('data-mode');
-    self.setDrawMode(mode);
-    self.setDrawingTool(mode);
+      var mode = $(this).attr('data-mode');
+      self.setDrawMode(mode);
+      self.setDrawingTool(mode);
     });
 
-    $('[name="spatial_bounds"]').on('change', function() {
-    try {
-        var geom = (new ol.format.WKT()).readGeometry($('[name="spatial_bounds"]').val());
-        geom.transform('EPSG:4326', 'EPSG:3031');
-        self.vectorSrc.clear();
-        self.vectorSrc.addFeature(new ol.Feature(geom));
-    } catch (e) {
-        console.log('invalid wkt geometry');
-    }
+    $('#spatial_bounds').on('change', function() {
+      try {
+          var geom = (new ol.format.WKT()).readGeometry($('spatial_bounds').val());
+          geom.transform('EPSG:4326', 'EPSG:3031');
+          self.vectorSrc.clear();
+          self.vectorSrc.addFeature(new ol.Feature(geom));
+      } catch (e) {
+          console.log('invalid wkt geometry');
+      }
     });
 
     $('#clear-polygon').click(function() {
-    $('[name="spatial_bounds"]').val('');
-    self.vectorSrc.clear();
+      $('#spatial_bounds').val('');
+      self.vectorSrc.clear();
     });
 
-    //$('#close-modal')
-    
-    /*
-    var styles = [
-        
-        new ol.style.Style({
-            stroke: new ol.style.Stroke({
-        color: 'blue',
-        width: 3
-            }),
-            fill: new ol.style.Fill({
-        color: 'rgba(0, 0, 255, 0.1)'
-            })
-        }),
-        new ol.style.Style({
-            image: new ol.style.Circle({
-        radius: 5,
-        fill: new ol.style.Fill({
-            color: 'black'
-        })
-            }),
-            geometry: function(feature) {
-        // return the coordinates of the first ring of the polygon
-        var coordinates = feature.getGeometry().getCoordinates()[0];
-        return new ol.geom.MultiPoint(coordinates);
-            }
-        })
-    ];
-        
-    this.bboxSrc = new ol.source.Vector();
-    var bboxLayer = new ol.layer.Vector({ source: this.bboxSrc, style: styles });
-    this.map.addLayer(bboxLayer);
-
-    $.ajax({
-    method: 'GET',
-    url: 'http://www.usap-dc.org/geometries',
-    success: function(msg) {
-        var featureCollection = {
-        type: 'FeatureCollection',
-        crs: {
-            type: 'name',
-            properties: {
-            name: 'EPSG:3031'
-            }
-        },
-        };
-        var features = []
-        for (var ft of msg) {
-        var outer = { type: 'Feature', geometry: $.parseJSON(ft), properties: {}};
-        features.push(outer);
-        }
-        featureCollection.features = features;
-        self.bboxSrc.addFeatures((new ol.format.GeoJSON()).readFeatures(JSON.stringify(featureCollection)));
-    }
-    });
-
-    self.bboxSrc.addFeatures((new ol.format.GeoJSON()).readFeatures(JSON.stringify(geojsonObject));
-     
-    var feature = new ol.Feature(
-    new ol.geom.Polygon([[[0, 0],[0,8200000],[8200000,8200000],[8200000,0],[0,0]]])
-    );
-    //feature.setStyle(circle);
-
-    var geojsonObject = {
-        'type': 'FeatureCollection',
-        'crs': {
-          'type': 'name',
-          'properties': {
-            'name': 'EPSG:3857'
-          }
-        },
-        'features': [{
-          'type': 'Feature',
-          'geometry': {
-            'type': 'Polygon',
-            'coordinates': [[[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6],
-                [-3e6, 6e6], [-5e6, 6e6]]]
-          }
-        }, {
-          'type': 'Feature',
-          'geometry': {
-            'type': 'Polygon',
-            'coordinates': [[[-2e6, 6e6], [-2e6, 8e6], [0, 8e6],
-                [0, 6e6], [-2e6, 6e6]]]
-          }
-        }, {
-          'type': 'Feature',
-          'geometry': {
-            'type': 'Polygon',
-            'coordinates': [[[1e6, 6e6], [1e6, 8e6], [3e6, 8e6],
-                [3e6, 6e6], [1e6, 6e6]]]
-          }
-        }, {
-          'type': 'Feature',
-          'geometry': {
-            'type': 'Polygon',
-            'coordinates': [[[-2e6, -1e6], [-1e6, 1e6],
-                [0, -1e6], [-2e6, -1e6]]]
-          }
-        }]
-      };
-    
-    //this.bboxSrc.addFeature(feature);
-
-    */
 }
+
 
 function interpolateGreatCircles(coords,resolution) {
     var i,j;
-    var ret = []
-    for (var i=0, j=1; j < coords.length; i++, j++) {
+    var ret = [];
+    for (i=0, j=1; j < coords.length; i++, j++) {
     var start = coords[i];
     var end = coords[j];
     if (start[0] == end[0] && start[1] == end[1]) {
@@ -681,14 +704,14 @@ function interpolateGreatCircles(coords,resolution) {
 function interpolateLineString(coords,resolution) {
     var i,j;
     var ret = [];
-    for (var i=0, j=1; j < coords.length; i++, j++) {
+    for (i=0, j=1; j < coords.length; i++, j++) {
     var start = coords[i];
     var end = coords[j];
     for (var n = 0; n < resolution; n++) {
         var t = n/resolution;
         var x = (1-t)*start[0] + t*end[0];
         var y = (1-t)*start[1] + t*end[1];
-        ret.push([x,y])
+        ret.push([x,y]);
     }
     }
     ret.push(coords[coords.length-1]);
@@ -700,46 +723,7 @@ MapClient.prototype.setDrawingTool = function() {
     var value = this.getDrawMode(); 
     if (value !== 'None') {
     var maxPoints, geometryFunction;
-    /*if (value == 'Polygon') {
-        geometryFunction = function(coordinates, geometry) {
-        if (!geometry) {
-            geometry = new ol.geom.Polygon(null);
-        }
-        var coords = new ol.geom.LineString(coordinates[0]);
-        coords.transform('EPSG:3031', 'EPSG:4326');
-        coords = coords.getCoordinates();
-        coords.push(coords[0]);
-        coords = interpolateGreatCircles(coords, 10);
-        
-        // Ensure that the polygon closes exactly
-        coords.pop();
-        coords.push(coords[0]);
-        geometry.setCoordinates([coords]);
-        geometry.transform('EPSG:4326', 'EPSG:3031');
-        return geometry;
-        //return new ol.geom.Polygon([[[0,0],[10000,10000],[10000,0],[0,0]]]);
-        }
-        }
-    if (value == 'Polygon') {
-        value = 'LineString';
-        geometryFunction = function(coordinates, geometry) {
-        if (!geometry) {
-            geometry = new ol.geom.Polygon(null);
-        }
-        var coords = new ol.geom.LineString(coordinates);
-        coords.transform('EPSG:3031', 'EPSG:4326');
-        coords = coords.getCoordinates();
-        coords.push(coords[0]);
-        coords = interpolateGreatCircles(coords, 10);
-        
-        // Ensure that the polygon closes exactly
-        coords.pop();
-        coords.push(coords[0]);
-        geometry.setCoordinates([coords]);
-        geometry.transform('EPSG:4326', 'EPSG:3031');
-        return geometry;
-        }
-    } else*/ if (value == 'Box') {
+    if (value == 'Box') {
         value = 'LineString';
         maxPoints = 2;
         geometryFunction = function(coordinates, geometry) {
@@ -763,25 +747,25 @@ MapClient.prototype.setDrawingTool = function() {
     this.map.addInteraction(this.drawingTool);
     
     var self = this;
-    this.drawingTool.on(ol.interaction.DrawEventType.DRAWSTART, function() {self.vectorSrc.clear()});
+    this.drawingTool.on(ol.interaction.DrawEventType.DRAWSTART, function() {self.vectorSrc.clear();});
 
     this.drawingTool.on(ol.interaction.DrawEventType.DRAWEND, function(e) {
         var geom = e.feature.getGeometry().clone();
         geom.transform('EPSG:3031', 'EPSG:4326');
         var coords = geom.getCoordinates();
         coords = coords.map(function(ring) { return ring.map(function(xy) { return [Number(xy[0]).toFixed(3), Number(xy[1]).toFixed(3)]; }); });
-        console.log(coords);
         geom.setCoordinates(coords);
         $('[name="spatial_bounds"]').val((new ol.format.WKT()).writeGeometry(geom));
     });
     }
-}
+};
 
 MapClient.prototype.getDrawMode = function() {
     return $('.drawing-button.draw-active').attr('data-mode');
-}
+};
 
 MapClient.prototype.setDrawMode = function(str) {
     $('#drawing-buttons .drawing-button').removeClass('draw-active');
     $('#drawing-buttons .drawing-button[data-mode="' + str + '"]').addClass('draw-active');
-}
+};
+

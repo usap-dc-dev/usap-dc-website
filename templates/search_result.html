@@ -176,7 +176,7 @@
 
   {% macro results_header() -%}
     <div class="results-header">
-      <a class="modify_search" class="btn btn-default" href="{{url_for('search')}}">Modify Search</a>
+      <a class="modify_search" class="btn btn-default" href="{{url_for('search_old')}}">Modify Search</a>
       <div>
 	{% if len(dataset_grps) > 1 %}
 	  <ul class="pagination">
