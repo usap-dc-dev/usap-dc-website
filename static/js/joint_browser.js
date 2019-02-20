@@ -127,32 +127,23 @@ $(document).ready(function() {
   
   $('.abstract-button').click(function(event) {
     var header = $(this).closest('table').find('th');
-    var dif_id_ind, abstract_ind, type_ind = 999;
+    var abstract_ind, type_ind = 999;
     for (var i in header) {
       if (header[i].tagName != "TH") continue;
       var label = header[i].innerText;
-      if (label == "DIF ID") dif_id_ind = i;
       if (label == "Abstract") abstract_ind = i;
       if (label == "Type") type_ind = i;
     }
     var row = $(this).closest('tr');
-    var dif_id = row.find('td').eq(dif_id_ind).text();
-    var abstract = row.find('td').eq(abstract_ind).text();
-    $("#abstract_title").text(dif_id);
+    var abstract = row.children('td').eq(abstract_ind).text();
     $("#abstract_text").html(abstract);
     var x = event.pageX;
     var y = event.pageY;
 
-    if ($(this)[0].id == 'joint_abstract_btn') {
-      var type = row.find('td').eq(type_ind).text();
-      $("#abstract_title").text(type +' Abstract');
-      $("#abstract").css({top:y-400+"px", left:x+"px"}).show();
-    } else if (abstract_ind == 6) {
-      $("#abstract_title").text('Project Abstract');
-      $("#abstract").css({top:y-400+"px", left:x+"px"}).show();
-    } else {
-      $("#abstract").css({top:y-400+"px", left:x-300+"px"}).show();
-    }
+    var type = row.children('td').eq(type_ind).text();
+    $("#abstract_title").text(type +' Abstract');
+    $("#abstract").css({top:y-400+"px", left:x+"px"}).show();
+
   });
 
   $('.close_abstract_btn').click(function() {
@@ -195,7 +186,7 @@ $(document).ready(function() {
       if (label == "Type") type_ind = i;
     }
     var row = $(this).closest('tr');
-    var geometry = row.find('td').eq(geometry_ind).text();
+    var geometry = row.children('td').eq(geometry_ind).text();
     plotGeometry(map, geometry, styles);
     var x = event.pageX;
     var y = event.pageY;
