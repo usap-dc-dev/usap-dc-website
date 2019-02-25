@@ -376,7 +376,7 @@ def updateProjectSpatialMap(uid, data):
                     out_text = "Spatial bounds successfully updated"
                 # otherwise insert record
                 else:
-                    sql_cmd = "INSERT INTO projct_spatial_map (proj_uid, west,east,south,north,cross_dateline, geometry, bounds_geometry) VALUES ('%s', %s, %s, %s, %s, %s, %s, %s);"\
+                    sql_cmd = "INSERT INTO project_spatial_map (proj_uid, west,east,south,north,cross_dateline, geometry, bounds_geometry) VALUES ('%s', %s, %s, %s, %s, %s, %s, %s);"\
                         % (uid, west, east, south, north, data['cross_dateline'], geometry, bounds_geometry)
                     out_text = "Spatial bounds successfully inserted"
                 print(sql_cmd)
@@ -646,10 +646,9 @@ def projectJson2sql(data, uid):
         sql_out += "\n"
 
     # Add spatial bounds
-    sql_out += "--NOTE: adding spatial bounds\n"
-    sql_out += "INSERT INTO project_spatial_map(proj_uid,west,east,south,north,cross_dateline) VALUES ('%s','%s','%s','%s','%s','%s');\n" % \
-        (uid, data["geo_w"], data["geo_e"], data["geo_s"], data["geo_n"], data["cross_dateline"])
+
     if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
+
         west = float(data["geo_w"])
         east = float(data["geo_e"])
         south = float(data["geo_s"])
@@ -660,8 +659,9 @@ def projectJson2sql(data, uid):
         geometry = "ST_GeomFromText('POINT(%s %s)', 4326)" % (mid_point_long, mid_point_lat)
         bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
 
-        sql_out += "UPDATE project_spatial_map SET (geometry, bounds_geometry) = (%s, %s) WHERE proj_uid = '%s';\n\n" % \
-            (geometry, bounds_geometry, uid)
+        sql_out += "--NOTE: adding spatial bounds\n"
+        sql_out += "INSERT INTO project_spatial_map(proj_uid,west,east,south,north,cross_dateline,geometry,bounds_geometry) VALUES ('%s','%s','%s','%s','%s','%s',%s,%s);\n" % \
+            (uid, west, east, south, north, data["cross_dateline"], geometry, bounds_geometry)
 
     sql_out += '\nCOMMIT;\n'
     
@@ -697,35 +697,37 @@ def getDifXML(data, uid):
     xml_entry.text = data.get('title')
 
     # ---- personel
-    for person in data['persons']:
-        name_last, name_first = person.get('id').split(',')
-        xml_pi = ET.SubElement(root, "Personnel")
-        xml_pi_role = ET.SubElement(xml_pi, "Role")
-        xml_pi_role.text = "INVESTIGATOR"
-        xml_pi_contact = ET.SubElement(xml_pi, "Contact_Person")
-        xml_pi_contact_fname = ET.SubElement(xml_pi_contact, "First_Name")
-        xml_pi_contact_fname.text = name_first.strip()
-        xml_pi_contact_lname = ET.SubElement(xml_pi_contact, "Last_Name")
-        xml_pi_contact_lname.text = name_last.strip()
-        xml_pi_contact_address = ET.SubElement(xml_pi_contact, "Address")
-        xml_pi_contact_address1 = ET.SubElement(xml_pi_contact_address, "Street_Address")
-        xml_pi_contact_address1.text = person.get('org')
-        xml_pi_contact_email = ET.SubElement(xml_pi_contact, "Email")
-        xml_pi_contact_email.text = person.get('email')
+    if data.get('persons'):
+        for person in data['persons']:
+            name_last, name_first = person.get('id').split(',')
+            xml_pi = ET.SubElement(root, "Personnel")
+            xml_pi_role = ET.SubElement(xml_pi, "Role")
+            xml_pi_role.text = "INVESTIGATOR"
+            xml_pi_contact = ET.SubElement(xml_pi, "Contact_Person")
+            xml_pi_contact_fname = ET.SubElement(xml_pi_contact, "First_Name")
+            xml_pi_contact_fname.text = name_first.strip()
+            xml_pi_contact_lname = ET.SubElement(xml_pi_contact, "Last_Name")
+            xml_pi_contact_lname.text = name_last.strip()
+            xml_pi_contact_address = ET.SubElement(xml_pi_contact, "Address")
+            xml_pi_contact_address1 = ET.SubElement(xml_pi_contact_address, "Street_Address")
+            xml_pi_contact_address1.text = person.get('org')
+            xml_pi_contact_email = ET.SubElement(xml_pi_contact, "Email")
+            xml_pi_contact_email.text = person.get('email')
 
     # --- science keywords
-    for keyword in data['parameters']:
-        keys = keyword['id'].split('>')
-        xml_key = ET.SubElement(root, "Science_Keywords")
-        xml_key_cat = ET.SubElement(xml_key, "Category")
-        xml_key_cat.text = keys[0].strip()
-        xml_key_topic = ET.SubElement(xml_key, "Topic")
-        xml_key_topic.text = keys[1].strip()
-        xml_key_term = ET.SubElement(xml_key, "Term")
-        xml_key_term.text = keys[2].strip()
-        if len(keys) > 3:
-            xml_key_level1 = ET.SubElement(xml_key, "Variable_Level_1")
-            xml_key_level1.text = keys[3].strip()
+    if data.get('parameters'):
+        for keyword in data['parameters']:
+            keys = keyword['id'].split('>')
+            xml_key = ET.SubElement(root, "Science_Keywords")
+            xml_key_cat = ET.SubElement(xml_key, "Category")
+            xml_key_cat.text = keys[0].strip()
+            xml_key_topic = ET.SubElement(xml_key, "Topic")
+            xml_key_topic.text = keys[1].strip()
+            xml_key_term = ET.SubElement(xml_key, "Term")
+            xml_key_term.text = keys[2].strip()
+            if len(keys) > 3:
+                xml_key_level1 = ET.SubElement(xml_key, "Variable_Level_1")
+                xml_key_level1.text = keys[3].strip()
 
     # --- iso topic category --> delete the ones that don't fit, should be form
     xml_iso = ET.SubElement(root, "ISO_Topic_Category")
@@ -750,37 +752,39 @@ def getDifXML(data, uid):
     xml_time_end.text = str(data.get('end_date'))
 
     # --- Spatial coverage
-    for sb in data['spatial_bounds']:
-        xml_space = ET.SubElement(root, "Spatial_Coverage")
-        xml_space_type = ET.SubElement(xml_space, "Spatial_Coverage_Type")
-        xml_space_type.text = "Horizontal"
-        xml_space_represent = ET.SubElement(xml_space, "Granule_Spatial_Representation")
-        xml_space_represent.text = "CARTESIAN"
-        xml_space_geom = ET.SubElement(xml_space, "Geometry")
-        xml_space_geom_coord = ET.SubElement(xml_space_geom, "Coordinate_System")
-        xml_space_geom_coord.text = "CARTESIAN"
-        xml_space_geom_bound = ET.SubElement(xml_space_geom, "Bounding_Rectangle")
-        xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Southernmost_Latitude")
-        xml_space_geom_south.text = str(sb['south'])
-        xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Northernmost_Latitude")
-        xml_space_geom_south.text = str(sb['north'])
-        xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Westernmost_Longitude")
-        xml_space_geom_south.text = str(sb['west'])
-        xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Easternmost_Longitude")
-        xml_space_geom_south.text = str(sb['east'])
+    if data.get('spatial_bounds'):
+        for sb in data['spatial_bounds']:
+            xml_space = ET.SubElement(root, "Spatial_Coverage")
+            xml_space_type = ET.SubElement(xml_space, "Spatial_Coverage_Type")
+            xml_space_type.text = "Horizontal"
+            xml_space_represent = ET.SubElement(xml_space, "Granule_Spatial_Representation")
+            xml_space_represent.text = "CARTESIAN"
+            xml_space_geom = ET.SubElement(xml_space, "Geometry")
+            xml_space_geom_coord = ET.SubElement(xml_space_geom, "Coordinate_System")
+            xml_space_geom_coord.text = "CARTESIAN"
+            xml_space_geom_bound = ET.SubElement(xml_space_geom, "Bounding_Rectangle")
+            xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Southernmost_Latitude")
+            xml_space_geom_south.text = str(sb['south'])
+            xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Northernmost_Latitude")
+            xml_space_geom_south.text = str(sb['north'])
+            xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Westernmost_Longitude")
+            xml_space_geom_south.text = str(sb['west'])
+            xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Easternmost_Longitude")
+            xml_space_geom_south.text = str(sb['east'])
 
     # --- location
-    for location in data['locations']:
-        loc_val = location['id'].split('>')
-        xml_loc = ET.SubElement(root, "Location")
-        xml_loc_cat = ET.SubElement(xml_loc, "Location_Category")
-        xml_loc_cat.text = loc_val[0].strip()
-        if len(loc_val) > 1:
-            xml_loc_type = ET.SubElement(xml_loc, "Location_Type")
-            xml_loc_type.text = loc_val[1].strip()
-        if len(loc_val) > 2:
-            xml_loc_sub1 = ET.SubElement(xml_loc, "Location_Subregion1")
-            xml_loc_sub1.text = loc_val[2].strip()
+    if data.get('locations'):
+        for location in data['locations']:
+            loc_val = location['id'].split('>')
+            xml_loc = ET.SubElement(root, "Location")
+            xml_loc_cat = ET.SubElement(xml_loc, "Location_Category")
+            xml_loc_cat.text = loc_val[0].strip()
+            if len(loc_val) > 1:
+                xml_loc_type = ET.SubElement(xml_loc, "Location_Type")
+                xml_loc_type.text = loc_val[1].strip()
+            if len(loc_val) > 2:
+                xml_loc_sub1 = ET.SubElement(xml_loc, "Location_Subregion1")
+                xml_loc_sub1.text = loc_val[2].strip()
 
     # # --- project
     xml_proj = ET.SubElement(root, "Project")
@@ -852,26 +856,28 @@ def getDifXML(data, uid):
     xml_abstract.text = text
 
     # --- related URL for awards
-    for award in set([a['award'] for a in data['funding']]):
-        xml_url = ET.SubElement(root, "Related_URL")
-        xml_url_ctype = ET.SubElement(xml_url, "URL_Content_Type")
-        xml_url_type = ET.SubElement(xml_url_ctype, "Type")
-        xml_url_type.text = "VIEW RELATED INFORMATION"
-        xml_url_url = ET.SubElement(xml_url, "URL")
-        xml_url_url.text = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=%s" % award
-        xml_url_desc = ET.SubElement(xml_url, "Description")
-        xml_url_desc.text = "NSF Award Abstract"
+    if data.get('funding'):
+        for award in set([a['award'] for a in data['funding']]):
+            xml_url = ET.SubElement(root, "Related_URL")
+            xml_url_ctype = ET.SubElement(xml_url, "URL_Content_Type")
+            xml_url_type = ET.SubElement(xml_url_ctype, "Type")
+            xml_url_type.text = "VIEW RELATED INFORMATION"
+            xml_url_url = ET.SubElement(xml_url, "URL")
+            xml_url_url.text = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=%s" % award
+            xml_url_desc = ET.SubElement(xml_url, "Description")
+            xml_url_desc.text = "NSF Award Abstract"
 
     # --- related URL for awards
-    for ds in data['datasets']:
-        xml_url = ET.SubElement(root, "Related_URL")
-        xml_url_ctype = ET.SubElement(xml_url, "URL_Content_Type")
-        xml_url_type = ET.SubElement(xml_url_ctype, "Type")
-        xml_url_type.text = "GET DATA"
-        xml_url_url = ET.SubElement(xml_url, "URL")
-        xml_url_url.text = ds.get('url')
-        xml_url_desc = ET.SubElement(xml_url, "Description")
-        xml_url_desc.text = ds.get('title')
+    if data.get('datasets'):
+        for ds in data['datasets']:
+            xml_url = ET.SubElement(root, "Related_URL")
+            xml_url_ctype = ET.SubElement(xml_url, "URL_Content_Type")
+            xml_url_type = ET.SubElement(xml_url_ctype, "Type")
+            xml_url_type.text = "GET DATA"
+            xml_url_url = ET.SubElement(xml_url, "URL")
+            xml_url_url.text = ds.get('url')
+            xml_url_desc = ET.SubElement(xml_url, "Description")
+            xml_url_desc.text = ds.get('title')
 
     # --- IDN nodes
     xml_idn = ET.SubElement(root, "IDN_Node")

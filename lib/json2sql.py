@@ -267,9 +267,7 @@ def make_sql(data, id):
     sql_out += "update dataset set review_person='{}' where id='{}';\n".format(curator,id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
-    line = "insert into dataset_spatial_map(dataset_id,west,east,south,north,cross_dateline) values  ('%s','%s','%s','%s','%s','%s');\n" % \
-                           (id, data["geo_w"],data["geo_e"],data["geo_s"],data["geo_n"],data["cross_dateline"])
-    sql_out += line
+
     if data["start"] != "" or data["stop"] != "":
         line = "insert into dataset_temporal_map(dataset_id,start_date,stop_date) values ('%s','%s','%s');\n\n" % \
                                (id, data["start"], data["stop"])
@@ -287,13 +285,14 @@ def make_sql(data, id):
         bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
 
         sql_out += "\n--NOTE: need to update geometry; need to add mid x and y\n"
-        line = "update dataset_spatial_map set (geometry, bounds_geometry) = ({}, {}) WHERE dataset_id = '{}';\n\n"\
-                   .format(geometry, bounds_geometry, id)
+
+        line = "INSERT INTO dataset_spatial_map(dataset_id,west,east,south,north,cross_dateline,geometry,bounds_geometry) VALUES ('%s','%s','%s','%s','%s','%s',%s,%s);\n" % \
+            (id, west, east, south, north, data["cross_dateline"], geometry, bounds_geometry)
         sql_out += line
 
-    sql_out += "--NOTE: optional; every dataset does NOT belong to an initiative\n"
+    sql_out += "\n--NOTE: optional; every dataset does NOT belong to an initiative\n"
     sql_out += "--insert into initiative(id) values ('WAIS Divide Ice Core');\n"
-    line = "--insert into dataset_initiative_map(dataset_id,initiative_id) values ('{}','{}');\n\n".format(id,'WAIS Divide Ice Core')
+    line = "--insert into dataset_initiative_map(dataset_id,initiative_id) values ('{}','{}');\n\n".format(id, 'WAIS Divide Ice Core')
     sql_out += line
 
     sql_out += "\n--NOTE: reference format is free text; insert CRs for multiple references\n"
