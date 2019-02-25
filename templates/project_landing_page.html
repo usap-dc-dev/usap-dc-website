@@ -67,20 +67,18 @@
           </div>
         {% endif %}
 
+       {% if data.initiatives %}
         <div class="lprow">
-          <div class="field">
-            Program:
-          </div>
-          <div class="value-inline">
-            {% if data.initiatives %}
+            <div class="field">
+              Program:
+            </div>
+            <div class="value-inline">
               {% for i in data.initiatives %}
                 {{i.id}}
               {% endfor %}
-            {% else %}
-              Unaffiliated
-            {% endif %}
+            </div>
           </div>
-        </div>
+        {% endif %}
 
 
         {% if data.website %}
