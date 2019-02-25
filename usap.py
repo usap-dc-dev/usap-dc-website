@@ -240,9 +240,9 @@ def get_datasets(dataset_ids):
                             GROUP BY dsenm.dataset_id
                         ) sen ON (d.id = sen.dataset_id)
                         LEFT JOIN (
-                            SELECT ref.dataset_id, json_agg(ref) AS references
-                            FROM dataset_reference_map ref
-                            GROUP BY ref.dataset_id
+                            SELECT drm.dataset_id, json_agg(ref) AS references
+                            FROM dataset_reference_map drm JOIN reference ref ON ref.ref_uid=drm.ref_uid
+                            GROUP BY drm.dataset_id
                         ) ref ON (d.id = ref.dataset_id)
                         LEFT JOIN (
                             SELECT sp.dataset_id, json_agg(sp) spatial_extents
@@ -349,9 +349,9 @@ def get_sensors(conn=None, cur=None, dataset_id=None):
 def get_references(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT * FROM dataset_reference_map'
+    query = 'SELECT * FROM reference'
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+        query += cur.mogrify(' WHERE ref_uid in (SELECT ref_uid FROM dataset_reference_map WHERE dataset_id=%s)', (dataset_id,))
     cur.execute(query)
     return cur.fetchall()
 
@@ -1514,13 +1514,6 @@ def landing_page(dataset_id):
         if p['id'] == metadata['creator'] and p['id_orcid'] is not None:
             creator_orcid = p['id_orcid']
             break
-
-    references = []
-    for ref in metadata.get('references'):
-        refs = ref['reference'].replace("<br><br>", "\n\n")
-        refs = refs.split("\n\n")
-        references.extend(refs)
-    metadata['refs'] = references
 
     return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
 

@@ -189,16 +189,16 @@
     {{data['language_id']}}
   </div>
 </div>
-{% if len(data['references']) > 0 and len(data['references'][0]['reference'].strip()) > 0 %}
+{% if len(data['references']) > 0 %}
 <div class="lprow">
   <div class="field">
   	References
   </div>
   <div class="value">
   	<ol>
-     {% for r in data['refs'] %}
+     {% for r in data.references %}
      <li>
-       {{r}}
+       {{r.ref_text}}
      </li>
      {% endfor %}
    </ol>

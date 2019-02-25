@@ -295,16 +295,34 @@ def make_sql(data, id):
     line = "--insert into dataset_initiative_map(dataset_id,initiative_id) values ('{}','{}');\n\n".format(id, 'WAIS Divide Ice Core')
     sql_out += line
 
-    sql_out += "\n--NOTE: reference format is free text; insert CRs for multiple references\n"
+    # Add references
+    if data.get('publications') is not None and len(data['publications']) > 0:
+        sql_out += "--NOTE: adding references\n"
 
-    for publication in data["publications"]:
-        if publication.get('doi') and publication['doi'] != "":
-            line = "insert into dataset_reference_map(dataset_id,reference,doi) values ('%s','%s','%s');\n" % \
-                (id, publication.get('text'), publication.get('doi'))
-        else:
-            line = "insert into dataset_reference_map(dataset_id,reference) values ('%s','%s');\n" % \
-                (id, publication.get('text'))
-        sql_out += line
+        #first find the highest ref_uid already in the table
+        query = "SELECT MAX(ref_uid) FROM reference;"
+        cur.execute(query)
+        res = cur.fetchall()
+        old_uid = int(res[0]['max'].replace('ref_', ''))
+
+        for pub in data['publications']:
+            # see if they are already in the references table
+            query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
+            cur.execute(query)
+            res = cur.fetchall()
+            if len(res) == 0:
+                # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
+                old_uid += 1
+                ref_uid = 'ref_%0*d' % (7, old_uid)
+                sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
+                    (ref_uid, pub.get('text'), pub.get('doi'))
+            else:
+                ref_uid = res[0]['ref_uid']
+            # sql_out += "--NOTE: adding reference %s to dataset_reference_map\n" % ref_uid
+            sql_out += "INSERT INTO dataset_reference_map (dataset_id, ref_uid) VALUES ('%s', '%s');\n" % \
+                (id, ref_uid)
+
+        sql_out += "\n"
 
     sql_out += "--NOTE: add keywords\n"
     sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0001'); -- Antarctica\n".format(id)
