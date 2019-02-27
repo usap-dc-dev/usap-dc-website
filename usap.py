@@ -200,7 +200,8 @@ def get_datasets(dataset_ids):
                              CASE WHEN tem.temporal_extents IS NULL THEN '[]'::json ELSE tem.temporal_extents END,
                              CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
                              CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END,
-                             CASE WHEN dif.dif_records IS NULL THEN '[]'::json ELSE dif.dif_records END
+                             CASE WHEN dif.dif_records IS NULL THEN '[]'::json ELSE dif.dif_records END,
+                             CASE WHEN rel_proj.rel_projects IS NULL THEN '[]'::json ELSE rel_proj.rel_projects END
                        FROM
                         dataset d
                         LEFT JOIN (
@@ -270,6 +271,11 @@ def get_datasets(dataset_ids):
                             FROM dataset_dif_map ddm JOIN dif ON (dif.dif_id=ddm.dif_id)
                             GROUP BY ddm.dataset_id
                         ) dif ON (d.id = dif.dataset_id)
+                        LEFT JOIN (
+                            SELECT pdm.dataset_id, json_agg(proj) rel_projects
+                            FROM project_dataset_map pdm JOIN project proj ON (proj.proj_uid=pdm.proj_uid)
+                            GROUP BY pdm.dataset_id
+                        ) rel_proj ON (d.id = rel_proj.dataset_id)
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)

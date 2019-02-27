@@ -189,6 +189,20 @@
     {{data['language_id']}}
   </div>
 </div>
+
+{% if len(data['rel_projects']) > 0 %}
+<div class="lprow">
+  <div class="field">
+    Related Project(s)
+  </div>
+  <div class="value">
+    {% for p in data['rel_projects'] %}
+    <a target=_new href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br/>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+      
 {% if len(data['references']) > 0 %}
 <div class="lprow">
   <div class="field">
