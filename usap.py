@@ -2538,7 +2538,7 @@ def search():
 
     # refresh the dataset and project view to make sure it is up to date
     (conn, cur) = connect_to_db()
-    query = "REFRESH MATERIALIZED VIEW dataset_project_view;"
+    query = "REFRESH MATERIALIZED VIEW dataset_project_view; COMMIT;"
     cur.execute(query)
 
     for row in rows:
