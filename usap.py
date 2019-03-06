@@ -2189,8 +2189,8 @@ def polygon_count():
 @app.route('/titles')
 def titles():
     term = request.args.get('term')
-    (conn,cur) = connect_to_db()
-    query_string = cur.mogrify('SELECT title FROM dataset WHERE title ILIKE %s', ('%' + term + '%',));
+    (conn, cur) = connect_to_db()
+    query_string = cur.mogrify('SELECT title FROM dataset WHERE title ILIKE %s', ('%' + term + '%',))
     cur.execute(query_string)
     rows = cur.fetchall()
     titles = []

@@ -190,7 +190,7 @@
   {% endif %}
   {% if cur=='search' %}
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/sprintf/dist/sprintf.min.js') }}"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery-ui/jquery-ui.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/search.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
   {% endif %}
@@ -213,13 +213,13 @@
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   {% endif %}
 
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.css')}}"/>
-  <script type="text/javascript" src="{{ url_for('static', filename='bower_components/bootstrap/dist/js/bootstrap.js')}}"></script>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.min.css')}}"/>
+  <script type="text/javascript" src="{{ url_for('static', filename='bower_components/bootstrap/dist/js/bootstrap.min.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap3-typeahead.js')}}"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.min.css"/>
-  <script type="text/javascript" src="{{url_for('static', filename='bower_components/bootstrap-select/dist/js/bootstrap-select.js')}}"></script>
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='bower_components/bootstrap-select/dist/css/bootstrap-select.css')}}"/>
+  <script type="text/javascript" src="{{url_for('static', filename='bower_components/bootstrap-select/dist/js/bootstrap-select.min.js')}}"></script>
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='bower_components/bootstrap-select/dist/css/bootstrap-select.min.css')}}"/>
 
 
   <link rel="stylesheet" type="text/css" href="/static/css/print.css" media="print" />
@@ -344,8 +344,8 @@
   <p>
     <h1 style="color:red"><b> This page is currently under active development and may not be fully operational.</b></h1>
   </p>
-</div> -->
-
+</div>
+ -->
     {% if cur == "home" %}
 
     {% block home %}{%endblock home %}
