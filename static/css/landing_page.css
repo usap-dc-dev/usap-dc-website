@@ -9,25 +9,39 @@
 }
 
 body {
-font-color: black !important;
+    font-color: black !important;
+}
+
+.lprow-no-margin {
+    position: relative;
+    margin-left: 1.44em;
 }
 
 .lprow {
-position: relative;
-min-height: 2.88em;
-margin-left: 1.44em;
-margin-bottom: 0.72em;
+    position: relative;
+    margin-left: 1.44em;
+    margin-bottom: 0.72em;
+    margin-top: 0.72em;
+}
+
+.title {
+    font-size: 1.4em;
+    color: #024a61;
+    margin-bottom: 0.4em;
 }
 
 .field {
-margin-left: 0.72em;
-position: absolute;
-width: 14.4em;
-font-weight: bold;
+    font-weight: bold;
+    font-style: italic;
+    display:inline-block
+}
+
+.value-inline {
+    display:inline-block
 }
 
 .value {
-margin-left: 14.4em;
+    display:block;
 }
 
 .col1 {
@@ -105,14 +119,39 @@ font-size: 1.3em;
     background-position: center;
 }
 
+.borderless-table td {
+    border: none;
+    padding-right: 20px;
+}
 
-table.data-table td, th { 
+.data-table td, th { 
   border: solid;
   border-width: 1px 1px;
   padding-left: 10px;
   padding-right: 10px;
 }
 
-table.borderless-table td {
-    border: none;
+.data-table th {
+    background-color: lightgrey;
+}
+.inline {
+  display: inline;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #337ab7;
+  text-decoration: none;
+  cursor: pointer;
+  padding-left: 0;
+}
+.link-button:focus {
+  outline: none;
+}
+.link-button:active {
+  text-decoration: underline
+}
+.link-button:hover {
+  text-decoration: underline
 }

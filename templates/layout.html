@@ -227,11 +227,8 @@
   {% if cur=='home' or cur=='map' %}
   <link rel="stylesheet" type="text/css" href="/static/css/home.css" media="screen, projection" />
   {% endif %}
-  {% if cur=='landing_page' %}
+  {% if cur=='landing_page' or cur == 'project_landing_page'%}
   <link rel="stylesheet" type="text/css" href="/static/css/landing_page.css" media="screen, projection" />
-  {% endif %}
-  {% if cur == 'project_landing_page'%}
-  <link rel="stylesheet" type="text/css" href="/static/css/project_landing_page.css" media="screen, projection" />
   {% endif %}
   {% if cur=='search' %}
   <link rel="stylesheet" type="text/css" href="/static/css/search.css" media="screen, projection" />
