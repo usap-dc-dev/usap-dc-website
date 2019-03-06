@@ -2530,7 +2530,6 @@ def project_browser():
 
 @app.route('/search', methods=['GET'])
 def search():
-
     template_dict = {}
     params = request.args.to_dict()
     rows = filter_datasets_projects(**params)
@@ -2550,17 +2549,15 @@ def search():
                 row['projects'] = items
                 if len(items) > 0:
                     row['repo'] = items[0]['repository']                         
-
     template_dict['records'] = rows
 
     template_dict['search_params'] = session.get('search_params')
-
     return render_template('search.html', **template_dict)  
 
 
 @app.route('/filter_joint_menus', methods=['GET'])
 def filter_joint_menus():
-    keys = ['person', 'free_text', 'sci_program', 'award', 'dp_title', 'nsf_program', 'spatial_bounds_interpolated', 'dp_type']
+    keys = ['person', 'free_text', 'sci_program', 'award', 'dp_title', 'nsf_program', 'spatial_bounds_interpolated', 'dp_type', 'repo']
     params = request.args.to_dict()
     # if reseting:
     if params == {}:
@@ -2600,18 +2597,26 @@ def filter_joint_menus():
     dp_dptypes = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_type'})
     dp_types = set([d['type'] for d in dp_dptypes])
 
+    dp_repos = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'repo'})
+    repos = set()
+    for d in dp_repos:
+        if d['repositories']:
+            for r in d['repositories'].split(';'):
+                repos.add(r.strip())
+
     return flask.jsonify({
         'dp_title': sorted(titles),
         'person': sorted(persons),
         'nsf_program': sorted(nsf_programs),
         'award': sorted(awards),
         'sci_program': sorted(sci_programs),
-        'dp_type': sorted(dp_types)
+        'dp_type': sorted(dp_types),
+        'repo': sorted(repos)
     })
 
 
 def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None, person=None, spatial_bounds_interpolated=None, sci_program=None,
-                             nsf_program=None, dp_type=None, spatial_bounds=None, exclude=False):
+                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, exclude=False):
 
     (conn, cur) = connect_to_db()
     query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM dataset_project_view dpv'''
@@ -2637,6 +2642,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if free_text:
         conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR datasets_or_projects ~* %s)", 
                                  (free_text, free_text, free_text, free_text, free_text)))
+    if repo:
+        conds.append(cur.mogrify('repositories ~* %s ', (repo,)))
+
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)

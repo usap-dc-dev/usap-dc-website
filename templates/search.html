@@ -37,6 +37,7 @@
 
       <fieldset>
         <div class="row1">
+          <!-- Free Text -->
           <div class="form-group col1">
             <label for="free_text">
               <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset or project title, abstract, people, keywords, or linked projects or datasets">
@@ -46,16 +47,25 @@
           </div>
 
           <!-- Dataset / Project -->
-          <div class="form-group col3"  id="dp_type-group">
+          <div class="form-group col2"  id="dp_type-group">
             <label for="dp_type">Dataset/Project</label>
             <select class="form-control selectpicker" id="dp_type" name="dp_type" data-width="225px"></select>
+          </div>
+
+          <!-- Repository -->
+          <div class="form-group col3" id="repo-group">
+            <label for="repo">Repository</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="repo" name="repo" data-title="All" data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="repo-input" type="text"/>
+            </div>
           </div>
 
         </div>
 
         <div class="row2">
           <!-- Title -->
-          <div class="form-group col1">
+          <div class="form-group col1_long">
             <label for="dp_title">
               <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset or project title - e.g. type 'ice core' to find all datasets and projects with ice core in the title.">
               Title (free text)</a>
@@ -225,14 +235,18 @@
 
             <td><font size=2>
               {% if val['datasets']|length == 0 and val['projects']|length == 0 %}
-                No data link provided
+                {% if val.type == 'Dataset' %}
+                  No project link provided
+                {% else %}
+                  No dataset link provided
+                {% endif %}
               {% else %}
                 <table style="width:98%" class="nested_table">
                   {% for ds in val['datasets'] %}
                     <tr>
                       <td width="80%">
                         {% if ds['url'] == '' %}
-                          No data link provided
+                          No project link provided
                         {% elif ds['title'] == '' %}
                           <a target='_blank' href="{{ds['url']}}">Access to data</a><br/>
                         {% else %}
