@@ -108,7 +108,15 @@ function plotGeometry(map, styles) {
   var west = parseFloat($("#geo_w").val());
   var south = parseFloat($("#geo_s").val());
 
-  if (isNaN(north) || isNaN(east) || isNaN(west) || isNaN(south)) return false;
+  //validate coordinates
+  var invalid = false;
+  if (isNaN(north) || Math.abs(north) > 90) {$("#geo_n").css('background-color','red'); invalid=true;} else $("#geo_n").css('background-color','inherit');
+  if (isNaN(south) || Math.abs(south) > 90) {$("#geo_s").css('background-color','red'); invalid=true;} else $("#geo_s").css('background-color','inherit');
+  if (isNaN(east) || Math.abs(east) > 180) {$("#geo_e").css('background-color','red'); invalid=true;} else $("#geo_e").css('background-color','inherit');
+  if (isNaN(west) || Math.abs(west) > 180) {$("#geo_w").css('background-color','red'); invalid=true;} else $("#geo_w").css('background-color','inherit');
+  if (isNaN(north) && isNaN(east) && isNaN(west) && isNaN(south)) {$(".coord-element").css('background-color','inherit'); invalid=false;}
+
+  if (isNaN(north) || isNaN(east) || isNaN(west) || isNaN(south) || invalid) return false;
   var cross_dateline = $("#cross_dateline").is(':checked');
 
   // point

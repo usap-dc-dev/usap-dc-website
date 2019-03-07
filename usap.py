@@ -617,7 +617,7 @@ def check_spatial_bounds(data):
             return \
                 abs(float(data['geo_w'])) <= 180 and \
                 abs(float(data['geo_e'])) <= 180 and \
-                abs(float(data['geo_n'])) >= -90 and abs(float(data['geo_s'])) >= -90
+                abs(float(data['geo_n'])) <= 90 and abs(float(data['geo_s'])) <= 90
         except:
             return False
 
