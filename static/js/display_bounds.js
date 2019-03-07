@@ -25,12 +25,23 @@ $(document).ready(function() {
     })
   ];
   
+  $('.coord-element').change(function(e) {
+    $("#geometry_title").text('Confirm Spatial Bounds');
+    if (plotGeometry(map, styles)) {
+      var x = $(this).parent().offset().left;
+      var y = $(this).parent().offset().top;
+      $("#geometry").css({top:y-350+"px", left:x-80+"px"}).show();
+      $("#confirm_btn").show();
+    }
+  });
+
   $('.map-btn').click(function(event) {
     $("#geometry_title").text('Spatial Bounds');
     plotGeometry(map, styles);
     var x = event.pageX;
     var y = event.pageY;
     $("#geometry").css({top:y-450+"px", left:x+"px"}).show();
+    $("#confirm_btn").hide();
   });
 
   $('.close_geom_btn').click(function() {
@@ -97,8 +108,9 @@ function plotGeometry(map, styles) {
   var west = parseFloat($("#geo_w").val());
   var south = parseFloat($("#geo_s").val());
 
-  if (isNaN(north) || isNaN(east) || isNaN(west) || isNaN(south)) return;
+  if (isNaN(north) || isNaN(east) || isNaN(west) || isNaN(south)) return false;
   var cross_dateline = $("#cross_dateline").is(':checked');
+
   // point
   if (west == east && north == south) {
     geom = new ol.geom.Point(ol.proj.transform([west, north], 'EPSG:4326', 'EPSG:3031'));
@@ -172,6 +184,8 @@ function plotGeometry(map, styles) {
         }
     }
     geom = new ol.geom.Polygon([polygon]).transform('EPSG:4326', 'EPSG:3031');
+
+   
   }
 
 
@@ -197,6 +211,7 @@ function plotGeometry(map, styles) {
     extent = source.getExtent();
   }
   map.getView().fit(extent, map.getSize());
+  return true;
 }
 /*
   A function to remove a layer using its name/title

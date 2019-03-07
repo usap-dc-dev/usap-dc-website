@@ -241,16 +241,16 @@
             <tbody>
               <tr>
                 <td align="center">
-                  &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value=""> <br>
-                  W: <input type="text" name="geo_w" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value=""> <br>
-                  S: <input type="text" name="geo_s" id="geo_s" size="5" value="">
+                  &nbsp;N: <input type="text" name="geo_n" class="coord-element" id="geo_n" size="5" value=""> <br>
+                  W: <input type="text" name="geo_w" class="coord-element" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" class="coord-element" id="geo_e" size="6" value=""> <br>
+                  S: <input type="text" name="geo_s" class="coord-element" id="geo_s" size="5" value="">
                 </td>
                 <td>
                   <span style="margin: 20px">
-                    <input type="checkbox" name="entire_region"> Entire Antarctic Region</input><br/>
+                    <input type="checkbox" name="entire_region" class="coord-element"> Entire Antarctic Region</input><br/>
                   </span>
                   <span style="margin: 20px">
-                   <input type="checkbox" name="cross_dateline" id="cross_dateline"> Check if your bounds cross the International Date Line</input>
+                   <input type="checkbox" name="cross_dateline" class="coord-element" id="cross_dateline"> Check if your bounds cross the International Date Line</input>
                   </span>
                    <br><button id="show_on_map_btn" type ="button" class="btn btn-default btn-sm map-btn">Show on Map</button>
                  </td>
@@ -263,7 +263,9 @@
             <div id="geometry_header" class="window-header">
               <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
             </div>
-            <div id="map"></div>
+            <div id="map">
+              <button id="confirm_btn" type="button" class="btn btn-primary btn-sm confirm-btn close_geom_btn">Confirm Coordinates</button>
+            </div>
           </div>
         </div>
 

@@ -128,3 +128,12 @@ input, textarea {
     border: 1px solid black;
     z-index: 1;
 }
+
+.confirm-btn {
+  display: none;
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  margin-left:-75px;  
+  z-index: 99;
+}
