@@ -24,6 +24,13 @@ body {
     margin-top: 0.72em;
 }
 
+.lprow2 {
+  position: relative;
+  min-height: 2.88em;
+  margin-left: 1.44em;
+  margin-bottom: 0.72em;
+}
+
 .title {
     font-size: 1.4em;
     color: #024a61;
@@ -88,7 +95,7 @@ list-style: circle;
 
 #file-rows {
 max-height: 28.8em;
-overflow: auto;
+overflow-x: auto;
 }
 
 .header {

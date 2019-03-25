@@ -19,26 +19,31 @@
         <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 
         <form method="post" action="/submit/project" method="POST" enctype="multipart/form-data" name="entry" id="entry" onLoad=reset()>
-          <div class="form-group required">
+          <div class="form-group">
             <b>Main Award</b>
             <div class="awardTemplate">
               <div id='extraAwardLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
-                <select required name="award" id="award" >
-                  <option value="" id="award_opt">(Select Award #)</option>
+
+                <select name="award" id="award" class="award_select">
+                  <option value="" id="award_opt">None</option>
+                  <option value="Not_In_This_List">Not In This List</option>
                   {% for grant in nsf_grants %}
                     {% set s = grant['award'] + " " + grant['name'] %}
                     <option value="{{grant['award']}}">{{s}}</option>
                   {% endfor %}
                 </select>
                 <i>(from NSF FastLane database)</i>
+
+
                 <a href="#awardsForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
+                <input class="input-sm form-control removable user_award_input" type="hidden" size=10 id="user_award" name="user_award" placeholder="Enter Award Number"/> 
               <div style="clear:both"></div>
             </div>
             <div id="more_awards"></div>
             <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add additional award linked to project</span></a>
           </div>
 
-       
+      
           <div class="form-group required">
             <b>Title:</b><br>
             <textarea required class="form-control" name="title" id="title" rows="2"></textarea>
@@ -48,13 +53,12 @@
             <b>Short Title:</b><br>
             <input class="form-control" type="text" name="short_title" id="short_title">
           </div>  
-          
           <div class="form-group required" style="margin:10px 0 10px 0">
             <b>Main Contact:</b><br>
             <div class="input-group">
-              <input required class="input-sm form-control" type="text" size=8 id="pi_name_last" name="pi_name_last" value="" placeholder="Last Name" /> 
+              <input required class="input-sm form-control" type="text" size=8 id="pi_name_last" name="pi_name_last" value="{{full_name.last_name}}" placeholder="Last Name" /> 
               <span  class="input-group-addon">,</span>
-              <input required class="input-sm form-control" type="text" size=8 id="pi_name_first" name="pi_name_first" value="" placeholder="First Name" />
+              <input required class="input-sm form-control" type="text" size=8 id="pi_name_first" name="pi_name_first" value="{{full_name.first_name}}" placeholder="First Name" />
             </div>
           </div>
 

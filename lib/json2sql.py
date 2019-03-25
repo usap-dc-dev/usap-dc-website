@@ -49,7 +49,8 @@ def parse_json(data):
 
     # --- fix award field
     for i in range(len(data["awards"])):
-        (data["awards"][i], dummy) = data["awards"][i].split(" ", 1)  # throw away the rest of the award string
+        if data["awards"][i] not in ["None", "Not In This List"] and len(data["awards"][i].split(" ", 1)) > 1:
+            (data["awards"][i], dummy) = data["awards"][i].split(" ", 1)  # throw away the rest of the award string
 
     # --- should add something here to check lat lon fields
 
@@ -173,9 +174,9 @@ def make_sql(data, id):
   
         if res['count'] == 0 and person_id != "":
             if author == data["author"]:
-                line = "insert into person(id,first_name, last_name, email,id_orcid) values ('{}','{}','{}',{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
+                line = "INSERT INTO person(id,first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}',{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
             else:
-                line = "insert into person(id,first_name, last_name) values ('{}','{}','{}');\n".format(person_id, first_name, last_name)
+                line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
 
             sql_out += line
 
@@ -185,92 +186,103 @@ def make_sql(data, id):
         res = cur.fetchone()
         print(res)
         if res['count'] == 0:
-            line = "insert into person(id,email,id_orcid) values ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
+            line = "INSERT INTO person(id,email,id_orcid) VALUES ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
             sql_out += line
     
     sql_out += '\n--NOTE: submitter_id = JSON "name"\n'
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
-    sql_line = """INSERT into dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,status_id,url_extra,review_status)
-    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work');\n"""\
-                    .format(id,\
-                      '10.15784/'+id, \
-                      data["title"], \
-                      data["name"], \
-                      '; '.join(person_ids), \
-                      release_date, \
-                      data["abstract"], \
-                      '1', \
-                      url, \
-                      'usap-dc', \
-                      'English', \
-                      'Complete', \
-                      '/doc/'+id+'/README_'+id+'.txt', \
-                      'In Work')
+    sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,status_id,url_extra,review_status)
+    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work');\n""" \
+            .format(id,
+                    '10.15784/' + id, 
+                    data["title"], 
+                    data["name"], 
+                    '; '.join(person_ids), 
+                    release_date, 
+                    data["abstract"], 
+                    '1', 
+                    url, 
+                    'usap-dc', 
+                    'English',
+                    'Complete', 
+                    '/doc/' + id + '/README_' + id + '.txt', 
+                    'In Work')
     sql_out += sql_line
-
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
-            line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
-                                   (id, person_id)
+            line = "INSERT INTO  dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, person_id)
             sql_out += line
 
     if data["name"] not in person_ids and data["name"] != '':
-        line = "insert into  dataset_person_map(dataset_id,person_id) values ('%s','%s');\n" % \
-                               (id, data["name"])
+        line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, data["name"])
         sql_out += line
   
     sql_out += '\n--NOTE: AWARDS functions:\n'
     for award in data['awards']:
-        query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % award
-        cur.execute(query)
-        res = cur.fetchone()
-        if res['count'] == 0:
-            sql_out += '\n--NOTE: DIF may already exist if a previous Dataset has been submitted\n'
-            line = "insert into dif(dif_id) values ('%s');\n" % \
-                ('USAP-' + award)
-            sql_out += line
-
-        line = "insert into dataset_dif_map(dataset_id,dif_id) values ('%s','%s');\n" % \
-            (id, 'USAP-' + award)
-        sql_out += line
-
-
-        sql_out += '\n--NOTE: check the award #\n'
-        line = "insert into dataset_award_map(dataset_id,award_id) values ('%s','%s');\n" % \
-                           (id, award)
-        sql_out += line
-
-        # look up award to see if already mapped to a program
-        query = "SELECT program_id FROM award_program_map WHERE award_id = '%s';" % award
-        cur.execute(query)
-        res = cur.fetchone()
-  
-        if res is None:
-            sql_out += "\n--NOTE: Need to map award to a program."
-            sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(award)
-            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Earth Sciences');\n".format(award)
-            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Glaciology');\n".format(award)
-            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Organisms and Ecosystems');\n".format(award)
-            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Integrated System Science');\n".format(award)
-            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(award)
-            sql_out += "--insert into award_program_map(award_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(award)
-
-            sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
+        print(award)
+        if award == 'None':
+            sql_out += "--NOTE: NO AWARD SUBMITTED\n"
+        elif award == "Not In This List":
+            sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
         else:
-            sql_out += "insert into dataset_program_map(dataset_id,program_id) values ('{}','{}');\n\n".format(id, res['program_id'])
-            if res['program_id'] == 'Antarctic Glaciology':
-                curator = 'Bauer'
+            # check if this award is already in the award table
+            query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+            cur.execute(query)
+            res = cur.fetchone()
+            if res['count'] == 0:
+                # Add award to award table
+                sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
+                sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+                sql_out += "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (id, award)
+
+            else:
+                query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % award
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    sql_out += '\n--NOTE: DIF may already exist if a previous Dataset has been submitted\n'
+                    line = "INSERT INTO dif(dif_id) VALUES ('%s');\n" % \
+                        ('USAP-' + award)
+                    sql_out += line
+
+                line = "INSERT INTO dataset_dif_map(dataset_id,dif_id) VALUES ('%s','%s');\n" % (id, 'USAP-' + award)
+                sql_out += line
+
+                sql_out += '\n--NOTE: check the award #\n'
+                line = "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (id, award)
+                sql_out += line
+
+                # look up award to see if already mapped to a program
+                query = "SELECT program_id FROM award_program_map WHERE award_id = '%s';" % award
+                cur.execute(query)
+                res = cur.fetchone()
+          
+                if res is None:
+                    sql_out += "\n--NOTE: Need to map award to a program."
+                    sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(award)
+                    sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Earth Sciences');\n".format(award)
+                    sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Glaciology');\n".format(award)
+                    sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Organisms and Ecosystems');\n".format(award)
+                    sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Integrated System Science');\n".format(award)
+                    sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(award)
+                    sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(award)
+
+                    sql_out += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
+                else:
+                    sql_out += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','{}');\n\n".format(id, res['program_id'])
+                    if res['program_id'] == 'Antarctic Glaciology':
+                        curator = 'Bauer'
 
     sql_out += "--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
-    sql_out += "update dataset set review_person='{}' where id='{}';\n".format(curator,id)
+    sql_out += "UPDATE dataset SET review_person='{}' WHERE id='{}';\n".format(curator, id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
 
     if data["start"] != "" or data["stop"] != "":
-        line = "insert into dataset_temporal_map(dataset_id,start_date,stop_date) values ('%s','%s','%s');\n\n" % \
-                               (id, data["start"], data["stop"])
+        line = "INSERT INTO dataset_temporal_map(dataset_id,start_date,stop_date) VALUES ('%s','%s','%s');\n\n" % (id, data["start"], data["stop"])
         sql_out += line
 
     if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
@@ -291,8 +303,8 @@ def make_sql(data, id):
         sql_out += line
 
     sql_out += "\n--NOTE: optional; every dataset does NOT belong to an initiative\n"
-    sql_out += "--insert into initiative(id) values ('WAIS Divide Ice Core');\n"
-    line = "--insert into dataset_initiative_map(dataset_id,initiative_id) values ('{}','{}');\n\n".format(id, 'WAIS Divide Ice Core')
+    sql_out += "--INSERT INTO initiative(id) VALUES ('WAIS Divide Ice Core');\n"
+    line = "--INSERT INTO dataset_initiative_map(dataset_id,initiative_id) VALUES ('{}','{}');\n\n".format(id, 'WAIS Divide Ice Core')
     sql_out += line
 
     # Add references
@@ -325,12 +337,12 @@ def make_sql(data, id):
         sql_out += "\n"
 
     sql_out += "--NOTE: add keywords\n"
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0001'); -- Antarctica\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0052'); -- Cryosphere\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0009'); -- Glaciers and Ice sheets\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0067'); -- Snow Ice\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0031'); -- Glaciology\n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) values ('{}','ik-0032'); -- Ice Core Records\n".format(id)
+    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0001'); -- Antarctica\n".format(id)
+    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0052'); -- Cryosphere\n".format(id)
+    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0009'); -- Glaciers and Ice sheets\n".format(id)
+    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0067'); -- Snow Ice\n".format(id)
+    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0031'); -- Glaciology\n".format(id)
+    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0032'); -- Ice Core Records\n".format(id)
 
     # user keywords
     if data["user_keywords"] != "":

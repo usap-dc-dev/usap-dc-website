@@ -68,7 +68,13 @@ $(document).ready(function() {
     $('#award').change(function() {
       var title = pi = institution = email = copi = start = end = cr = ipy = null;
       var val = $('#award').val();
-      if (val != '0') {
+      if (val == "Not_In_This_List") {
+        $(this).parent('div').find('.user_award_input').attr('type','text');
+      } else {
+        $(this).parent('div').find('.user_award_input').attr('type','hidden');
+      }
+
+      if (val != '' && val != 'Not_In_This_List') {
         var award_num = val.split(' ')[0];
         $.ajax({
         method: 'GET',
@@ -101,7 +107,7 @@ $(document).ready(function() {
             $("#entry input[name='pi_name_last']").val(pi[0]);
             $("#entry input[name='pi_name_first']").val(pi[1]);
             $("#entry input[name='org']").val(msg.org);
-            $("#entry input[name='email']").val(msg.email);
+            if (msg.email) $("#entry input[name='email']").val(msg.email);
             $("#entry input[name='copi']").val(msg.copi);
             $("#entry input[name='start']").val(to_yyyymmdd(msg.start));
             $("#entry input[name='end']").val(to_yyyymmdd(msg.expiry));
@@ -267,10 +273,19 @@ $(document).ready(function() {
       //increment the element ids
       $(extraAward).find('#award').attr('id', 'award'+award_counter).attr('name', 'award'+award_counter).html('').removeAttr('required');
       $('#award').find('option').clone().appendTo($(extraAward).find('#award'+award_counter));
+      $(extraAward).find('#user_award').attr({'id': 'user_award'+award_counter, 'name': 'user_award'+award_counter, 'type':'hidden', 'value': ''});
       $(extraAward).find('#removeAwardRow').show();
       $(extraAward).find('#extraAwardLine').show();
       $(award_wrapper).append($('<div/>', {'class' : 'extraAward', html: extraAward.html()}));
       award_counter++;
+
+      $(".award_select").on("change", function() {
+        if ($(this).val() == "Not_In_This_List") {
+          $(this).parent().find('.user_award_input').attr('type','text');
+        } else {
+          $(this).parent().find('.user_award_input').attr('type','hidden');
+        }
+      });
   }
 
 

@@ -133,22 +133,41 @@
     award_counter--;
   });
 
+
+  $(".award_input").on("change", function() {
+      if ($(this).val() == "Not In This List") {
+        $(this).parent('div').find('.user_award_input').attr('type','text');
+      } else {
+        $(this).parent('div').find('.user_award_input').attr('type','hidden');
+      }
+    });
+
   function addAwardRow(award) {
     var extraAward = $('.awardTemplate').clone();
       //increment the element ids
       $(extraAward).find('#award-dropdown').attr({'id': 'award-dropdown'+award_counter});
       $(extraAward).find('#award').attr({'id': 'award'+award_counter, 'name': 'award'+award_counter, 'value': ''});
       $(extraAward).find('#award_dropdown').attr({'id': 'award_dropdown'+award_counter}).html('None <span class="caret"></span>');
+      $(extraAward).find('#user_award').attr({'id': 'user_award'+award_counter, 'name': 'user_award'+award_counter, 'type':'hidden', 'value': ''});
       $(extraAward).find('#removeAwardRow').show();
       $(extraAward).find('#extraAwardLine').show();
       if (award !== null) {
         $(extraAward).find('#award'+award_counter).attr('value', award);
+        // $(extraAward).find('#user_award'+award_counter).attr('value', award.user_award);
       }
       $(award_wrapper).append($('<div/>', {'class' : 'extraAward', html: extraAward.html()}));
       award_counter++;
 
       $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
       $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+      $(".award_input").on("change", function() {
+          if ($(this).val() == "Not In This List") {
+            $(this).parent('div').find('.user_award_input').attr('type','text');
+          } else {
+            $(this).parent('div').find('.user_award_input').attr('type','hidden');
+          }
+      });
     }
 
 
@@ -259,25 +278,28 @@
           </div>
 
           <!-- Awards -->
-          <div class="form-group required">
+          <div class="form-group">
             <label for="award">Award</label>
-
             <div class="awardTemplate">
               <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
               <div class="dropdown" id="award-dropdown">
-                <input type="hidden" id="award" name="award" value="{{dataset_metadata.get('award')}}"/>
+                <input type="hidden" id="award" name="award" class="award_input" value="{{dataset_metadata.get('awards',['None'])[0]}}"/>
                 <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control removable">
-                  {{dataset_metadata.get('award','All')}}
+                  {{dataset_metadata.get('awards',['None'])[0]}}
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
+                  <li><a data-toggle="tooltip" data-placement="right">None</li></li>
+                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your NSF Award in this list" data-placement="right">Not In This List</li></li>
                   {% for grant in nsf_grants %}
                   {% set s = grant['award'] + " " + grant['name'] %}
                   <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
                   {% endfor %}
                 </ul>
                 <a href="#awardForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
+                <input class="input-sm form-control removable user_award_input" type="hidden" size=10 id="user_award" name="user_award" placeholder="Enter Award Number"/> 
                 <div style="clear:both"></div>
+
               </div>
             </div>
             <div id="more_awards"></div>

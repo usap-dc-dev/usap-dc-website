@@ -252,7 +252,7 @@
   <link rel="stylesheet" type="text/css" href="/static/css/curator.css" media="screen, projection" />
   {% endif %}
 
-
+<script src="//cdnjs.cloudflare.com/ajax/libs/Snowstorm/20131208/snowstorm-min.js"></script>
   <script>
     //If viewing on a touch screen, need to disable top menu links
     window.addEventListener('touchstart', function() {
@@ -299,8 +299,8 @@
         </li>
         <li><a class="top_link" href="{{url_for('search')}}">Search</a>
           <ul>
-            <li><a href="{{url_for('search')}}">Dataset and Project Search</a></li>
-            <li><a href="{{url_for('catalog_browser')}}">Antarctic Project Catalog Browser</a></li>
+            <li><a href="{{url_for('search')}}">Project & Datasets Search</a></li>
+            <!-- <li><a href="{{url_for('catalog_browser')}}">Antarctic Project Catalog Browser</a></li> -->
             <!-- <li><a href="{{url_for('project_browser')}}">Antarctic Project Browser</a></li> -->
             <li><a href="https://gcmd.gsfc.nasa.gov/KeywordSearch/Freetext.do?Portal=amd&amp;MetadataType=0&amp;Freetext=DIF%2FIDN_Node%3A+AMD*">Search AMD</a></li>
           </ul>
@@ -379,5 +379,5 @@
       </table>
     </div>
 
-  </body>
+   </body>
   </html>

@@ -27,10 +27,7 @@ import urllib
 import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
-# from lib.curatorFunctions import isCurator, isRegisteredWithDataCite, submitToDataCite, getDataCiteXML, getDataCiteXMLFromFile, getDCXMLFileName,\
-#     getISOXMLFromFile, getISOXMLFileName, doISOXML, ISOXMLExists, addKeywordsToDatabase, isDatabaseImported, updateSpatialMap, \
-#     getCoordsFromDatabase, getKeywordsFromDatabase, getDatasetKeywords, projectJson2sql, updateProjectSpatialMap, isProjectImported, \
-#     getProjectCoordsFromDatabase, getDifXML
+
 
 app = Flask(__name__)
 
@@ -458,6 +455,7 @@ def dataset():
                 session['dataset_metadata']['publications'].append(publication)
 
         awards_keys = [s for s in request.form.keys() if "award" in s]
+
         remove_award_keys = []
         if len(awards_keys) > 0:
             awards_keys.sort()
@@ -469,6 +467,8 @@ def dataset():
             for k in remove_award_keys: 
                 awards_keys.remove(k)
             session['dataset_metadata']['awards'] = [request.form.get(key) for key in awards_keys]
+
+        print(session['dataset_metadata']['awards'])
 
         author_keys = [s for s in request.form.keys() if "author_name_last" in s]
         remove_author_keys = []
@@ -483,15 +483,13 @@ def dataset():
                 del session['dataset_metadata'][key.replace('last', 'first')]
             for k in remove_author_keys: 
                 author_keys.remove(k)
-            print(author_keys)
+ 
             for key in author_keys:
                 last_name = request.form.get(key)
                 first_name = request.form.get(key.replace('last', 'first'))
                 author = {'first_name': first_name, 'last_name': last_name}
                 session['dataset_metadata']['authors'].append(author) 
             
-            print(session['dataset_metadata']['authors'])
-
         session['dataset_metadata']['agree'] = 'agree' in request.form
         flash('test message')
 
@@ -550,6 +548,10 @@ def dataset():
         name = ""
         if user_info.get('name'):
             name = user_info.get('name')
+            names = name.split(' ')
+            if 'dataset_metadata' not in session:
+                session['dataset_metadata'] = dict()
+            session['dataset_metadata']['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
                                only_inhabited=False), projects=get_projects(), persons=get_persons())
@@ -643,7 +645,7 @@ def check_dataset_submission(msg_data):
 
     def check_valid_award(data):
         print(data.get('awards'))
-        return data.get('awards') is not None and data['awards'] != ["None"] and data['awards'] != [""]
+        return data.get('awards') is not None and data['awards'] != [""]
 
     validators = [
         Validator(func=default_func('title'), msg='You must include a dataset title for the submission.'),
@@ -683,7 +685,7 @@ def check_project_registration(msg_data):
         return re.match("[^@]+@[^@]+\.[^@]+", data['email'])
 
     validators = [
-        Validator(func=default_func('award'), msg="You must select an award #"),
+        # Validator(func=default_func('award'), msg="You must select an award #"),
         Validator(func=default_func("title"), msg="You must provide a title for the project"),
         Validator(func=default_func("pi_name_first"), msg="You must provide the PI's first name for the project"),
         Validator(func=default_func("pi_name_last"), msg="You must provide the PI's last name for the project"),
@@ -893,6 +895,11 @@ def project():
         if msg_data.get('entire_region') is not None:
             del msg_data['entire_region']
 
+        # handle user added awards
+        if msg_data['award'] == 'Not_In_This_List':
+            msg_data['award'] += ":" + msg_data.get('user_award')
+            del msg_data['user_award']
+
         # handle multiple parameters, awards, co-authors, etc
         parameters = []
         idx = 1
@@ -909,11 +916,16 @@ def project():
         idx = 1
         key = 'award1'
         while key in msg_data:
+            user_award_key = 'user_award' + str(idx)
             if msg_data[key] != "":
+                if msg_data[key] == 'Not_In_This_List':
+                    msg_data[key] += ":" + msg_data[user_award_key]    
                 other_awards.append(msg_data[key])
             del msg_data[key]
+            del msg_data[user_award_key]
             idx += 1
             key = 'award' + str(idx)
+       
         msg_data['other_awards'] = other_awards
 
         copis = []
@@ -1084,11 +1096,19 @@ def project():
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
+
+        name = ""
+        full_name = {'first_name': '', 'last_name': ''}
+        if user_info.get('name'):
+            name = user_info.get('name')
+            names = name.split(' ')
+            full_name = {'first_name': names[0], 'last_name': names[-1]}
+
         (conn, cur) = connect_to_db()
         q = "SELECT id FROM initiative ORDER BY id;"
         cur.execute(q)
         programs = cur.fetchall()
-        return render_template('project.html', name=user_info['name'], email=email, programs=programs, persons=get_persons(),
+        return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=programs, persons=get_persons(),
                                nsf_grants=get_nsf_grants(['award', 'name'], only_inhabited=False), deployment_types=get_deployment_types(),
                                locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles())
 
@@ -1096,7 +1116,7 @@ def project():
 @app.route('/submit/projectinfo', methods=['GET'])
 def projectinfo():
     award_id = request.args.get('award')
-    if award_id is not None:       
+    if award_id and award_id != 'Not_In_This_List':       
         (conn, cur) = connect_to_db()
         query_string = "SELECT * FROM award a WHERE a.award = '%s'" % award_id
         cur.execute(query_string)
@@ -1129,7 +1149,7 @@ def authorized(resp):
     access_token = resp['access_token']
     session['google_access_token'] = access_token, ''
     session['googleSignedIn'] = True
-    headers = {'Authorization': 'OAuth '+access_token}
+    headers = {'Authorization': 'OAuth ' + access_token}
     req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
                   None, headers)
     res = urlopen(req)
@@ -1143,10 +1163,20 @@ def authorized(resp):
 @orcid.authorized_handler
 def authorized_orcid(resp):
     session['orcid_access_token'] = resp['access_token']
+
     session['user_info'] = {
         'name': resp.get('name'),
         'orcid': resp.get('orcid')
     }
+
+    res = requests.get('https://pub.orcid.org/v2.1/' + resp['orcid'] + '/email',
+                       headers={'accept': 'application/json'}).json()
+    try:
+        email = res['email'][0]['email']
+        session['user_info']['email'] = email
+    except:
+        email = ''
+
     return redirect(session['next'])
 
 
@@ -1819,6 +1849,16 @@ def curator():
                     else:
                         template_dict['error'] = 'Invalid bounds'
 
+                # update award in database
+                elif request.form.get('submit') == "award":
+                    template_dict['tab'] = "spatial"
+                    award = request.form.get('award')
+                    (msg, status) = cf.addAwardToDataset(uid, award)
+                    if status == 0:
+                        template_dict['error'] = msg
+                    else:
+                        template_dict['message'].append(msg)
+
                 # Standalone DataCite DOI submission
                 elif request.form.get('submit') == "submit_to_datacite":
                     template_dict.update(request.form.to_dict())
@@ -1939,6 +1979,16 @@ def curator():
                     else:
                         template_dict['error'] = 'Invalid bounds'
                 
+                # update award in database
+                elif request.form.get('submit') == "project_award":
+                    template_dict['tab'] = "spatial"
+                    award = request.form.get('proj_award')
+                    (msg, status) = cf.addAwardToProject(uid, award)
+                    if status == 0:
+                        template_dict['error'] = msg
+                    else:
+                        template_dict['message'].append(msg)
+
                 # generate DIF XML from JSON file
                 elif request.form.get('submit') == "generate_difxml":
                     template_dict.update(request.form.to_dict())
@@ -2201,7 +2251,7 @@ def titles():
 
 @app.route('/geometries')
 def geometries():
-    (conn,cur) = connect_to_db()
+    (conn, cur) = connect_to_db()
     query = "SELECT st_asgeojson(st_transform(st_geomfromewkt('srid=4326;' || 'POLYGON((' || west || ' ' || south || ', ' || west || ' ' || north || ', ' || east || ' ' || north || ', ' || east || ' ' || south || ', ' || west || ' ' || south || '))'),3031)) as geom FROM dataset_spatial_map;"
     cur.execute(query)
     return flask.jsonify([row['geom'] for row in cur.fetchall()])
@@ -2209,9 +2259,9 @@ def geometries():
 
 @app.route('/parameter_search')
 def parameter_search():
-    (conn,cur) = connect_to_db()
-    expr = '%'+request.args.get('term')+'%'
-    query = cur.mogrify("SELECT id FROM parameter WHERE category ILIKE %s OR topic ILIKE %s OR term ILIKE %s OR varlev1 ILIKE %s OR varlev2 ILIKE %s OR varlev3 ILIKE %s", (expr,expr,expr,expr,expr,expr))
+    (conn, cur) = connect_to_db()
+    expr = '%' + request.args.get('term') + '%'
+    query = cur.mogrify("SELECT id FROM parameter WHERE category ILIKE %s OR topic ILIKE %s OR term ILIKE %s OR varlev1 ILIKE %s OR varlev2 ILIKE %s OR varlev3 ILIKE %s", (expr, expr, expr, expr, expr, expr))
     cur.execute(query)
     return flask.jsonify([row['id'] for row in cur.fetchall()])
 
@@ -2336,11 +2386,12 @@ def project_landing_page(project_id):
 
     # make a list of all the unique Data Management Plans
     dmps = set()
-    for f in metadata['funding']:
-        if f.get('dmp_link') and f['dmp_link'] != 'None':
-            dmps.add(f['dmp_link'])
-    if len(dmps) == 0:
-        dmps = None
+    if metadata.get('funding'):
+        for f in metadata['funding']:
+            if f.get('dmp_link') and f['dmp_link'] != 'None':
+                dmps.add(f['dmp_link'])
+        if len(dmps) == 0:
+            dmps = None
     metadata['dmps'] = dmps
 
     return render_template('project_landing_page.html', data=metadata)
@@ -2531,24 +2582,29 @@ def project_browser():
 @app.route('/search', methods=['GET'])
 def search():
     template_dict = {}
-    params = request.args.to_dict()
-    rows = filter_datasets_projects(**params)
-    session['search_params'] = params
 
     # refresh the dataset and project view to make sure it is up to date
     (conn, cur) = connect_to_db()
-    query = "REFRESH MATERIALIZED VIEW dataset_project_view; COMMIT;"
+    query = "REFRESH MATERIALIZED VIEW project_view; COMMIT;"
     cur.execute(query)
 
+    params = request.args.to_dict()
+    # params['dp_type'] = 'Project'
+    rows = filter_datasets_projects(**params)
+    session['search_params'] = params
+
     for row in rows:
-        if row['datasets_or_projects']:
-            items = json.loads(row['datasets_or_projects'])
-            if row['type'] == 'Project':
-                row['datasets'] = items
-            elif row['type'] == 'Dataset':
-                row['projects'] = items
-                if len(items) > 0:
-                    row['repo'] = items[0]['repository']                         
+        if row['datasets']:
+            items = json.loads(row['datasets'])
+            # if row['type'] == 'Project':
+            row['datasets'] = items
+            # elif row['type'] == 'Dataset':
+            #     row['projects'] = items\
+            if type(items) is dict:
+                row['repo'] = items['repository']
+                row['datasets'] = [items]
+            elif type(items) is list and len(items) > 0:
+                row['repo'] = items[0]['repository']                         
     template_dict['records'] = rows
 
     template_dict['search_params'] = session.get('search_params')
@@ -2564,8 +2620,14 @@ def filter_joint_menus():
         session['search_params'] = {}
 
     dp_titles = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_title'})
-    titles = set([d['title'] for d in dp_titles])
-
+    titles = set()
+    for d in dp_titles:
+        titles.add(d['title'])
+        if d.get('dataset_titles'):
+            ds_titles = d['dataset_titles'].split(';')
+            for ds in ds_titles:
+                titles.add(ds)
+  
     dp_persons = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'person'})
     persons = set()
     for d in dp_persons:
@@ -2594,8 +2656,8 @@ def filter_joint_menus():
             for p in d['awards'].split(';'):
                 awards.add(p.strip())
 
-    dp_dptypes = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_type'})
-    dp_types = set([d['type'] for d in dp_dptypes])
+    # dp_dptypes = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_type'})
+    # dp_types = set([d['type'] for d in dp_dptypes])
 
     dp_repos = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'repo'})
     repos = set()
@@ -2610,7 +2672,7 @@ def filter_joint_menus():
         'nsf_program': sorted(nsf_programs),
         'award': sorted(awards),
         'sci_program': sorted(sci_programs),
-        'dp_type': sorted(dp_types),
+        # 'dp_type': sorted(dp_types),
         'repo': sorted(repos)
     })
 
@@ -2619,12 +2681,12 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
                              nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, exclude=False):
 
     (conn, cur) = connect_to_db()
-    query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM dataset_project_view dpv'''
+    query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM project_view dpv'''
     conds = []
     if uid:
         conds.append(cur.mogrify('dpv.uid=%s', (uid,)))
     if dp_title:
-        conds.append(cur.mogrify('dpv.title ILIKE %s', ('%' + dp_title + '%',)))
+        conds.append(cur.mogrify('dpv.title ILIKE %s OR dpv.dataset_titles ILIKE %s', ('%' + dp_title + '%', '%' + dp_title + '%')))
     if award:
         conds.append(cur.mogrify('dpv.awards~*%s', (award,)))
     if person:
@@ -2640,7 +2702,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if dp_type and dp_type != 'Both':
         conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     if free_text:
-        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR datasets_or_projects ~* %s)", 
+        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR datasets ~* %s)", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify('repositories ~* %s ', (repo,)))

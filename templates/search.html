@@ -30,7 +30,7 @@
 
       <div class="row0">
         <div class="col100">
-          <h2>Search Projects And Datasets Hosted At USAP-DC<a name="top"></a></h2>
+          <h2>(Beta) Search USAP Projects And Datasets<a name="top"></a></h2>
         </div>
 
       </div>
@@ -38,18 +38,12 @@
       <fieldset>
         <div class="row1">
           <!-- Free Text -->
-          <div class="form-group col1">
+          <div class="form-group col1_long">
             <label for="free_text">
-              <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the dataset or project title, abstract, people, keywords, or linked projects or datasets">
+              <a href="#" data-toggle="popover" data-placement="right" data-content="Any term in the project title, abstract, people, keywords, or linked dataset titles">
               Free Text Search</a>
             </label>
             <input id="free_text" name="free_text" class="form-control"  value="{% if session.search_params %}{{session.search_params.free_text}}{% endif %}">
-          </div>
-
-          <!-- Dataset / Project -->
-          <div class="form-group col2"  id="dp_type-group">
-            <label for="dp_type">Dataset/Project</label>
-            <select class="form-control selectpicker" id="dp_type" name="dp_type" data-width="225px"></select>
           </div>
 
           <!-- Repository -->
@@ -191,25 +185,22 @@
       <table class='sortable' preserve_style='row'>
     
         <tr>
-          <th width="5%">Type</th>
-          <th width="30%">Title/Abstract/Map</th>
+          <th width="30%">Project Title/Abstract/Map</th>
           <th width="7%">NSF Award(s)</th>
           <th width="8%">Date Created</th>
-          <th width="10%">PI (CoPIs)</th>
-          <th width="30%">Dataset or Project Links and Repositories</th>
+          <th width="10%">PIs / Scientists</th>
+          <th width="30%">Dataset Links and Repositories</th>
           <th hidden>Abstract</th>
           <th hidden>Geometry</th>
         </tr>
     
         {% for val in records %}
-   
           <tr class='w3-border'>
-            <td>{{val.type}}</td>
             <td> 
-              {% if val.type == 'Project' %}            
+              {% if val.title %}        
                 <a href="{{url_for('project_landing_page', project_id=val.uid)}}">{{val.title}}</a>
-              {% elif val.type == 'Dataset' %}
-                <a href="{{url_for('landing_page', dataset_id=val.uid)}}">{{val.title}}</a>
+              {% else %}
+                None
               {% endif %}
               <br/>
               {% if val.description %}
@@ -234,12 +225,8 @@
             <td>{{val.persons}}</td>
 
             <td><font size=2>
-              {% if val['datasets']|length == 0 and val['projects']|length == 0 %}
-                {% if val.type == 'Dataset' %}
-                  No project link provided
-                {% else %}
-                  No dataset link provided
-                {% endif %}
+              {% if not val.datasets or val.datasets|length == 0 %}
+                No dataset link provided
               {% else %}
                 <table style="width:98%" class="nested_table">
                   {% for ds in val['datasets'] %}
@@ -258,23 +245,9 @@
                       </td>
                     </tr>
                   {% endfor %}
-                  {% for p in val['projects'] %}
-                    <tr>
-                      <td width="80%">
-                        {% if p['title'] == '' %}
-                          <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Project Landing Page</a><br/>
-                        {% else %}
-                         <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br/>
-                      {% endif %}
-                      </td>
-                      <td width="20%" align="center">
-                        {{p.repository}}
-                      </td>
-                    </tr>
-                  {% endfor %}
-              </table>
-            {% endif %}
-          </font></td>
+                </table>
+              {% endif %}
+            </font></td>
 
             <td hidden>{{val['description']}}</td>
             <td hidden>{{val['bounds_geometry']}}</td>

@@ -408,6 +408,83 @@ def getProjectCoordsFromDatabase(uid):
     return cur.fetchone()
 
 
+def addAwardToDataset(uid, award):
+    (conn, cur) = connect_to_db()
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        try:
+            sql_cmd = ""
+            # check if this award is already in the award table
+            query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+            cur.execute(query)
+            res = cur.fetchone()
+            if res['count'] == 0:
+                # Add award to award table
+                sql_cmd += "--NOTE: Adding award %s to award table\n" % award
+                sql_cmd += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
+            else:
+                query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % award
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    sql_cmd += "INSERT INTO dif(dif_id) VALUES ('USAP-%s');\n" % (award)
+
+                sql_cmd += "INSERT INTO dataset_dif_map(dataset_id,dif_id) VALUES ('%s','USAP-%s');\n" % (uid, award)
+
+            sql_cmd += "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (uid, award)
+
+            # look up award to see if already mapped to a program
+            query = "SELECT program_id FROM award_program_map WHERE award_id = '%s';" % award
+            cur.execute(query)
+            res = cur.fetchone()
+      
+            if res is None:
+                sql_cmd += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(uid)
+            else:
+                sql_cmd += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','{}');\n\n".format(uid, res['program_id'])
+
+            print(sql_cmd)
+            cur.execute(sql_cmd)
+            cur.execute('COMMIT;')
+            out_text = "Award successfully added to dataset %s" % uid
+        except Exception as e:
+            out_text = "Error adding award to database. \n%s" % str(e)
+            status = 0
+    return (out_text, status)
+
+
+def addAwardToProject(uid, award):
+    (conn, cur) = connect_to_db()
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        try:
+            sql_cmd = ""
+            # check if this award is already in the award table
+            query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+            cur.execute(query)
+            res = cur.fetchone()
+            if res['count'] == 0:
+                # Add award to award table
+                sql_cmd += "--NOTE: Adding award %s to award table\n" % award
+                sql_cmd += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
+            sql_cmd += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, award)
+
+            print(sql_cmd)
+            cur.execute(sql_cmd)
+            cur.execute('COMMIT;')
+            out_text = "Award successfully added to project %s" % uid
+        except Exception as e:
+            out_text = "Error adding award to database. \n%s" % str(e)
+            status = 0
+    return (out_text, status)
+
+
 def getKeywordsFromDatabase():
     # for each keyword_type, get all keywords from database  
     (conn, cur) = connect_to_db()
@@ -517,18 +594,50 @@ def projectJson2sql(data, uid):
 
     # Update data management plan link in award table
     if data.get('dmp_file') is not None and data['dmp_file'] != '' and data.get('upload_directory') is not None \
-       and data.get('award') is not None:
+       and data.get('award') is not None and data['award'] != '':
         dst = os.path.join(AWARDS_FOLDER, data['award'], data['dmp_file'])
         sql_out += "--NOTE: updating dmp_link for award %s\n" % data['award']
         sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n\n" % (dst, data['award'])
 
     # Add awards to project_award_map
     sql_out += "--NOTE: adding awards to project_award_map\n"
-    sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % \
-        (uid, data['award'])
-    for award in data['other_awards']:
-        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'False');\n" % \
-            (uid, award)
+    if data['award'] == '':
+        sql_out += "-- NOTE: NO AWARD SUBMITTED\n"
+    elif 'Not_In_This_List' in data['award']:
+        sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+        (dummy, award) = data['award'].split(':')
+        # check if this award is already in the award table
+        query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+        cur.execute(query)
+        res = cur.fetchone()
+        if res['count'] == 0:
+            # Add award to award table
+            sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+            sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
+            sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+
+        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, award)
+    else:
+        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, data['award'])
+
+    for other_award in data['other_awards']:
+        print(other_award)
+        if 'Not_In_This_List' in other_award:
+                sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+                (dummy, award) = other_award.split(':')
+                # check if this award is already in the award table
+                query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    # Add award to award table
+                    sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                    sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
+                    sql_out += "--UPDATE award SET iscr='f', isopy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+
+        else:
+            award = other_award
+        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'False');\n" % (uid, award)
     sql_out += "\n"
     
     # Add initiatives to project_initiative_map
