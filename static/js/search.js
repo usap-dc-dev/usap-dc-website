@@ -326,6 +326,13 @@ function updateMenusWithSelected(selected, reset) {
 
       success: function(opts) {
 
+        //move 'Other' to end of list
+        var ind = opts.repo.indexOf('Other');
+        if (ind > -1) {
+          opts.repo.splice(ind, 1);
+        }
+        opts.repo.push('Other');
+
         for (var menu_name in opts) {
             // console.log('filling opts: ' + menu_name +", " + selected[menu_name]);
             fill_opts(menu_name, opts[menu_name], selected[menu_name]);
