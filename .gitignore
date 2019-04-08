@@ -20,3 +20,8 @@ dataset.save/
 doc.save/
 inlist
 awards/
+.eslintrc.js
+package.json
+settings.json
+landing_page_old.css
+.gitignore
