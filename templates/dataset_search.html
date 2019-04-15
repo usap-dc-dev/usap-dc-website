@@ -1,0 +1,280 @@
+{% extends "layout.html" %}
+{% set cur = "search" %}
+{% block catalog_body %}
+
+<script type="text/javascript" src="/static/js/dropdown-select.js"></script>
+
+<div id="search_params" hidden>{{search_params|tojson}}</div>
+
+<div id="abstract" hidden>
+  <div id="abstract_header" class="window-header">
+    <span id="abstract_title"></span><span class='close_abstract_btn close_btn'>X</span>
+  </div>
+  <div id="abstract_body">
+    <p id="abstract_text"></p>
+  </div>
+</div>
+
+
+<div id="geometry">
+  <div id="geometry_header" class="window-header">
+    <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
+  </div>
+  <div id="show_on_map"></div>
+</div>
+
+<div>
+
+  <div>
+    <form method="get" action="{{url_for('dataset_search')}}" id="data_link" onLoad="resetForm()">
+
+      <div class="row0">
+        <div class="col100">
+          <h2>(Beta) Search USAP Datasets<a name="top"></a></h2>
+        </div>
+
+      </div>
+
+      <fieldset>
+        <div class="row1">
+          <!-- Free Text -->
+          <div class="form-group col1_long">
+            <label for="free_text">
+              <a href="#" data-toggle="popover" data-placement="right"
+                data-content="Any term in the dataset title, abstract, people, keywords, or linked project titles">
+                Free Text Search</a>
+            </label>
+            <input id="free_text" name="free_text" class="form-control"
+              value="{% if session.search_params %}{{session.search_params.free_text}}{% endif %}">
+          </div>
+
+          <!-- Repository -->
+          <div class="form-group col3" id="repo-group" hidden>
+            <label for="repo">Repository</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="repo" name="repo" data-title="All"
+                data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="repo-input"
+                type="text" />
+            </div>
+          </div>
+
+        </div>
+
+        <div class="row2">
+          <!-- Title -->
+          <div class="form-group col1_long">
+            <label for="dp_title">
+              <a href="#" data-toggle="popover" data-placement="right"
+                data-content="Any term in the dataset or project title - e.g. type 'ice core' to find all datasets and projects with ice core in the title.">
+                Title (free text)</a>
+            </label>
+            <input id="dp_title" name="dp_title" autocomplete="off" class="form-control" data-autoSelect="false"
+              value="{% if session.search_params %}{{session.search_params.dp_title}}{% endif %}">
+          </div>
+
+          <!-- Project -->
+          <div class="form-group col3" id="sci_program-group">
+            <label for="sci_program">Science Program</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="sci_program" name="sci_program" data-title="All"
+                data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input"
+                id="sci_program-input" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="row3">
+          <!-- Person -->
+          <div class="form-group col1" id="person-group">
+            <label for="person">Person</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="person" name="person" data-title="All"
+                data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="person-input"
+                type="text" />
+            </div>
+          </div>
+
+          <!-- Award -->
+          <div class="form-group col2" id="award-group">
+            <label for="award-input">Award</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="award" name="award" data-title="All"
+                data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input" id="award-input"
+                type="text" />
+            </div>
+          </div>
+
+          <!-- NSF Program -->
+          <div class="form-group col3" id="nsf_program-group">
+            <label for="nsf_program">NSF Funding Program</label>
+            <div class="select-editable">
+              <select class="form-control selectpicker" id="nsf_program" name="nsf_program" data-title="All"
+                data-width="225px"></select>
+              <input autocorrect="off" autocapitalize="off" spellcheck="false" class="editable-input"
+                id="nsf_program-input" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="row4">
+          <!-- Spatial Bounds -->
+           <div id="spatial">
+
+            <div class="form-group">
+              <label for="spatial_bounds">Spatial Bounds of Data</label>
+              <button type="button" class="btn btn-default" data-toggle="modal" data-target="#map-modal">Draw on
+                Map</button>
+              <br />
+              <button class="btn btn-xs btn-link" type="button" data-toggle="collapse" data-target="#edit-geometry-div">
+                <span>Edit Geometry</span><span class="caret"></span>
+              </button>
+              <div id="edit-geometry-div" class="collapse">
+                <textarea id="spatial_bounds" name="spatial_bounds"
+                  class="form-control">{% if session.search_params %}{{session.search_params.spatial_bounds}}{% endif %}</textarea>
+                <div class="help-block small">
+                  Any WKT polygon, with longitudes in a 0-360 &deg; range. Example: Ross Sea is between 160 and 210.
+                  Read about the WKT format
+                  <a href="https://en.wikipedia.org/wiki/Well-known_text" target="_blank">here</a>.
+                </div>
+              </div>
+              <div>
+                <input type="checkbox" name="exclude" id="exclude" {% if session.search_params.exclude == 'on' %}
+                  checked {% endif %}> Exclude datasets that cover the whole Antarctic from map-based search
+              </div>
+            </div>
+
+            <input name="spatial_bounds_interpolated" type="hidden" />
+            <div class="modal fade" id="map-modal" role="dialog">
+              <div class="modal-dialog" role="document">
+                <div id="modal-contents">
+                  <div class="modal-content" id="modal-mapbox">
+                    <div class="modal-body">
+                      <div id="map">
+                        <div id="drawing-buttons">
+                          <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
+                            <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
+                          </div>
+                          <div id="rect-icon" data-mode="Box" class="drawing-button">
+                            <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
+                          </div>
+                          <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
+                            <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="modal-content" id="modal-buttons">
+                    <button type="button" class="btn btn-primary btn-sm" id="clear-polygon">Clear</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="close-modal" class="close"
+                      data-dismiss="modal">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> 
+
+        <div class="btn-group">
+          <input class="btn btn-primary btn-lg w3-blue-grey" id="search_btn" type="submit" value="Search">
+          <input type="button" id="reset-btn" class="btn btn-default btn-lg " value="Reset" onClick="resetForm()">
+        </div>
+
+      </fieldset>
+
+    </form>
+
+    <i>
+      <font size=2 color=gray>{{records|length}} record(s) found </font>
+    </i>
+  </div>
+
+
+  {% if records|length > 0 %}
+
+  <div>
+    <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
+  </div>
+
+  <div id='dif-browser-table'>
+    <table class='sortable' preserve_style='row'>
+
+      <tr>
+        <th width="30%">Dataset Title/Abstract/Map</th>
+        <th width="7%">NSF Award(s)</th>
+        <th width="8%">Date Created</th>
+        <th width="10%">PIs / Scientists</th>
+        <th width="30%">Project Links</th>
+        <th hidden>Abstract</th>
+        <th hidden>Geometry</th>
+      </tr>
+
+      {% for val in records %}
+      <tr class='w3-border'>
+        <td>
+          {% if val.title %}
+          <a href="{{url_for('landing_page', dataset_id=val.uid)}}">{{val.title}}</a>
+          {% else %}
+          None
+          {% endif %}
+          <br />
+          {% if val.description %}
+          <button type="button" class="in-table-button abstract-button" id="abstract_btn"><b>Abstract</b></button>
+          <br />
+          {% endif %}
+          {% if val.bounds_geometry %}
+          <button type="button" class="in-table-button geometry-button" id="geom_btn"><b>Show on Map</b></button>
+          {% endif %}</td>
+        {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
+        <td>
+          {% for a in val.awards.split('; ') %}
+          {% set award = a.split(' ')[0] %}
+          {% set award_url = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
+          <a target='_blank' href='{{award_url}}'>{{award}}</a><br />
+          {% endfor %}
+        </td>
+        {% else %}
+        <td>None</td>
+        {% endif %}
+        <td>{{val.date_created}}</td>
+        <td>{{val.persons}}</td>
+
+        <td>
+            {% if not val.projects or val.projects|length == 0 %}
+            No project link provided
+            {% else %}
+              {% for p in val['projects'] %}
+                {% if p['url'] == '' %}
+                  No project link provided
+                {% elif p['title'] == '' %}
+                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Access to project</a><br />
+                {% else %}
+                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br />
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+        </td>
+
+        <td hidden>{{val['description']}}</td>
+        <td hidden>{{val['bounds_geometry']}}</td>
+      </tr>
+      {% endfor %}
+
+    </table>
+  </div>
+  {% else %}
+  <td colspan="4"><br /><br /><i>No records found, please try again.</i></td>
+  {% endif %}
+</div>
+</div>
+
+<script type="text/javascript">
+
+</script>
+
+{% endblock catalog_body %}
