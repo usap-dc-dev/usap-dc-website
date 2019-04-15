@@ -10,3 +10,24 @@
 	padding-right:13px;
 	background:transparent url(/imgs/external.gif) center right no-repeat;
 }
+
+.col-p {
+	font-size:1.3em; 
+	line-height:1.3em; 
+	margin-top:25px;
+}
+.cont-p {
+	font-size:1.3em; 
+	line-height:1.3em; 
+}
+
+.button-div {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	margin: 10px 0px 10px 0px;
+}
+
+.cont-button {
+	padding: 20px 30px 20px 30px;
+}

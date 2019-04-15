@@ -2,51 +2,98 @@
 {% set cur = "submit" %}
 {% block body %}
 
-<style>
-  .button-div {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      margin: 10px 0px 10px 0px;
-  }
-</style>
-
 <div class="border">
-	{% if session.googleSignedIn %}	
-    	<div class="alert alert-danger alert-dismissible" style="width:800;">
-        	<a href="{{url_for('submit', google='false')}}" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-		    <h4>If you are using a public computer, please make sure you <a onclick="logoutGoogle()" href="https://www.google.com/accounts/Logout?continue=https://appengine.google.com/_ah/logout?continue={{url_for('submit', google='false', _external=True)}}">sign out</a> of your Google account before leaving.</h4>
-		 </div>
+	{% if session.googleSignedIn %}
+		<div class="alert alert-danger alert-dismissible" style="width:800;">
+			<a href="{{url_for('submit', google='false')}}" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			<h4>If you are using a public computer, please make sure you <a onclick="logoutGoogle()"
+					href="https://www.google.com/accounts/Logout?continue=https://appengine.google.com/_ah/logout?continue={{url_for('submit', google='false', _external=True)}}">sign
+					out</a> of your Google account before leaving.</h4>
+		</div>
 	{% endif %}
 	<div class="content">
-		<h3 style="float:left">How to Contribute Data</h3> 
-		<a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+		<a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}"
+			class="btn btn-primary">Help</a>
 		<div style="clear:both"></div>
-		<br />
-		<h4>Step #1: Deposit Your Dataset</h4>
-		<p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services, including data publication in the <a href="http://www.doi.org/">DOI&reg; system</a> and long-term archiving.</p>
-		<p><strong>Note:</strong> <a href="{{url_for('contact')}}" title="contact us">Contact us</a> if other disciplinary repositories may be more appropriate for your datatype, e.g. those in <a href="{{url_for('repo_list')}}"> this list</a>.
-		</p>
-		<div class="button-div">
-			<a href="/submit/dataset" class="btn btn-lg btn-primary">Deposit</a>
-		</div>
-		<br />
-		<h4 style="margin-top: 0;">Step #2: Register Your Project</h4>
-		<p style="text-align:left">
-			Register your project with USAP-DC. Click on the "Register" button below to fill out a brief Web form, and we will register your project and create and submit a record to the Antarctic Master Directory as currently required for your NSF final report.
-		</p>
-		<div class="button-div">
-			<a href="/submit/project" class="btn btn-lg btn-primary">Register</a>
-		</div>
-		<br />
 
+		<div style="width:70%; margin:0 auto;">
+			<h1 style="text-align:center">Contribute Data</h1>
+			<br>
+			<div class="cont-p">
+				<p>
+					The NSF Antarctic Research Program requires for each award that
+				</p>
+				<ol>
 
-		<h4 style="margin-top: 0;">Step #3: What Happens After Submission</h4>
-		<p style="text-align:left">
-            Your submission will be reviewed by our curators who will contact you if questions arise.  This process might take up to several business days. 
-			Submissions to AMD are verified by their staff and it takes usually several business days until a record goes live.
-		</p>
-		<br/>
+					<li>
+						metadata for all Antarctic supported data sets and derived data products must be submitted to the Antarctic
+						Master Directory, via the USAP Data Center.
+					</li>
+					<li>
+						metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly
+						accessible archive;
+					</li>
+				</ol>
+			</div>
+			<br>
+			<div class="split">
+				<div class="left">
+					<div class="button-div">
+						<a href="/submit/project" class="btn w3-button w3-xxlarge btn-primary cont-button">Register<br>Project</a>
+					</div>
+				</div>
+
+				<div class="right">
+					<div class="button-div">
+						<a href="/submit/dataset" class="btn w3-button w3-xxlarge btn-primary cont-button">Deposit<br>Dataset</a>
+					</div>
+				</div>
+			</div>
+			<div class="split">
+				<div class="left col-p">
+					<p>
+						Use this web form to submit a project metadata record for an NSF award or a series of collaborative awards.
+						USAP-DC will create a project page and links to datasets at USAP-DC or other repository.
+					</p>
+					<p>
+						USAP-DC will also use this information to prepare and submit an entry (DIF record) to the
+						Antarctic Master Directory (<a href="https://gcmd.nasa.gov/Data/portals/amd/" title="AMD">AMD</a>).
+					</p>
+					<p>
+						<strong>Note:</strong> <a href="{{url_for('contact')}}" title="contact us">Contact us</a> if you have
+						question.
+					</p>
+				</div>
+
+				<div class="right col-p">
+					<p>
+						Before submitting to USAP-DC check if another disciplinary repository would be more appropriate,
+						e.g. those in <a href="{{url_for('repo_list')}}"> this list</a>.
+					</p>
+					<p>
+						Use this web form to submit a dataset. USAP-DC accepts data submissions for any Antarctic datasets
+						and provides repository services, including data publication in the DOI® system and long-term archiving.
+					</p>
+					<p>
+						<strong>Note:</strong> <a href="{{url_for('contact')}}" title="contact us">Contact us</a> if you have
+						question.
+					</p>
+				</div>
+			</div>
+
+			<div style="clear:both"></div>
+			<br>
+			<h3>
+				What Happens After Submission:
+			</h3>
+			<p class="cont-p">
+				Your submission will be reviewed by our curators who will contact you if questions arise. This process might
+				take
+				up to several business days. Submissions to AMD are verified by their staff and it takes usually several
+				business
+				days until a record goes live.
+			</p>
+		</div>
 	</div>
 </div>
 

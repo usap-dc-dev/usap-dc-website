@@ -2583,13 +2583,13 @@ def project_browser():
 def search():
     template_dict = {}
 
-    # refresh the dataset and project view to make sure it is up to date
+    # refresh the project view to make sure it is up to date
     (conn, cur) = connect_to_db()
     query = "REFRESH MATERIALIZED VIEW project_view; COMMIT;"
     cur.execute(query)
 
     params = request.args.to_dict()
-    # params['dp_type'] = 'Project'
+    params['dp_type'] = 'Project'
     rows = filter_datasets_projects(**params)
     session['search_params'] = params
 
@@ -2609,6 +2609,35 @@ def search():
 
     template_dict['search_params'] = session.get('search_params')
     return render_template('search.html', **template_dict)  
+
+
+@app.route('/dataset_search', methods=['GET'])
+def dataset_search():
+    template_dict = {}
+
+    # refresh the project view to make sure it is up to date
+    (conn, cur) = connect_to_db()
+    query = "REFRESH MATERIALIZED VIEW dataset_view; COMMIT;"
+    cur.execute(query)
+
+    params = request.args.to_dict()
+    params['dp_type'] = 'Dataset'
+    rows = filter_datasets_projects(**params)
+    session['search_params'] = params
+
+    for row in rows:
+        if row['projects']:
+            items = json.loads(row['projects'])
+            row['projects'] = items
+            if type(items) is dict:
+                row['repo'] = items['repository']
+                row['projects'] = [items]
+            elif type(items) is list and len(items) > 0:
+                row['repo'] = items[0]['repository']                         
+    template_dict['records'] = rows
+
+    template_dict['search_params'] = session.get('search_params')
+    return render_template('dataset_search.html', **template_dict)  
 
 
 @app.route('/filter_joint_menus', methods=['GET'])
@@ -2681,7 +2710,17 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
                              nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, exclude=False):
 
     (conn, cur) = connect_to_db()
-    query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM project_view dpv'''
+
+    if (dp_type) == 'Project':
+        view = 'project_view'
+        d_or_p = 'datasets'
+    elif dp_type == 'Dataset':
+        view = 'dataset_view'
+        d_or_p = 'projects'
+    else:
+        return
+
+    query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM %s dpv''' %view
     conds = []
     if uid:
         conds.append(cur.mogrify('dpv.uid=%s', (uid,)))
@@ -2699,11 +2738,11 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         conds.append(cur.mogrify('dpv.science_programs~*%s ', (sci_program,)))
     if nsf_program:
         conds.append(cur.mogrify('dpv.nsf_funding_programs~*%s ', (nsf_program,)))
-    if dp_type and dp_type != 'Both':
-        conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
+    # if dp_type and dp_type != 'Both':
+    #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     if free_text:
-        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR datasets ~* %s)", 
-                                 (free_text, free_text, free_text, free_text, free_text)))
+        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR %s ~* %s)", 
+                                 (free_text, free_text, free_text, free_text, d_or_p, free_text)))
     if repo:
         conds.append(cur.mogrify('repositories ~* %s ', (repo,)))
 

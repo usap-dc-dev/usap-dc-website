@@ -20,7 +20,7 @@ $(document).ready(function() {
     $('#award-input').typeahead({autoSelect: false});
     $('#repo-input').typeahead({autoSelect: false});
     
-    $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo').change(function(e) {
+    $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo').change(function() {
         $('[data-toggle="tooltip"]').tooltip('hide');
 
         var selected = {
@@ -113,28 +113,25 @@ $(document).ready(function() {
     });
 
 
+    if ($(location).attr('pathname') == '/dataset_search') {
+        var mc = new MapClient();
 
-    mc = new MapClient();
+        $('#data_link').submit(function() {
+        var features = mc.vectorSrc.getFeatures();
+        if (features.length > 0) {
+            var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
+            var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
+            var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
+            $('input[name="spatial_bounds_interpolated"]').val(wkt);
+        } else {
+            $('input[name="spatial_bounds_interpolated"]').val('');
+        }
+        });
 
-
-    $('#data_link').submit(function() {
-    var features = mc.vectorSrc.getFeatures();
-    if (features.length > 0) {
-        var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
-        var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
-        var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
-        $('input[name="spatial_bounds_interpolated"]').val(wkt);
-    } else {
-        $('input[name="spatial_bounds_interpolated"]').val('');
+        $('#map-modal').on('shown.bs.modal', function() {
+        mc.map.updateSize();
+        });
     }
-    });
-
-
-
-
-    $('#map-modal').on('shown.bs.modal', function() {
-      mc.map.updateSize();
-    });
   
   $('.abstract-button').click(function(event) {
     var header = $(this).closest('table').find('th');
@@ -189,7 +186,7 @@ $(document).ready(function() {
   
   $('.geometry-button').click(function(event) {
     var header = $(this).closest('table').find('th');
-    var dif_id_ind, geometry_ind, type_ind = 999;
+    var geometry_ind, type_ind = 999;
     for (var i in header) {
       if (header[i].tagName != "TH") continue;
       var label = header[i].innerText;
@@ -226,7 +223,7 @@ function MapClient2() {
   var projection = ol.proj.get('EPSG:3031');
   projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
   projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
-  map = new ol.Map({ // set to GMRT SP bounds
+  var map = new ol.Map({ // set to GMRT SP bounds
   target: 'show_on_map',
     view: new ol.View({
         center: [0,0],
@@ -316,9 +313,14 @@ function removeLayerByName(map, name) {
 }
 
 
-function updateMenusWithSelected(selected, reset) {
+function updateMenusWithSelected(selected) {
     selected = selected || {};
 
+    if($(location).attr('pathname') == '/dataset_search') {
+        selected['dp_type'] = 'Dataset';
+    } else {
+        selected['dp_type'] = 'Project';
+    }
     return $.ajax({
       method: 'GET',
       url: 'http://' + window.location.hostname + '/filter_joint_menus',
@@ -597,8 +599,6 @@ function MapClient() {
         var max_px = [x + tolerance[0], y - tolerance[1]];
         var min_coord = this.getCoordinateFromPixel(min_px);
         var max_coord = this.getCoordinateFromPixel(max_px);
-        var min_ll = ol.proj.toLonLat(min_coord, this.getView().getProjection());
-        var max_ll = ol.proj.toLonLat(max_coord, this.getView().getProjection());
         var bbox = min_coord[0]+','+min_coord[1]+','+max_coord[0]+','+max_coord[1];
         
         var layers = '';
@@ -679,7 +679,7 @@ function MapClient() {
       }
     }
     
-    $('.drawing-button').on('click', function(e) {
+    $('.drawing-button').on('click', function() {
       var mode = $(this).attr('data-mode');
       self.setDrawMode(mode);
       self.setDrawingTool(mode);

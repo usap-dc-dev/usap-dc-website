@@ -210,16 +210,15 @@ width: 100%;
  position: static;
  min-height: 2.9em;
  margin-left: 0;
- margin-top: 7em;
- /*margin-bottom: 3.9em;*/
+ /* margin-top: 7em; */
+ margin-bottom: 3.9em;
 }
 
 .row4 {
  position: static;
  min-height: 2.9em;
  margin-left: 0;
- margin-top: 7em;
- /*margin-bottom: 2.9em;*/
+ margin-top: -1.5em;
 }
 
 .col1_long {
@@ -466,4 +465,10 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 
 .nested_table td {
   border:1px solid lightgrey !important;
+}
+
+div.square {
+  border: solid 21px #ff0000;
+  width: 5px;
+  height: 5px;
 }
