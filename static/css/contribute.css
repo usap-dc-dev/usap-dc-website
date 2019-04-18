@@ -15,10 +15,12 @@
 	font-size:1.3em; 
 	line-height:1.3em; 
 	margin-top:25px;
+	text-align: justify;
 }
 .cont-p {
 	font-size:1.3em; 
 	line-height:1.3em; 
+	text-align: justify;
 }
 
 .button-div {

@@ -120,66 +120,6 @@
           </div>
         </div>
 
-        <!-- <div class="row4"> -->
-          <!-- Spatial Bounds -->
-          <!-- <div id="spatial">
-
-            <div class="form-group">
-              <label for="spatial_bounds">Spatial Bounds of Data</label>
-              <button type="button" class="btn btn-default" data-toggle="modal" data-target="#map-modal">Draw on
-                Map</button>
-              <br />
-              <button class="btn btn-xs btn-link" type="button" data-toggle="collapse" data-target="#edit-geometry-div">
-                <span>Edit Geometry</span><span class="caret"></span>
-              </button>
-              <div id="edit-geometry-div" class="collapse">
-                <textarea id="spatial_bounds" name="spatial_bounds"
-                  class="form-control">{% if session.search_params %}{{session.search_params.spatial_bounds}}{% endif %}</textarea>
-                <div class="help-block small">
-                  Any WKT polygon, with longitudes in a 0-360 &deg; range. Example: Ross Sea is between 160 and 210.
-                  Read about the WKT format
-                  <a href="https://en.wikipedia.org/wiki/Well-known_text" target="_blank">here</a>.
-                </div>
-              </div>
-              <div>
-                <input type="checkbox" name="exclude" id="exclude" {% if session.search_params.exclude == 'on' %}
-                  checked {% endif %}> Exclude datasets that cover the whole Antarctic from map-based search
-              </div>
-            </div>
-
-            <input name="spatial_bounds_interpolated" type="hidden" />
-            <div class="modal fade" id="map-modal" role="dialog">
-              <div class="modal-dialog" role="document">
-                <div id="modal-contents">
-                  <div class="modal-content" id="modal-mapbox">
-                    <div class="modal-body">
-                      <div id="map">
-                        <div id="drawing-buttons">
-                          <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
-                            <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
-                          </div>
-                          <div id="rect-icon" data-mode="Box" class="drawing-button">
-                            <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
-                          </div>
-                          <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
-                            <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="modal-content" id="modal-buttons">
-                    <button type="button" class="btn btn-primary btn-sm" id="clear-polygon">Clear</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="close-modal" class="close"
-                      data-dismiss="modal">Save</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> -->
-
         <div class="btn-group">
           <input class="btn btn-primary btn-lg w3-blue-grey" id="search_btn" type="submit" value="Search">
           <input type="button" id="reset-btn" class="btn btn-default btn-lg " value="Reset" onClick="resetForm()">
@@ -198,7 +138,7 @@
   {% if records|length > 0 %}
 
   <div>
-    <h5><font color="red">&#9632;</font> Older retrieved projects from AMD; might have incomplete information</h5>
+    <h5><div class="square"></div> Older retrieved projects from AMD. Warning: many have incomplete information.</h5>
     <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
   </div>
 
@@ -206,6 +146,7 @@
     <table class='sortable' preserve_style='row'>
 
       <tr>
+        <th width="33px" style="text-align:center"><div class="square"></div></th>
         <th width="30%">Project Title/Abstract/Map</th>
         <th width="7%">NSF Award(s)</th>
         <th width="8%">Date Created</th>
@@ -217,10 +158,12 @@
 
       {% for val in records %}
       <tr class='w3-border'>
+        <td style="text-align:center">
+            {% if not val.is_usap_dc %}
+              <div class="square"></div>
+            {% endif %}
+        </td>
         <td>
-          {% if not val.is_usap_dc %}
-          <font color="red">&#9632;</font>
-          {% endif %}
           {% if val.title %}
           <a href="{{url_for('project_landing_page', project_id=val.uid)}}">{{val.title}}</a>
           {% else %}

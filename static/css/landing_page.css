@@ -8,10 +8,6 @@
     z-index: 1;
 }
 
-body {
-    font-color: black !important;
-}
-
 .lprow-no-margin {
     position: relative;
     margin-left: 1.44em;
@@ -58,6 +54,13 @@ width: 7.2em;
 position: absolute;  
 }
 
+.col2_short {
+  text-align: center;
+  margin-left: 9em;
+  width: 7.2em;
+  position: absolute;
+}
+ 
 .col2 {
 margin-left: 10.8em;
 width: 10.8em;

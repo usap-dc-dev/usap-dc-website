@@ -39,6 +39,17 @@
           </div>
         {% endif %}
 
+        {% if data['citation'] %}
+          <div class="lprow">
+            <div class="field">
+              Cite as
+            </div>
+            <div class="value">
+              {{data.citation}}
+            </div>
+          </div>
+        {% endif %}
+
         {% if len(data['dif_records']) > 0 %}
         <div class="lprow">
           <div class="field">
@@ -200,8 +211,13 @@
     </div>
     <div class="lprow2">
       <div class="col1">
-        <div class="download" data-url="/supplement/{{data['id']}}">
+        <div class="download" data-url="/readme/{{data.id}}">
           View
+        </div>      
+      </div>
+      <div class="col2_short">
+        <div class="download" data-url="/readme-download/{{data.id}}">
+          Download
         </div>  
       </div>
       <div class="col3">

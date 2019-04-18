@@ -1518,7 +1518,7 @@ def landing_page(dataset_id):
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
-    print(metadata)
+    # print(metadata)
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
@@ -1551,28 +1551,83 @@ def landing_page(dataset_id):
             creator_orcid = p['id_orcid']
             break
 
+    metadata['citation'] = makeCitation(metadata, dataset_id)
+
     return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
 
+
+def makeCitation(metadata, dataset_id):
+    try:
+        (conn, cur) = connect_to_db()
+        cur.execute("SELECT person_id, first_name, middle_name, last_name FROM dataset_person_map dpm JOIN person ON person.id=dpm.person_id WHERE dataset_id='%s'"  % dataset_id)
+        creators = cur.fetchall()
+        print(creators)
+        etal =  ''
+        middle_init = ''
+
+        if len(creators) == 0: 
+            creators = metadata['creator'].split(';')
+            (last_name, first_name) = creators[0].split(',')
+            first_names = first_name.strip().split(' ')
+            if len(first_names) > 1:
+                middle_init = ' ' + first_names[1][0] + '. '
+        else:
+            pi = creators[0]
+            # try and find the person who matches the first in the dataset.creators list
+            creator1 = metadata['creator'].split(' ')[0]
+            for creator in creators:
+                if creator1 in creator['person_id']:
+                    pi = creator
+
+            if pi.get('first_name') and pi.get('last_name'):
+                first_name = pi['first_name']
+                last_name = pi['last_name']
+                
+                if pi.get('middle_name'):
+                    middle_init = ' ' + pi['middle_name'][0] + '. '
+            else:
+                (last_name, first_name) = pi['person_id'].split(',')
+
+        if len(creators) > 1: etal = ' et al. ' 
+        year = metadata['release_date'].split('-')[0]
+
+        citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: %s.' % (initcap(last_name), first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
+        return citation
+    except:
+        return None
 
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
     directory = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'])
     return send_from_directory(directory, filename, as_attachment=True)
 
-@app.route('/supplement/<dataset_id>')
-def supplement(dataset_id):
+
+@app.route('/readme/<dataset_id>')
+def readme(dataset_id):
     (conn, cur) = connect_to_db()
     cur.execute('''SELECT url_extra FROM dataset WHERE id=%s''', (dataset_id,))
     url_extra = cur.fetchall()[0]['url_extra'][1:]
     if url_extra.startswith('/'):
         url_extra = url_extra[1:]
     try:
-        return send_file(os.path.join(current_app.root_path, url_extra),
-                       as_attachment=True,
-                       attachment_filename=os.path.basename(url_extra))
+        return send_from_directory(current_app.root_path, url_extra,
+                       as_attachment=False)
     except:
         return redirect(url_for('not_found'))
 
+
+@app.route('/readme-download/<dataset_id>')
+def readme_download(dataset_id):
+    (conn, cur) = connect_to_db()
+    cur.execute('''SELECT url_extra FROM dataset WHERE id=%s''', (dataset_id,))
+    url_extra = cur.fetchall()[0]['url_extra'][1:]
+    if url_extra.startswith('/'):
+        url_extra = url_extra[1:]
+    try:
+        return send_from_directory(current_app.root_path, url_extra,
+                       as_attachment=True)
+    except:
+        return redirect(url_for('not_found'))
 
 @app.route('/mapserver-template.html')
 def mapserver_template():
