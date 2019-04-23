@@ -146,7 +146,7 @@
     <table class='sortable' preserve_style='row'>
 
       <tr>
-        <th width="33px" style="text-align:center"><div class="square"></div></th>
+        <th width="19px" style="padding-left:1px;"><div class="square"></div></th>
         <th width="30%">Project Title/Abstract/Map</th>
         <th width="7%">NSF Award(s)</th>
         <th width="8%">Date Created</th>
@@ -158,7 +158,7 @@
 
       {% for val in records %}
       <tr class='w3-border'>
-        <td style="text-align:center">
+        <td style="padding-left:1px;">
             {% if not val.is_usap_dc %}
               <div class="square"></div>
             {% endif %}
