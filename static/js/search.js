@@ -195,7 +195,13 @@ $(document).ready(function() {
     }
     var row = $(this).closest('tr');
     var geometry = row.children('td').eq(geometry_ind).text();
+    if (geometry[0] == '[') {
+        geometry = JSON.parse(geometry);
+    } else {
+        geometry = [geometry];
+    }    
     plotGeometry(map, geometry, styles);
+
     var x = event.pageX;
     var y = event.pageY;
 
@@ -270,29 +276,31 @@ function plotGeometry(map, geometry, styles) {
 
   var format = new ol.format.WKT();
 
-  var feature = format.readFeature(geometry, {
-    dataProjection: 'EPSG:4326',
-    featureProjection: 'EPSG:3031'
-  });
+  for (let geom of geometry) {
+    var feature = format.readFeature(geom, {
+        dataProjection: 'EPSG:4326',
+        featureProjection: 'EPSG:3031'
+    });
 
-  var source = new ol.source.Vector({
-    features: [feature]
-  });
+    var source = new ol.source.Vector({
+        features: [feature]
+    });
 
-  var layer = new ol.layer.Vector({
-    source: source,
-    style: styles,
-    title: "geometry"
-  });
+    var layer = new ol.layer.Vector({
+        source: source,
+        style: styles,
+        title: "geometry"
+    });
 
-  map.addLayer(layer);
+    map.addLayer(layer);
 
-  var extent = map.getView().getProjection().getExtent();
-  //zoom to polygon
-  if (feature.getGeometry().getType() == "Polygon") {
-    extent = source.getExtent();
+    var extent = map.getView().getProjection().getExtent();
+    //zoom to polygon
+    if (feature.getGeometry().getType() == "Polygon") {
+        extent = source.getExtent();
+    }
+    map.getView().fit(extent, map.getSize());
   }
-  map.getView().fit(extent, map.getSize());
 }
 
 /*

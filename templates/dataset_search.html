@@ -261,7 +261,7 @@
         </td>
 
         <td hidden>{{val['description']}}</td>
-        <td hidden>{{val['bounds_geometry']}}</td>
+        <td hidden>{{val['bounds_geometry'] |map('string')|list|tojson}}</td>
       </tr>
       {% endfor %}
 

@@ -2688,7 +2688,7 @@ def dataset_search():
                 row['repo'] = items['repository']
                 row['projects'] = [items]
             elif type(items) is list and len(items) > 0:
-                row['repo'] = items[0]['repository']                         
+                row['repo'] = items[0]['repository']                 
     template_dict['records'] = rows
 
     template_dict['search_params'] = session.get('search_params')
@@ -2711,6 +2711,10 @@ def filter_joint_menus():
             ds_titles = d['dataset_titles'].split(';')
             for ds in ds_titles:
                 titles.add(ds)
+        if d.get('project_titles'):
+            p_titles = d['project_titles'].split(';')
+            for p in p_titles:
+                titles.add(p)
   
     dp_persons = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'person'})
     persons = set()
@@ -2767,20 +2771,21 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     (conn, cur) = connect_to_db()
 
     if (dp_type) == 'Project':
-        view = 'project_view'
         d_or_p = 'datasets'
+        query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM project_view dpv''' 
+        titles = 'dataset_titles'
     elif dp_type == 'Dataset':
-        view = 'dataset_view'
         d_or_p = 'projects'
+        query_string = '''SELECT *,  bounds_geometry AS bounds_geometry FROM dataset_view dpv'''
+        titles = 'project_titles'
     else:
         return
 
-    query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM %s dpv''' %view
     conds = []
     if uid:
         conds.append(cur.mogrify('dpv.uid=%s', (uid,)))
     if dp_title:
-        conds.append(cur.mogrify('dpv.title ILIKE %s OR dpv.dataset_titles ILIKE %s', ('%' + dp_title + '%', '%' + dp_title + '%')))
+        conds.append("dpv.title ~* '%s' OR dpv.%s ~* '%s'" % (dp_title, titles, dp_title))
     if award:
         conds.append(cur.mogrify('dpv.awards~*%s', (award,)))
     if person:
