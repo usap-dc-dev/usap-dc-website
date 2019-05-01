@@ -146,19 +146,19 @@
     <table class='sortable' preserve_style='row'>
 
       <tr>
-        <th width="19px" style="padding-left:1px;"><div class="square"></div></th>
-        <th width="30%">Project Title/Abstract/Map</th>
-        <th width="7%">NSF Award(s)</th>
-        <th width="8%">Date Created</th>
-        <th width="10%">PIs / Scientists</th>
-        <th width="30%">Dataset Links and Repositories</th>
+        <th style="width:1.8em; padding:0; text-align:center" > <div class="square"></div></th>
+        <th style="width:30em;">Project Title/Abstract/Map</th>
+        <th style="width:7em;">NSF Award(s)</th>
+        <th style="width:8em;" >Date Created</th>
+        <th style="width:10em;" >PIs / Scientists</th>
+        <th style="width:30em;" >Dataset Links and Repositories</th>
         <th hidden>Abstract</th>
         <th hidden>Geometry</th>
       </tr>
 
       {% for val in records %}
       <tr class='w3-border'>
-        <td style="padding-left:1px;">
+        <td style="width:1.8em; padding:0; text-align:center">
             {% if not val.is_usap_dc %}
               <div class="square"></div>
             {% endif %}
@@ -171,11 +171,11 @@
           {% endif %}
           <br />
           {% if val.description %}
-          <button type="button" class="in-table-button abstract-button" id="abstract_btn"><b>Abstract</b></button>
+          <button type="button" class="in-table-button abstract-button" id="abstract_btn" onclick="showAbstract(this);"><b>Abstract</b></button>
           <br />
           {% endif %}
           {% if val.bounds_geometry %}
-          <button type="button" class="in-table-button geometry-button" id="geom_btn"><b>Show on Map</b></button>
+          <button type="button" class="in-table-button geometry-button" id="geom_btn" onclick="showOnMap(this);"><b>Show on Map</b></button>
           {% endif %}</td>
         {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
         <td>

@@ -5,6 +5,7 @@ var sci_programs = [];
 var nsf_programs = [];
 var awards = [];
 var repos = [];
+var map;
 
 $(document).ready(function() {
     $(document).ajaxStart(function () { $("html").addClass("wait"); });
@@ -132,84 +133,13 @@ $(document).ready(function() {
         mc.map.updateSize();
         });
     }
-  
-  $('.abstract-button').click(function(event) {
-    var header = $(this).closest('table').find('th');
-    var abstract_ind, type_ind = 999;
-    for (var i in header) {
-      if (header[i].tagName != "TH") continue;
-      var label = header[i].innerText;
-      if (label == "Abstract") abstract_ind = i;
-      if (label == "Type") type_ind = i;
-    }
-    var row = $(this).closest('tr');
-    var abstract = row.children('td').eq(abstract_ind).text();
-    $("#abstract_text").html(abstract);
-    var x = event.pageX;
-    var y = event.pageY;
-
-    var type = row.children('td').eq(type_ind).text();
-    $("#abstract_title").text(type +' Abstract');
-    $("#abstract").css({top:y-400+"px", left:x+"px"}).show();
-
-  });
 
   $('.close_abstract_btn').click(function() {
     $("#abstract").hide();
   });
-  
 
-  var map = new MapClient2();
-  var styles = [
-    new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: 'rgba(255, 0, 0, 0.8)',
-        width: 2
-      }),
-      fill: new ol.style.Fill({
-        color: 'rgba(255, 0, 0, 0.3)'
-      })
-    }),
-    new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 4,
-        stroke: new ol.style.Stroke({
-          color: 'rgba(255, 0, 0, 0.8)',
-          width: 2
-        }),
-        fill: new ol.style.Fill({
-          color: 'rgba(255, 0, 0, 0.3)'
-        })
-      })
-    })
-  ];
-  
-  $('.geometry-button').click(function(event) {
-    var header = $(this).closest('table').find('th');
-    var geometry_ind, type_ind = 999;
-    for (var i in header) {
-      if (header[i].tagName != "TH") continue;
-      var label = header[i].innerText;
-      if (label == "Geometry") geometry_ind = i;
-      if (label == "Type") type_ind = i;
-    }
-    var row = $(this).closest('tr');
-    var geometry = row.children('td').eq(geometry_ind).text();
-    if (geometry[0] == '[') {
-        geometry = JSON.parse(geometry);
-    } else {
-        geometry = [geometry];
-    }    
-    plotGeometry(map, geometry, styles);
+  map = new MapClient2();
 
-    var x = event.pageX;
-    var y = event.pageY;
-
-    var type = row.find('td').eq(type_ind).text();
-    $("#geometry_title").text(type +' Spatial Bounds');
-    $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
-
-  });
 
   $('.close_geom_btn').click(function() {
     $("#geometry").hide();
@@ -223,6 +153,78 @@ $(document).ready(function() {
   updateMenusWithSelected(search_params, false);
 
 });
+
+function showAbstract(el) {
+    var header = $(el).closest('table').find('th');
+    var abstract_ind, type_ind = 999;
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "Abstract") abstract_ind = i;
+      if (label == "Type") type_ind = i;
+    }
+    var row = $(el).closest('tr');
+    var abstract = row.children('td').eq(abstract_ind).text();
+    $("#abstract_text").html(abstract);
+    var x = event.pageX;
+    var y = event.pageY;
+
+    var type = row.children('td').eq(type_ind).text();
+    $("#abstract_title").text(type +' Abstract');
+    $("#abstract").css({top:y-400+"px", left:x+"px"}).show();   
+  }
+
+
+var styles = [
+  new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      color: 'rgba(255, 0, 0, 0.8)',
+      width: 2
+    }),
+    fill: new ol.style.Fill({
+      color: 'rgba(255, 0, 0, 0.3)'
+    })
+  }),
+  new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 4,
+      stroke: new ol.style.Stroke({
+        color: 'rgba(255, 0, 0, 0.8)',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 0, 0, 0.3)'
+      })
+    })
+  })
+];
+
+function showOnMap(el) {
+  var header = $(el).closest('table').find('th');
+  var geometry_ind, type_ind = 999;
+  for (var i in header) {
+    if (header[i].tagName != "TH") continue;
+    var label = header[i].innerText;
+    if (label == "Geometry") geometry_ind = i;
+    if (label == "Type") type_ind = i;
+  }
+  var row = $(el).closest('tr');
+  var geometry = row.children('td').eq(geometry_ind).text();
+  if (geometry[0] == '[') {
+      geometry = JSON.parse(geometry);
+  } else {
+      geometry = [geometry];
+  }   
+  plotGeometry(map, geometry, styles);
+
+  var x = event.pageX;
+  var y = event.pageY;
+
+  var type = row.find('td').eq(type_ind).text();
+  $("#geometry_title").text(type +' Spatial Bounds');
+  $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
+
+}
 
 function MapClient2() {
   proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
@@ -299,6 +301,7 @@ function plotGeometry(map, geometry, styles) {
     if (feature.getGeometry().getType() == "Polygon") {
         extent = source.getExtent();
     }
+
     map.getView().fit(extent, map.getSize());
   }
 }
@@ -325,9 +328,9 @@ function updateMenusWithSelected(selected) {
     selected = selected || {};
 
     if($(location).attr('pathname') == '/dataset_search') {
-        selected['dp_type'] = 'Dataset';
+        selected.dp_type = 'Dataset';
     } else {
-        selected['dp_type'] = 'Project';
+        selected.dp_type = 'Project';
     }
     return $.ajax({
       method: 'GET',

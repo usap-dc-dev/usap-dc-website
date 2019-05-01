@@ -205,11 +205,11 @@
     <table class='sortable' preserve_style='row'>
 
       <tr>
-        <th width="30%">Dataset Title/Abstract/Map</th>
-        <th width="7%">NSF Award(s)</th>
-        <th width="8%">Date Created</th>
-        <th width="10%">PIs / Scientists</th>
-        <th width="30%">Project Links</th>
+        <th style="width:30em;">Dataset Title/Abstract/Map</th>
+        <th style="width:7em;">NSF Award(s)</th>
+        <th style="width:8em;">Date Created</th>
+        <th style="width:10em;">PIs / Scientists</th>
+        <th style="width:30em;">Project Links</th>
         <th hidden>Abstract</th>
         <th hidden>Geometry</th>
       </tr>
@@ -224,11 +224,11 @@
           {% endif %}
           <br />
           {% if val.description %}
-          <button type="button" class="in-table-button abstract-button" id="abstract_btn"><b>Abstract</b></button>
+          <button type="button" class="in-table-button abstract-button" id="abstract_btn" onclick="showAbstract(this);"><b>Abstract</b></button>
           <br />
           {% endif %}
           {% if val.bounds_geometry %}
-          <button type="button" class="in-table-button geometry-button" id="geom_btn"><b>Show on Map</b></button>
+          <button type="button" class="in-table-button geometry-button" id="geom_btn" onclick="showOnMap(this);"><b>Show on Map</b></button>
           {% endif %}</td>
         {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
         <td>
