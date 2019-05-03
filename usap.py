@@ -2777,6 +2777,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     elif dp_type == 'Dataset':
         d_or_p = 'projects'
         query_string = '''SELECT *,  bounds_geometry AS bounds_geometry FROM dataset_view dpv'''
+        if spatial_bounds_interpolated:
+            query_string += ''', text(JSON_ARRAY_ELEMENTS(dpv.bounds_geometry)) AS b'''
         titles = 'project_titles'
     else:
         return
@@ -2791,7 +2793,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if person:
         conds.append(cur.mogrify('dpv.persons~*%s', (person,)))
     if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_intersects(st_transform(dpv.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
+        conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
+        conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
