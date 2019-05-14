@@ -2770,7 +2770,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
     (conn, cur) = connect_to_db()
 
-    if (dp_type) == 'Project':
+    if dp_type == 'Project':
         d_or_p = 'datasets'
         query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM project_view dpv''' 
         titles = 'dataset_titles'
