@@ -2383,6 +2383,41 @@ def stats():
     template_dict['download_numfiles_bytes'] = download_numfiles_bytes
     template_dict['download_users_downloads'] = download_users_downloads
 
+    # To be used if we start collecting stats on searches
+    
+    # get search information from the database
+    # (conn, cur) = connect_to_db()
+    # query = "SELECT * FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+
+    # cur.execute(query)
+    # data = cur.fetchall()
+    # searches = {'repos': {}, 'sci_progs': {}, 'nsf_progs': {}}
+    # for row in data:
+    #     time = row['time']
+    #     month = "%s-%02d-01" % (time.year, time.month)  
+    #     bytes = row['resource_size']
+    #     user = row['remote_host']
+    #     resource = row['resource_requested']
+    #     search = parseSearch(resource)
+
+    #     if search.get('repo') and search['repo'] != '':
+    #         if searches['repos'].get(search['repo']):
+    #             searches['repos'][search['repo']] += 1
+    #         else:
+    #             searches['repos'][search['repo']] = 1
+    #     if search.get('sci_program') and search['sci_program'] != '':
+    #         if searches['sci_progs'].get(search['sci_program']):
+    #             searches['sci_progs'][search['sci_program']] += 1
+    #         else:
+    #             searches['sci_progs'][search['sci_program']] = 1
+    #     if search.get('nsf_program') and search['nsf_program'] != '':
+    #         if searches['nsf_progs'].get(search['nsf_program']):
+    #             searches['nsf_progs'][search['nsf_program']] += 1
+    #         else:
+    #             searches['nsf_progs'][search['nsf_program']] = 1
+
+    # print(searches)
+
     # get submission information from the database
 
     query = cur.mogrify('''SELECT dsf.*, d.release_date, dt.date_created::text FROM dataset_file_info dsf 
@@ -2431,6 +2466,18 @@ def stats():
     template_dict['submission_submissions'] = submission_submissions
 
     return render_template('statistics.html', **template_dict)
+
+
+# To be used if we start collecting stats on searches
+def parseSearch(resource):
+    resource = resource.split('?')[1]
+    filters = resource.split('&')
+    search = {}
+    for f in filters:
+        filter, value = f.split('=')
+        search[filter] = value
+    print(search)
+    return search
 
 
 @app.route('/view/project/<project_id>')
