@@ -39,7 +39,7 @@ function MapClient(zoom) {
     type: 'base',
     title: "GMRT Synthesis",
     source: new ol.source.TileWMS({
-        url: "http://gmrt.marine-geo.org/cgi-bin/mapserv?map=/public/mgg/web/gmrt.marine-geo.org/htdocs/services/map/wms_sp.map",
+        url: "https://www.gmrt.org/services/mapserver/wms_SP?request=GetCapabilities&service=WMS&version=1.3.0",
         params: {
         layers: 'South_Polar_Bathymetry'
         }
@@ -52,7 +52,7 @@ function MapClient(zoom) {
     visible: false,
     title: "GMRT Synthesis-Mask",
     source: new ol.source.TileWMS({
-        url: "http://gmrt.marine-geo.org/cgi-bin/mapserv?map=/public/mgg/web/gmrt.marine-geo.org/htdocs/services/map/wms_sp_mask.map",
+        url: "https://www.gmrt.org/services/mapserver/wms_SP_mask?request=GetCapabilities&service=WMS&version=1.3.0",
         params: {
         layers: 'South_Polar_Bathymetry'
         }
