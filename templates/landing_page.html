@@ -186,7 +186,9 @@
           	<ol>
              {% for r in data.references %}
              <li>
-               {{r.ref_text}} {% if r.doi %} (<a target="=_blank" href="https://doi.org/{{r.doi}}">{{r.doi}}</a>) {% endif %}
+               {{r.ref_text}} 
+               {% if r.doi %}
+                (<a target="=_blank" href="https://doi.org/{{r.doi}}">{% if r.doi[0:3]|upper != "DOI" %}doi:{% endif %}{{r.doi}}</a>) {% endif %}
              </li>
              {% endfor %}
            </ol>
