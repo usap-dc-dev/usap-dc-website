@@ -2,16 +2,23 @@
 {% set cur = "landing_page" %}
 {% block body %}
 
-
 <script type="text/javascript">
+
   $(document).ready(function() {
     $('.download').click(function() {
       window.open($(this).attr('data-url'), '_blank');
     });
+
+    // add schema.org json_ld for google searches
+    var el = document.createElement('script');
+    el.type = 'application/ld+json';
+    el.text = $("#div_jsonld").text();
+    document.querySelector('head').appendChild(el);
   });
 </script>
 
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
+<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])}}</div>
 
 <div id="metadata">
   <div class="header">

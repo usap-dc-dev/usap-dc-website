@@ -104,7 +104,6 @@ function MapClient(zoom) {
     });
     map.addLayer(lima);
 
-
     var tracks = new ol.layer.Tile({
     title: "USAP R/V Cruises",
     visible: false,

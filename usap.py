@@ -1552,8 +1552,141 @@ def landing_page(dataset_id):
             break
 
     metadata['citation'] = makeCitation(metadata, dataset_id)
+    metadata['json_ld'] = makeJsonLD(metadata, dataset_id)
 
     return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
+
+
+def makeJsonLD(data, uid):
+    keywords = cf.getDatasetKeywords(uid)
+    print(data.get('data'))
+    creators = []
+    for p in data.get('persons'):
+        creator = {
+            "@type": "Role",
+            "roleName": "author",
+            "creator": {
+                "@type": "Person",
+                "additionalType": "geolink:Person",
+                "name": p.get('id'),
+                "email": p.get('email'),
+                "affiliation": {
+                    "@type": "Organization",
+                    "name": p.get('address')
+                }
+            } 
+        }
+        creators.append(creator)
+
+    awards = []
+    for a in data.get('awards'):
+        (conn, cur) = connect_to_db()
+        cur.execute("SELECT program_id FROM award_program_map apm  WHERE award_id='%s'" % a['award'])
+        program = cur.fetchone()
+        award = {
+            "@type": "Role",
+            "roleName": "credit",
+            "description": "funderName:NSF:%s:%s:%s awardNumber:%s awardTitle:%s" % (a.get('dir'), a.get('div'), program['program_id'], a.get('award'), a.get('title'))
+        }
+        awards.append(award)
+
+    spatial_coverage = []
+    for s in data.get('spatial_extents'):
+        if s['west'] == s['east'] and s['south'] == s['north']:
+            ex = {
+                "@type": "Place",
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "longitude": s.get('east'),
+                    "latitude": s.get('north')
+                }
+            }
+        else:   
+            ex = {
+                "@type": "Place",
+                "geo": {
+                    "@type": "GeoShape",
+                    "box": "%s, %s, %s, %s" % (s.get('west'), s.get('south'), s.get('east'), s.get('north'))
+                }
+            }
+        spatial_coverage.append(ex)
+
+    json_ld = {
+        "@context": "https://schema.org/",
+        "@type": "Dataset",
+        "@id": "doi:" + data.get('doi'),
+        "additionalType": ["geolink:Dataset", "vivo:Dataset"],
+        "name": data.get('title'),
+        "description": data.get('abstract'),
+        "citation": data.get('citation'),
+        "datePublished": data.get('release_date'),
+        "keywords": [kw['keyword_label'] for kw in keywords],
+        "creator": creators,
+        "distribution": [
+            {
+                "@type": "DataDownload",
+                "additionalType": "http://www.w3.org/ns/dcat#DataCatalog",
+                "encodingFormat": "text/xml",
+                "name": "ISO Metadata Document",
+                "url": "http://get.iedadata.org/metadata/iso/usap/%siso.xml" % uid
+            },
+            {
+                "@type": "DataDownload",
+                "@id": "http://dx.doi.org/%s" % data.get('doi'),
+                "additionalType": "dcat:distribution",
+                "url": "http://dx.doi.org/%s" % data.get('doi'),
+                "name": "landing page",
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information"
+            },
+            {
+                "@type": "DataDownload",
+                "@id": url_for('landing_page', dataset_id=uid),
+                "additionalType": "dcat:distribution",
+                "url": url_for('landing_page', dataset_id=uid),
+                "name": "landing page",
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information"
+            }
+
+        ],
+        "identifier": {
+            "@type": "PropertyValue",
+            "propertyID": "dataset identifier",
+            "value": "doi:" + data.get('doi')
+        },
+        "contributor": awards,
+        "license": [
+            {
+                "@type": "DigitalDocument", 
+                "URL": "https://creativecommons.org/licenses/by-nc-sa/3.0/us/",
+                "name": "MD_Constraints",
+                "description": "useLimitation: Creative Commons Attribution-NonCommercial-Share Alike 3.0 United States [CC BY-NC-SA 3.0].   "
+            },
+            {
+                "@type": "DigitalDocument", 
+                "name": "MD_LegalConstraints",
+                "description": "accessConstraints: license.    otherConstraints: Creative Commons Attribution-NonCommercial-Share Alike 3.0 United States [CC BY-NC-SA 3.0].   "
+            },
+            {
+                "@type": "DigitalDocument",
+                "name": "MD_SecurityConstraints",
+                "description": "classification: "
+            }
+        ],
+        "publisher": {
+            "@type": "Role",
+            "roleName": "publisher",
+            "publisher": {
+                "@type": "Organization",
+                "name": "U.S. Antarctic Program (USAP) Data Center"
+            }
+
+        },
+        "spatialCoverage": spatial_coverage
+        
+        
+    }
+
+    return json_ld
 
 
 def makeCitation(metadata, dataset_id):
@@ -1561,8 +1694,8 @@ def makeCitation(metadata, dataset_id):
         (conn, cur) = connect_to_db()
         cur.execute("SELECT person_id, first_name, middle_name, last_name FROM dataset_person_map dpm JOIN person ON person.id=dpm.person_id WHERE dataset_id='%s'"  % dataset_id)
         creators = cur.fetchall()
-        print(creators)
-        etal =  ''
+
+        etal = ''
         middle_init = ''
 
         if len(creators) == 0: 
@@ -1595,6 +1728,7 @@ def makeCitation(metadata, dataset_id):
         return citation
     except:
         return None
+
 
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
