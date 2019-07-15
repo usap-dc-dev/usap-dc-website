@@ -10,8 +10,10 @@ Modified for USAP-DC curator page by Neville Shane March 1 2018
 import os
 import json
 import psycopg2
+from flask import url_for
 
 config = json.loads(open('config.json', 'r').read())
+dc_config = json.loads(open('inc/datacite.json', 'r').read())
 
 
 def connect_to_db():
@@ -195,7 +197,7 @@ def make_sql(data, id):
     sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,status_id,url_extra,review_status)
     VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work');\n""" \
             .format(id,
-                    '10.15784/' + id, 
+                    dc_config['SHOULDER'] + id, 
                     data["title"], 
                     data["name"], 
                     '; '.join(person_ids), 
@@ -209,6 +211,10 @@ def make_sql(data, id):
                     '/doc/' + id + '/README_' + id + '.txt', 
                     'In Work')
     sql_out += sql_line
+
+    sql_out += '\n--NOTE: add to project_dataset table\n'
+    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, doi) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
+        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True), dc_config['SHOULDER'] + id)
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
@@ -239,17 +245,12 @@ def make_sql(data, id):
                 sql_out += "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (id, award)
 
             else:
-                query = "SELECT COUNT(*) FROM dif WHERE dif_id = 'USAP-%s'" % award
+                query = "SELECT * FROM dif_award_map WHERE award = '%s';" % award
                 cur.execute(query)
-                res = cur.fetchone()
-                if res['count'] == 0:
-                    sql_out += '\n--NOTE: DIF may already exist if a previous Dataset has been submitted\n'
-                    line = "INSERT INTO dif(dif_id) VALUES ('%s');\n" % \
-                        ('USAP-' + award)
-                    sql_out += line
-
-                line = "INSERT INTO dataset_dif_map(dataset_id,dif_id) VALUES ('%s','%s');\n" % (id, 'USAP-' + award)
-                sql_out += line
+                res = cur.fetchone()                
+                if res:
+                    sql_out += "\n--NOTE: Linking dataset to DIF via award\n"
+                    sql_out += "INSERT INTO dataset_dif_map(dataset_id,dif_id) VALUES ('%s','%s');\n" % (id, res['dif_id'])
 
                 sql_out += '\n--NOTE: check the award #\n'
                 line = "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (id, award)
@@ -276,7 +277,16 @@ def make_sql(data, id):
                     if res['program_id'] == 'Antarctic Glaciology':
                         curator = 'Bauer'
 
-    sql_out += "--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
+                # look up award to see if already mapped to a project
+                query = "SELECT proj_uid FROM project_award_map WHERE award_id = '%s';" % award
+                cur.execute(query)
+                res = cur.fetchall()
+                if len(res) > 0:
+                    sql_out += "--NOTE: Linking dataset to project via award.  Comment out any lines you don't wish to add to DB\n"
+                    for project in res:
+                        sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), id)    
+     
+    sql_out += "\n--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
     sql_out += "UPDATE dataset SET review_person='{}' WHERE id='{}';\n".format(curator, id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
