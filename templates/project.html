@@ -20,24 +20,28 @@
 
         <form method="post" action="/submit/project" method="POST" enctype="multipart/form-data" name="entry" id="entry" onLoad=reset()>
           <div class="form-group">
-            <b>Main Award</b>
+            <b>Main Award (from NSF FastLane database)</b>
             <div class="awardTemplate">
-              <div id='extraAwardLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
-
-                <select name="award" id="award" class="award_select">
-                  <option value="" id="award_opt">None</option>
-                  <option value="Not_In_This_List">Not In This List</option>
+              <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+              <div class="dropdown" id="award-dropdown">
+                <input type="hidden" id="award" name="award" class="award_input" value='None'/>
+                <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control removable">
+                  None
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a data-toggle="tooltip" data-placement="right">None</li></li>
+                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your NSF Award in this list" data-placement="right">Not In This List</li></li>
                   {% for grant in nsf_grants %}
-                    {% set s = grant['award'] + " " + grant['name'] %}
-                    <option value="{{grant['award']}}">{{s}}</option>
+                  {% set s = grant['award'] + " " + grant['name'] %}
+                  <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
                   {% endfor %}
-                </select>
-                <i>(from NSF FastLane database)</i>
-
-
-                <a href="#awardsForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
+                </ul>
+                <a href="#awardForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
                 <input class="input-sm form-control removable user_award_input" type="hidden" size=10 id="user_award" name="user_award" placeholder="Enter Award Number"/> 
-              <div style="clear:both"></div>
+                <div style="clear:both"></div>
+
+              </div>
             </div>
             <div id="more_awards"></div>
             <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add additional award linked to project</span></a>

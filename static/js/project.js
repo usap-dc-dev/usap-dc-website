@@ -65,6 +65,10 @@ $(document).ready(function() {
       }
     });
 
+    $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+
+    $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
+
     $('#award').change(function() {
       var title = pi = institution = email = copi = start = end = cr = ipy = null;
       var val = $('#award').val();
@@ -268,25 +272,41 @@ $(document).ready(function() {
       award_counter--;
   });
 
-  function addAwardRow() {
-      var extraAward = $('.awardTemplate').clone();
+  $(".award_input").on("change", function() {
+      if ($(this).val() == "Not In This List") {
+        $(this).parent('div').find('.user_award_input').attr('type','text');
+      } else {
+        $(this).parent('div').find('.user_award_input').attr('type','hidden');
+      }
+    });
+
+  function addAwardRow(award) {
+    var extraAward = $('.awardTemplate').clone();
       //increment the element ids
-      $(extraAward).find('#award').attr('id', 'award'+award_counter).attr('name', 'award'+award_counter).html('').removeAttr('required');
-      $('#award').find('option').clone().appendTo($(extraAward).find('#award'+award_counter));
+      $(extraAward).find('#award-dropdown').attr({'id': 'award-dropdown'+award_counter});
+      $(extraAward).find('#award').attr({'id': 'award'+award_counter, 'name': 'award'+award_counter, 'value': ''});
+      $(extraAward).find('#award_dropdown').attr({'id': 'award_dropdown'+award_counter}).html('None <span class="caret"></span>');
       $(extraAward).find('#user_award').attr({'id': 'user_award'+award_counter, 'name': 'user_award'+award_counter, 'type':'hidden', 'value': ''});
       $(extraAward).find('#removeAwardRow').show();
       $(extraAward).find('#extraAwardLine').show();
+      if (award !== null) {
+        $(extraAward).find('#award'+award_counter).attr('value', award);
+        // $(extraAward).find('#user_award'+award_counter).attr('value', award.user_award);
+      }
       $(award_wrapper).append($('<div/>', {'class' : 'extraAward', html: extraAward.html()}));
       award_counter++;
 
-      $(".award_select").on("change", function() {
-        if ($(this).val() == "Not_In_This_List") {
-          $(this).parent().find('.user_award_input').attr('type','text');
-        } else {
-          $(this).parent().find('.user_award_input').attr('type','hidden');
-        }
+      $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+      $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+      $(".award_input").on("change", function() {
+          if ($(this).val() == "Not In This List") {
+            $(this).parent('div').find('.user_award_input').attr('type','text');
+          } else {
+            $(this).parent('div').find('.user_award_input').attr('type','hidden');
+          }
       });
-  }
+    }
 
 
     $('#addWebsiteRow').click(function (e) {

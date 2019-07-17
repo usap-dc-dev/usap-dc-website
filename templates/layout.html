@@ -170,6 +170,7 @@
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.js')}}"></script>
   {% endif %}
   {% if cur == 'dataset' or cur == 'project' %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/dropdown-select.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/display_bounds.js') }}"></script>
   {% endif %}
   <script src="https://apis.google.com/js/platform.js" async defer></script>

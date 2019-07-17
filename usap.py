@@ -1109,7 +1109,7 @@ def project():
         cur.execute(q)
         programs = cur.fetchall()
         return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=programs, persons=get_persons(),
-                               nsf_grants=get_nsf_grants(['award', 'name'], only_inhabited=False), deployment_types=get_deployment_types(),
+                               nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
                                locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles())
 
 
