@@ -10,6 +10,7 @@ from flask import session, url_for
 from subprocess import Popen, PIPE
 from json2sql import makeBoundsGeom
 import base64
+from datetime import datetime
 
 
 UPLOAD_FOLDER = "upload"
@@ -522,6 +523,13 @@ def projectJson2sql(data, uid):
 
     conn, cur = connect_to_db()
 
+    # --- fix award fields (throw out PI name)
+    if data["award"] not in ["None", "Not In This List"] and len(data["award"].split(" ", 1)) > 1:
+            data["award"] = data["award"].split(" ")[0]
+    for i in range(len(data["other_awards"])):
+        if data["other_awards"][i] not in ["None", "Not In This List"] and len(data["other_awards"][i].split(" ", 1)) > 1:
+            (data["other_awards"][i]) = data["other_awards"][i].split(" ")[0]  # throw away the rest of the award string
+
     sql_out = ""
     sql_out += "START TRANSACTION;\n\n"
 
@@ -785,6 +793,16 @@ def getDifID(uid):
     return "USAP-%s_1" % res['award_id']  
 
 
+def getDifIDAndTitle(uid):
+    conn, cur = connect_to_db()
+    query = "SELECT award_id, title FROM project_award_map pam " \
+            "JOIN award a ON pam.award_id = a.award " \
+            "WHERE pam.is_main_award = 'True' AND pam.proj_uid = '%s';" % uid
+    cur.execute(query)
+    res = cur.fetchone()
+    return "USAP-%s_1" % res['award_id'], res['title']  
+
+
 def getDifXMLFileName(uid):
     return os.path.join(DIFXML_FOLDER, "%s.xml" % getDifID(uid))
 
@@ -1037,13 +1055,14 @@ def addDifToDB(uid):
     else:
         try:
             sql_cmd = ""
-            dif_id = getDifID(uid)
+            dif_id, title = getDifIDAndTitle(uid)
             # Add to dif table if not already there
             query = "SELECT * FROM dif WHERE dif_id = '%s';" % dif_id
             cur.execute(query)
             res = cur.fetchall()
             if len(res) == 0:
-                sql_cmd += "INSERT INTO dif (dif_id) VALUES ('%s');" % dif_id
+                sql_cmd += "INSERT INTO dif (dif_id, date_created, date_modified, title, is_usap_dc, is_nsf) VALUES ('%s', '%s', '%s', '%s', %s, %s);\n" % \
+                    (dif_id, datetime.now().date(), datetime.now().date(), title, True, True)
 
             # add to project_dif_map
             query = "SELECT * FROM project_dif_map WHERE proj_uid = '%s' AND dif_id = '%s';" % (uid, dif_id)
