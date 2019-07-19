@@ -1554,7 +1554,21 @@ def landing_page(dataset_id):
     metadata['citation'] = makeCitation(metadata, dataset_id)
     metadata['json_ld'] = makeJsonLD(metadata, dataset_id)
 
+    # get count of how many times this dataset has been downloaded
+    metadata['downloads'] = getDownloadsCount(dataset_id)
+
     return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
+
+
+def getDownloadsCount(uid):
+    try:
+        (conn, cur) = connect_to_db()
+        query = "SELECT COUNT(DISTINCT (remote_host, to_char(time,'YY-MM-DD'))) FROM access_logs_downloads WHERE resource_requested ~ '%s';" % uid
+        cur.execute(query)
+        res = cur.fetchone()  
+        return res['count']
+    except:
+        return None
 
 
 def makeJsonLD(data, uid):
@@ -2598,8 +2612,22 @@ def stats():
     template_dict['submission_bytes'] = submission_bytes
     template_dict['submission_num_files'] = submission_num_files
     template_dict['submission_submissions'] = submission_submissions
+    template_dict['download_numbers'] = getDownloadsForDatasets()
 
     return render_template('statistics.html', **template_dict)
+
+
+def getDownloadsForDatasets():
+    (conn, cur) = connect_to_db()
+    query = '''SELECT d.*, COUNT(DISTINCT(remote_host,TO_CHAR(time,'YY-MM-DD'))) AS count
+                FROM access_logs_downloads ald
+                JOIN dataset d ON d.id = SUBSTR(ald.resource_requested,18,6) 
+                GROUP BY d.id
+                ORDER BY count DESC'''
+
+    cur.execute(query)
+    res = cur.fetchall()  
+    return res
 
 
 # To be used if we start collecting stats on searches

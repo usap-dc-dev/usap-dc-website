@@ -461,8 +461,13 @@ div.autocomplete ul li.selected { background-color: #ffb;}
   background-color: inherit !important;
 }
 
-.nested_table td {
+.nested_table td{
   border:1px solid lightgrey !important;
+}
+
+.nested_table th{
+  border:1px solid lightgrey !important;
+  background: rgb(240,240,240);
 }
 
 .square {

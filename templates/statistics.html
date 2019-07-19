@@ -19,6 +19,26 @@
   <div id="sm_submissions_chart_div"></div>
   <div id="dl_users_downloads_chart_div"></div>
   <div id="dl_numfiles_bytes_chart_div"></div>
+  <p class="stats-text"> Number of downloads for each dataset (based on unique date-IP combinations)*</p>
+  <div class="scrollable-window">
+    <table style="width:98%" class="nested_table">
+      <tr>
+        <th style="width:4em;">Count</th>
+        <th style="width:7em;">ID</th>
+        <th style="width:55%;">Title</th>
+        <th>Creator(s)</th>
+      </tr>
+      {% for d in download_numbers %}
+      <tr>
+        <td>{{d.count}}</td>
+        <td><a href={{url_for('landing_page', dataset_id=d.id)}} target="_blank">{{d.id}}</a></td>
+        <td>{{d.title}}</td>
+        <td>{{d.creator}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
   <div>
     <p><b>
       * Download statistics collection began in March 2017

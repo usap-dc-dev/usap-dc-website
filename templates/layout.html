@@ -231,7 +231,7 @@
   {% if cur=='landing_page' or cur == 'project_landing_page'%}
   <link rel="stylesheet" type="text/css" href="/static/css/landing_page.css" media="screen, projection" />
   {% endif %}
-  {% if cur=='search' %}
+  {% if cur=='search' or cur=='stats' %}
   <link rel="stylesheet" type="text/css" href="/static/css/search.css" media="screen, projection" />
   {% endif %}
   {% if cur=='contact' %}
@@ -243,7 +243,7 @@
   {% if cur in ['dataset', 'dataset_error', 'project', 'thank_you'] %}
   <link rel="stylesheet" type="text/css" href="/static/css/dataset.css" media="screen, projection" />
   {% endif %}
-  {% if cur =="catalog_browser" or cur=="project_browser"%}
+  {% if cur =="catalog_browser" or cur=="project_browser" %}
   <link rel="stylesheet" type="text/css" href="/static/css/catalog_browser.css" media="screen, projection" />
   {% endif %}
   {% if cur =="search_old" %}

@@ -719,3 +719,22 @@ content area & common elements
 .loginBtn--orcid:focus {
   background: rgb(170,210,61);
 }
+
+.scrollable-window {
+  height: 400px;
+  width: 90%;
+  overflow: auto;
+  font-size: 10px;
+  margin-left:3em;
+  margin-bottom: 10px;
+}
+
+.stats-text {
+    font-family: Arial;
+    font-size: 15;
+    font-weight: bold;
+    stroke: none;
+    stroke-width: 0;
+    fill: rgb(0, 0, 0);
+    margin-left:2em;
+}

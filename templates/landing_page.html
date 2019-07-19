@@ -265,5 +265,11 @@
 
 </div>
 
+{% if data.downloads >= 0 %}
+<div class="field">
+  This dataset has been downloaded {{data.downloads}} time{%if data.downloads != 1 %}s{% endif %} since March 2017 (based on unique date-IP combinations)
+</div>
+{% endif %}
+
 
 {% endblock body %}
