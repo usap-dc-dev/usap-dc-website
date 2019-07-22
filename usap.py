@@ -1563,10 +1563,18 @@ def landing_page(dataset_id):
 def getDownloadsCount(uid):
     try:
         (conn, cur) = connect_to_db()
-        query = "SELECT COUNT(DISTINCT (remote_host, to_char(time,'YY-MM-DD'))) FROM access_logs_downloads WHERE resource_requested ~ '%s';" % uid
+        query = '''SELECT SUM(count) FROM (
+                    SELECT count(DISTINCT (remote_host, to_char(time,'YY-MM-DD'))) FROM access_logs_downloads 
+                    WHERE resource_requested ~ '%s'
+                    AND resource_requested !~ 'Please_contact_us_to_arrange_for_download.txt' 
+                    AND resource_requested !~ 'image_file_list'
+                    UNION
+                    SELECT count(*)  FROM access_ftp_downloads WHERE dataset_id = '%s'
+                    ) as downloads;''' % (uid, uid)
         cur.execute(query)
-        res = cur.fetchone()  
-        return res['count']
+
+        res = cur.fetchone() 
+        return res['sum']
     except:
         return None
 
@@ -2612,18 +2620,29 @@ def stats():
     template_dict['submission_bytes'] = submission_bytes
     template_dict['submission_num_files'] = submission_num_files
     template_dict['submission_submissions'] = submission_submissions
-    template_dict['download_numbers'] = getDownloadsForDatasets()
+    template_dict['download_numbers'] = getDownloadsForDatasets(start_date, end_date)
 
     return render_template('statistics.html', **template_dict)
 
 
-def getDownloadsForDatasets():
+def getDownloadsForDatasets(start_date, end_date):
     (conn, cur) = connect_to_db()
-    query = '''SELECT d.*, COUNT(DISTINCT(remote_host,TO_CHAR(time,'YY-MM-DD'))) AS count
-                FROM access_logs_downloads ald
-                JOIN dataset d ON d.id = SUBSTR(ald.resource_requested,18,6) 
-                GROUP BY d.id
-                ORDER BY count DESC'''
+
+    query = '''SELECT downloads.id, downloads.title, downloads.creator, SUM(num_downloads) AS count FROM (               
+                    SELECT d.*, COUNT(afd.*) as num_downloads
+                         FROM dataset d JOIN access_ftp_downloads afd ON 
+                         d.id=afd.dataset_id
+                         WHERE date >= '%s' AND date <= '%s'
+                         GROUP BY d.id
+                     UNION ALL
+                     SELECT d.*,COUNT(DISTINCT(remote_host,TO_CHAR(time,'YY-MM-DD'))) AS num_downloads
+                          FROM dataset d JOIN access_logs_downloads ald ON d.id=SUBSTR(ald.resource_requested,18,6)
+                          WHERE resource_requested !~ 'Please_contact_us_to_arrange_for_download.txt' 
+                          AND resource_requested !~ 'image_file_list'
+                          AND time >= '%s' AND time <= '%s'
+                          GROUP BY d.id
+                   ) downloads GROUP BY downloads.id, downloads.title, downloads.creator
+                   ORDER BY count DESC, id ASC;''' % (start_date, end_date, start_date, end_date)
 
     cur.execute(query)
     res = cur.fetchall()  
