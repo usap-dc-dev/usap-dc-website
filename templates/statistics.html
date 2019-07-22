@@ -19,6 +19,7 @@
   <div id="sm_submissions_chart_div"></div>
   <div id="dl_users_downloads_chart_div"></div>
   <div id="dl_numfiles_bytes_chart_div"></div>
+
   <p class="stats-text"> Number of downloads for each dataset (based on unique date-IP combinations)*</p>
   <div class="scrollable-window">
     <table style="width:98%" class="nested_table">
@@ -38,6 +39,125 @@
       {% endfor %}
     </table>
   </div>
+
+  <p class="stats-text">Search Statistics</p>
+
+
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Repository</th>
+        </tr>
+        {% for k,v in searches.repos|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Science Programs</th>
+        </tr>
+        {% for k,v in searches.sci_progs|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div>
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>NSF Programs</th>
+        </tr>
+        {% for k,v in searches.nsf_progs|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div>
+
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Person</th>
+        </tr>
+        {% for k,v in searches.persons|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div>
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Award</th>
+        </tr>
+        {% for k,v in searches.awards|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div>
+
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Title</th>
+        </tr>
+        {% for k,v in searches.titles|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div>
+
+  <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Free Text</th>
+        </tr>
+        {% for k,v in searches.free_texts|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div>
+<!--   <div class="search-stats">
+      <table class="nested_table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Spatial Bounds</th>
+        </tr>
+        {% for k,v in searches.spatial_bounds|dictsort(false, 'value', reverse=true) %}
+        <tr>
+          <td>{{v}}</td>
+          <td>{{k}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+  </div> -->
 
   <div>
     <p><b>

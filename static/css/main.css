@@ -738,3 +738,13 @@ content area & common elements
     fill: rgb(0, 0, 0);
     margin-left:2em;
 }
+
+.search-stats {
+  display:inline-block;
+  height: 400px;
+  width: 150px;
+  overflow: auto;
+  font-size: 10px;
+  margin-left:3em;
+  margin-bottom: 10px;
+}
