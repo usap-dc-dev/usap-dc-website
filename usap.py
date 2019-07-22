@@ -2549,7 +2549,7 @@ def stats():
     data = cur.fetchall()
     searches = {'repos': {}, 'sci_progs': {}, 'nsf_progs': {}, 'persons': {}, 'awards': {}, 'free_texts': {}, 'titles': {}, 'spatial_bounds': {}}
     params = {'repo': 'repos', 'sci_program': 'sci_progs', 'nsf_program': 'nsf_progs', 'person': 'persons', 'award': 'awards', 
-              'free_text': 'free_texts', 'title': 'titles', 'spatial_bounds': 'spatial_bounds'}
+              'free_text': 'free_texts', 'dp_title': 'titles', 'spatial_bounds': 'spatial_bounds'}
     for row in data:
         time = row['time']
         month = "%s-%02d-01" % (time.year, time.month)  
