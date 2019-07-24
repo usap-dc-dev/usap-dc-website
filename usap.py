@@ -2626,7 +2626,7 @@ def binSearch(search, searches, search_param, searches_param):
 def getDownloadsForDatasets(start_date, end_date):
     (conn, cur) = connect_to_db()
 
-    query = '''SELECT id, title, creator, SUM(num_downloads) AS count FROM (               
+    query = '''SELECT id, title, creator, release_date, SUM(num_downloads) AS count FROM (               
                     SELECT d.*, COUNT(afd.*) as num_downloads
                          FROM dataset d JOIN access_ftp_downloads afd ON 
                          d.id=afd.dataset_id
@@ -2639,7 +2639,7 @@ def getDownloadsForDatasets(start_date, end_date):
                           AND resource_requested !~ 'image_file_list'
                           AND time >= '%s' AND time <= '%s'
                           GROUP BY d.id
-                   ) downloads GROUP BY id, title, creator
+                   ) downloads GROUP BY id, title, creator, release_date
                    ORDER BY count DESC, id ASC;''' % (start_date, end_date, start_date, end_date)
 
     cur.execute(query)

@@ -9,7 +9,7 @@ import psycopg2
 import psycopg2.extras
 
 LOGS_DIR = "/var/log/httpd/"
-DOMAIN = "www-dev.usap-dc.org"
+DOMAIN = "www.usap-dc.org"
 
 line_parser = apache_log_parser.make_parser("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"")
 
