@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% set cur = "dashboard" %}
+{% block body %}
+
+<h2>User Dashboard{% if user_info.name %}: {{user_info.name}} {% endif %} <a name="top"></a></h2>
+ <div id='dif-browser-table'>
+    <table class='sortable' preserve_style='row'>
+
+      <tr>
+        <th style="width:7em;">Project/Dataset</th>
+        <th style="width:30em;">Project Title</th>
+        <th style="width:8em;">Date Created</th>
+        <th style="width:8em;">Last Modified</th>
+        <th style="width:5em;">View</th>
+        <th style="width:5em;">Edit</th>
+      </tr>
+
+      {% for p in projects %}
+        <tr class='w3-border'>
+          <td>Project</td>
+          <td>{{p.title}}</td>
+          <td>{{p.date_created}}</td>
+          <td>{{p.date_modified}}</td>
+          <td><a href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">View</a></td>
+          <td><a href="{{url_for('project', project_id=p.proj_uid)}}">Edit</a></td>
+        </tr>
+      {% endfor %}
+
+      {% for d in datasets %}
+        <tr class='w3-border'>
+          <td>Dataset</td>
+          <td>{{d.title}}</td>
+          <td>{{d.release_date}}</td>
+          <td>TBD</td>
+          <td><a href="{{url_for('landing_page', dataset_id=d.dataset_id)}}">View</a></td>
+          <td><a href="{{url_for('dataset', dataset_id=d.dataset_id)}}">Edit</a></td>
+        </tr>
+      {% endfor %}
+
+    </table>
+  </div>
+
+
+
+
+
+
+
+
+
+
+{% endblock body %}

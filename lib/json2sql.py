@@ -175,8 +175,8 @@ def make_sql(data, id):
         res = cur.fetchone()
   
         if res['count'] == 0 and person_id != "":
-            if author == data["author"]:
-                line = "INSERT INTO person(id,first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}',{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
+            if author == data["authors"][0]:
+                line = "INSERT INTO person(id,first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
             else:
                 line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
 
@@ -218,7 +218,7 @@ def make_sql(data, id):
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
-            line = "INSERT INTO  dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, person_id)
+            line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, person_id)
             sql_out += line
 
     if data["name"] not in person_ids and data["name"] != '':
@@ -247,7 +247,7 @@ def make_sql(data, id):
             else:
                 query = "SELECT * FROM dif_award_map WHERE award = '%s';" % award
                 cur.execute(query)
-                res = cur.fetchone()                
+                res = cur.fetchone()               
                 if res:
                     sql_out += "\n--NOTE: Linking dataset to DIF via award\n"
                     sql_out += "INSERT INTO dataset_dif_map(dataset_id,dif_id) VALUES ('%s','%s');\n" % (id, res['dif_id'])
@@ -356,6 +356,7 @@ def make_sql(data, id):
 
     # user keywords
     if data["user_keywords"] != "":
+        last_id = None
         sql_out += "--NOTE: add user keywords\n"
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
@@ -371,11 +372,13 @@ def make_sql(data, id):
                 query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
                 cur.execute(query)
                 res = cur.fetchone()
-                last_id = res['keyword_id'].replace('uk-', '')
+                if not last_id:
+                    last_id = res['keyword_id'].replace('uk-', '')
                 next_id = int(last_id) + 1
                 sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
                     (next_id, keyword)
                 sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(id, next_id)
+                last_id = next_id
 
     sql_out += '\nCOMMIT;\n'
 

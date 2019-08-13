@@ -338,6 +338,26 @@ def get_persons(conn=None, cur=None, dataset_id=None):
     return cur.fetchall()
 
 
+def get_project_persons(conn=None, cur=None, project_id=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM person'
+    if project_id:
+        query += cur.mogrify(' WHERE id in (SELECT person_id FROM project_person_map WHERE proj_uid=%s)', (project_id,))
+    query += cur.mogrify(' ORDER BY id')
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_person(person_id):
+    (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM person'
+    if person_id:
+        query += cur.mogrify(' WHERE id = %s', (person_id,))
+    cur.execute(query)
+    return cur.fetchone()
+
+
 def get_sensors(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
@@ -419,21 +439,52 @@ def get_deployment_types(conn=None, cur=None):
     return cur.fetchall()
 
 
+def check_user_permission(user_info, uid, project=False):
+    # if user is a curator, always return true
+    if cf.isCurator():
+        return True
+
+    if project:
+        persons = get_project_persons(project_id=uid)
+    else:
+        # get users associated with this dataset
+        persons = get_persons(dataset_id=uid)
+    # check if orcid or email address from user_info matches any of these users
+    for p in persons:
+        if (p.get('email') and p['email'] == user_info.get('email')) \
+           or (p.get('orcid') and p['orcid'] == user_info.get('orcid')):
+            return True
+
+    return False
+
+
+@app.route('/edit/dataset/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset', methods=['GET', 'POST'])
-def dataset():
+def dataset(dataset_id=None):
     error = ''
     success = ''
+    edit = False 
+    if not dataset_id:
+        dataset_id = request.form.get('dataset_id')
+
+    if dataset_id and dataset_id != '':
+        edit = True
+
     user_info = session.get('user_info')
     if user_info is None:
-        session['next'] = '/submit/dataset'
+        session['next'] = request.path
         return redirect(url_for('login'))
+
+    # if editing - check user has editing permissions on this dataset
+    if edit and not check_user_permission(user_info, dataset_id):
+            return redirect(url_for('invalid_user', dataset_id=dataset_id))
 
     if request.method == 'POST':
         if 'dataset_metadata' not in session:
             session['dataset_metadata'] = dict()
         session['dataset_metadata'].update(request.form.to_dict())
 
-        print(request.form.to_dict())
+        # print(request.form.to_dict())
 
         publications_keys = [s for s in request.form.keys() if "publication" in s]
         remove_pub_keys = []
@@ -467,8 +518,6 @@ def dataset():
             for k in remove_award_keys: 
                 awards_keys.remove(k)
             session['dataset_metadata']['awards'] = [request.form.get(key) for key in awards_keys]
-
-        print(session['dataset_metadata']['awards'])
 
         author_keys = [s for s in request.form.keys() if "author_name_last" in s]
         remove_author_keys = []
@@ -539,22 +588,145 @@ def dataset():
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
                                    only_inhabited=False), projects=get_projects(), persons=get_persons())
 
+        if edit:
+            return redirect('/edit/dataset2/' + dataset_id)
         return redirect('/submit/dataset2')
 
     else:
-        email = ""
-        if user_info.get('email'):
-            email = user_info.get('email')
-        name = ""
-        if user_info.get('name'):
-            name = user_info.get('name')
-            names = name.split(' ')
-            if 'dataset_metadata' not in session:
-                session['dataset_metadata'] = dict()
-            session['dataset_metadata']['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
+        session['dataset_metadata'] = {}
+        # EDIT dataset
+        # get the dataset ID from the URL
+        if edit:
+            form_data = dataset_db2form(dataset_id)
+ 
+            session['dataset_metadata'] = form_data
+            email = ""
+            if user_info.get('email'):
+                email = user_info.get('email')
+            name = ""
+            if user_info.get('name'):
+                name = user_info.get('name')
+        else:
+            email = ""
+            if user_info.get('email'):
+                email = user_info.get('email')
+            name = ""
+            if user_info.get('name'):
+                name = user_info.get('name')
+                names = name.split(' ')
+                if 'dataset_metadata' not in session:
+                    session['dataset_metadata'] = dict()
+                session['dataset_metadata']['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                               only_inhabited=False), projects=get_projects(), persons=get_persons())
+                               only_inhabited=False), projects=get_projects(), persons=get_persons(), edit=edit)
+
+
+# get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
+def dataset_db2form(uid):
+    db_data = get_datasets([uid])[0]
+    if not db_data: 
+        return {}
+    form_data = {
+        'dataset_id': uid,
+        'abstract': db_data.get('abstract'),
+        'name': db_data.get('submitter_id'),
+        'title': db_data.get('title'),
+        'filenames': ['untitled.txt']
+    }
+
+    form_data['authors'] = []
+    for author in db_data.get('creator').split('; '):
+        last_name, first_name = author.split(', ')
+        form_data['authors'].append({'first_name': first_name, 'last_name': last_name})
+
+    form_data['awards'] = []
+    for award in db_data.get('awards'):
+        form_data['awards'].append(award.get('award') + ' ' + award.get('name'))
+
+    if db_data.get('spatial_extents'):
+        se = db_data.get('spatial_extents')[0]
+        form_data['cross_dateline'] = se.get('cross_dateline')
+        form_data['geo_e'] = se.get('east')
+        form_data['geo_n'] = se.get('north')
+        form_data['geo_s'] = se.get('south')
+        form_data['geo_w'] = se.get('west')
+
+    submitter = get_person(db_data.get('submitter_id'))
+    if submitter:
+        form_data['email'] = submitter.get('email')
+
+    form_data['publications'] = []
+    for ref in db_data.get('references'):
+        form_data['publications'].append({'doi': ref.get('doi'), 'text': ref.get('ref_text')})
+
+    form_data['project'] = None
+    if db_data.get('projects') and len(db_data['projects']) > 0:
+        form_data['project'] = db_data['projects'][0].get('id')
+    
+    if db_data.get('temporal_extents') and len(db_data['temporal_extents']) > 0:
+        form_data['start'] = db_data['temporal_extents'][0].get('start_date')
+        form_data['stop'] = db_data['temporal_extents'][0].get('stop_date')
+
+    keywords = cf.getDatasetKeywords(uid)
+    form_data['user_keywords'] = ''
+    for kw in keywords:
+        if kw.get('keyword_id')[0:2] == 'uk':
+            if form_data['user_keywords'] != '':
+                form_data['user_keywords'] += ', '
+            form_data['user_keywords'] += kw.get('keyword_label')
+
+    # read in more fields from the readme file and add to the form_data
+    form_data.update(dataset_readme2form(uid))
+
+    # get uploaded files
+    url = db_data.get('url')
+    form_data['uploaded_files'] = []
+    if url:
+        usap_domain = 'http://www.usap-dc.org/'
+        if url.startswith(usap_domain):
+            directory = os.path.join(current_app.root_path, url[len(usap_domain):])
+            # print(directory)
+            file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
+            omit = set(['readme.txt', '00README.txt', 'index.php', 'index.html', 'data.html'])
+            file_paths = [f for f in file_paths if os.path.basename(f) not in omit]
+            files = []
+            for f_path in file_paths:
+                f_size = os.stat(f_path).st_size
+                f_name = os.path.basename(f_path)
+                f_subpath = f_path[len(directory):]
+                files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
+                form_data['uploaded_files'] = files
+            files.sort()
+        else:
+            form_data['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
+
+    return form_data
+
+
+def dataset_readme2form(uid):
+    text = requests.get(url_for('readme', dataset_id=uid, _external=True)).text
+
+    form_data = {}
+    start = text.find('Instruments and devices:') + len('Instruments and devices:')
+    end = text.find('Acquisition procedures:')
+    form_data['devices'] = text[start:end].replace('\n', '')
+
+    start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
+    end = text.find('Content and processing steps:')
+    form_data['procedures'] = text[start:end].replace('\n', '')
+
+    start = text.find('Content and processing steps:') + len('Content and processing steps:')
+    end = text.find('Limitations and issues:')
+    c_p = text[start:end].replace('\r', '').split('\n\n')
+    form_data['content'] = c_p[0].replace('\n', '')
+    form_data['data_processing'] = c_p[1].replace('\n', '')
+
+    start = text.find('Limitations and issues:') + len('Limitations and issues:')
+    end = text.find('Checkboxes:')
+    form_data['issues'] = text[start:end].replace('\n', '')
+
+    return form_data
 
 
 @app.route('/submit/help', methods=['GET', 'POST'])
@@ -566,46 +738,59 @@ class ExceptionWithRedirect(Exception):
     def __init__(self, message, redirect):
         self.redirect = redirect
         super(ExceptionWithRedirect, self).__init__(message)
-    
+  
+
 class BadSubmission(ExceptionWithRedirect):
     pass
+
         
 class CaptchaException(ExceptionWithRedirect):
     pass
 
+
 class InvalidDatasetException(ExceptionWithRedirect):
-    def __init__(self,msg='Invalid Dataset#',redirect='/'):
-        super(InvalidDatasetException, self).__init__(msg,redirect)
+    def __init__(self, msg='Invalid Dataset#', redirect='/'):
+        super(InvalidDatasetException, self).__init__(msg, redirect)
 
 
 @app.errorhandler(CaptchaException)
 def failed_captcha(e):
-    return render_template('error.html',error_message=str(e))
+    return render_template('error.html', error_message=str(e))
 
 
 @app.errorhandler(BadSubmission)
 def invalid_dataset(e):
-    return render_template('error.html',error_message=str(e),back_url=e.redirect,name=session['user_info']['name'])
+    return render_template('error.html', error_message=str(e), back_url=e.redirect, name=session['user_info']['name'])
 
 
 #@app.errorhandler(OAuthException)
 def oauth_error(e):
-    return render_template('error.html',error_message=str(e))
+    return render_template('error.html', error_message=str(e))
 
 
 #@app.errorhandler(Exception)
 def general_error(e):
-    return render_template('error.html',error_message=str(e))
+    return render_template('error.html', error_message=str(e))
 
 
 #@app.errorhandler(InvalidDatasetException)
 def view_error(e):
-    return render_template('error.html',error_message=str(e))
+    return render_template('error.html', error_message=str(e))
 
 
 @app.route('/thank_you/<submission_type>')
 def thank_you(submission_type):
-    return render_template('thank_you.html',submission_type=submission_type)
+    return render_template('thank_you.html', submission_type=submission_type)
+
+
+@app.route('/invalid_user/<dataset_id>')
+def invalid_user(dataset_id):
+    return render_template('invalid_user.html', dataset_id=dataset_id)
+
+
+@app.route('/invalid_project_user/<project_id>')
+def invalid_project_user(project_id):
+    return render_template('invalid_project_user.html', project_id=project_id)
 
 
 Validator = namedtuple('Validator', ['func', 'msg'])
@@ -712,13 +897,25 @@ def format_time():
     return s[:-5] + 'Z'
    
 
+@app.route('/edit/dataset2/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset2', methods=['GET', 'POST'])
-def dataset2():
+def dataset2(dataset_id=None):
     error = ""
     success = ""
+    edit = False 
+    if not dataset_id:
+        dataset_id = request.form.get('dataset_id') 
+    if dataset_id and dataset_id != '':
+        edit = True
+
     user_info = session.get('user_info')
     if user_info is None:
-        session['next'] = '/submit/dataset2'
+        session['next'] = request.path
+        return redirect(url_for('login'))
+
+    # if editing - check user has editing permissions on this dataset
+    if edit and not check_user_permission(user_info, dataset_id):
+            return redirect(url_for('invalid_user', dataset_id=dataset_id))
 
     if request.method == 'POST':
         if 'dataset_metadata' not in session:
@@ -743,6 +940,11 @@ def dataset2():
             if 'orcid' in session['user_info']:
                 msg_data['orcid'] = session['user_info']['orcid']
 
+            msg_data['filenames'] = []
+            if edit:
+                for f in msg_data['uploaded_files']:
+                    msg_data['filenames'].append(f['name'])
+
             files = request.files.getlist('file[]')
             fnames = dict()
             for f in files:
@@ -750,7 +952,7 @@ def dataset2():
                 if len(fname) > 0:
                     fnames[fname] = f
 
-            msg_data['filenames'] = fnames.keys()
+            msg_data['filenames'] += fnames.keys()
             timestamp = format_time()
             msg_data['timestamp'] = timestamp
             check_dataset_submission(msg_data)
@@ -766,23 +968,32 @@ def dataset2():
           
             # save json file in submitted dir
             submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-            # get next_id
-            next_id = getNextDOIRef()
-            updateNextDOIRef()
-            submitted_file = os.path.join(submitted_dir, next_id + ".json")
+            if edit:
+                submitted_file = os.path.join(submitted_dir, "e" + dataset_id + ".json")
+            else:
+                # get next_id
+                next_id = getNextDOIRef()
+                updateNextDOIRef()
+                submitted_file = os.path.join(submitted_dir, next_id + ".json")
             with open(submitted_file, 'w') as file:
                 file.write(json.dumps(msg_data, indent=4, sort_keys=True))
             os.chmod(submitted_file, 0o664)
           
             # email RT queue
-            # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
-            message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
-                % (request.url_root, next_id)
+            if edit:
+                message = "Dataset Edit.\n\nDataset JSON: %scurator?uid=e%s\n" \
+                    % (request.url_root, dataset_id)
+            else:
+                message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
+                    % (request.url_root, next_id)
             msg = MIMEText(message)
             sender = msg_data.get('email')
             recipients = ['info@usap-dc.org']
-       
-            msg['Subject'] = 'USAP-DC Dataset Submission'
+
+            if edit:
+                msg['Subject'] = 'USAP-DC Dataset Edit'
+            else: 
+                msg['Subject'] = 'USAP-DC Dataset Submission'
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
 
@@ -802,7 +1013,8 @@ def dataset2():
         elif request.form['action'] == 'Previous Page':
             # post the form back to dataset since the session['dataset_metadata'] 
             # gets lost if we use a standard GET redirect
-            print('DATASET2b, publications: %s' % session['dataset_metadata'].get('publications'))
+            if edit:
+                return redirect('/edit/dataset/' + dataset_id, code=307)
             return redirect('/submit/dataset', code=307)
         elif request.form.get('action') == "save":
             # save to file
@@ -819,7 +1031,7 @@ def dataset2():
                     success = "Saved dataset form"
                 except Exception as e:
                     error = "Unable to save dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()))
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -839,7 +1051,7 @@ def dataset2():
                     error = "Unable to restore dataset."
             else:
                 error = "Unable to restore dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()))
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
 
     else:
         email = ""
@@ -848,7 +1060,7 @@ def dataset2():
         name = ""
         if user_info.get('name'):
             name = user_info.get('name')
-        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()))
+        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
 
 
 # Read the next doi reference number from the file
@@ -876,12 +1088,24 @@ def updateNextProjectRef():
         refFile.write(str(newRef))
 
 
+@app.route('/edit/project/<project_id>', methods=['GET', 'POST'])
 @app.route('/submit/project', methods=['GET', 'POST'])
-def project():
+def project(project_id=None):
+    edit = False 
+    if not project_id:
+        project_id = request.form.get('project_id')
+
+    if project_id and project_id != '':
+        edit = True
+
     user_info = session.get('user_info')
     if user_info is None:
-        session['next'] = '/submit/project'
+        session['next'] = request.path
         return redirect(url_for('login'))
+
+    # if editing - check user has editing permissions on this dataset
+    if edit and not check_user_permission(user_info, project_id, project=True):
+            return redirect(url_for('invalid_project_user', project_id=project_id))
 
     if request.method == 'POST':
         msg_data = dict()
@@ -964,8 +1188,6 @@ def project():
             key = 'website_url' + str(idx)
         msg_data['websites'] = websites
 
-        print(msg_data)
-
         deployments = []
         idx = 0
         key = 'deployment_name'
@@ -1007,10 +1229,6 @@ def project():
             key = 'location' + str(idx)
         msg_data['locations'] = locations
 
-        # if 'nodata' in msg_data:
-        #     msg_data['repos'] = 'nodata'
-        #     del msg_data['nodata']
-        # else:
         datasets = []
         idx = 0
         key = 'ds_repo'
@@ -1058,23 +1276,33 @@ def project():
       
         # save json file in submitted dir
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-        # get next_id for project
-        next_id = getNextProjectRef()
-        updateNextProjectRef()
-        submitted_file = os.path.join(submitted_dir, next_id + ".json")
+        if edit:
+            submitted_file = os.path.join(submitted_dir, "e" + project_id + ".json")
+        else:
+            # get next_id for project
+            next_id = getNextProjectRef()
+            updateNextProjectRef()
+            submitted_file = os.path.join(submitted_dir, next_id + ".json")
         with open(submitted_file, 'w') as file:
             file.write(json.dumps(msg_data, indent=4, sort_keys=True))
         os.chmod(submitted_file, 0o664)
 
         # email RT queue
-        # msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
-        message = "New project submission.\n\nDataset JSON: %scurator?uid=%s\n" \
-            % (request.url_root, next_id)
+        if edit:
+            message = "Project Edit.\n\nProject JSON: %scurator?uid=e%s\n" \
+                % (request.url_root, project_id)
+        else:
+            message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
+                % (request.url_root, next_id)
         msg = MIMEText(message)
 
         sender = msg_data.get('email')
         recipients = ['info@usap-dc.org']
-        msg['Subject'] = 'USAP-DC Project Submission'
+
+        if edit:
+            msg['Subject'] = 'USAP-DC Project Edit'
+        else: 
+            msg['Subject'] = 'USAP-DC Project Submission'
         msg['From'] = sender
         msg['To'] = ', '.join(recipients)
 
@@ -1093,6 +1321,19 @@ def project():
         
         return redirect('thank_you/project')
     else:
+        # EDIT project
+        session['project_metadata'] = {}
+        form_data = {}
+        if edit:
+            form_data = project_db2form(project_id)
+            session['project_metadata'] = form_data
+            # email = ""
+            # if user_info.get('email'):
+            #     email = user_info.get('email')
+            # name = ""
+            # if user_info.get('name'):
+            #     name = user_info.get('name')
+        # else:
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
@@ -1104,13 +1345,95 @@ def project():
             names = name.split(' ')
             full_name = {'first_name': names[0], 'last_name': names[-1]}
 
+        if form_data.get('pi_name_first') and form_data.get('pi_name_last'):
+            full_name = {'first_name': form_data['pi_name_first'], 'last_name': form_data['pi_name_last']}
+
+        if form_data.get('email'):
+            email = form_data['email']
+
         (conn, cur) = connect_to_db()
         q = "SELECT id FROM initiative ORDER BY id;"
         cur.execute(q)
         programs = cur.fetchall()
         return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=programs, persons=get_persons(),
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                               locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles())
+                               locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
+                               project_metadata=session.get('project_metadata'), edit=edit)
+
+
+# get project data from DB and convert to json that can be displayed in the Register/Edit Project page
+def project_db2form(uid):
+    db_data = get_project(uid)
+
+    if not db_data: 
+        return {}
+    form_data = {
+        'project_id': uid,
+        'sum': db_data.get('description'),
+        'title': db_data.get('title'),
+        'short_title': db_data.get('short_name'),
+        'start': db_data.get('start_date'),
+        'end': db_data.get('end_date'),
+        'websites': db_data.get('website'),
+        'copis': [],
+        'deployments': [],
+        'locations': [],
+        'parameters': [],
+        'publications': [],
+        'datasets': db_data.get('datasets')
+    }
+
+    for person in db_data.get('persons'):
+        if person.get('role') == 'Investigator and contact':
+            form_data['pi_name_first'] = person.get('name_first')
+            form_data['pi_name_last'] = person.get('name_last')
+            form_data['org'] = person.get('org')
+            form_data['email'] = person.get('email')
+        else:
+            if not person.get('name_last') and not person.get('name_first'):
+                person['name_last'], person['name_first'] = person.get('id').replace(' ', '').split(',')
+            form_data['copis'].append(person)
+
+    awards = set()
+    for award in db_data.get('funding'):
+        if award.get('is_main_award'):
+            form_data['award'] = award.get('award') + ' ' + award.get('pi_name')
+            form_data['dmp_link'] = award.get('dmp_link')
+            form_data['dmp_file'] = award.get('dmp_link').split('/')[-1]
+        else:
+            awards.add(award.get('award') + ' ' + award.get('pi_name'))
+    form_data['other_awards'] = list(awards)
+
+    if db_data.get('initiatives'):
+        form_data['program'] = db_data['initiatives'][0]
+
+    for d in db_data.get('deployment'):
+        form_data['deployments'].append({'name': d.get('deployment_id'), 'type': d.get('deployment_type'), 'url': d.get('url')})
+
+    for l in db_data.get('locations'):
+        form_data['locations'].append(l.get('id'))
+
+    features = []
+    for f in db_data.get('feature'):
+        features.append(f.get('feature_name'))
+    form_data['location_free'] = ','.join(features)
+
+    for p in db_data.get('parameters'):
+        form_data['parameters'].append(p.get('id'))
+
+    if db_data.get('spatial_bounds'):
+        se = db_data.get('spatial_bounds')[0]
+        form_data['cross_dateline'] = se.get('cross_dateline')
+        form_data['geo_e'] = se.get('east')
+        form_data['geo_n'] = se.get('north')
+        form_data['geo_s'] = se.get('south')
+        form_data['geo_w'] = se.get('west')
+   
+    if db_data.get('reference_list'):
+        for ref in db_data.get('reference_list'):
+            form_data['publications'].append({'doi': ref.get('doi'), 'text': ref.get('ref_text')})
+
+    return form_data
 
 
 @app.route('/submit/projectinfo', methods=['GET'])
@@ -1197,7 +1520,7 @@ def logout():
         del session['dataset_metadata']
     if request.args.get('type') == 'curator':
         return redirect(url_for('curator'))
-    return redirect(url_for('submit'))
+    return redirect(url_for('home'))
 
 
 @app.route("/index", methods=['GET'])
@@ -1293,6 +1616,7 @@ def title_examples():
 @app.route('/abstract_examples')
 def abstract_examples():
     return render_template('abstract_examples.html')
+
 
 #DEPRECATED
 @app.route('/search_old', methods=['GET', 'POST'])
@@ -1605,6 +1929,9 @@ def makeJsonLD(data, uid):
         (conn, cur) = connect_to_db()
         cur.execute("SELECT program_id FROM award_program_map apm  WHERE award_id='%s'" % a['award'])
         program = cur.fetchone()
+        if (not program):
+            program = {'program_id': 'NONE'}
+        
         award = {
             "@type": "Role",
             "roleName": "credit",
@@ -1743,7 +2070,8 @@ def makeCitation(metadata, dataset_id):
             else:
                 (last_name, first_name) = pi['person_id'].split(',')
 
-        if len(creators) > 1: etal = ' et al. ' 
+        if len(creators) > 1: 
+            etal = ' et al. ' 
         year = metadata['release_date'].split('-')[0]
 
         citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: %s.' % (initcap(last_name), first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
@@ -1808,12 +2136,22 @@ def curator():
         template_dict['need_login'] = False
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
 
-        # get list of json files in submission directory
-        files = os.listdir(submitted_dir)
+        # get list of json files in submission directory, ordered by date
+        current_dir = os.getcwd()
+        os.chdir(submitted_dir)
+        files = filter(os.path.isfile, os.listdir(submitted_dir))
+        files = [os.path.join(submitted_dir, f) for f in files]  # add path to each file
+        files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        os.chdir(current_dir)
+
         submissions = []
         for f in files:
+
+            print(f)
             if f.find(".json") > 0:
+                f = os.path.basename(f)
                 uid = f.split(".json")[0]
+                print(uid)
                 if uid[0] == 'p':
                     if not cf.isProjectImported(uid):
                         status = "Pending"
@@ -1835,7 +2173,7 @@ def curator():
                         else:
                             status = "Completed"
                 submissions.append({'id': uid, 'status': status, 'landing_page': landing_page})
-        submissions.sort(reverse=True)
+   
         template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
@@ -2162,7 +2500,7 @@ def curator():
                            json_data.get('upload_directory') is not None and json_data.get('award') is not None:
                             
                             src = os.path.join(json_data['upload_directory'], json_data['dmp_file'])
-                            dst_dir = os.path.join(app.config['AWARDS_FOLDER'], json_data['award'])
+                            dst_dir = os.path.join(app.config['AWARDS_FOLDER'], json_data['award'].split(' ')[0])
                             try:
                                 if not os.path.exists(dst_dir):
                                     os.mkdir(dst_dir)
@@ -2488,6 +2826,11 @@ def dataset_json(dataset_id):
     return flask.jsonify(get_datasets([dataset_id]))
 
 
+@app.route('/project_json/<project_id>')
+def project_json(project_id):
+    return flask.jsonify(get_project(project_id))
+
+
 @app.route('/stats', methods=['GET'])
 def stats():
 
@@ -2702,7 +3045,7 @@ def get_project(project_id):
                         project p
                         LEFT JOIN (
                             SELECT pam.proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link, 
-                            'is_main_award', pam.is_main_award)) funding
+                            'is_main_award', pam.is_main_award, 'pi_name', a.name)) funding
                             FROM project_award_map pam 
                             JOIN award a ON a.award=pam.award_id
                             LEFT JOIN award_program_map apm ON apm.award_id=a.award
@@ -3045,6 +3388,37 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 def initcap(s):
     parts = re.split('( |_|-|>)+', s)
     return ' '.join([p.lower().capitalize() for p in parts])
+
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    user_info = session.get('user_info')
+    if user_info is None:
+        session['next'] = request.path
+        return redirect(url_for('login'))
+
+    # user_info['email'] = 'fnitsche@ldeo.columbia.edu'
+
+    (conn, cur) = connect_to_db()
+    query = """SELECT * FROM dataset d
+                JOIN dataset_person_map dpm ON d.id = dpm.dataset_id
+                JOIN person p ON dpm.person_id = p.id
+                WHERE p.email = '%s'
+                OR p.id_orcid = '%s';""" % (user_info.get('email'), user_info.get('orcid'))
+
+    cur.execute(query)
+    datasets = cur.fetchall()
+
+    query = """SELECT * FROM project 
+            JOIN project_person_map ppm ON project.proj_uid = ppm.proj_uid
+            JOIN person p ON ppm.person_id = p.id
+            WHERE p.email = '%s'
+            OR p.id_orcid = '%s';""" % (user_info.get('email'), user_info.get('orcid'))
+
+    cur.execute(query)
+    projects = cur.fetchall()
+
+    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects) 
 
 
 @app.errorhandler(500)

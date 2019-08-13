@@ -22,7 +22,7 @@
         </div>
         {% endif %}
 
-    		<h3 style="float:left;">Submit Your Dataset</h3>
+    		<h3 style="float:left;">{% if edit %}Edit{% else %}Submit{% endif %} Your Dataset</h3>
         <div style="float:right; margin-top: 20px;">
           <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
           <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
@@ -33,7 +33,9 @@
     		<div class="title" style="font-size: 1em;">Page 2 of 2</div>
     		<span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 
-    		<form action="/submit/dataset2" method="POST" enctype="multipart/form-data" name="entry" id="entry">
+    		<form action="/submit/dataset2" method="POST" enctype="multipart/form-data" name="entry" id="entry">  
+          <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
+          <input class="form-control" type="hidden" name="dataset_id" value="{{dataset_metadata.dataset_id}}"/>
           <button class="prev-button" type="submit" name="action" value="Previous Page">Previous Page</button>
           <br/>
           <br>
@@ -76,7 +78,17 @@
           <textarea name="other_comments" rows="3" cols="80">{{dataset_metadata.get('other_comments','')}}</textarea><br>
           <br>
 
-          <div class="required">
+          {% if edit %}
+            <b>Files currently uploaded</b>
+            <br>
+            {% for f in dataset_metadata.uploaded_files %}
+              <a href={{f.url}} target="_blank">{{f.name}}</a>
+              <br>
+            {% endfor %}
+            <br>
+          {% endif %}
+
+          <div {% if not edit %} class="required" {% endif %}>
             <b>File(s) to upload</b> [<a href="/files_to_upload" target="_new">Help</a>]<b>:</b><br>
              Note: The file(s) will be uploaded when you click "Submit".<br/>
             You may use Zip or Tar to bundle a directory. Please use descriptive filenames and non proprietary file formats if possible.<br/>

@@ -4,6 +4,14 @@
 
 <div id="persons" hidden>{{persons|tojson}}</div>
 <div id="orgs" hidden>{{orgs|tojson}}</div>
+<div id="awards_list" hidden>{% if project_metadata['other_awards']|length > 0 %}{{project_metadata['other_awards']|tojson}}{% endif %}</div>
+<div id="copis_list" hidden>{% if project_metadata['copis']|length > 0 %}{{project_metadata['copis']|tojson}}{% endif %}</div>
+<div id="websites_list" hidden>{% if project_metadata['websites']|length > 0 %}{{project_metadata['websites']|tojson}}{% endif %}</div>
+<div id="deployments_list" hidden>{% if project_metadata['deployments']|length > 0 %}{{project_metadata['deployments']|tojson}}{% endif %}</div>
+<div id="locations_list" hidden>{% if project_metadata['locations']|length > 0 %}{{project_metadata['locations']|tojson}}{% endif %}</div>
+<div id="parameters_list" hidden>{% if project_metadata['parameters']|length > 0 %}{{project_metadata['parameters']|tojson}}{% endif %}</div>
+<div id="publications_list" hidden>{% if project_metadata['publications']|length > 0 %}{{project_metadata['publications']|tojson}}{% endif %}</div>
+<div id="datasets_list" hidden>{% if project_metadata['datasets']|length > 0 %}{{project_metadata['datasets']|tojson}}{% endif %}</div>
 
 <div class="content fixed-width">
 
@@ -13,20 +21,22 @@
       {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9">
-        <h2 style="float:left;" class="title">Register Your Project</h2>
+        <h2 style="float:left;" class="title">{% if edit %}Edit{% else %}Register{% endif %} Your Project</h2>
         <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
         <div style="clear:both"></div>
         <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 
         <form method="post" action="/submit/project" method="POST" enctype="multipart/form-data" name="entry" id="entry" onLoad=reset()>
+          <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
+          <input class="form-control" type="hidden" name="project_id" value="{{project_metadata.project_id}}"/>
           <div class="form-group">
             <b>Main Award (from NSF FastLane database)</b>
             <div class="awardTemplate">
               <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
               <div class="dropdown" id="award-dropdown">
-                <input type="hidden" id="award" name="award" class="award_input" value='None'/>
+                <input type="hidden" id="award" name="award" class="award_input" value="{{project_metadata.get('award','None')}}"/>
                 <button type="button" id="award_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control removable">
-                  None
+                  {{project_metadata.get('award','None')}}
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
@@ -50,12 +60,12 @@
       
           <div class="form-group required">
             <b>Title:</b><br>
-            <textarea required class="form-control" name="title" id="title" rows="2"></textarea>
+            <textarea required class="form-control" name="title" id="title" rows="2">{{project_metadata.get('title','')}}</textarea>
           </div>
 
           <div class="form-group">
             <b>Short Title:</b><br>
-            <input class="form-control" type="text" name="short_title" id="short_title">
+            <input class="form-control" type="text" name="short_title" id="short_title" value="{{project_metadata.get('short_title','')}}">
           </div>  
           <div class="form-group required" style="margin:10px 0 10px 0">
             <b>Main Contact:</b><br>
@@ -69,7 +79,7 @@
 
           <div class="input-group form-group">
             <b>Institution:</b><br>
-              <input class="input-sm form-control" type="text" id="org" name="org" value="" /> 
+              <input class="input-sm form-control" type="text" id="org" name="org" value="{{project_metadata.get('org','')}}"/> 
           </div>
 
    
@@ -129,9 +139,9 @@
               <th class="required">End Date:</th>
             </tr>
             <tr>
-              <td><input required type="date" name="start" id="start" size="20"></td>
+              <td><input required type="date" name="start" id="start" size="20" value="{{project_metadata.get('start','')}}"></td>
               <td></td>
-              <td><input required type="date" name="end" id="end" size="20"></td>
+              <td><input required type="date" name="end" id="end" size="20" value="{{project_metadata.get('end','')}}"></td>
             </tr>
           </table>
 
@@ -141,7 +151,7 @@
           <select name="program" id="program">
             <option value="">(Select Program)</option>
             {% for p in programs %}
-              <option value="{{p}}">{{p.id}}</option>
+              <option value="{{p}}" {% if project_metadata.program and p.id == project_metadata.program.id %}selected{% endif %}>{{p.id}}</option>
             {% endfor %}
           </select><br><br>
 
@@ -202,13 +212,17 @@
           <div>
             <b>Upload Data Management Plan</b>
             <br>
+            {% if project_metadata.dmp_file %}
+              <i>Current uploaded DMP: </i>{{project_metadata.dmp_file}}
+              <br>
+            {% endif %}
             <input type="file" name="dmp" style="font-size: 1em;">
           </div>
           <br>
 
           <b class="required">Abstract:</b> <br>
           <i>(Please modify the original NSF award abstract to better describe the project results, if applicable)</i><br>
-          <textarea required name="sum" id="sum" rows="10" cols="80"></textarea>
+          <textarea required name="sum" id="sum" rows="10" cols="80">{{project_metadata.sum}}</textarea>
 
           <br><br>
           <div class="form-group required">
@@ -226,7 +240,7 @@
 
           <div class="form-group">
             <b>Location(s) - not GCMD:</b> &nbsp;<i>(Free text, separated by commas)</i>
-            <textarea class="form-control" name="location_free" id="location_free" rows="1"></textarea>
+            <textarea class="form-control" name="location_free" id="location_free" rows="1">{{project_metadata.location_free}}</textarea>
           </div>
 
         <div class="form-group required">
@@ -249,16 +263,16 @@
             <tbody>
               <tr>
                 <td align="center">
-                  &nbsp;N: <input type="text" name="geo_n" class="coord-element" id="geo_n" size="5" value=""> <br>
-                  W: <input type="text" name="geo_w" class="coord-element" id="geo_w" size="6" value=""> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" class="coord-element" id="geo_e" size="6" value=""> <br>
-                  S: <input type="text" name="geo_s" class="coord-element" id="geo_s" size="5" value="">
+                  &nbsp;N: <input type="text" name="geo_n" class="coord-element" id="geo_n" size="5" value="{{project_metadata.get('geo_n','')}}"> <br>
+                  W: <input type="text" name="geo_w" class="coord-element" id="geo_w" size="6" value="{{project_metadata.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" class="coord-element" id="geo_e" size="6" value="{{project_metadata.get('geo_e','')}}"> <br>
+                  S: <input type="text" name="geo_s" class="coord-element" id="geo_s" size="5" value="{{project_metadata.get('geo_s','')}}">
                 </td>
                 <td>
                   <span style="margin: 20px">
                     <input type="checkbox" name="entire_region" class="coord-element"> Entire Antarctic Region</input><br/>
                   </span>
                   <span style="margin: 20px">
-                   <input type="checkbox" name="cross_dateline" class="coord-element" id="cross_dateline"> Check if your bounds cross the International Date Line</input>
+                   <input type="checkbox" name="cross_dateline" class="coord-element" id="cross_dateline" {% if project_metadata.get('cross_dateline') %}checked{% endif %}> Check if your bounds cross the International Date Line</input>
                   </span>
                    <br><button id="show_on_map_btn" type ="button" class="btn btn-default btn-sm map-btn">Show on Map</button>
                  </td>

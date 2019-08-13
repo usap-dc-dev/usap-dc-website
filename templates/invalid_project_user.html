@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% set cur = "invalid_user" %}
+{% block body %}
+
+<style type="text/css">
+ #main {
+     padding: 20px;
+ }
+
+ #sidebar-div {
+     margin-top: 20px;
+ }
+</style>
+
+<div class="wrapper">
+  {% if name %}
+  <div id="sidebar-div">
+    {% include 'sidebar.html' %}
+  </div>
+  {% endif %}
+  <!-- END HEADER -->
+  <div id="main">
+    <h3 style="text-align: center">Your account is not currently associated with this Project.<br><br>Please contact <a href="mailto: info@usap-dc.org?subject=Request to edit project {{project_id}}">info@usap-dc.org</a> if you wish to update the metadata.</h3>
+  </div>
+</div>
+
+{% endblock body %}

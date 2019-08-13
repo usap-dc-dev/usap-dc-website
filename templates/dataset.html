@@ -232,7 +232,9 @@
         {% endif %}
 
         <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
-          <h2 class="title" style="float:left;">Deposit Your Dataset</h2>
+          <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
+          <input class="form-control" type="hidden" name="dataset_id" value="{{dataset_metadata.dataset_id}}"/>
+          <h2 class="title" style="float:left;">{% if edit %}Edit{% else %}Deposit{% endif %} Your Dataset</h2>
           <div style="float:right; margin-top: 1.44em;">
             <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
             <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>

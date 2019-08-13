@@ -26,6 +26,46 @@ $(document).ready(function() {
       orgs.push(org.name);
     }
 
+    var awards = [];
+    if ($("#awards_list").text().length > 0) {
+      awards = JSON.parse($("#awards_list").text());
+    }
+
+    var copis = [];
+    if ($("#copis_list").text().length > 0) {
+      copis = JSON.parse($("#copis_list").text());
+    }
+
+    var websites = [];
+    if ($("#websites_list").text().length > 0) {
+      websites = JSON.parse($("#websites_list").text());
+    }
+
+    var deployments = [];
+    if ($("#deployments_list").text().length > 0) {
+      deployments = JSON.parse($("#deployments_list").text());
+    }
+
+    var locations = [];
+    if ($("#locations_list").text().length > 0) {
+      locations = JSON.parse($("#locations_list").text());
+    }
+
+    var parameters = [];
+    if ($("#parameters_list").text().length > 0) {
+      parameters = JSON.parse($("#parameters_list").text());
+    }
+
+    var publications = [];
+    if ($("#publications_list").text().length > 0) {
+      publications = JSON.parse($("#publications_list").text());
+    }
+
+    var datasets = [];
+    if ($("#datasets_list").text().length > 0) {
+      datasets = JSON.parse($("#datasets_list").text());
+    }
+
     /*initiate the autocomplete function on the "author" elements, and pass along the persons array as possible autocomplete values:*/
     autocomplete(document.getElementById("copi_name_last"), document.getElementById("copi_name_first"), persons);
     autocomplete(document.getElementById("pi_name_last"), document.getElementById("pi_name_first"), persons);
@@ -124,7 +164,21 @@ $(document).ready(function() {
     
     });
 
-    $('#add-location').click(function() {
+    // if editing, populate any added location fields
+    if (locations.length > 0) {
+      $('#location1').val(locations[0]);
+      
+      for (i=1; i < locations.length; i++ ) {
+        addLocation(locations[i]);
+      }
+    }
+
+    $('#add-location').click(function(e) {
+      e.preventDefault();
+      addLocation();
+    });
+
+    function addLocation(location) {
       var $cloned = $("#locations select[name='location1']").clone();
       var idx = $('#locations').children().length+1;
       $cloned.attr('name','location'+idx);
@@ -132,18 +186,40 @@ $(document).ready(function() {
       $cloned.removeAttr('required');
       $cloned.children().first().text('(Select Term ' + idx + ')');
       $('#locations').append($cloned);
-    
+
+      if (typeof location != 'undefined') {
+        $('#location'+idx).val(location);
+      }
+    }
+
+
+    // if editing, populate any added parameter fields
+    if (parameters.length > 0) {
+      $('#parameter1').val(parameters[0]);
+      
+      for (i=1; i < parameters.length; i++ ) {
+        addParameter(parameters[i]);
+      }
+    }
+
+    $('#add-parameter').click(function(e) {
+      e.preventDefault();
+      addParameter();
     });
 
-    $('#add-parameter').click(function() {
+    function addParameter(parameter) {
       var $cloned = $("#parameters select[name='parameter1']").clone();
       var idx = $('#parameters').children().length+1;
       $cloned.attr('name','parameter'+idx);
       $cloned.attr('id', 'parameter'+idx);
       $cloned.removeAttr('required');
       $cloned.children().first().text('(Select Term ' + idx + ')');
-      $('#parameters').append($cloned);   
-    });
+      $('#parameters').append($cloned); 
+ 
+      if (typeof parameter != 'undefined') {
+        $('#parameter'+idx).val(parameter);
+      }  
+    }
 
     $('#add_repo').click(function() {
       var repos = $('#repositories');
@@ -170,6 +246,19 @@ $(document).ready(function() {
     }
     });
 
+    // if editing, populate any added copi fields
+    if (copis.length > 0) {
+      var copi = copis[0];
+      $('#copi_name_last').val(copi.name_last);
+      $('#copi_name_first').val(copi.name_first);
+      $('#copi_org').val(copi.org);
+      $('#copi_role').val(copi.role);
+
+      for (i=1; i < copis.length; i++ ) {
+        copi = copis[i];
+        addAuthorRow(copi);
+      }
+    }
 
     $('#addAuthorRow').click(function (e) {
           //code to add another author
@@ -192,46 +281,78 @@ $(document).ready(function() {
           $(extraAuthor).find('#copi_org').attr({'id': 'copi_org'+author_counter, 'name': 'copi_org'+author_counter, 'value': ''});
           $(extraAuthor).find('#removeAuthorRow').show();
           $(extraAuthor).find('#extraAuthorLine').show();
-          if (typeof author != 'undefined') {
-           $(extraAuthor).find('#copi_name_last'+author_counter).attr('value', author.last_name);
-           $(extraAuthor).find('#copi_name_first'+author_counter).attr('value', author.first_name);
-          }
+
           $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
+
+          if (typeof author != 'undefined') {
+            $('#copi_name_last'+author_counter).val(author.name_last);
+            $('#copi_name_first'+author_counter).val(author.name_first);
+            $('#copi_org'+author_counter).val(author.org);
+            $('#copi_role'+author_counter).val(author.role);
+          }
+
           autocomplete(document.getElementById("copi_name_last"+author_counter), document.getElementById("copi_name_first"+author_counter), persons);
           autocomplete(document.getElementById("copi_org"+author_counter), null, orgs);
           author_counter++;
     }
 
-    $('#addDatasetRow').click(function (e) {
-      //code to add another dataset
-      e.preventDefault();
-      addDatasetRow();
-    });
-
-    $(ds_wrapper).on("click","#removeDatasetRow", function(e){ //user click on remove field
-      e.preventDefault(); 
-      $(this).parent().closest('div').remove();
-      ds_counter--;
-    });
-
-    function addDatasetRow() {
-      var extraDataset = $('.datasetTemplate').clone();
-      //increment the element ids
-      $(extraDataset).find('#ds_repo').attr({'id': 'ds_repo'+ds_counter, 'name': 'ds_repo'+ds_counter, 'value': ''});
-      $(extraDataset).find('#ds_title').attr('id', 'ds_title'+ds_counter).attr('name', 'ds_title'+ds_counter).html('');
-      $(extraDataset).find('#ds_url').attr('id', 'ds_url'+ds_counter).attr('name', 'ds_url'+ds_counter).html('');
-      $(extraDataset).find('#ds_doi').attr({'id': 'ds_doi'+ds_counter, 'name': 'ds_doi'+ds_counter, 'value': ''});
-      $(extraDataset).find('#removeDatasetRow').show();
-      $(extraDataset).find('#extraDatasetLine').show();
-      // if (typeof publication != 'undefined') {
-      //     $(extraPub).find('#publication'+pub_counter).html(publication.text);
-      //     $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
-      // }
-      $(ds_wrapper).append($('<div/>', {'class' : 'extraDataset', html: extraDataset.html()}));
-      ds_counter++;
+  
+  // if editing, populate any added datasets fields
+  if (datasets.length > 0) {
+    var dataset = datasets[0];
+    $('#ds_repo').val(dataset.repository);
+    $('#ds_title').val(dataset.title);
+    $('#ds_url').val(dataset.url);
+    $('#ds_doi').val(dataset.doi);
+  
+    for (i=1; i < datasets.length; i++ ) {
+      addDatasetRow(datasets[i]);
     }
+  }
+
+  $('#addDatasetRow').click(function (e) {
+    //code to add another dataset
+    e.preventDefault();
+    addDatasetRow();
+  });
+
+  $(ds_wrapper).on("click","#removeDatasetRow", function(e){ //user click on remove field
+    e.preventDefault(); 
+    $(this).parent().closest('div').remove();
+    ds_counter--;
+  });
+
+  function addDatasetRow(dataset) {
+    var extraDataset = $('.datasetTemplate').clone();
+    //increment the element ids
+    $(extraDataset).find('#ds_repo').attr({'id': 'ds_repo'+ds_counter, 'name': 'ds_repo'+ds_counter, 'value': ''});
+    $(extraDataset).find('#ds_title').attr('id', 'ds_title'+ds_counter).attr('name', 'ds_title'+ds_counter).html('');
+    $(extraDataset).find('#ds_url').attr('id', 'ds_url'+ds_counter).attr('name', 'ds_url'+ds_counter).html('');
+    $(extraDataset).find('#ds_doi').attr({'id': 'ds_doi'+ds_counter, 'name': 'ds_doi'+ds_counter, 'value': ''});
+    $(extraDataset).find('#removeDatasetRow').show();
+    $(extraDataset).find('#extraDatasetLine').show();
+    $(ds_wrapper).append($('<div/>', {'class' : 'extraDataset', html: extraDataset.html()}));
+
+    if (typeof dataset != 'undefined') {
+      $('#ds_repo'+ds_counter).val(dataset.repository);
+      $('#ds_title'+ds_counter).val(dataset.title);
+      $('#ds_url'+ds_counter).val(dataset.url);
+      $('#ds_doi'+ds_counter).val(dataset.doi);
+    }
+    ds_counter++;
+  }
 
   
+  // if editing, populate any added publication fields
+  if (publications.length > 0) {
+    $('#publication').html(publications[0].text);
+    $('#pub_doi').val(publications[0].doi);
+  
+    for (i=1; i < publications.length; i++ ) {
+      addPubRow(publications[i]);
+    }
+  }
+
   $('#addPubRow').click(function (e) {
       //code to add another file
       e.preventDefault();
@@ -259,6 +380,11 @@ $(document).ready(function() {
       pub_counter++;
   }
 
+  // if editing, populate any added award fields
+  for (i=0; i < awards.length; i++ ) {
+    var award = awards[i];
+    addAwardRow(award);
+  }
 
   $('#addAwardRow').click(function (e) {
       //code to add another file
@@ -309,6 +435,16 @@ $(document).ready(function() {
     }
 
 
+    // if editing, populate any added website fields
+    if (websites.length > 0) {
+      $('#website_title').val(websites[0].title);
+      $('#website_url').val(websites[0].url);
+      
+      for (i=1; i < websites.length; i++ ) {
+        addWebsiteRow(websites[i]);
+      }
+    }
+
     $('#addWebsiteRow').click(function (e) {
       //code to add another dataset
       e.preventDefault();
@@ -321,7 +457,7 @@ $(document).ready(function() {
       website_counter--;
     });
 
-    function addWebsiteRow() {
+    function addWebsiteRow(website) {
       var extraWebsite = $('.websiteTemplate').clone();
       //increment the element ids
       $(extraWebsite).find('#website_title').attr({'id': 'website_title'+website_counter, 'name': 'website_title'+website_counter, 'value': ''});
@@ -329,9 +465,25 @@ $(document).ready(function() {
       $(extraWebsite).find('#removeWebsiteRow').show();
       $(extraWebsite).find('#extraWebsiteLine').show();
       $(website_wrapper).append($('<div/>', {'class' : 'extraWebsite', html: extraWebsite.html()}));
+
+      if (typeof website != 'undefined') {
+        $('#website_title'+website_counter).val(website.title);
+        $('#website_url'+website_counter).val(website.url);
+      }
       website_counter++;
     }
 
+
+    // if editing, populate any added deployment fields
+    if (deployments.length > 0) {
+      $('#deployment_name').val(deployments[0].name);
+      $('#deployment_type').val(deployments[0].type);
+      $('#deployment_url').val(deployments[0].url);
+      
+      for (i=1; i < websites.length; i++ ) {
+        addDeploymentRow(deployments[i]);
+      }
+    }
 
     $('#addDeploymentRow').click(function (e) {
       if ($(this).hasClass('disabled')) return;
@@ -346,7 +498,7 @@ $(document).ready(function() {
       deployment_counter--;
     });
 
-    function addDeploymentRow() {
+    function addDeploymentRow(deployment) {
       var extraDeployment = $('.deploymentTemplate').clone();
       //increment the element ids
       $(extraDeployment).find('#deployment_name').attr({'id': 'deployment_name'+deployment_counter, 'name': 'deployment_name'+deployment_counter, 'value': ''});
@@ -356,6 +508,13 @@ $(document).ready(function() {
       $(extraDeployment).find('#removeDeploymentRow').show();
       $(extraDeployment).find('#extraDeploymentLine').show();
       $(deployment_wrapper).append($('<div/>', {'class' : 'extraDeployment', html: extraDeployment.html()}));
+      
+      if (typeof deployment != 'undefined') {
+        $('#deployment_name'+deployment_counter).val(deployment.name);
+        $('#deployment_type'+deployment_counter).val(deployment.type);
+        $('#deployment_url'+deployment_counter).val(deployment.url);
+      }
+
       deployment_counter++;
     }
 
