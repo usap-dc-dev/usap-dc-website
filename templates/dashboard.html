@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
 {% set cur = "dashboard" %}
 {% block body %}
-
 <h2>User Dashboard{% if user_info.name %}: {{user_info.name}} {% endif %} <a name="top"></a></h2>
  <div id='dif-browser-table'>
     <table class='sortable' preserve_style='row'>
@@ -32,8 +31,8 @@
           <td>{{d.title}}</td>
           <td>{{d.release_date}}</td>
           <td>TBD</td>
-          <td><a href="{{url_for('landing_page', dataset_id=d.dataset_id)}}">View</a></td>
-          <td><a href="{{url_for('dataset', dataset_id=d.dataset_id)}}">Edit</a></td>
+          <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a></td>
+          <td><a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a></td>
         </tr>
       {% endfor %}
 

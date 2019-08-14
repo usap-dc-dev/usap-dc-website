@@ -463,6 +463,9 @@ def check_user_permission(user_info, uid, project=False):
 def dataset(dataset_id=None):
     error = ''
     success = ''
+    # make some space in the session cookie by clearing any project_metadata
+    if session.get('project_metadata'):
+        del session['project_metadata']
     edit = False 
     if not dataset_id:
         dataset_id = request.form.get('dataset_id')
@@ -481,9 +484,8 @@ def dataset(dataset_id=None):
 
     if request.method == 'POST':
         if 'dataset_metadata' not in session:
-            session['dataset_metadata'] = dict()
+            session['dataset_metadata'] = dict()   
         session['dataset_metadata'].update(request.form.to_dict())
-
         # print(request.form.to_dict())
 
         publications_keys = [s for s in request.form.keys() if "publication" in s]
@@ -598,8 +600,8 @@ def dataset(dataset_id=None):
         # get the dataset ID from the URL
         if edit:
             form_data = dataset_db2form(dataset_id)
- 
             session['dataset_metadata'] = form_data
+
             email = ""
             if user_info.get('email'):
                 email = user_info.get('email')
@@ -618,8 +620,9 @@ def dataset(dataset_id=None):
                     session['dataset_metadata'] = dict()
                 session['dataset_metadata']['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
-                               dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                               only_inhabited=False), projects=get_projects(), persons=get_persons(), edit=edit)
+                               dataset_metadata=session.get('dataset_metadata', dict()), 
+                               nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
+                               persons=get_persons(), edit=edit)
 
 
 # get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
@@ -1091,6 +1094,9 @@ def updateNextProjectRef():
 @app.route('/edit/project/<project_id>', methods=['GET', 'POST'])
 @app.route('/submit/project', methods=['GET', 'POST'])
 def project(project_id=None):
+    # make some space in the session cookie by clearing any dataset_metadata
+    if session.get('dataset_metadata'):
+        del session['dataset_metadata']
     edit = False 
     if not project_id:
         project_id = request.form.get('project_id')
@@ -3400,7 +3406,7 @@ def dashboard():
     # user_info['email'] = 'fnitsche@ldeo.columbia.edu'
 
     (conn, cur) = connect_to_db()
-    query = """SELECT * FROM dataset d
+    query = """SELECT DISTINCT d.* FROM dataset d
                 JOIN dataset_person_map dpm ON d.id = dpm.dataset_id
                 JOIN person p ON dpm.person_id = p.id
                 WHERE p.email = '%s'
@@ -3409,7 +3415,7 @@ def dashboard():
     cur.execute(query)
     datasets = cur.fetchall()
 
-    query = """SELECT * FROM project 
+    query = """SELECT DISTINCT project.* FROM project 
             JOIN project_person_map ppm ON project.proj_uid = ppm.proj_uid
             JOIN person p ON ppm.person_id = p.id
             WHERE p.email = '%s'
