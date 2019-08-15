@@ -395,27 +395,26 @@ def write_readme(data, id):
     out_filename = os.path.join(doc_dir, 'README_' + id + '.txt')
     text = []
     text.append('USAP-DC Dataset# ' + id + '\n')
-    text.append(data["timestamp"][:10]+'\n')
-    text.append('http://doi.org/10.15784/' + id+'\n')
+    text.append(data["timestamp"][:10] + '\n')
+    text.append('http://doi.org/10.15784/' + id + '\n')
     text.append('\nabstract:\n')
-    text.append(data["abstract"]+'\n')
+    text.append(data["abstract"] + '\n')
     text.append('\nInstruments and devices:\n')
-    text.append(data["devices"]+'\n')
+    text.append(data["devices"] + '\n')
     text.append('\nAcquisition procedures:\n')
-    text.append(data["procedures"]+'\n')
+    text.append(data["procedures"] + '\n')
     text.append('\nContent and processing steps:\n')
-    text.append(data["content"]+'\n\n')
-    text.append(data["data_processing"]+'\n')
+    text.append(data["content"] + '\n\n')
+    text.append(data["data_processing"] + '\n')
     text.append('\nLimitations and issues:\n')
-    text.append(data["issues"]+'\n')
+    text.append(data["issues"] + '\n')
     text.append('\nCheckboxes:\n')
     text.append('* All the data are referenced in time and space.\n')
     text.append('* The data column, properties, and attributes listed/used in the data files are explained either in the description and/or the data files themselves.\n')
     text.append('* Graphs and maps (if provided) have legends.\n')
-    
-    
+      
     #--- write the text to output file
-    with open(out_filename,'w') as out_file:
+    with open(out_filename, 'w') as out_file:
         out_file.writelines(text)
     os.chmod(out_filename, 0o664)
     

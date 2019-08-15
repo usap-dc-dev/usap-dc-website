@@ -682,6 +682,9 @@ def dataset_db2form(uid):
     # read in more fields from the readme file and add to the form_data
     form_data.update(dataset_readme2form(uid))
 
+    # read in remaining fields from previous submisison form and add to the form_data
+    form_data.update(dataset_oldform2form(uid))
+
     # get uploaded files
     url = db_data.get('url')
     form_data['uploaded_files'] = []
@@ -729,6 +732,22 @@ def dataset_readme2form(uid):
     end = text.find('Checkboxes:')
     form_data['issues'] = text[start:end].replace('\n', '')
 
+    return form_data
+
+
+def dataset_oldform2form(uid):
+    #get Related Field Event IDs and Region Feature Name from previous submission
+    submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+    # if there is an editted file, use taht one, other wise use original
+    if os.path.isfile(os.path.join(submitted_dir, "e" + uid + ".json")):
+        submitted_file = os.path.join(submitted_dir, "e" + uid + ".json")
+    else:
+        submitted_file = os.path.join(submitted_dir, uid + ".json")
+
+    with open(submitted_file) as infile:
+        submitted_data = json.load(infile)
+
+    form_data = {'related_fields': submitted_data.get('related_fields'), 'feature_name': submitted_data.get('feature_name')}
     return form_data
 
 
