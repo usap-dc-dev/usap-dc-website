@@ -231,7 +231,7 @@
         </div>
         {% endif %}
 
-        <form action="/submit/dataset" method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
+        <form method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
           <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
           <input class="form-control" type="hidden" name="dataset_id" value="{{dataset_metadata.dataset_id}}"/>
           <h2 class="title" style="float:left;">{% if edit %}Edit{% else %}Deposit{% endif %} Your Dataset</h2>

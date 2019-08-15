@@ -466,10 +466,12 @@ def dataset(dataset_id=None):
     # make some space in the session cookie by clearing any project_metadata
     if session.get('project_metadata'):
         del session['project_metadata']
+    if session.get('_flashes'):
+        del session['_flashes']
+
     edit = False 
     if not dataset_id:
         dataset_id = request.form.get('dataset_id')
-
     if dataset_id and dataset_id != '':
         edit = True
 
@@ -542,6 +544,7 @@ def dataset(dataset_id=None):
                 session['dataset_metadata']['authors'].append(author) 
             
         session['dataset_metadata']['agree'] = 'agree' in request.form
+        # for some reason, the flash command makes sure that the session variable remains in tact when saving or restoring
         flash('test message')
 
         if request.form.get('action') == "Previous Page":
@@ -566,7 +569,7 @@ def dataset(dataset_id=None):
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons())
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -580,6 +583,7 @@ def dataset(dataset_id=None):
                 try:
                     with open(saved_file, 'r') as file:
                         data = json.load(file)
+                        del data['dataset_id']
                     session['dataset_metadata'].update(data)
                     success = "Restored dataset form"
                 except Exception as e:
@@ -588,7 +592,7 @@ def dataset(dataset_id=None):
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons())
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), edit=edit)
 
         if edit:
             return redirect('/edit/dataset2/' + dataset_id)
@@ -711,27 +715,28 @@ def dataset_db2form(uid):
 
 
 def dataset_readme2form(uid):
-    text = requests.get(url_for('readme', dataset_id=uid, _external=True)).text
-
+    r = requests.get(url_for('readme', dataset_id=uid, _external=True))
     form_data = {}
-    start = text.find('Instruments and devices:') + len('Instruments and devices:')
-    end = text.find('Acquisition procedures:')
-    form_data['devices'] = text[start:end].replace('\n', '')
+    if r.url != url_for('not_found', _external=True):
+        text = r.text
+        start = text.find('Instruments and devices:') + len('Instruments and devices:')
+        end = text.find('Acquisition procedures:')
+        form_data['devices'] = text[start:end].replace('\n', '')
 
-    start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
-    end = text.find('Content and processing steps:')
-    form_data['procedures'] = text[start:end].replace('\n', '')
+        start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
+        end = text.find('Content and processing steps:')
+        form_data['procedures'] = text[start:end].replace('\n', '')
 
-    start = text.find('Content and processing steps:') + len('Content and processing steps:')
-    end = text.find('Limitations and issues:')
-    c_p = text[start:end].replace('\r', '').split('\n\n')
-    form_data['content'] = c_p[0].replace('\n', '')
-    form_data['data_processing'] = c_p[1].replace('\n', '')
+        start = text.find('Content and processing steps:') + len('Content and processing steps:')
+        end = text.find('Limitations and issues:')
+        c_p = text[start:end].replace('\r', '').split('\n\n')
+        form_data['content'] = c_p[0].replace('\n', '')
+        form_data['data_processing'] = c_p[1].replace('\n', '')
 
-    start = text.find('Limitations and issues:') + len('Limitations and issues:')
-    end = text.find('Checkboxes:')
-    form_data['issues'] = text[start:end].replace('\n', '')
-
+        start = text.find('Limitations and issues:') + len('Limitations and issues:')
+        end = text.find('Checkboxes:')
+        form_data['issues'] = text[start:end].replace('\n', '')
+        
     return form_data
 
 
@@ -948,6 +953,8 @@ def dataset2(dataset_id=None):
         session['dataset_metadata']['propertiesExplained'] = 'propertiesExplained' in request.form
         session['dataset_metadata']['comprehensiveLegends'] = 'comprehensiveLegends' in request.form
         session['dataset_metadata']['dataUnits'] = 'dataUnits' in request.form
+        # for some reason, the flash command makes sure that the session variable remains in tact when saving or restoring
+        flash('test message2')
 
         if request.form.get('action') == 'Submit':
             msg_data = copy.copy(session['dataset_metadata'])
@@ -2171,12 +2178,9 @@ def curator():
 
         submissions = []
         for f in files:
-
-            print(f)
             if f.find(".json") > 0:
                 f = os.path.basename(f)
                 uid = f.split(".json")[0]
-                print(uid)
                 if uid[0] == 'p':
                     if not cf.isProjectImported(uid):
                         status = "Pending"
