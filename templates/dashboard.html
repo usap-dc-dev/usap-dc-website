@@ -29,8 +29,8 @@
         <tr class='w3-border'>
           <td>Dataset</td>
           <td>{{d.title}}</td>
-          <td>{{d.release_date}}</td>
-          <td>TBD</td>
+          <td>{{d.date_created}}</td>
+          <td>{{d.date_modified}}</td>
           <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a></td>
           <td><a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a></td>
         </tr>

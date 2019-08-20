@@ -95,13 +95,13 @@
         </div>
         {% endif %}
 
-        {% if data.get('release_date') %}
+        {% if data.get('date_created') %}
         <div class="lprow">
           <div class="field">
             Date Created:
           </div>
           <div class="value-inline">
-            {{data['release_date']}}
+            {{data.date_created}}
           </div>
         </div>
         {% endif %}

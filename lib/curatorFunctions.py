@@ -6,11 +6,12 @@ import psycopg2
 import psycopg2.extras
 import sys
 import requests
-from flask import session, url_for
+from flask import session, url_for, current_app
 from subprocess import Popen, PIPE
 from json2sql import makeBoundsGeom
 import base64
 from datetime import datetime
+import usap
 
 
 UPLOAD_FOLDER = "upload"
@@ -347,7 +348,7 @@ def updateSpatialMap(uid, data):
     return (out_text, status)
 
 
-def updateProjectSpatialMap(uid, data):
+def updateProjectSpatialMap(uid, data, run_update=True):
     (conn, cur) = connect_to_db()
     status = 1
     if type(conn) is str:
@@ -381,6 +382,8 @@ def updateProjectSpatialMap(uid, data):
                         % (uid, west, east, south, north, data['cross_dateline'], geometry, bounds_geometry)
                     out_text = "Spatial bounds successfully inserted"
                 print(sql_cmd)
+                if not run_update:
+                    return sql_cmd
                 cur.execute(sql_cmd)
                 cur.execute('COMMIT;')
                 
@@ -457,7 +460,7 @@ def addAwardToDataset(uid, award):
     return (out_text, status)
 
 
-def addAwardToProject(uid, award):
+def addAwardToProject(uid, award, is_main_award):
     (conn, cur) = connect_to_db()
     status = 1
     if type(conn) is str:
@@ -466,15 +469,17 @@ def addAwardToProject(uid, award):
     else:
         try:
             sql_cmd = ""
+            # if new award is to be the main award, need to set existing main award to non-main award
+            if is_main_award:
+                sql_cmd += "UPDATE project_award_map SET is_main_award = 'False' WHERE proj_uid = '%s';\n" % uid
             # check if this award is already in the award table
             query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
             cur.execute(query)
             res = cur.fetchone()
             if res['count'] == 0:
                 # Add award to award table
-                sql_cmd += "--NOTE: Adding award %s to award table\n" % award
                 sql_cmd += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
-            sql_cmd += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, award)
+            sql_cmd += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', '%s');\n" % (uid, award, is_main_award)
 
             print(sql_cmd)
             cur.execute(sql_cmd)
@@ -521,6 +526,10 @@ def getDatasetKeywords(uid):
 
 def projectJson2sql(data, uid):
 
+    # check if we are editing an exiting project
+    if data.get('edit') and data['edit'] == 'True':
+        return editProjectJson2sql(data, uid)
+
     conn, cur = connect_to_db()
 
     # --- fix award fields (throw out PI name)
@@ -547,9 +556,16 @@ def projectJson2sql(data, uid):
     res = cur.fetchall()
     if len(res) == 0:
         sql_out += "--NOTE: adding PI to person table\n"
-        sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
-                   "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
-                   (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'))
+
+        if data.get('orcid') and data['orcid'] != '':
+            sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
+                       "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
+                (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['orcid'])
+        else:
+            sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
+                       "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
+                (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'))
+
     else:
         if data.get('email') is not None and res[0]['email'] != data['email']:
             sql_out += "--NOTE: updating email for PI %s to %s\n" % (pi_id, data['email'])
@@ -557,6 +573,9 @@ def projectJson2sql(data, uid):
         if data.get('org') is not None and res[0]['organization'] != data['org']:
             sql_out += "--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
             sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], pi_id)
+        if data.get('orcid') is not None and res[0]['id_orcid'] != data['orcid']:
+            sql_out += "--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['orcid'])
+            sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], pi_id)
 
     sql_out += "--NOTE: adding PI %s to project_person_map\n" % pi_id
     sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n\n" % \
@@ -608,28 +627,44 @@ def projectJson2sql(data, uid):
         sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n\n" % (dst, data['award'])
 
     # Add awards to project_award_map
-    sql_out += "--NOTE: adding awards to project_award_map\n"
+    sql_out += "--NOTE: adding main award to project_award_map\n"
     if data['award'] == '':
         sql_out += "-- NOTE: NO AWARD SUBMITTED\n"
-    elif 'Not_In_This_List' in data['award']:
-        sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
-        (dummy, award) = data['award'].split(':')
+    else:
+        award = data['award'] 
+        if 'Not_In_This_List' in data['award']:
+            sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+            (dummy, award) = data['award'].split(':')
         # check if this award is already in the award table
-        query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+        query = "SELECT * FROM  award WHERE award = '%s'" % award
         cur.execute(query)
-        res = cur.fetchone()
-        if res['count'] == 0:
+        res = cur.fetchall()
+        if len(res) == 0:
+            title = 'TBD'
             # Add award to award table
-            sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+            sql_out += "--NOTE: Adding award %s to award table. Curator should update with any known fields.\n" % award
             sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
             sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+        else:
+            title = res[0]['title']
 
         sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, award)
-    else:
-        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, data['award'])
+
+        # Add DIF to project_dif_map
+        dif_id = "USAP-%s_1" % award
+        # Add to dif table if not already there
+        query = "SELECT * FROM dif WHERE dif_id = '%s';" % dif_id
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) == 0:
+            sql_out += "\n--NOTE: Adding %s to dif table.\n" % dif_id
+            sql_out += "INSERT INTO dif (dif_id, date_created, date_modified, title, is_usap_dc, is_nsf) VALUES ('%s', '%s', '%s', '%s', %s, %s);" % \
+                (dif_id, datetime.now().date(), datetime.now().date(), title, True, True)
+            # add to project_dif_map
+        sql_out += "\n--NOTE: adding dif to project_dif_map\n"
+        sql_out += "INSERT INTO project_dif_map (proj_uid, dif_id) VALUES ('%s', '%s');\n" % (uid, dif_id)
 
     for other_award in data['other_awards']:
-        print(other_award)
         if 'Not_In_This_List' in other_award:
                 sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
                 (dummy, award) = other_award.split(':')
@@ -645,12 +680,20 @@ def projectJson2sql(data, uid):
 
         else:
             award = other_award
+        sql_out += "\n--NOTE: adding other awards to project_award_map\n"
         sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'False');\n" % (uid, award)
-    sql_out += "\n"
-    
+    sql_out += '\n'
+
     # Add initiatives to project_initiative_map
     if data.get('program') is not None and data['program'] != "":
-        initiative = json.loads(data["program"].replace("\'", "\""))['id']
+        try:
+            initiative = data['program'].get('id')
+        except AttributeError:
+            # if program is a string, as will be the case in older submissions
+            program = json.loads(data['program'].replace("\'", "\""))
+            initiative = program.get('id')
+        except:
+            initiative = None
         sql_out += "\n--NOTE: adding initiative to project_initiative_map\n"
         sql_out += "INSERT INTO project_initiative_map (proj_uid, initiative_id) VALUES ('%s', '%s');\n\n" % \
             (uid, initiative)
@@ -752,7 +795,7 @@ def projectJson2sql(data, uid):
         if len(free_locs) > 0:
             sql_out += "--NOTE: adding free text locations to project_features\n"
             for loc in free_locs:
-                sql_out += "INSERT INTO project_feature (proj_uid, feature_name) VALUES ('%s', '%s');\n" % (uid, loc)
+                sql_out += "INSERT INTO project_feature (proj_uid, feature_name) VALUES ('%s', '%s');\n" % (uid, loc.strip())
         sql_out += "\n"
 
     # Add GCMD keywords
@@ -763,7 +806,6 @@ def projectJson2sql(data, uid):
         sql_out += "\n"
 
     # Add spatial bounds
-
     if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
 
         west = float(data["geo_w"])
@@ -785,6 +827,426 @@ def projectJson2sql(data, uid):
     return sql_out
 
 
+def editProjectJson2sql(data, uid):
+    conn, cur = connect_to_db()
+
+    pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
+    pi_id = pi_id.replace(',  ', ', ')
+
+    # get existing values from the database and compare them with the JSON file
+    orig = usap.project_db2form(uid)
+
+    # compare original with edited json
+    updates = set()
+    for k in orig.keys():
+        if orig[k] != data.get(k):
+            print(k)
+            print("orig:", orig.get(k))
+            print("new:", data.get(k))
+            if k in ['geo_e', 'geo_n', 'geo_s', 'geo_w', 'cross_dateline']:
+                updates.add('spatial_extents')
+            elif k in ['pi_name_last', 'pi_name_first']:
+                updates.add('pi_name')
+            else:
+                updates.add(k)
+
+    # check for orcid update
+    query = "SELECT id_orcid FROM person WHERE id = '%s'" % pi_id
+    cur.execute(query)
+    res = cur.fetchone()
+    if res and res['id_orcid'] != data.get('orcid'):
+        updates.add('orcid')
+
+    # --- fix award fields (throw out PI name)
+    data["award_num"] = data["award"]
+    if data["award"] not in ["None", "Not_In_This_List"] and len(data["award"].split(" ", 1)) > 1:
+            data["award_num"] = data["award"].split(" ")[0]
+    data["other_awards_num"] = data['other_awards'][:]
+    for i in range(len(data["other_awards"])):
+        if data["other_awards"][i] not in ["None", "Not In This List"] and len(data["other_awards"][i].split(" ", 1)) > 1:
+            data["other_awards_num"][i] = data["other_awards"][i].split(" ")[0]  # throw away the rest of the award string
+
+    # update database with edited values
+    sql_out = ""
+    sql_out += "START TRANSACTION;\n\n"
+    for k in updates:
+        if k == 'award':
+            sql_out += "--NOTE: UPDATING AWARD\n"
+
+            if data['award_num'] == '' or data['award_num'] == 'None':
+                sql_out += "--NOTE: No award submitted - remove existing award\n"
+                sql_out += "DELETE FROM project_award_map WHERE proj_uid = '%s';\n" % uid
+            elif 'Not_In_This_List' in data['award_num']:
+                sql_out += "--NOTE: Award not in provided list\n"
+                (dummy, award) = data['award_num'].split(':')
+                # check if this award is already in the award table
+                query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    # Add award to award table
+                    sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                    sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
+                    sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+
+                sql_out += "UPDATE project_award_map SET award_id = '%s' WHERE proj_uid = '%s' AND is_main_award = 'True';\n" % (award, uid)
+            else:
+                sql_out += "UPDATE project_award_map SET award_id = '%s' WHERE proj_uid = '%s' AND is_main_award = 'True';\n" % (data['award_num'], uid)
+        
+        elif k == 'copis':
+            sql_out += "--NOTE: UPDATING CO-PIS\n"
+
+            # remove existing co-pis from project_person_map
+            sql_out += "--NOTE: First remove all existing co-pis from project_person_map\n"
+            sql_out += "DELETE FROM project_person_map WHERE proj_uid = '%s' and person_id != '%s';\n" % (uid, pi_id)
+
+            # Update personnel to the person table, if necessary, and project_person_map
+            for co_pi in data['copis']:
+                co_pi_id = co_pi['name_last'] + ', ' + co_pi['name_first']
+                co_pi_id = co_pi_id.replace(',  ', ', ')
+                query = "SELECT * FROM person WHERE id = '%s'" % co_pi_id
+                cur.execute(query)
+                res = cur.fetchall()
+                if len(res) == 0:
+                    sql_out += "--NOTE: adding %s to person table\n" % co_pi_id
+                    sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
+                               "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
+                               (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
+                elif co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
+                    sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
+                    sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
+                
+                sql_out += "--NOTE: adding %s to project_person_map\n" % co_pi_id
+                sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
+                           (uid, co_pi_id, co_pi.get('role'))
+
+                # add org to Organizations table if necessary
+                if co_pi.get('org') is not None:
+                    query = "SELECT COUNT(*) FROM organizations WHERE name = '%s'" % co_pi['org']
+                    cur.execute(query)
+                    res = cur.fetchall()
+                    if res[0]['count'] == 0:
+                        sql_out += "--NOTE: adding %s to orgainzations table\n" % co_pi['org']
+                        sql_out += "INSERT INTO organizations (name) VALUES('%s');\n\n" % co_pi['org']
+
+        elif k == 'datasets':
+            sql_out += "--NOTE: UPDATING DATASETS\n"
+
+            # remove existing datasets from project_dataset_map
+            sql_out += "--NOTE: First remove all existing datasets from project_dataset_map\n"
+            sql_out += "DELETE FROM project_dataset_map WHERE proj_uid = '%s';\n" % uid
+
+            if data.get('datasets') and len(data['datasets']) > 0:
+                sql_out += "--NOTE: adding project_datasets\n"
+
+                #first find the highest non-USAP-DC dataset_id already in the table
+                query = "SELECT MAX(dataset_id) FROM project_dataset WHERE dataset_id::integer < 600000;"
+                cur.execute(query)
+                res = cur.fetchall()
+                dataset_id = int(res[0]['max'])
+
+                for ds in data['datasets']:
+                    # see if they are already in the project_dataset table
+                    query = "SELECT * FROM project_dataset WHERE repository = '%s' AND title = '%s'" % (ds['repository'], ds['title'])
+                    if ds.get('doi') is not None and ds['doi'] != '':
+                        query += " AND doi = '%s'" % ds['doi']
+                    cur.execute(query)
+                    res = cur.fetchall()
+                    if len(res) == 0:
+                        sql_out += "--NOTE: adding dataset %s to project_dataset table\n" % ds['title']
+                        if ds.get('doi') is not None and ds['doi'] != '':
+                            # first try and get the dataset id from the dataset table, using the DOI
+                            query = "SELECT id FROM dataset WHERE doi = '%s';" % ds['doi']
+                            cur.execute(query)
+                            res2 = cur.fetchall()
+                            if len(res2) == 1:
+                                ds_id = res2[0]['id']
+                            else:
+                                dataset_id += 1
+                                ds_id = dataset_id
+                        else:
+                            dataset_id += 1
+                            ds_id = dataset_id
+                        sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, doi) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
+                            (ds_id, ds.get('repository'), ds.get('title'), ds.get('url'), ds.get('doi'))
+                    else:
+                        ds_id = res[0]['dataset_id']
+                        # update url if changed
+                        if ds['url'] != res[0]['url']:
+                            sql_out += "--NOTE: updating dataset\n"
+                            sql_out += "UPDATE project_dataset SET url = '%s' WHERE dataset_id = '%s';\n" % (ds['url'], ds_id)
+                    sql_out += "--NOTE: adding dataset %s to project_dataset_map\n" % ds_id
+                    sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (uid, ds_id)
+                sql_out += "\n"
+
+        elif k == 'deployments':
+            sql_out += "--NOTE: UPDATING DEPLOYMENTS\n"
+
+            # remove existing datasets from project_dataset_map
+            sql_out += "--NOTE: First remove all existing deployments from project_deployment\n"
+            sql_out += "DELETE FROM project_deployment WHERE proj_uid = '%s';\n" % uid
+
+            # add deployments from form
+            sql_out += "--NOTE: Add deployments from submitted form\n"
+            for dep in data['deployments']:
+                sql_out += "INSERT INTO project_deployment (proj_uid, deployment_id, deployment_type, url) VALUES ('%s', '%s', '%s', '%s');\n" % \
+                    (uid, dep.get('name'), dep.get('type'), dep.get('url'))
+            sql_out += "\n"
+
+        elif k == 'dmp_file':
+            if data.get('dmp_file') is not None and data['dmp_file'] != '' and data.get('upload_directory') is not None \
+               and data.get('award') is not None and data['award'] != '':
+                dst = os.path.join(AWARDS_FOLDER, data['award'], data['dmp_file'])
+                sql_out += "--NOTE: UPDATING DMP_LINK FOR AWARD %s\n" % data['award']
+                sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n" % (dst, data['award'])
+
+        elif k == 'email':
+            # first check if pi is already in person DB table - if not, email will get added when pi is created later in the code
+            query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % pi_id
+            cur.execute(query)
+            res = cur.fetchone()
+            if res['count'] > 0:
+                sql_out += "--NOTE: UPDATING EMAIL ADDRESS\n"
+                sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], pi_id)
+ 
+        elif k == 'end':
+            sql_out += "--NOTE: UPDATING END DATE\n"
+            sql_out += "UPDATE project SET end_date = '%s' WHERE proj_uid = '%s';\n" % (data['end'], uid)
+
+        elif k == 'location_free':
+            sql_out += "--NOTE: UPDATING FREE TEXT LOCATIONS\n"
+
+            # remove existing locations from project_features
+            sql_out += "--NOTE: First remove all existing locations from project_feature\n"
+            sql_out += "DELETE FROM project_feature WHERE proj_uid = '%s';\n" % uid
+
+            if data.get('location_free') is not None and data['location_free'] != '':
+                free_locs = data['location_free'].split(',')
+                if len(free_locs) > 0:
+                    sql_out += "--NOTE: adding free text locations to project_features\n"
+                    for loc in free_locs:
+                        sql_out += "INSERT INTO project_feature (proj_uid, feature_name) VALUES ('%s', '%s');\n" % (uid, loc.strip())
+                sql_out += "\n"
+
+        elif k == 'locations':
+            sql_out += "--NOTE: UPDATING GCMD LOCATIONS\n"
+
+            # remove existing locations from project_gcmd_location_map
+            sql_out += "--NOTE: First remove all existing locations from project_gcmd_location_map\n"
+            sql_out += "DELETE FROM project_gcmd_location_map WHERE proj_uid = '%s';\n" % uid
+
+            sql_out += "--NOTE: adding gcmd_locations\n"
+            for loc in data['locations']:
+                sql_out += "INSERT INTO project_gcmd_location_map (proj_uid, loc_id) VALUES ('%s', '%s');\n" % (uid, loc)
+            sql_out += "\n"
+        
+        elif k == 'orcid':
+            sql_out += "--NOTE: UPDATING ORCID\n"
+            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['orcid'], pi_id)
+
+        elif k == 'org':
+            sql_out += "--NOTE: UPDATING ORGANIZATION\n"
+            sql_out += "UPDATE person SET organization = '%s' WHERE id='%s';\n" % (data['org'], pi_id)
+
+            # add org to Organizations table if necessary
+            if data.get('org') is not None:
+                query = "SELECT COUNT(*) FROM organizations WHERE name = '%s'" % data['org']
+                cur.execute(query)
+                res = cur.fetchall()
+                if res[0]['count'] == 0:
+                    sql_out += "--NOTE: adding %s to orgainzations table\n" % data['org']
+                    sql_out += "INSERT INTO organizations (name) VALUES('%s');\n\n" % data['org']
+        
+        elif k == 'other_awards':
+            sql_out += "--NOTE: UPDATING OTHER AWARDS\n"
+
+            # remove existing additional awards from project_award_map
+            sql_out += "--NOTE: First remove existing additional awards from project_award_map\n"
+            sql_out += "DELETE FROM project_award_map WHERE proj_uid = '%s' AND is_main_award = 'False';\n" % (uid)
+
+            for other_award in data['other_awards_num']:
+                if 'Not_In_This_List' in other_award:
+                        sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+                        (dummy, award) = other_award.split(':')
+                        # check if this award is already in the award table
+                        query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+                        cur.execute(query)
+                        res = cur.fetchone()
+                        if res['count'] == 0:
+                            # Add award to award table
+                            sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                            sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
+                            sql_out += "--UPDATE award SET iscr='f', isopy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+
+                else:
+                    award = other_award
+                sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'False');\n" % (uid, award)
+            sql_out += "\n"
+
+        elif k == 'parameters':
+            sql_out += "--NOTE: UPDATING GCMD SCIENCE KEYWORDS\n"
+
+            # remove existing locations from project_gcmd_location_map
+            sql_out += "--NOTE: First remove all existing keywords from project_gcmd_science_key_map\n"
+            sql_out += "DELETE FROM project_gcmd_science_key_map WHERE proj_uid = '%s';\n" % uid
+
+            sql_out += "--NOTE: adding gcmd_science_keys\n"
+            for param in data['parameters']:
+                sql_out += "INSERT INTO project_gcmd_science_key_map (proj_uid, gcmd_key_id) VALUES ('%s', '%s');\n" % (uid, param)
+            sql_out += "\n"
+
+        elif k == 'pi_name':
+            sql_out += "--NOTE: UPDATING PI NAME\n"
+
+            # Remove old PI from project_person_map
+            sql_out += "--NOTE: First remove all existing PI from project_person_map\n"
+            sql_out += "DELETE FROM project_person_map WHERE proj_uid = '%s' and role = 'Investigator and contact';\n" % uid
+
+            # Check if new pi_name already in person table, add if not
+            query = "SELECT * FROM person WHERE id = '%s'" % pi_id
+            cur.execute(query)
+            res = cur.fetchall()
+            if len(res) == 0:
+                sql_out += "--NOTE: adding PI to person table\n"
+
+                if data.get('orcid') and data['orcid'] != '':
+                    sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
+                               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
+                        (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['orcid'])
+                else:
+                    sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
+                               "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
+                        (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'))
+
+            else:
+                if data.get('email') is not None and res[0]['email'] != data['email']:
+                    sql_out += "--NOTE: updating email for PI %s to %s\n" % (pi_id, data['email'])
+                    sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], pi_id)
+                if data.get('org') is not None and res[0]['organization'] != data['org']:
+                    sql_out += "--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
+                    sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], pi_id)
+                if data.get('orcid') is not None and res[0]['id_orcid'] != data['orcid']:
+                    sql_out += "--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['orcid'])
+                    sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], pi_id)
+
+            # Insert new PI into project_person_map
+            sql_out += "--NOTE: adding PI %s to project_person_map\n" % pi_id
+            sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n" % \
+                       (uid, pi_id)
+
+        elif k == 'program':
+            sql_out += "--NOTE: UPDATING INITIATIVE\n"
+
+            # remove existing initiative from project_award_map
+            sql_out += "--NOTE: First remove existing additional awards from project_initiative_map\n"
+            sql_out += "DELETE FROM project_initiative_map WHERE proj_uid = '%s';\n" % (uid)
+
+            if data.get('program') is not None and data['program'] != "":
+                initiative = data['program']['id']
+                sql_out += "\n--NOTE: adding initiative to project_initiative_map\n"
+                sql_out += "INSERT INTO project_initiative_map (proj_uid, initiative_id) VALUES ('%s', '%s');\n" % \
+                    (uid, initiative)
+
+        elif k == 'publications':
+            sql_out += "--NOTE: UPDATING PUBLICATIONS\n"
+
+            # remove existing publications from project_ref_map
+            sql_out += "--NOTE: First remove all existing publications from project_ref_map\n"
+            sql_out += "DELETE FROM project_ref_map WHERE proj_uid = '%s';\n" % uid
+
+            # add references
+            if data.get('publications') is not None and len(data['publications']) > 0:
+                sql_out += "--NOTE: adding references\n"
+
+                #first find the highest ref_uid already in the table
+                query = "SELECT MAX(ref_uid) FROM reference;"
+                cur.execute(query)
+                res = cur.fetchall()
+                old_uid = int(res[0]['max'].replace('ref_', ''))
+
+                for pub in data['publications']:
+                    # see if they are already in the references table
+                    query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
+                    cur.execute(query)
+                    res = cur.fetchall()
+                    if len(res) == 0:
+                        sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
+                        old_uid += 1
+                        ref_uid = 'ref_%0*d' % (7, old_uid)
+                        sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
+                            (ref_uid, pub.get('name'), pub.get('doi'))
+                    else:
+                        ref_uid = res[0]['ref_uid']
+                    sql_out += "--NOTE: adding reference %s to project_ref_map\n" % ref_uid
+                    sql_out += "INSERT INTO project_ref_map (proj_uid, ref_uid) VALUES ('%s', '%s');\n" % \
+                        (uid, ref_uid)
+
+                sql_out += "\n"
+
+        elif k == 'short_title':
+            sql_out += "--NOTE: UPDATING SHORT TITLE\n"
+            sql_out += "UPDATE project SET short_name = '%s' WHERE proj_uid = '%s';\n" % (data['short_title'], uid)
+    
+        elif k == 'spatial_extents':
+            sql_out += "--NOTE: UPDATING PROJECT_SPATIAL_MAP\n"
+            sql_out += updateProjectSpatialMap(uid, data, False)
+
+        elif k == 'start':
+            sql_out += "--NOTE: UPDATING START DATE\n"
+            sql_out += "UPDATE project SET start_date = '%s' WHERE proj_uid = '%s';\n" % (data['start'], uid)
+
+        elif k == 'sum':
+            sql_out += "--NOTE: UPDATING ABSTRACT\n"
+            sql_out += "UPDATE project SET description = '%s' WHERE proj_uid = '%s';\n" % (data['sum'], uid)
+
+        elif k == 'title':
+            sql_out += "--NOTE: UPDATING TITLE\n"
+            sql_out += "UPDATE project SET title = '%s' WHERE proj_uid = '%s';\n" % (data['title'], uid)
+
+        elif k == 'websites': 
+            sql_out += "--NOTE: UPDATING WEBSITES\n"
+
+            # remove existing websites from project_website
+            sql_out += "--NOTE: First remove all existing websites from project_website\n"
+            sql_out += "DELETE FROM project_website WHERE proj_uid = '%s';\n" % uid
+
+            # add websites
+            sql_out += "--NOTE: adding project_websites\n"
+            for ws in data['websites']:
+                sql_out += "INSERT INTO project_website (proj_uid, title, url) VALUES ('%s', '%s', '%s');\n" % \
+                    (uid, ws.get('title'), ws.get('url'))
+            sql_out += "\n"
+    
+    sql_out += "\nUPDATE project SET date_modified = '%s' WHERE proj_uid= '%s';\n" % (data['timestamp'][0:10], uid)
+    sql_out += '\nCOMMIT;\n'
+
+    # update json edit file
+    data['edit_complete'] = True
+    updateProjectEditFile(data, uid)
+
+    return sql_out
+
+
+def updateProjectEditFile(data, uid):
+    submitted_dir = os.path.join(current_app.root_path, usap.app.config['SUBMITTED_FOLDER'])
+    submission_file = os.path.join(submitted_dir, "e" + uid + ".json")
+    if not os.path.exists(submission_file):
+        return False
+    with open(submission_file, 'w') as file:
+        file.write(json.dumps(data, indent=4, sort_keys=True))
+    os.chmod(submission_file, 0o664)
+
+
+def isProjectEditComplete(uid):
+    submitted_dir = os.path.join(current_app.root_path, usap.app.config['SUBMITTED_FOLDER'])
+    submission_file = os.path.join(submitted_dir, uid + ".json")
+    if not os.path.exists(submission_file):
+        return False
+    with open(submission_file) as infile:
+        data = json.load(infile)
+    return data.get('edit_complete')
+
+
 def getDifID(uid):
     conn, cur = connect_to_db()
     query = "SELECT award_id FROM project_award_map WHERE is_main_award = 'True' AND proj_uid = '%s';" % uid
@@ -799,6 +1261,7 @@ def getDifIDAndTitle(uid):
             "JOIN award a ON pam.award_id = a.award " \
             "WHERE pam.is_main_award = 'True' AND pam.proj_uid = '%s';" % uid
     cur.execute(query)
+
     res = cur.fetchone()
     return "USAP-%s_1" % res['award_id'], res['title']  
 

@@ -736,7 +736,7 @@ def dataset_readme2form(uid):
         start = text.find('Limitations and issues:') + len('Limitations and issues:')
         end = text.find('Checkboxes:')
         form_data['issues'] = text[start:end].replace('\n', '')
-        
+
     return form_data
 
 
@@ -1152,8 +1152,8 @@ def project(project_id=None):
             del msg_data['entire_region']
 
         # handle user added awards
-        if msg_data['award'] == 'Not_In_This_List':
-            msg_data['award'] += ":" + msg_data.get('user_award')
+        if msg_data['award'] == 'Not In This List':
+            msg_data['award'] = "Not_In_This_List:" + msg_data.get('user_award')
             del msg_data['user_award']
 
         # handle multiple parameters, awards, co-authors, etc
@@ -1174,8 +1174,8 @@ def project(project_id=None):
         while key in msg_data:
             user_award_key = 'user_award' + str(idx)
             if msg_data[key] != "":
-                if msg_data[key] == 'Not_In_This_List':
-                    msg_data[key] += ":" + msg_data[user_award_key]    
+                if msg_data[key] == 'Not In This List':
+                    msg_data[key] = "Not_In_This_List:" + msg_data[user_award_key]
                 other_awards.append(msg_data[key])
             del msg_data[key]
             del msg_data[user_award_key]
@@ -1205,6 +1205,9 @@ def project(project_id=None):
             idx += 1
             key = 'copi_name_last' + str(idx)
         msg_data['copis'] = copis
+
+        if msg_data.get('program'):
+            msg_data['program'] = json.loads(msg_data['program'].replace("\'", "\""))
 
         websites = []
         idx = 0
@@ -1295,7 +1298,7 @@ def project(project_id=None):
 
         # get the data management plan and save it in the upload folder
         dmp = request.files.get('dmp')
-        if dmp is not None:
+        if dmp:
             dmp_fname = secure_filename(dmp.filename)
             msg_data['dmp_file'] = dmp_fname
 
@@ -1305,7 +1308,10 @@ def project(project_id=None):
                 os.makedirs(upload_dir)
 
             dmp.save(os.path.join(upload_dir, dmp_fname))
-      
+        elif msg_data.get('current_dmp'):
+            msg_data['dmp_file'] = msg_data['current_dmp']
+            del msg_data['current_dmp']
+
         # save json file in submitted dir
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
         if edit:
@@ -1348,10 +1354,11 @@ def project(project_id=None):
         # re-identify ourselves as an encrypted connection
         s.ehlo()
         s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-        s.sendmail(sender, recipients, msg.as_string())
+        # s.sendmail(sender, recipients, msg.as_string())
         s.quit()
         
         return redirect('thank_you/project')
+
     else:
         # EDIT project
         session['project_metadata'] = {}
@@ -1359,13 +1366,7 @@ def project(project_id=None):
         if edit:
             form_data = project_db2form(project_id)
             session['project_metadata'] = form_data
-            # email = ""
-            # if user_info.get('email'):
-            #     email = user_info.get('email')
-            # name = ""
-            # if user_info.get('name'):
-            #     name = user_info.get('name')
-        # else:
+
         email = ""
         if user_info.get('email'):
             email = user_info.get('email')
@@ -1404,15 +1405,17 @@ def project_db2form(uid):
         'sum': db_data.get('description'),
         'title': db_data.get('title'),
         'short_title': db_data.get('short_name'),
-        'start': db_data.get('start_date'),
-        'end': db_data.get('end_date'),
-        'websites': db_data.get('website'),
+        'start': str(db_data.get('start_date')),
+        'end': str(db_data.get('end_date')),
+        'websites': [],
         'copis': [],
         'deployments': [],
         'locations': [],
         'parameters': [],
         'publications': [],
-        'datasets': db_data.get('datasets')
+        'datasets': [],
+        'program': None,
+        'dmp_file': None
     }
 
     for person in db_data.get('persons'):
@@ -1424,47 +1427,66 @@ def project_db2form(uid):
         else:
             if not person.get('name_last') and not person.get('name_first'):
                 person['name_last'], person['name_first'] = person.get('id').replace(' ', '').split(',')
-            form_data['copis'].append(person)
+            form_data['copis'].append({'name_first': person['name_first'],
+                                       'name_last': person['name_last'],
+                                       'org': person['org'],
+                                       'role': person['role']})
 
     awards = set()
     for award in db_data.get('funding'):
         if award.get('is_main_award'):
             form_data['award'] = award.get('award') + ' ' + award.get('pi_name')
-            form_data['dmp_link'] = award.get('dmp_link')
-            form_data['dmp_file'] = award.get('dmp_link').split('/')[-1]
+            if award.get('dmp_link'):
+                form_data['dmp_file'] = award.get('dmp_link').split('/')[-1]
         else:
             awards.add(award.get('award') + ' ' + award.get('pi_name'))
     form_data['other_awards'] = list(awards)
 
     if db_data.get('initiatives'):
-        form_data['program'] = db_data['initiatives'][0]
+        i = db_data['initiatives'][0]
+        form_data['program'] = {'id': i.get('id')}
+    
+    if db_data.get('website'):
+        for w in db_data['website']:
+                form_data['websites'].append({'title': w.get('title'), 'url': w.get('url')})
 
-    for d in db_data.get('deployment'):
-        form_data['deployments'].append({'name': d.get('deployment_id'), 'type': d.get('deployment_type'), 'url': d.get('url')})
+    if db_data.get('deployment'): 
+        for d in db_data.get('deployment'):
+            form_data['deployments'].append({'name': d.get('deployment_id'), 'type': d.get('deployment_type'), 'url': d.get('url')})
 
-    for l in db_data.get('locations'):
-        form_data['locations'].append(l.get('id'))
+    if db_data.get('locations'):
+        for l in db_data.get('locations'):
+            form_data['locations'].append(l.get('id'))
 
-    features = []
-    for f in db_data.get('feature'):
-        features.append(f.get('feature_name'))
-    form_data['location_free'] = ','.join(features)
+    if db_data.get('feature'):
+        features = []
+        for f in db_data.get('feature'):
+            features.append(f.get('feature_name'))
+        form_data['location_free'] = ', '.join(features)
 
-    for p in db_data.get('parameters'):
-        form_data['parameters'].append(p.get('id'))
+    if db_data.get('parameters'):
+        for p in db_data.get('parameters'):
+            form_data['parameters'].append(p.get('id'))
 
     if db_data.get('spatial_bounds'):
         se = db_data.get('spatial_bounds')[0]
         form_data['cross_dateline'] = se.get('cross_dateline')
-        form_data['geo_e'] = se.get('east')
-        form_data['geo_n'] = se.get('north')
-        form_data['geo_s'] = se.get('south')
-        form_data['geo_w'] = se.get('west')
+        form_data['geo_e'] = str(se.get('east'))
+        form_data['geo_n'] = str(se.get('north'))
+        form_data['geo_s'] = str(se.get('south'))
+        form_data['geo_w'] = str(se.get('west'))
    
     if db_data.get('reference_list'):
-        for ref in db_data.get('reference_list'):
-            form_data['publications'].append({'doi': ref.get('doi'), 'text': ref.get('ref_text')})
+        for ref in db_data['reference_list']:
+            form_data['publications'].append({'doi': ref.get('doi'), 'name': ref.get('ref_text')})
 
+    if db_data.get('datasets'):
+        for d in db_data['datasets']:
+            form_data['datasets'].append({'repository': d.get('repository'),
+                                          'title': d.get('title'),
+                                          'url': d.get('url'),
+                                          'doi': d.get('doi')})
+ 
     return form_data
 
 
@@ -2073,7 +2095,7 @@ def makeJsonLD(data, uid):
 def makeCitation(metadata, dataset_id):
     try:
         (conn, cur) = connect_to_db()
-        cur.execute("SELECT person_id, first_name, middle_name, last_name FROM dataset_person_map dpm JOIN person ON person.id=dpm.person_id WHERE dataset_id='%s'"  % dataset_id)
+        cur.execute("SELECT person_id, first_name, middle_name, last_name FROM dataset_person_map dpm JOIN person ON person.id=dpm.person_id WHERE dataset_id='%s'" % dataset_id)
         creators = cur.fetchall()
 
         etal = ''
@@ -2126,8 +2148,7 @@ def readme(dataset_id):
     if url_extra.startswith('/'):
         url_extra = url_extra[1:]
     try:
-        return send_from_directory(current_app.root_path, url_extra,
-                       as_attachment=False)
+        return send_from_directory(current_app.root_path, url_extra, as_attachment=False)
     except:
         return redirect(url_for('not_found'))
 
@@ -2140,10 +2161,10 @@ def readme_download(dataset_id):
     if url_extra.startswith('/'):
         url_extra = url_extra[1:]
     try:
-        return send_from_directory(current_app.root_path, url_extra,
-                       as_attachment=True)
+        return send_from_directory(current_app.root_path, url_extra, as_attachment=True)
     except:
         return redirect(url_for('not_found'))
+
 
 @app.route('/mapserver-template.html')
 def mapserver_template():
@@ -2188,6 +2209,13 @@ def curator():
                     else:
                         status = "Ingested"
                         landing_page = '/view/project/%s' % uid
+                elif uid[0:2] == 'ep':
+                    if cf.isProjectEditComplete(uid):
+                        status = "Edit completed"
+                        landing_page = '/view/project/%s' % uid.replace('e', '') 
+                    else:
+                        status = "Pending"
+                        landing_page = ''           
                 else:
                     # if a submission has a landing page, then set the status to Complete, otherwise Pending
                     if not cf.isDatabaseImported(uid):
@@ -2207,7 +2235,8 @@ def curator():
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
         if request.args.get('uid') is not None:
-            uid = request.args.get('uid')
+            filename = request.args.get('uid')
+            uid = filename.replace('e', '')
             template_dict['uid'] = uid
             # check is project or dataset
             if uid[0] == 'p':
@@ -2233,7 +2262,7 @@ def curator():
                         template_dict['coords'] = coords 
                     template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
 
-            submission_file = os.path.join(submitted_dir, uid + ".json")
+            submission_file = os.path.join(submitted_dir, filename + ".json")
             template_dict['filename'] = submission_file
             template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
             template_dict['readme'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
@@ -2514,7 +2543,11 @@ def curator():
                         cur.execute(sql_str)
 
                         template_dict['message'].append("Successfully imported to database")
-                        template_dict['landing_page'] = '/view/project/%s' % uid
+                        if uid[0] == 'e':
+                            proj_uid = uid[1:]
+                        else:
+                            proj_uid = uid
+                        template_dict['landing_page'] = '/view/project/%s' % proj_uid
                         template_dict['db_imported'] = True
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
@@ -2561,7 +2594,8 @@ def curator():
                 elif request.form.get('submit') == "project_award":
                     template_dict['tab'] = "spatial"
                     award = request.form.get('proj_award')
-                    (msg, status) = cf.addAwardToProject(uid, award)
+                    is_main_award = request.form.get('proj_main_award') == 'on'
+                    (msg, status) = cf.addAwardToProject(uid, award, is_main_award)
                     if status == 0:
                         template_dict['error'] = msg
                     else:
@@ -2936,17 +2970,17 @@ def stats():
     template_dict['searches'] = searches
     # get submission information from the database
 
-    query = cur.mogrify('''SELECT dsf.*, d.release_date, dt.date_created::text FROM dataset_file_info dsf 
+    query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dt.date_created::text AS dif_date FROM dataset_file_info dsf 
             JOIN dataset d ON d.id = dsf.dataset_id
             LEFT JOIN dif_test dt ON d.id_orig = dt.dif_id;''') 
     cur.execute(query)
     data = cur.fetchall()
     submissions = {}
     for row in data:
-        if row['date_created'] is not None:
-            date = row['date_created']
+        if row['dif_date'] is not None:
+            date = row['dif_date']
         else:
-            date = row['release_date']
+            date = row['date_created']
         if date is None or date.count("-") != 2:
             # if only a year is given, make the date Dec 1st of that year
             if len(date) == 4:

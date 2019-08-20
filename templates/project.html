@@ -60,7 +60,7 @@
       
           <div class="form-group required">
             <b>Title:</b><br>
-            <textarea required class="form-control" name="title" id="title" rows="2">{{project_metadata.get('title','')}}</textarea>
+            <textarea required class="form-control" name="title" id="title" rows="2" {% if edit %} disabled {% endif %}>{{project_metadata.get('title','')}}</textarea>
           </div>
 
           <div class="form-group">
@@ -213,7 +213,7 @@
             <b>Upload Data Management Plan</b>
             <br>
             {% if project_metadata.dmp_file %}
-              <i>Current uploaded DMP: </i>{{project_metadata.dmp_file}}
+              <i>Current uploaded DMP: </i><input type="text" name="current_dmp" value ="{{project_metadata.dmp_file}}" disabled>
               <br>
             {% endif %}
             <input type="file" name="dmp" style="font-size: 1em;">
@@ -222,7 +222,7 @@
 
           <b class="required">Abstract:</b> <br>
           <i>(Please modify the original NSF award abstract to better describe the project results, if applicable)</i><br>
-          <textarea required name="sum" id="sum" rows="10" cols="80">{{project_metadata.sum}}</textarea>
+          <textarea required name="sum" id="sum" rows="10" cols="80" {% if edit %} disabled {% endif %}>{{project_metadata.sum}}</textarea>
 
           <br><br>
           <div class="form-group required">

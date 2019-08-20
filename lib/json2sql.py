@@ -151,6 +151,8 @@ def makeBoundsGeom(north, south, east, west, cross_dateline):
 def make_sql(data, id):
     # --- prepare some parameter
     release_date = data["timestamp"][0:10]
+    date_created = data["timestamp"][0:10]
+
     # print(release_date)
     url = 'http://www.usap-dc.org/dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
     # print(url)
@@ -194,8 +196,8 @@ def make_sql(data, id):
     sql_out += '\n--NOTE: submitter_id = JSON "name"\n'
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
-    sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,status_id,url_extra,review_status)
-    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work');\n""" \
+    sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,status_id,url_extra,review_status,date_created,date_modified)
+    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}');\n""" \
             .format(id,
                     dc_config['SHOULDER'] + id, 
                     data["title"], 
@@ -208,8 +210,10 @@ def make_sql(data, id):
                     'usap-dc', 
                     'English',
                     'Complete', 
-                    '/doc/' + id + '/README_' + id + '.txt', 
-                    'In Work')
+                    '/doc/' + id + '/README_' + id + '.txt',
+                    date_created,
+                    date_created)
+
     sql_out += sql_line
 
     sql_out += '\n--NOTE: add to project_dataset table\n'
@@ -312,10 +316,15 @@ def make_sql(data, id):
             (id, west, east, south, north, data["cross_dateline"], geometry, bounds_geometry)
         sql_out += line
 
-    sql_out += "\n--NOTE: optional; every dataset does NOT belong to an initiative\n"
-    sql_out += "--INSERT INTO initiative(id) VALUES ('WAIS Divide Ice Core');\n"
-    line = "--INSERT INTO dataset_initiative_map(dataset_id,initiative_id) VALUES ('{}','{}');\n\n".format(id, 'WAIS Divide Ice Core')
-    sql_out += line
+    # Add Initiative
+    if data.get('project') and data['project'] != '' and data['project'] != 'None':
+        sql_out += "\n--NOTE: adding initiative\n"
+        sql_out += "INSERT INTO dataset_initiative_map(dataset_id,initiative_id) VALUES ('{}','{}');\n\n".format(id, data['project'])
+    else:
+        sql_out += "\n--NOTE: optional; every dataset does NOT belong to an initiative\n"
+        sql_out += "--INSERT INTO initiative(id) VALUES ('WAIS Divide Ice Core');\n"
+        line = "--INSERT INTO dataset_initiative_map(dataset_id,initiative_id) VALUES ('{}','{}');\n\n".format(id, 'WAIS Divide Ice Core')
+        sql_out += line
 
     # Add references
     if data.get('publications') is not None and len(data['publications']) > 0:

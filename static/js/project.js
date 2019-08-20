@@ -345,7 +345,7 @@ $(document).ready(function() {
   
   // if editing, populate any added publication fields
   if (publications.length > 0) {
-    $('#publication').html(publications[0].text);
+    $('#publication').html(publications[0].name);
     $('#pub_doi').val(publications[0].doi);
   
     for (i=1; i < publications.length; i++ ) {
@@ -373,7 +373,7 @@ $(document).ready(function() {
       $(extraPub).find('#removePubRow').show();
       $(extraPub).find('#extraPubLine').show();
       if (typeof publication != 'undefined') {
-          $(extraPub).find('#publication'+pub_counter).html(publication.text);
+          $(extraPub).find('#publication'+pub_counter).html(publication.name);
           $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
       }
       $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));

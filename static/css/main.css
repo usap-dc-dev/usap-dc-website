@@ -748,3 +748,8 @@ content area & common elements
   margin-left:3em;
   margin-bottom: 10px;
 }
+
+textarea[disabled], input[disabled]{
+    background-color: #eee;
+    opacity: 1;
+}
