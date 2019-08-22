@@ -2189,6 +2189,23 @@ def curator():
         template_dict['need_login'] = False
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
 
+        # if Add User To Dataset / Project button pressed
+        if request.args.get('fnc') is not None:
+            return render_template('curator.html', type=request.args['fnc'], projects=filter_datasets_projects(dp_type='Project'),
+                                   datasets=filter_datasets_projects(dp_type='Dataset'), persons=get_persons(), orgs=get_orgs(), 
+                                   roles=get_roles())
+
+        # if Add User submit button pressed
+        if request.method == 'POST' and request.form.get('submit') == 'add_user':
+            try:
+                msg = cf.addUserToDatasetOrProject(request.form)
+                if msg:
+                    template_dict['error'] = "Error adding user: " + msg
+                else:
+                    template_dict['message'].append("Successfully added user")
+            except Exception as err:
+                template_dict['error'] = "Error adding user: " + str(err)
+            
         # get list of json files in submission directory, ordered by date
         current_dir = os.getcwd()
         os.chdir(submitted_dir)
@@ -2272,6 +2289,7 @@ def curator():
 
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
+
                 # read in json and convert to sql
                 if request.form.get('submit') == 'make_sql':
                     json_str = request.form.get('json').encode('utf-8')

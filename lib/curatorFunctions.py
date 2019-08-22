@@ -1544,3 +1544,52 @@ def addDifToDB(uid):
             status = 0
 
     return (out_text, status)
+
+
+def addUserToDatasetOrProject(data):
+    try:
+        (conn, cur) = connect_to_db()
+        sql_out = ""
+
+        person_id = data['name_last'] + ', ' + data['name_first'] 
+        person_id = person_id.replace(',  ', ', ')
+
+        # first check if the user is already in person table
+        query = "SELECT * FROM person WHERE id = '%s'" % person_id
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) == 0:
+
+            if data.get('orcid') and data['orcid'] != '':
+                sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
+                           "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
+                    (person_id, data.get('name_first'), data.get('name_last'), data.get('email'), data.get('org'), data['orcid'])
+            else:
+                sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
+                           "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
+                    (person_id, data.get('name_first'), data.get('name_last'), data.get('email'), data.get('org'))
+
+        else:
+            if data.get('email') and data['email'] != '' and res[0]['email'] != data['email']:
+                sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], person_id)
+            if data.get('org') and data['org'] != '' and res[0]['organization'] != data['org']:
+                sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], person_id)
+            if data.get('orcid') and data['orcid'] != '' and res[0]['id_orcid'] != data['orcid']:
+                sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], person_id)
+
+        uid, title = data.get('dataset_or_project').split(': ')
+        if uid[0] == 'p':
+            # PROJECT
+            sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
+                (uid, person_id, data.get('role'))
+        else:
+            # DATASET
+            sql_out += "INSERT INTO dataset_person_map (dataset_id, person_id, role_id) VALUES ('%s', '%s', '%s');\n\n" % \
+                (uid, person_id, data.get('role'))
+
+        sql_out += "COMMIT;"
+        cur.execute(sql_out)
+
+        return None
+    except Exception as e:
+        return str(e)

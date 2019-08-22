@@ -6,6 +6,7 @@
 <div class="content">
 
 <h2 style="float:left;">Curator Page</h2>
+
 <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('curator_help')}}" class="btn btn-primary">Help</a>
 <div style="clear:both"></div>
 
@@ -317,27 +318,99 @@
     </form>
 
   {% else %}
-    
-    <div id='dif-browser-table'>
-      <table class='sortable' >
-           <thead class="w3-striped w3-bordered w3-hoverable">
-            <tr>
-              <th>Submission</th>
-              <th>Status</th>
-              <th>Landing Page</th>
-            </tr>
-          </thead>
 
-          {% for sub in submissions %}
-              <tr {% if sub['status'] != 'Completed' %} style="font-weight: bold" {% endif %}>
-                  <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub['id']}} </a></td>
-                  <td>{{sub['status']}}</td>
-                  <td>{% if sub['landing_page'] %} <a target="_blank" href={{sub['landing_page']}}>{{sub['landing_page']}}</a> {% endif %}</td>
-              </tr>
-          {% endfor %}
-      </table>
+
+    {% if type == 'addUser' %}
+      <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
+      <h3>Add User To Dataset / Project</h3>
+
+      <form action="{{url_for('curator')}}" method="post" enctype="multipart/form-data">
+        <div id="projects" hidden>{{projects|tojson}}</div>
+        <div id="datasets" hidden>{{datasets|tojson}}</div>
+        <div id="persons" hidden>{{persons|tojson}}</div>
+        <div id="orgs" hidden>{{orgs|tojson}}</div>
+        
+        <div>
+          
+          <div class="input-group form-group required">
+            <b>Dataset / Project:</b><br>
+              <input class="input-sm form-control" type="text" id="dataset_or_project" name="dataset_or_project" size="150"/> 
+          </div>
+
+          <div class="w3-card-2" style="width:55%; padding:15px">
+            <header >
+              <h4>User Details</h4>
+            </header>
+
+            <div class="form-group required" style="margin:10px 0 10px 0">
+              Name:<br>
+              <div class="input-group">
+                <input required class="input-sm form-control" type="text" size=8 id="name_last" name="name_last" placeholder="Last Name" /> 
+                <span  class="input-group-addon">,</span>
+                <input required class="input-sm form-control" type="text" size=8 id="name_first" name="name_first" placeholder="First Name" />
+              </div>
+            </div>
+
+            <div class="input-group form-group required">
+              Email:<br>
+              <input class="input-sm form-control" type="text" id="email" name="email"/> 
+            </div>
+
+            <div class="input-group form-group">
+              ORCID:<br>
+              <input class="input-sm form-control" type="text" id="orcid" name="orcid"/> 
+            </div>
+            
+            <div class="input-group form-group">
+              Institution:<br>
+              <input class="input-sm form-control" type="text" id="org" name="org"/> 
+            </div>
+
+            <div class="input-group form-group">
+              Role:<br>
+              <select class="input-sm form-control removable" name="role" id="role" style="margin-bottom:6px">
+                <option value="">(Select Role)</option>
+                {% for r in roles %}
+                  <option value="{{r.id}}">{{r.id}}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <br/><br/>
+          <button type="submit" name="submit" value="add_user" onclick="waitCursor()">Add User</button>
+        </div>
+      </form>
+
+
+
+    {% else %}
+
+    <div style="padding:10px;">
+      <a class="btn btn-primary" href="{{url_for('curator',fnc='addUser')}}">Add User To Dataset / Project</a>
     </div>
+
+      <div id='dif-browser-table'>
+        <table class='sortable' >
+             <thead class="w3-striped w3-bordered w3-hoverable">
+              <tr>
+                <th>Submission</th>
+                <th>Status</th>
+                <th>Landing Page</th>
+              </tr>
+            </thead>
+
+            {% for sub in submissions %}
+                <tr {% if sub['status'] != 'Completed' %} style="font-weight: bold" {% endif %}>
+                    <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub['id']}} </a></td>
+                    <td>{{sub['status']}}</td>
+                    <td>{% if sub['landing_page'] %} <a target="_blank" href={{sub['landing_page']}}>{{sub['landing_page']}}</a> {% endif %}</td>
+                </tr>
+            {% endfor %}
+        </table>
+      </div>
     {% endif %}
+  {% endif %}
   
 {% endif %}
 
@@ -389,6 +462,44 @@
           proj_n.val('');
       }
     });
+
+
+    var project_rows = JSON.parse($("#projects").text());
+    var dataset_rows = JSON.parse($("#datasets").text());
+
+    var d_ps = [];
+    var d_p;
+    for (var r of project_rows) {
+      if (r.uid) {
+        d_p = r.uid + ': ' + r.title;
+        d_ps.push(d_p);
+      }
+    }
+    for (r of dataset_rows) {
+      if (r.uid) {
+        d_p = r.uid + ': ' + r.title;
+        d_ps.push(d_p);
+      }
+    }
+
+    var persons_rows = JSON.parse($("#persons").text());
+    var persons = [];
+    for (r in persons_rows) {
+        row = persons_rows[r];
+        persons.push(row.id);
+    }
+
+    var orgs_rows = JSON.parse($("#orgs").text());
+    var orgs = [];
+    for (r in orgs_rows) {
+      org = orgs_rows[r];
+      orgs.push(org.name);
+    }
+
+    autocomplete(document.getElementById("dataset_or_project"), null, d_ps);
+    autocomplete(document.getElementById("name_last"), document.getElementById("name_first"), persons);
+    autocomplete(document.getElementById("org"), null, orgs);
+
   });
 
   function waitCursor() {
@@ -493,6 +604,121 @@
   $('#kw_cancel_btn').click(function() {
     $("#add_keyword_div").hide();
   });
+
+
+
+  function autocomplete(inp, inp2, arr) {
+    /*the autocomplete function takes three arguments,
+    two text field elements and an array of possible autocompleted values:*/
+    var currentFocus;
+    /*execute a function when someone writes in the text field:*/
+    [inp, inp2].forEach(function(elem) {
+      if (elem === null) return;
+      elem.addEventListener("input", function(e) {
+          var a, b, i, val = this.value;
+          /*close any already open lists of autocompleted values*/
+          closeAllLists();
+          if (!val) { return false;}
+          currentFocus = -1;
+          /*create a DIV element that will contain the items (values):*/
+          a = document.createElement("DIV");
+          a.setAttribute("id", this.id + "autocomplete-list");
+          a.setAttribute("class", "autocomplete-items");
+          /*append the DIV element as a child of the autocomplete container:*/
+          this.parentNode.appendChild(a);
+          /*for each item in the array...*/
+          for (i = 0; i < arr.length; i++) {
+            /*check if the item starts with the same letters as the text field value:*/
+            if (arr[i].toUpperCase().indexOf(val.toUpperCase()) != -1) {
+              /*create a DIV element for each matching element:*/
+              b = document.createElement("DIV");
+              /*make the matching letters bold:*/
+              b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+              b.innerHTML += arr[i].substr(val.length);
+              /*insert a input field that will hold the current array item's value:*/
+              b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+              /*execute a function when someone clicks on the item value (DIV element):*/
+              b.addEventListener("click", function(e) {
+                  var selected;
+                  if (inp2 !== null) {
+                    /*insert the value for the autocomplete text field:*/
+                    //split the name at the comma
+                    selected = this.getElementsByTagName("input")[0].value.split(',');
+                    inp.value = selected[0].trim();
+                    inp2.value = selected[1].trim();
+                  }
+                  else {
+                    selected = this.getElementsByTagName("input")[0].value;
+                    inp.value = selected;
+                  }
+                  /*close the list of autocompleted values,
+                  (or any other open lists of autocompleted values:*/
+                  closeAllLists();
+              });
+              a.appendChild(b);
+            }
+          }
+      });
+
+      /*execute a function presses a key on the keyboard:*/
+      elem.addEventListener("keydown", function(e) {
+          var x = document.getElementById(this.id + "autocomplete-list");
+          if (x) x = x.getElementsByTagName("div");
+          if (e.keyCode == 40) {
+            /*If the arrow DOWN key is pressed,
+            increase the currentFocus variable:*/
+            currentFocus++;
+            /*and and make the current item more visible:*/
+            addActive(x);
+          } else if (e.keyCode == 38) { //up
+            /*If the arrow UP key is pressed,
+            decrease the currentFocus variable:*/
+            currentFocus--;
+            /*and and make the current item more visible:*/
+            addActive(x);
+          } else if (e.keyCode == 13) {
+            /*If the ENTER key is pressed, prevent the form from being submitted,*/
+            e.preventDefault();
+            if (currentFocus > -1) {
+              /*and simulate a click on the "active" item:*/
+              if (x) x[currentFocus].click();
+            }
+          }
+      });
+    });
+
+    function addActive(x) {
+      /*a function to classify an item as "active":*/
+      if (!x) return false;
+      /*start by removing the "active" class on all items:*/
+      removeActive(x);
+      if (currentFocus >= x.length) currentFocus = 0;
+      if (currentFocus < 0) currentFocus = (x.length - 1);
+      /*add class "autocomplete-active":*/
+      x[currentFocus].classList.add("autocomplete-active");
+    }
+    function removeActive(x) {
+      /*a function to remove the "active" class from all autocomplete items:*/
+      for (var i = 0; i < x.length; i++) {
+        x[i].classList.remove("autocomplete-active");
+      }
+    }
+    function closeAllLists(elmnt) {
+      /*close all autocomplete lists in the document,
+      except the one passed as an argument:*/
+      var x = document.getElementsByClassName("autocomplete-items");
+      for (var i = 0; i < x.length; i++) {
+        if (elmnt != x[i] && elmnt != inp) {
+          x[i].parentNode.removeChild(x[i]);
+        }
+      }
+    }
+    /*execute a function when someone clicks in the document:*/
+    document.addEventListener("click", function (e) {
+        closeAllLists(e.target);
+    });
+  }
+
 
 </script>
 {% endblock body %}
