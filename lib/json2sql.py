@@ -11,6 +11,8 @@ import os
 import json
 import psycopg2
 from flask import url_for
+import usap
+from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap
 
 config = json.loads(open('config.json', 'r').read())
 dc_config = json.loads(open('inc/datacite.json', 'r').read())
@@ -68,84 +70,6 @@ def parse_json(data):
     # print('check json file for wrong EOL')
 
     return data
-
-
-def makeBoundsGeom(north, south, east, west, cross_dateline):
-    # point
-    if (west == east and north == south):
-        geom = "POINT(%s %s)" % (west, north)
-
-    # polygon
-    else:
-        geom = "POLYGON(("
-        n = 10
-        if (cross_dateline):
-            dlon = (-180 - west) / n
-            dlat = (north - south) / n
-            for i in range(n):
-                geom += "%s %s," % (-180 - dlon * i, north)
-
-            for i in range(n):
-                geom += "%s %s," % (west, north - dlat * i)
-
-            for i in range(n):
-                geom += "%s %s," % (west + dlon * i, south)
-
-            dlon = (180 - east) / n
-            for i in range(n):
-                geom += "%s %s," % (180 - dlon * i, south)
-
-            for i in range(n):
-                geom += "%s %s," % (east, south + dlat * i)
-
-            for i in range(n):
-                geom += "%s %s," % (east + dlon * i, north)
-            # close the ring ???
-            geom += "%s %s," % (-180, north)
-
-        elif east > west:
-            dlon = (west - east) / n
-            dlat = (north - south) / n
-            for i in range(n):
-                geom += "%s %s," % (west - dlon * i, north)
-
-            for i in range(n):
-                geom += "%s %s," % (east, north - dlat * i)
-
-            for i in range(n):
-                geom += "%s %s," % (east + dlon * i, south)
-
-            for i in range(n):
-                geom += "%s %s," % (west, south + dlat * i)
-            # close the ring
-            geom += "%s %s," % (west, north)
-
-        else:
-            dlon = (-180 - east) / n
-            dlat = (north - south) / n
-            for i in range(n):
-                geom += "%s %s," % (-180 - dlon * i, north)
-
-            for i in range(n):
-                geom += "%s %s," % (east, north - dlat * i)
-
-            for i in range(n):
-                geom += "%s %s," % (east + dlon * i, south)
-
-            dlon = (180 - west) / n
-            for i in range(n):
-                geom += "%s %s," % (180 - dlon * i, south)
-
-            for i in range(n):
-                geom += "%s %s," % (west, south + dlat * i)
-
-            for i in range(n):
-                geom += "%s %s," % (west + dlon * i, north)
-            # close the ring ???
-            geom += "%s %s," % (-180, north)
-
-        geom = geom[:-1] + "))"
-    return geom
 
 
 def make_sql(data, id):
@@ -231,7 +155,6 @@ def make_sql(data, id):
   
     sql_out += '\n--NOTE: AWARDS functions:\n'
     for award in data['awards']:
-        print(award)
         if award == 'None':
             sql_out += "--NOTE: NO AWARD SUBMITTED\n"
         elif award == "Not In This List":
@@ -338,7 +261,7 @@ def make_sql(data, id):
 
         for pub in data['publications']:
             # see if they are already in the references table
-            query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
+            query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('text'))
             cur.execute(query)
             res = cur.fetchall()
             if len(res) == 0:
@@ -394,6 +317,316 @@ def make_sql(data, id):
     return sql_out
 
 
+def editDatasetJson2sql(data, uid):
+    conn, cur = connect_to_db()
+
+    # get existing values from the database and compare them with the JSON file
+    orig = usap.dataset_db2form(uid)
+
+    # construct pi_id for first author
+    first_name = data['authors'][0].get("first_name")
+    last_name = data['authors'][0].get("last_name")
+    pi_id = "%s, %s" % (last_name, first_name)
+
+    # submitter
+    if data["name"] != "":
+        (first, last) = data["name"].split(' ', 1)
+        data["name"] = "{}, {}".format(last, first)
+
+    # compare original with edited json
+    updates = set()
+    for k in orig.keys():
+        if orig[k] != data.get(k):
+            print(k)
+            print("orig:", orig.get(k))
+            print("new:", data.get(k))
+            if k in ['geo_e', 'geo_n', 'geo_s', 'geo_w', 'cross_dateline']:
+                updates.add('spatial_extents')
+            else:
+                updates.add(k)
+
+    # if new files have been uploaded, create a whole new dataset record 
+    # with a new verion number
+    if 'filenames' in updates:
+        return make_sql(data, id)        
+
+    # check for orcid update
+    query = "SELECT id_orcid FROM person WHERE id = '%s'" % data['name']
+    cur.execute(query)
+    res = cur.fetchone()
+    if res and res['id_orcid'] != data.get('orcid'):
+        updates.add('orcid')
+
+    # --- fix award fields (throw out PI name)
+    data["awards_num"] = data['awards'][:]
+    for i in range(len(data["awards"])):
+        if data["awards"][i] not in ["None", "Not In This List"] and len(data["awards"][i].split(" ", 1)) > 1:
+            data["awards_num"][i] = data["awards"][i].split(" ")[0]  # throw away the rest of the award string
+
+    # update database with edited values
+    sql_out = ""
+    sql_out += "START TRANSACTION;\n\n"
+    for k in updates:
+        if k == 'abstract':
+            sql_out += "--NOTE: UPDATING ABSTRACT\n"
+            sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (data['abstract'], uid)
+        
+        if k == 'authors':
+            sql_out += "--NOTE: UPDATING AUTHORS\n"
+
+            # remove existing co-pis from project_person_map
+            sql_out += "--NOTE: First remove all existing authors from dataset_person_map\n"
+            sql_out += "DELETE FROM dataset_person_map WHERE dataset_id = '%s' and person_id != '%s';\n" % (uid, data['name'])
+            # make sure authors are in person table
+            person_ids = []
+            for author in data["authors"]:
+                first_name = author.get("first_name")
+                last_name = author.get("last_name")
+                person_id = "%s, %s" % (last_name, first_name)
+                person_ids.append(person_id)
+
+                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % person_id
+                cur.execute(query)
+                res = cur.fetchone()
+          
+                if res['count'] == 0 and person_id != "":
+                    if author == data["authors"][0]:
+                        line = "INSERT INTO person(id,first_name, last_name, email, id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
+                    else:
+                        line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
+
+                    sql_out += line
+
+            # add people back in to project_person_map
+            for person_id in person_ids:
+                if person_id != data['name']:
+                    sql_out += "--NOTE: adding %s to dataset_person_map\n" % person_id
+                    sql_out += "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (uid, person_id)
+
+            # update creator field in dataset table
+            sql_out += "--NOTE: updating creator field in dataset table\n"
+            sql_out += "UPDATE dataset SET creator = '%s' WHERE id = '%s';\n" % ('; '.join(person_ids), uid)
+
+        if k == 'awards':
+            sql_out += "--NOTE: UPDATING AWARDS\n"
+
+            # remove existing awards from dataset_award_map
+            sql_out += "--NOTE: First remove existing awards from dataset_award_map\n"
+            sql_out += "DELETE FROM dataset_award_map WHERE dataset_id = '%s';\n" % (uid)
+            sql_out += "--NOTE: Then remove dataset from project_dataset_map\n"
+            sql_out += "DELETE FROM project_dataset_map WHERE dataset_id = '%s';\n" % (uid)
+
+            for award in data['awards_num']:
+                if award == 'None':
+                    sql_out += "--NOTE: NO AWARD SUBMITTED\n"
+                elif award == "Not In This List":
+                    sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+                else:
+                    # check if this award is already in the award table
+                    query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if res['count'] == 0:
+                        # Add award to award table
+                        sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                        sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
+                        sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+                   
+                    sql_out += "--NOTE: add award %s to dataset_award_map\n" % award
+                    sql_out += "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (uid, award)
+
+                    # look up award to see if already mapped to a program
+                    query = "SELECT program_id FROM award_program_map WHERE award_id = '%s';" % award
+                    cur.execute(query)
+                    res = cur.fetchone()
+              
+                    # if res is None:
+                    #     sql_out += "\n--NOTE: Need to map award to a program."
+                    #     sql_out += "\n--NOTE: look up at https://www.nsf.gov/awardsearch/showAward?AWD_ID={}\n".format(award)
+                    #     sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Earth Sciences');\n".format(award)
+                    #     sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Glaciology');\n".format(award)
+                    #     sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Organisms and Ecosystems');\n".format(award)
+                    #     sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Integrated System Science');\n".format(award)
+                    #     sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Astrophysics and Geospace Sciences');\n".format(award)
+                    #     sql_out += "--INSERT INTO award_program_map(award_id,program_id) VALUES ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(award)
+
+                    #     sql_out += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
+                    # else:
+                    #     sql_out += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','{}');\n\n".format(id, res['program_id'])
+                    #     if res['program_id'] == 'Antarctic Glaciology':
+                    #         curator = 'Bauer'
+
+                    # look up award to see if already mapped to a project
+                    query = "SELECT proj_uid FROM project_award_map WHERE award_id = '%s';" % award
+                    cur.execute(query)
+                    res = cur.fetchall()
+                    if len(res) > 0:
+                        sql_out += "--NOTE: Linking dataset to project via award.  Comment out any lines you don't wish to add to DB\n"
+                        for project in res:
+                            sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), uid)   
+
+        if k == 'content':
+            sql_out += "--NOTE: UPDATING DATA CONTENT DESCRIPTION IN README FILE\n"
+
+        if k == 'data_processing':
+            sql_out += "--NOTE: UPDATING DATA PROCESSING DESCRIPTION IN README FILE\n"
+
+        if k == 'devices':
+            sql_out += "--NOTE: UPDATING INSTRUMENTS AND DEVICES DESCRIPTION IN README FILE\n"
+
+        if k == 'email':
+            # first check if first author is already in person DB table - if not, email will get added when authors are updated elsewhere in the code
+            query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % pi_id
+            cur.execute(query)
+            res = cur.fetchone()
+            if res['count'] > 0:
+                sql_out += "--NOTE: UPDATING EMAIL ADDRESS\n"
+                sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], pi_id)
+        
+        if k == 'feature_name':
+            # feature name not currently stored in DB or Readme file, so this will do nothing.
+            # Update will just be stored in the new json file.
+            pass
+
+        if k == 'issues':
+            sql_out += "--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"
+
+        if k == 'name':
+            if data["name"] != '':
+                sql_out += "--NOTE: UPDATING SUBMITTER\n"
+
+                # This will probably never be needed as the submitter would need to be in the DB to have permission to edit.
+                # But just in case!
+                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["name"]
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    line = "INSERT INTO person(id,email,id_orcid) VALUES ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
+                    sql_out += line
+                query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, data["name"])
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, data["name"])
+                    sql_out += line
+
+                sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (data['name'], uid)
+
+        if k == 'orcid':
+            sql_out += "--NOTE: UPDATING ORCID FOR SUBMITTER\n"
+            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['orcid'], data['name'])
+
+        if k == 'procedures':
+            sql_out += "--NOTE: UPDATING ACQUISITION PROCEDURES DESCRIPTION IN README FILE\n"
+
+        if k == 'project': 
+            sql_out += "--NOTE: UPDATING INITIATIVE\n"
+
+            # remove existing initiative from project_award_map
+            sql_out += "--NOTE: First remove existing initiatives from dataset_initiative_map\n"
+            sql_out += "DELETE FROM dataset_initiative_map WHERE dataset_id = '%s';\n" % (uid)
+
+            if data.get('project') is not None and data['project'] != "":
+                sql_out += "--NOTE: adding initiative to dataset_initiative_map\n"
+                sql_out += "INSERT INTO dataset_initiative_map (dataset_id, initiative_id) VALUES ('%s', '%s');\n" % \
+                    (uid, data['project'])
+
+        if k == 'publications':
+            sql_out += "--NOTE: UPDATING PUBLICATIONS\n"
+
+            # remove existing publications from dataset_reference_map
+            sql_out += "--NOTE: First remove all existing publications from dataset_reference_map\n"
+            sql_out += "DELETE FROM dataset_reference_map WHERE dataset_id = '%s';\n" % uid
+            
+            # Add references
+            if data.get('publications') is not None and len(data['publications']) > 0:
+                sql_out += "--NOTE: adding references\n"
+
+                #first find the highest ref_uid already in the table
+                query = "SELECT MAX(ref_uid) FROM reference;"
+                cur.execute(query)
+                res = cur.fetchall()
+                old_uid = int(res[0]['max'].replace('ref_', ''))
+
+                for pub in data['publications']:
+                    # see if they are already in the references table
+                    query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('text'))
+                    print(query)
+                    cur.execute(query)
+                    res = cur.fetchall()
+                    if len(res) == 0:
+                        # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
+                        old_uid += 1
+                        ref_uid = 'ref_%0*d' % (7, old_uid)
+                        sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
+                            (ref_uid, pub.get('text'), pub.get('doi'))
+                    else:
+                        ref_uid = res[0]['ref_uid']
+                    # sql_out += "--NOTE: adding reference %s to dataset_reference_map\n" % ref_uid
+                    sql_out += "INSERT INTO dataset_reference_map (dataset_id, ref_uid) VALUES ('%s', '%s');\n" % \
+                        (uid, ref_uid)
+
+                sql_out += "\n"
+
+        if k == 'related_fields':
+            # related fields not currently stored in DB or Readme file, so this will do nothing.
+            # Update will just be stored in the new json file.
+            pass
+
+        if k == 'spatial_extents':
+            sql_out += "--NOTE: UPDATING DATASET_SPATIAL_MAP\n"
+            sql_out += updateSpatialMap(uid, data, False)
+
+        if k == 'start':
+            sql_out += "--NOTE: UPDATING START DATE\n"
+            sql_out += "UPDATE dataset_temporal_map SET start_date = '%s' WHERE dataset_id = '%s';\n" % (data['start'], uid)
+
+        if k == 'stop':
+            sql_out += "--NOTE: UPDATING STOP DATE\n"
+            sql_out += "UPDATE dataset_temporal_map SET stop_date = '%s' WHERE dataset_id = '%s';\n" % (data['stop'], uid)
+
+        if k == 'title':      
+            sql_out += "--NOTE: UPDATING TITLE\n"
+            sql_out += "UPDATE dataset SET title = '%s' WHERE id = '%s';\n" % (data['title'], uid)
+
+        if k == 'user_keywords': 
+            sql_out += "--NOTE: UPDATING USER KEYWORDS\n"
+
+            # remove existing locations from project_features
+            sql_out += "--NOTE: First remove all user keywords from dataset_keyword_map\n"
+            sql_out += "DELETE FROM dataset_keyword_map WHERE dataset_id = '%s' AND keyword_id ~ 'uk-';\n" % uid
+
+            if data["user_keywords"] != "":
+                last_id = None
+                sql_out += "--NOTE: add user keywords\n"
+                for keyword in data["user_keywords"].split(','):
+                    keyword = keyword.strip()
+                    # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
+                    query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if res is not None:
+                        sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(uid, res['keyword_id'], keyword)
+                    else:
+                        #if not found, add to keyword_usap
+                        # first work out the last keyword_id used
+                        query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                        cur.execute(query)
+                        res = cur.fetchone()
+                        if not last_id:
+                            last_id = res['keyword_id'].replace('uk-', '')
+                        next_id = int(last_id) + 1
+                        sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
+                            (next_id, keyword)
+                        sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(uid, next_id)
+                        last_id = next_id
+
+    sql_out += "\nUPDATE dataset SET date_modified = '%s' WHERE id= '%s';\n" % (data['timestamp'][0:10], uid)
+    sql_out += '\nCOMMIT;\n'
+
+    return sql_out
+
+
 def write_readme(data, id):
     doc_dir = os.path.join("doc", id)
     if not os.path.exists(doc_dir):
@@ -432,10 +665,15 @@ def write_readme(data, id):
 
 def json2sql(data, id):
 
-    data = parse_json(data)
+  
 
     if data:
-        sql = make_sql(data, id)
+        # check if we are editing an existing project
+        if data.get('edit') and data['edit'] == 'True':
+            sql = editDatasetJson2sql(data, id)
+        else:
+            data = parse_json(data)
+            sql = make_sql(data, id)
         readme_file = write_readme(data, id)
         return sql, readme_file
     else:

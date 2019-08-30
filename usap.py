@@ -654,10 +654,10 @@ def dataset_db2form(uid):
     if db_data.get('spatial_extents'):
         se = db_data.get('spatial_extents')[0]
         form_data['cross_dateline'] = se.get('cross_dateline')
-        form_data['geo_e'] = se.get('east')
-        form_data['geo_n'] = se.get('north')
-        form_data['geo_s'] = se.get('south')
-        form_data['geo_w'] = se.get('west')
+        form_data['geo_e'] = str(se.get('east'))
+        form_data['geo_n'] = str(se.get('north'))
+        form_data['geo_s'] = str(se.get('south'))
+        form_data['geo_w'] = str(se.get('west'))
 
     submitter = get_person(db_data.get('submitter_id'))
     if submitter:
@@ -1035,7 +1035,7 @@ def dataset2(dataset_id=None):
             # re-identify ourselves as an encrypted connection
             s.ehlo()
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-            s.sendmail(sender, recipients, msg.as_string())
+            # s.sendmail(sender, recipients, msg.as_string())
             s.quit()          
 
             return redirect('/thank_you/dataset')
@@ -1354,7 +1354,7 @@ def project(project_id=None):
         # re-identify ourselves as an encrypted connection
         s.ehlo()
         s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-        # s.sendmail(sender, recipients, msg.as_string())
+        s.sendmail(sender, recipients, msg.as_string())
         s.quit()
         
         return redirect('thank_you/project')
@@ -2219,6 +2219,7 @@ def curator():
             if f.find(".json") > 0:
                 f = os.path.basename(f)
                 uid = f.split(".json")[0]
+                # set submission status
                 if uid[0] == 'p':
                     if not cf.isProjectImported(uid):
                         status = "Pending"
@@ -2227,14 +2228,20 @@ def curator():
                         status = "Ingested"
                         landing_page = '/view/project/%s' % uid
                 elif uid[0:2] == 'ep':
-                    if cf.isProjectEditComplete(uid):
+                    if cf.isEditComplete(uid):
                         status = "Edit completed"
                         landing_page = '/view/project/%s' % uid.replace('e', '') 
                     else:
                         status = "Pending"
-                        landing_page = ''           
+                        landing_page = ''
+                elif uid[0] == 'e':
+                    if cf.isEditComplete(uid):
+                        status = "Edit completed"
+                        landing_page = '/view/dataset/%s' % uid.replace('e', '') 
+                    else:
+                        status = "Pending"
+                        landing_page = ''            
                 else:
-                    # if a submission has a landing page, then set the status to Complete, otherwise Pending
                     if not cf.isDatabaseImported(uid):
                         status = "Pending"
                         landing_page = ''
@@ -2316,6 +2323,7 @@ def curator():
                         # run sql to import data into the database
                         (conn, cur) = connect_to_db()
                         cur.execute(sql_str)
+                        cf.updateEditFile(uid)
 
                         template_dict['message'].append("Successfully imported to database")
                         coords = cf.getCoordsFromDatabase(uid)
@@ -2559,7 +2567,7 @@ def curator():
                         # run sql to import data into the database
                         (conn, cur) = connect_to_db()
                         cur.execute(sql_str)
-
+                        cf.updateEditFile(uid)
                         template_dict['message'].append("Successfully imported to database")
                         if uid[0] == 'e':
                             proj_uid = uid[1:]

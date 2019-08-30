@@ -8,7 +8,6 @@ import sys
 import requests
 from flask import session, url_for, current_app
 from subprocess import Popen, PIPE
-from json2sql import makeBoundsGeom
 import base64
 from datetime import datetime
 import usap
@@ -300,7 +299,7 @@ def isProjectImported(uid):
     return res['count'] > 0
 
 
-def updateSpatialMap(uid, data):
+def updateSpatialMap(uid, data, run_update=True):
     (conn, cur) = connect_to_db()
     status = 1
     if type(conn) is str:
@@ -334,6 +333,8 @@ def updateSpatialMap(uid, data):
                         % (uid, west, east, south, north, data['cross_dateline'], geometry, bounds_geometry)
                     out_text = "Spatial bounds successfully inserted"
                 print(sql_cmd)
+                if not run_update:
+                    return sql_cmd
                 cur.execute(sql_cmd)
                 cur.execute('COMMIT;')
                 
@@ -526,7 +527,7 @@ def getDatasetKeywords(uid):
 
 def projectJson2sql(data, uid):
 
-    # check if we are editing an exiting project
+    # check if we are editing an existing project
     if data.get('edit') and data['edit'] == 'True':
         return editProjectJson2sql(data, uid)
 
@@ -1066,17 +1067,17 @@ def editProjectJson2sql(data, uid):
 
             for other_award in data['other_awards_num']:
                 if 'Not_In_This_List' in other_award:
-                        sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
-                        (dummy, award) = other_award.split(':')
-                        # check if this award is already in the award table
-                        query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
-                        cur.execute(query)
-                        res = cur.fetchone()
-                        if res['count'] == 0:
-                            # Add award to award table
-                            sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
-                            sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
-                            sql_out += "--UPDATE award SET iscr='f', isopy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+                    sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+                    (dummy, award) = other_award.split(':')
+                    # check if this award is already in the award table
+                    query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if res['count'] == 0:
+                        # Add award to award table
+                        sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                        sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'DIV', 'TBD', 'TBD');\n" % award
+                        sql_out += "--UPDATE award SET iscr='f', isopy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
 
                 else:
                     award = other_award
@@ -1138,7 +1139,7 @@ def editProjectJson2sql(data, uid):
             sql_out += "--NOTE: UPDATING INITIATIVE\n"
 
             # remove existing initiative from project_award_map
-            sql_out += "--NOTE: First remove existing additional awards from project_initiative_map\n"
+            sql_out += "--NOTE: First remove initiatives from project_initiative_map\n"
             sql_out += "DELETE FROM project_initiative_map WHERE proj_uid = '%s';\n" % (uid)
 
             if data.get('program') is not None and data['program'] != "":
@@ -1220,24 +1221,25 @@ def editProjectJson2sql(data, uid):
     sql_out += "\nUPDATE project SET date_modified = '%s' WHERE proj_uid= '%s';\n" % (data['timestamp'][0:10], uid)
     sql_out += '\nCOMMIT;\n'
 
-    # update json edit file
-    data['edit_complete'] = True
-    updateProjectEditFile(data, uid)
-
     return sql_out
 
 
-def updateProjectEditFile(data, uid):
+# update json file to mark edit as complete
+def updateEditFile(uid):
     submitted_dir = os.path.join(current_app.root_path, usap.app.config['SUBMITTED_FOLDER'])
     submission_file = os.path.join(submitted_dir, "e" + uid + ".json")
+    print(submission_file)
     if not os.path.exists(submission_file):
         return False
+    with open(submission_file, 'r') as file:
+        data = json.load(file)
+    data['edit_complete'] = True
     with open(submission_file, 'w') as file:
         file.write(json.dumps(data, indent=4, sort_keys=True))
     os.chmod(submission_file, 0o664)
 
 
-def isProjectEditComplete(uid):
+def isEditComplete(uid):
     submitted_dir = os.path.join(current_app.root_path, usap.app.config['SUBMITTED_FOLDER'])
     submission_file = os.path.join(submitted_dir, uid + ".json")
     if not os.path.exists(submission_file):
@@ -1593,3 +1595,81 @@ def addUserToDatasetOrProject(data):
         return None
     except Exception as e:
         return str(e)
+
+
+def makeBoundsGeom(north, south, east, west, cross_dateline):
+    # point
+    if (west == east and north == south):
+        geom = "POINT(%s %s)" % (west, north)
+
+    # polygon
+    else:
+        geom = "POLYGON(("
+        n = 10
+        if (cross_dateline):
+            dlon = (-180 - west) / n
+            dlat = (north - south) / n
+            for i in range(n):
+                geom += "%s %s," % (-180 - dlon * i, north)
+
+            for i in range(n):
+                geom += "%s %s," % (west, north - dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (west + dlon * i, south)
+
+            dlon = (180 - east) / n
+            for i in range(n):
+                geom += "%s %s," % (180 - dlon * i, south)
+
+            for i in range(n):
+                geom += "%s %s," % (east, south + dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (east + dlon * i, north)
+            # close the ring ???
+            geom += "%s %s," % (-180, north)
+
+        elif east > west:
+            dlon = (west - east) / n
+            dlat = (north - south) / n
+            for i in range(n):
+                geom += "%s %s," % (west - dlon * i, north)
+
+            for i in range(n):
+                geom += "%s %s," % (east, north - dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (east + dlon * i, south)
+
+            for i in range(n):
+                geom += "%s %s," % (west, south + dlat * i)
+            # close the ring
+            geom += "%s %s," % (west, north)
+
+        else:
+            dlon = (-180 - east) / n
+            dlat = (north - south) / n
+            for i in range(n):
+                geom += "%s %s," % (-180 - dlon * i, north)
+
+            for i in range(n):
+                geom += "%s %s," % (east, north - dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (east + dlon * i, south)
+
+            dlon = (180 - west) / n
+            for i in range(n):
+                geom += "%s %s," % (180 - dlon * i, south)
+
+            for i in range(n):
+                geom += "%s %s," % (west, south + dlat * i)
+
+            for i in range(n):
+                geom += "%s %s," % (west + dlon * i, north)
+            # close the ring ???
+            geom += "%s %s," % (-180, north)
+
+        geom = geom[:-1] + "))"
+    return geom
