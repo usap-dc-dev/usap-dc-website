@@ -32,6 +32,7 @@
             <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
           </div>
           <div style="clear:both"></div>
+          <span class="help-block">All fields have been pre-populated with existing values</span>
           <div class="title" style="font-size: 1em;">Page 2 of 2</div>
           <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
           <button class="prev-button" type="submit" name="action" value="Previous Page">Previous Page</button>
@@ -96,8 +97,16 @@
             <br/>
             <input type="file" name="file[]" multiple style="font-size: 1em;">
             <br/>
+            {% if edit %}
+              <b>Please add description of relationship of new files to existing data submission</b><br>
+              <textarea name="new_files_desc" rows="3" cols="80">{{dataset_metadata.get('new_files_desc','')}}</textarea><br>
+              <br>
+            {% endif %}
             <br/>
           </div>
+
+
+
 
           <div class="required">
             <input type="checkbox" name="agree" {% if dataset_metadata.get('agree') %}checked{% endif %}> I agree these file(s) will be posted online with a DOI.

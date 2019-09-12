@@ -330,10 +330,14 @@
         </li>
         {% if session.user_info %}
           <li><a href="{{url_for('dashboard')}}">Dashboard</a></li>
+          {% if session.user_info.is_curator %}
+            <li><a href="{{url_for('curator')}}">Curator Page</a></li>
+          {% endif %}
           <li><a href="{{url_for('logout')}}">Logout</a></li>
         {% else %}
           <li><a href="{{url_for('dashboard')}}">Login</a></li>
         {% endif %}
+
 
       </ul>
     </div>

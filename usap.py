@@ -1533,6 +1533,8 @@ def authorized(resp):
     session['user_info'] = json.loads(res.read())
     if session['user_info'].get('name') is None:
         session['user_info']['name'] = ""
+
+    session['user_info']['is_curator'] = cf.isCurator()
     return redirect(session['next'])
 
 
@@ -1554,6 +1556,7 @@ def authorized_orcid(resp):
     except:
         email = ''
 
+    session['user_info']['is_curator'] = cf.isCurator()
     return redirect(session['next'])
 
 
@@ -2217,6 +2220,7 @@ def curator():
         submissions = []
         for f in files:
             if f.find(".json") > 0:
+                date = datetime.utcfromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
                 f = os.path.basename(f)
                 uid = f.split(".json")[0]
                 # set submission status
@@ -2253,7 +2257,7 @@ def curator():
                             status = "ISO XML file missing"
                         else:
                             status = "Completed"
-                submissions.append({'id': uid, 'status': status, 'landing_page': landing_page})
+                submissions.append({'id': uid, 'date': date, 'status': status, 'landing_page': landing_page})
    
         template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
@@ -3461,8 +3465,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     if free_text:
-        conds.append(cur.mogrify("(title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR %s ~* %s)", 
-                                 (free_text, free_text, free_text, free_text, d_or_p, free_text)))
+        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
+                                 (free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify('repositories ~* %s ', (repo,)))
 
@@ -3471,6 +3475,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         query_string += ' WHERE ' + ' AND '.join(conds)
 
     cur.execute(query_string)
+    print(query_string)
     return cur.fetchall()
 
 

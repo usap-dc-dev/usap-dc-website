@@ -395,6 +395,7 @@
              <thead class="w3-striped w3-bordered w3-hoverable">
               <tr>
                 <th>Submission</th>
+                <th>Submitted Date</th>
                 <th>Status</th>
                 <th>Landing Page</th>
               </tr>
@@ -402,9 +403,10 @@
 
             {% for sub in submissions %}
                 <tr {% if sub['status'] != 'Completed' %} style="font-weight: bold" {% endif %}>
-                    <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub['id']}} </a></td>
-                    <td>{{sub['status']}}</td>
-                    <td>{% if sub['landing_page'] %} <a target="_blank" href={{sub['landing_page']}}>{{sub['landing_page']}}</a> {% endif %}</td>
+                    <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub.id}} </a></td>
+                    <td>{{sub.date}}</td>
+                    <td>{{sub.status}}</td>
+                    <td>{% if sub.landing_page %} <a target="_blank" href={{sub['landing_page']}}>{{sub.landing_page}}</a> {% endif %}</td>
                 </tr>
             {% endfor %}
         </table>

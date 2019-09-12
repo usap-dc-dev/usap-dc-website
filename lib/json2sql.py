@@ -201,8 +201,8 @@ def make_sql(data, id):
                     sql_out += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','Antarctic Ocean and Atmospheric Sciences');\n\n".format(id)
                 else:
                     sql_out += "INSERT INTO dataset_program_map(dataset_id,program_id) VALUES ('{}','{}');\n\n".format(id, res['program_id'])
-                    if res['program_id'] == 'Antarctic Glaciology':
-                        curator = 'Bauer'
+                    # if res['program_id'] == 'Antarctic Glaciology':
+                    #     curator = 'Bauer'
 
                 # look up award to see if already mapped to a project
                 query = "SELECT proj_uid FROM project_award_map WHERE award_id = '%s';" % award
@@ -213,7 +213,7 @@ def make_sql(data, id):
                     for project in res:
                         sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), id)    
      
-    sql_out += "\n--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
+    # sql_out += "\n--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
     sql_out += "UPDATE dataset SET review_person='{}' WHERE id='{}';\n".format(curator, id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
