@@ -62,11 +62,13 @@
           <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
+          <button class="tablinks" onclick="openTab(event, 'emailTab')"  {% if tab == 'email' %} id="defaultOpen" {% endif %}>Send Email</button>
         {% elif type == 'project' %}
           <button class="tablinks" onclick="openTab(event, 'projectJsonTab')" {% if tab == 'project_json' %} id="defaultOpen" {% endif %}>JSON</button>
           <button class="tablinks" onclick="openTab(event, 'projectSqlTab')" {% if tab == 'project_sql' %} id="defaultOpen" {% endif %}>SQL</button>
           <button class="tablinks" onclick="openTab(event, 'projectSpatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
           <button class="tablinks" onclick="openTab(event, 'difxmlTab')"  {% if tab == 'difxml' %} id="defaultOpen" {% endif %}>DIF XML</button>
+          <button class="tablinks" onclick="openTab(event, 'emailTab')"  {% if tab == 'email' %} id="defaultOpen" {% endif %}>Send Email</button>
         {% endif %}
 
       </div>
@@ -234,8 +236,24 @@
         </table>
       </div>
 
+      <div id="emailTab", class="tabcontent">
+        <h4>Send email to creator (and editor) of {{uid}}</h4>
+ 
+        <div>
+          <b>Recipients</b><br/>
+          <textarea id="email_recipients" name="email_recipients" cols="100" rows="3">{{email_recipients}}</textarea>
+          <br/><br/>
+          <b>Subject</b><br/>
+          <textarea id="email_subject" name="email_subject" cols="100" rows="1">{{email_subject}}</textarea>  
+          <br/><br/>
+          <b>Text</b><br/>
+          <textarea id="email_text" name="email_text" cols="100" rows="15">{{email_text}}</textarea>
+          <br><br>
+          <button type="submit" name="submit" value="send_email" onclick="waitCursor()">Send</button>
+        </div>
+      </div>
 
-
+      
 
       <div id="projectJsonTab", class="tabcontent active">
           <h4>{{filename}}</h4>
@@ -329,7 +347,7 @@
         <div id="datasets" hidden>{{datasets|tojson}}</div>
         <div id="persons" hidden>{{persons|tojson}}</div>
         <div id="orgs" hidden>{{orgs|tojson}}</div>
-        
+
         <div>
           
           <div class="input-group form-group required">

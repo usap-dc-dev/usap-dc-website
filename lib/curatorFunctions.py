@@ -1673,3 +1673,29 @@ def makeBoundsGeom(north, south, east, west, cross_dateline):
 
         geom = geom[:-1] + "))"
     return geom
+
+
+def getCreatorEmails(uid):
+    conn, cur = connect_to_db()
+    if uid[0] == 'p':
+        # get project creators
+        query = "SELECT id, email FROM person JOIN project_person_map ppm ON person.id = ppm.person_id " + \
+                "WHERE proj_uid = '%s' AND email <> '' AND role IN ('Investigator', 'Investigator and contact')" % uid
+        cur.execute(query)
+        res = cur.fetchall()
+    else:
+        # get dataset creators
+        query = "SELECT creator FROM dataset WHERE id = '%s';" % uid
+        cur.execute(query)
+        res = cur.fetchone()
+        if res:
+            creators = res['creator'].split('; ')
+            query = "SELECT id, email FROM person WHERE id IN (%s) AND email <> ''" % (', '.join("'" + item + "'" for item in creators))
+            cur.execute(query)
+            res = cur.fetchall()
+        else:
+            res = []
+    emails_string = ""
+    emails_string = '\n'.join(['"%s" <%s>' % (r.get('id'), r.get('email')) for r in res])
+
+    return emails_string

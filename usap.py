@@ -2266,10 +2266,15 @@ def curator():
             filename = request.args.get('uid')
             uid = filename.replace('e', '')
             template_dict['uid'] = uid
+
+            # get list of creator emails from db (if already in db)
+            template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+            
             # check is project or dataset
             if uid[0] == 'p':
                 template_dict['type'] = 'project'
                 template_dict['tab'] = "project_json"
+                template_dict['email_subject'] = "Message From USAP-DC regarding project %s" % uid
                 # check whether dataset as already been imported to database
                 template_dict['db_imported'] = cf.isProjectImported(uid)
                 # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
@@ -2281,6 +2286,7 @@ def curator():
             else:
                 template_dict['type'] = 'dataset'
                 template_dict['tab'] = "json"
+                template_dict['email_subject'] = "Message From USAP-DC regarding dataset %s" % uid
                 # check whether dataset as already been imported to database
                 template_dict['db_imported'] = cf.isDatabaseImported(uid)
                 # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
@@ -2289,7 +2295,7 @@ def curator():
                     if coords is not None:
                         template_dict['coords'] = coords 
                     template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
-
+                
             submission_file = os.path.join(submitted_dir, filename + ".json")
             template_dict['filename'] = submission_file
             template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
@@ -2306,6 +2312,7 @@ def curator():
                     json_str = request.form.get('json').encode('utf-8')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
+
                     sql, readme_file = json2sql.json2sql(json_data, uid)
                     template_dict['sql'] = sql
                     template_dict['readme_file'] = readme_file
@@ -2330,6 +2337,24 @@ def curator():
                         cf.updateEditFile(uid)
 
                         template_dict['message'].append("Successfully imported to database")
+                        data = json.loads(request.form.get('json'))
+                        
+                        template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
+                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
+                            template_dict['email_recipients'] += contact
+                        
+                        if filename[0] == 'e':
+                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('landing_page', dataset_id=uid, _external=True)
+                        else:
+                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully registered.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('landing_page', dataset_id=uid, _external=True)
+
                         coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
                             template_dict['coords'] = coords
@@ -2549,6 +2574,37 @@ def curator():
                         template_dict['error'] = "Error: Unable to generate ISO XML."
                     template_dict['isoxml'] = isoxml
 
+                # Send email to creator and editor - for both datasets and projects
+                elif request.form.get('submit') == "send_email":
+                    template_dict['tab'] = 'email'
+                    try:
+                        msg = MIMEText(request.form.get('email_text'))
+                        sender = 'info@usap-dc.org'
+                        recipients_text = request.form.get('email_recipients').encode('utf-8')
+                        recipients = recipients_text.splitlines()
+
+                        print(recipients)
+                        msg['Subject'] = request.form.get('email_subject')
+
+                        msg['From'] = sender
+                        msg['To'] = ', '.join(recipients)
+
+                        smtp_details = config['SMTP']
+                        s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
+                        # identify ourselves to smtp client
+                        s.ehlo()
+                        # secure our email with tls encryption
+                        s.starttls()
+                        # re-identify ourselves as an encrypted connection
+                        s.ehlo()
+                        s.login(smtp_details["USER"], smtp_details["PASSWORD"])
+
+                        s.sendmail(sender, recipients, msg.as_string())
+                        template_dict['message'].append("Email sent")
+                        s.quit()  
+                    except Exception as err:
+                        template_dict['error'] = "Error sending email: " + str(err)
+
                 # PROJECT CURATION
 
                 # read in json and convert to sql
@@ -2573,11 +2629,24 @@ def curator():
                         cur.execute(sql_str)
                         cf.updateEditFile(uid)
                         template_dict['message'].append("Successfully imported to database")
-                        if uid[0] == 'e':
-                            proj_uid = uid[1:]
+                        data = json.loads(request.form.get('proj_json'))
+                        
+                        template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
+                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
+                            template_dict['email_recipients'] += contact
+                        
+                        if filename[0] == 'e':
+                            template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully updated.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('project_landing_page', project_id=uid, _external=True)
                         else:
-                            proj_uid = uid
-                        template_dict['landing_page'] = '/view/project/%s' % proj_uid
+                            template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully registered.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('project_landing_page', project_id=uid, _external=True)
+                        template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
                         template_dict['db_imported'] = True
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
@@ -2673,6 +2742,10 @@ def curator():
                         data = json.load(infile)
                         submission_data = json.dumps(data, sort_keys=True, indent=4)
                         template_dict['json'] = submission_data
+                        # add contact to list of recipients
+                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
+                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
+                            template_dict['email_recipients'] += contact
                 except:
                     template_dict['error'] = "Can't read submission file: %s" % submission_file
 
@@ -3490,8 +3563,6 @@ def dashboard():
     if user_info is None:
         session['next'] = request.path
         return redirect(url_for('login'))
-
-    # user_info['email'] = 'fnitsche@ldeo.columbia.edu'
 
     (conn, cur) = connect_to_db()
     query = """SELECT DISTINCT d.* FROM dataset d
