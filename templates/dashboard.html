@@ -6,12 +6,11 @@
     <table class='sortable' preserve_style='row'>
 
       <tr>
-        <th style="width:7em;">Project/Dataset</th>
+        <th style="width:6em;">Project/Dataset</th>
         <th style="width:30em;">Project Title</th>
-        <th style="width:8em;">Date Created</th>
-        <th style="width:8em;">Last Modified</th>
-        <th style="width:5em;">View</th>
-        <th style="width:5em;">Edit</th>
+        <th style="width:6em;">Date Created</th>
+        <th style="width:6em;">Last Modified</th>
+        <th style="width:17em;">Actions</th>
       </tr>
 
       {% for p in projects %}
@@ -20,8 +19,7 @@
           <td>{{p.title}}</td>
           <td>{{p.date_created}}</td>
           <td>{{p.date_modified}}</td>
-          <td><a href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">View</a></td>
-          <td><a href="{{url_for('project', project_id=p.proj_uid)}}">Edit</a></td>
+          <td><a href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">View</a> / <a href="{{url_for('project', project_id=p.proj_uid)}}">Edit</a> / <a href="{{url_for('project', template_id=p.proj_uid)}}">Create New Submission From This One</a></td>
         </tr>
       {% endfor %}
 
@@ -31,8 +29,7 @@
           <td>{{d.title}}</td>
           <td>{{d.date_created}}</td>
           <td>{{d.date_modified}}</td>
-          <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a></td>
-          <td><a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a></td>
+          <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a> / <a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a> / <a href="{{url_for('dataset', template_id=d.id)}}">Create New Submission From This One</a></td>
         </tr>
       {% endfor %}
 

@@ -29,6 +29,16 @@
     <tr>
       <td width="75%">
 
+
+        {% if data.replaced_by %}
+          <div class="lprow-no-margin ">
+            <div class="value-inline title" style="color:red">
+              A newer version exists for this dataset.  Click <a href="{{url_for('landing_page',dataset_id=data.replaced_by)}}">here</a> to go to its landing page.</h3>
+            </div>
+          </div>
+        {% endif %}
+
+
         <div class="lprow-no-margin ">
           <div class="value-inline title">
             <b>{{data.title}}</b>

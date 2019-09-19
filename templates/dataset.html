@@ -235,6 +235,7 @@
           <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
           <input class="form-control" type="hidden" name="dataset_id" value="{{dataset_metadata.dataset_id}}"/>
           <h2 class="title" style="float:left;">{% if edit %}Edit{% else %}Deposit{% endif %} Your Dataset</h2>
+
           <div style="float:right; margin-top: 1.44em;">
             <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
             <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
@@ -242,7 +243,11 @@
           </div>
 
           <div style="clear:both"></div>
-          <span class="help-block">All fields have been pre-populated with existing values</span>
+<!--           <input type="radio" name="template_choice" value="new_dataset" checked> New Dataset&nbsp;&nbsp;&nbsp;&nbsp;
+          <input type="radio" name="template_choice" value="new_version"> New Version of Existing Dataset
+          <br><br>
+ -->
+          {% if edit %}<span class="help-block">All fields have been pre-populated with existing values</span>{% endif %}
           <div class="title" style="font-size: 1em;">Page 1 of 2</div>
           <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
 

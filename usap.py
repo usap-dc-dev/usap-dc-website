@@ -47,6 +47,7 @@ app.config.update(
     AWARDS_FOLDER="awards",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
+    USAP_DOMAIN="http://www.usap-dc.org/",
     DEBUG=True
 )
 
@@ -85,6 +86,7 @@ orcid = oauth.remote_app('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
+
 def connect_to_db():
     info = config['DATABASE']
     conn = psycopg2.connect(host=info['HOST'],
@@ -93,22 +95,27 @@ def connect_to_db():
                             user=info['USER'],
                             password=info['PASSWORD'])
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    return (conn,cur)
+    return (conn, cur)
+
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
-    (conn,cur) = connect_to_db()
+    (conn, cur) = connect_to_db()
     query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award::integer<8000000 and a.award::integer>0400000' % ','.join(columns)
     
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
     query_string += ' ORDER BY name,award'
+
+    print(query_string)
+
     cur.execute(query_string)
     return cur.fetchall()
 
+
 def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
-                    sensor=None, west=None,east=None,south=None,north=None, spatial_bounds=None, spatial_bounds_interpolated=None,start=None, stop=None, program=None,
+                    sensor=None, west=None, east=None, south=None, north=None, spatial_bounds=None, spatial_bounds_interpolated=None, start=None, stop=None, program=None,
                     project=None, title=None, limit=None, offset=None):
-    (conn,cur) = connect_to_db()
+    (conn, cur) = connect_to_db()
     query_string = '''SELECT DISTINCT d.id
                       FROM dataset d
                       LEFT JOIN dataset_award_map dam ON dam.dataset_id=d.id
@@ -470,10 +477,18 @@ def dataset(dataset_id=None):
         del session['_flashes']
 
     edit = False 
+    template = False
+    template_id = None
+
     if not dataset_id:
         dataset_id = request.form.get('dataset_id')
+        template_id = request.args.get('template_id')
+
     if dataset_id and dataset_id != '':
         edit = True
+
+    if template_id and template_id != '':
+        template = True
 
     user_info = session.get('user_info')
     if user_info is None:
@@ -612,6 +627,21 @@ def dataset(dataset_id=None):
             name = ""
             if user_info.get('name'):
                 name = user_info.get('name')
+        # Create new dataset using existing dataset as template
+        elif template:
+            form_data = dataset_db2form(template_id)
+            session['dataset_metadata'] = form_data
+
+            email = ""
+            if user_info.get('email'):
+                email = user_info.get('email')
+            name = ""
+            if user_info.get('name'):
+                name = user_info.get('name')
+
+            # remove dataset_id when creating new submission
+            if form_data.get('dataset_id'):
+                del(form_data['dataset_id'])
         else:
             email = ""
             if user_info.get('email'):
@@ -626,7 +656,7 @@ def dataset(dataset_id=None):
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), 
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
-                               persons=get_persons(), edit=edit)
+                               persons=get_persons(), edit=edit, template=template)
 
 
 # get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
@@ -639,7 +669,7 @@ def dataset_db2form(uid):
         'abstract': db_data.get('abstract'),
         'name': db_data.get('submitter_id'),
         'title': db_data.get('title'),
-        'filenames': ['untitled.txt']
+        'filenames': []
     }
 
     form_data['authors'] = []
@@ -693,7 +723,7 @@ def dataset_db2form(uid):
     url = db_data.get('url')
     form_data['uploaded_files'] = []
     if url:
-        usap_domain = 'http://www.usap-dc.org/'
+        usap_domain = app.config['USAP_DOMAIN']
         if url.startswith(usap_domain):
             directory = os.path.join(current_app.root_path, url[len(usap_domain):])
             # print(directory)
@@ -707,6 +737,7 @@ def dataset_db2form(uid):
                 f_subpath = f_path[len(directory):]
                 files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
                 form_data['uploaded_files'] = files
+                form_data['filenames'].append(f_name)
             files.sort()
         else:
             form_data['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
@@ -970,10 +1001,18 @@ def dataset2(dataset_id=None):
                 msg_data['orcid'] = session['user_info']['orcid']
 
             msg_data['filenames'] = []
-            if edit:
-                for f in msg_data['uploaded_files']:
-                    msg_data['filenames'].append(f['name'])
 
+            if edit:
+                # get all the names of any files previously uploaded
+                file_keys = [s for s in request.form.keys() if "uploaded_file_" in s]
+                for f in file_keys:
+                    msg_data['filenames'].append(f.replace('uploaded_file_', ''))
+                    del(msg_data[f])
+
+            if msg_data.get('uploaded_files'):
+                del(msg_data['uploaded_files'])   
+
+            # get filenames of any files uploaded with this submission
             files = request.files.getlist('file[]')
             fnames = dict()
             for f in files:
@@ -982,6 +1021,13 @@ def dataset2(dataset_id=None):
                     fnames[fname] = f
 
             msg_data['filenames'] += fnames.keys()
+
+            # if files have been added or deleted during an edit, we will create a new dataset
+            if edit and (len(files) > 0 or msg_data.get('file_deleted') == 'true'):
+                msg_data['related_dataset'] = dataset_id
+                msg_data['edit'] = False
+                edit = False
+
             timestamp = format_time()
             msg_data['timestamp'] = timestamp
             check_dataset_submission(msg_data)
@@ -1123,12 +1169,18 @@ def project(project_id=None):
     # make some space in the session cookie by clearing any dataset_metadata
     if session.get('dataset_metadata'):
         del session['dataset_metadata']
-    edit = False 
+    edit = False
+    template = False 
+    template_id = None
     if not project_id:
         project_id = request.form.get('project_id')
+        template_id = request.args.get('template_id')
 
     if project_id and project_id != '':
         edit = True
+
+    if template_id and template_id != '':
+        template = True
 
     user_info = session.get('user_info')
     if user_info is None:
@@ -1359,12 +1411,22 @@ def project(project_id=None):
         
         return redirect('thank_you/project')
 
-    else:
-        # EDIT project
+    else:       
         session['project_metadata'] = {}
         form_data = {}
         if edit:
+            # Load up existing project data for EDIT
             form_data = project_db2form(project_id)
+            session['project_metadata'] = form_data
+        if template:
+            # Load up existing project as template for new submission
+            form_data = project_db2form(template_id)
+            # remove dmp_link if creating new submission
+            if form_data.get('dmp_file'):
+                del(form_data['dmp_file'])
+            # remove project_id when creating new submission
+            if form_data.get('project_id'):
+                del(form_data['project_id'])
             session['project_metadata'] = form_data
 
         email = ""
@@ -1903,7 +1965,7 @@ def landing_page(dataset_id):
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
-    usap_domain = 'http://www.usap-dc.org/'
+    usap_domain = app.config['USAP_DOMAIN']
     # print(url)
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
@@ -2379,6 +2441,18 @@ def curator():
                                 if os.path.exists(dest_dir):
                                     shutil.rmtree(dest_dir)
                                 shutil.copytree(upload_dir, dest_dir)
+
+                                # if this dataset is replacing an existing one
+                                # any files from data['filenames'] that were not in
+                                # the submission dir should be in the dataset dir
+                                # or the replaced dataset
+                                if json_data.get('related_dataset') and json_data.get('filenames'):
+                                    old_ds = get_datasets([json_data['related_dataset']])[0]
+                                    old_dir = old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/')
+                                    for f in json_data['filenames']:
+                                        if not os.path.exists(os.path.join(dest_dir, f)) and os.path.exists(os.path.join(old_dir, f)):
+                                            shutil.copy(os.path.join(old_dir, f), dest_dir)
+
                                 # change permissions
                                 os.chmod(uid_dir, 0o775)
                                 for root, dirs, files in os.walk(uid_dir):
@@ -2402,8 +2476,27 @@ def curator():
                         # run sql to import data into the database
                         (conn, cur) = connect_to_db()
                         cur.execute(sql_str)
+                        cf.updateEditFile(uid)                     
 
                         template_dict['message'].append("Successfully imported to database")
+                        data = json.loads(request.form.get('json'))
+                        
+                        template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
+                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
+                            template_dict['email_recipients'] += contact
+                        
+                        if filename[0] == 'e':
+                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('landing_page', dataset_id=uid, _external=True)
+                        else:
+                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully registered.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('landing_page', dataset_id=uid, _external=True)
+
                         coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
                             template_dict['coords'] = coords
@@ -2428,6 +2521,18 @@ def curator():
                                 if os.path.exists(dest_dir):
                                     shutil.rmtree(dest_dir)
                                 shutil.copytree(upload_dir, dest_dir)
+
+                                # if this dataset is replacing an existing one
+                                # any files from data['filenames'] that were not in
+                                # the submission dir should be in the dataset dir
+                                # or the replaced dataset
+                                if json_data.get('related_dataset') and json_data.get('filenames'):
+                                    old_ds = get_datasets([json_data['related_dataset']])[0]
+                                    old_dir = old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/')
+                                    for f in json_data['filenames']:
+                                        if not os.path.exists(os.path.join(dest_dir, f)) and os.path.exists(os.path.join(old_dir, f)):
+                                            shutil.copy(os.path.join(old_dir, f), dest_dir)
+
                                 # change permissions
                                 os.chmod(uid_dir, 0o775)
                                 for root, dirs, files in os.walk(uid_dir):
@@ -2946,7 +3051,7 @@ def polygon_count():
            JOIN dataset ds ON (dspm.dataset_id=ds.id)
            JOIN dataset_award_map dam ON (ds.id=dam.dataset_id)
            JOIN award_program_map apm ON (dam.award_id=apm.award_id)
-           WHERE st_within(st_transform(dspm.geometry,3031),st_geomfromewkt('srid=3031;'||%s))) foo GROUP BY program''',(wkt,))
+           WHERE st_within(st_transform(dspm.geometry,3031),st_geomfromewkt('srid=3031;'||%s))) foo GROUP BY program''', (wkt,))
     cur.execute(query)
     return flask.jsonify(cur.fetchall())
 
@@ -3569,7 +3674,8 @@ def dashboard():
                 JOIN dataset_person_map dpm ON d.id = dpm.dataset_id
                 JOIN person p ON dpm.person_id = p.id
                 WHERE p.email = '%s'
-                OR p.id_orcid = '%s';""" % (user_info.get('email'), user_info.get('orcid'))
+                OR p.id_orcid = '%s'
+                ORDER BY d.date_created DESC;""" % (user_info.get('email'), user_info.get('orcid'))
 
     cur.execute(query)
     datasets = cur.fetchall()
@@ -3578,7 +3684,8 @@ def dashboard():
             JOIN project_person_map ppm ON project.proj_uid = ppm.proj_uid
             JOIN person p ON ppm.person_id = p.id
             WHERE p.email = '%s'
-            OR p.id_orcid = '%s';""" % (user_info.get('email'), user_info.get('orcid'))
+            OR p.id_orcid = '%s'
+            ORDER BY project.date_created DESC;""" % (user_info.get('email'), user_info.get('orcid'))
 
     cur.execute(query)
     projects = cur.fetchall()

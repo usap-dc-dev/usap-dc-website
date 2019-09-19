@@ -77,9 +77,7 @@ def make_sql(data, id):
     release_date = data["timestamp"][0:10]
     date_created = data["timestamp"][0:10]
 
-    # print(release_date)
     url = 'http://www.usap-dc.org/dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
-    # print(url)
     
     curator = "Nitsche"
 
@@ -120,7 +118,8 @@ def make_sql(data, id):
     sql_out += '\n--NOTE: submitter_id = JSON "name"\n'
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
-    sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,status_id,url_extra,review_status,date_created,date_modified)
+    sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,
+    status_id,url_extra,review_status,date_created,date_modified)
     VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}');\n""" \
             .format(id,
                     dc_config['SHOULDER'] + id, 
@@ -312,6 +311,13 @@ def make_sql(data, id):
                 sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(id, next_id)
                 last_id = next_id
 
+    # if this dataset is replacing an old dataset, need to deprecate the old one
+    if data.get('related_dataset'):
+        sql_out += "\n--NOTE: this dataset will replace dataset %s\n" % data['related_dataset']
+        sql_out += "UPDATE dataset SET replaces = '%s' WHERE id = '%s';\n" % (data['related_dataset'], id)
+        sql_out += "UPDATE dataset SET replaced_by = '%s' WHERE id = '%s';\n" % (id, data['related_dataset'])
+        sql_out += "UPDATE project_dataset SET status = 'deprecated' WHERE dataset_id = '%s';\n" % data['related_dataset']
+
     sql_out += '\nCOMMIT;\n'
 
     return sql_out
@@ -343,12 +349,7 @@ def editDatasetJson2sql(data, uid):
             if k in ['geo_e', 'geo_n', 'geo_s', 'geo_w', 'cross_dateline']:
                 updates.add('spatial_extents')
             else:
-                updates.add(k)
-
-    # if new files have been uploaded, create a whole new dataset record 
-    # with a new verion number
-    if 'filenames' in updates:
-        return make_sql(data, id)        
+                updates.add(k)    
 
     # check for orcid update
     query = "SELECT id_orcid FROM person WHERE id = '%s'" % data['name']
@@ -664,9 +665,6 @@ def write_readme(data, id):
 
 
 def json2sql(data, id):
-
-  
-
     if data:
         # check if we are editing an existing project
         if data.get('edit') and data['edit'] == 'True':
