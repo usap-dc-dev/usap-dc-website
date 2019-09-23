@@ -3715,7 +3715,17 @@ def dashboard():
     cur.execute(query)
     projects = cur.fetchall()
 
-    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects) 
+    query = """SELECT award.* FROM award 
+            JOIN person p ON award.name = p.id
+            OR award.copi ~ p.id
+            WHERE p.email = '%s'
+            OR p.id_orcid = '%s'
+            ORDER BY award::integer;""" % (user_info.get('email'), user_info.get('orcid'))
+
+    cur.execute(query)
+    awards = cur.fetchall()
+
+    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
 
 
 @app.errorhandler(500)

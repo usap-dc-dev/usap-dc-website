@@ -6,8 +6,8 @@
     <table class='sortable' preserve_style='row'>
 
       <tr>
-        <th style="width:6em;">Project/Dataset</th>
-        <th style="width:30em;">Project Title</th>
+        <th style="width:6em;">Record Type</th>
+        <th style="width:30em;">Title</th>
         <th style="width:6em;">Date Created</th>
         <th style="width:6em;">Last Modified</th>
         <th style="width:17em;">Actions</th>
@@ -33,16 +33,16 @@
         </tr>
       {% endfor %}
 
+      {% for a in awards %}
+        <tr class='w3-border'>
+          <td>Award</td>
+          <td>{{a.award}}: {{a.title}}</td>
+          <td></td>
+          <td></td>
+          <td><a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{a.award}}">View</a></td>
+        </tr>
+      {% endfor %}
     </table>
   </div>
-
-
-
-
-
-
-
-
-
 
 {% endblock body %}
