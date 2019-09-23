@@ -1081,7 +1081,7 @@ def dataset2(dataset_id=None):
             # re-identify ourselves as an encrypted connection
             s.ehlo()
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-            # s.sendmail(sender, recipients, msg.as_string())
+            s.sendmail(sender, recipients, msg.as_string())
             s.quit()          
 
             return redirect('/thank_you/dataset')
@@ -2328,7 +2328,8 @@ def curator():
             filename = request.args.get('uid')
             uid = filename.replace('e', '')
             template_dict['uid'] = uid
-
+            edit = filename[0] == 'e'
+            
             # get list of creator emails from db (if already in db)
             template_dict['email_recipients'] = cf.getCreatorEmails(uid)
             
@@ -2357,6 +2358,11 @@ def curator():
                     if coords is not None:
                         template_dict['coords'] = coords 
                     template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
+                # if this dataset replaces another, will need to update XML for old dataset too
+                if not request.form.get('dc_uid'):
+                    template_dict['dc_uid'] = uid
+                if not edit:
+                    template_dict['replaced_dataset'] = cf.getReplacedDataset(uid)
                 
             submission_file = os.path.join(submitted_dir, filename + ".json")
             template_dict['filename'] = submission_file
@@ -2399,14 +2405,15 @@ def curator():
                         cf.updateEditFile(uid)
 
                         template_dict['message'].append("Successfully imported to database")
+                        template_dict['message'].append("Remember to update DataCite record")
                         data = json.loads(request.form.get('json'))
                         
                         template_dict['email_recipients'] = cf.getCreatorEmails(uid)
                         contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
                         if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
                             template_dict['email_recipients'] += contact
-                        
-                        if filename[0] == 'e':
+
+                        if edit:
                             template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
                                                           % data.get('title') + \
                                                           "Please check the landing page %s and contact us if there are any issues." \
@@ -2486,7 +2493,7 @@ def curator():
                         if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
                             template_dict['email_recipients'] += contact
                         
-                        if filename[0] == 'e':
+                        if edit:
                             template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
                                                           % data.get('title') + \
                                                           "Please check the landing page %s and contact us if there are any issues." \
@@ -2631,12 +2638,17 @@ def curator():
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "dcxml"
                     xml_str = request.form.get('dcxml').encode('utf-8')
-                    datacite_file = cf.getDCXMLFileName(uid)
+                    # could be new dataset, or could be editing old replaced dataset
+                    dc_uid = template_dict['dc_uid']
+                    if dc_uid != uid: 
+                        edit = True
+                    datacite_file = cf.getDCXMLFileName(dc_uid)
                     try:
                         with open(datacite_file, 'w') as out_file:
                             out_file.write(xml_str)
                         os.chmod(datacite_file, 0o664)
-                        msg = cf.submitToDataCite(uid)
+
+                        msg = cf.submitToDataCite(dc_uid, edit)
                         if msg.find("Error") >= 0:
                             template_dict['error'] = msg
                             problem = True
@@ -2654,6 +2666,19 @@ def curator():
                         template_dict['error'] = "Error: Unable to get DataCiteXML from database."
                     else:
                         template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
+                        template_dict['dc_uid'] = uid
+
+                # update DataCite XML for a replaced dataset
+                elif request.form.get('submit') == "update_replaced_dcxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "dcxml"
+                    old_uid = template_dict['replaced_dataset']
+                    datacite_file, status = cf.getDataCiteXML(old_uid)
+                    if status == 0:
+                        template_dict['error'] = "Error: Unable to get DataCiteXML from database."
+                    else:
+                        template_dict['dcxml'] = cf.getDataCiteXMLFromFile(old_uid)
+                        template_dict['dc_uid'] = old_uid
 
                 # Standalone save ISO XML to watch dir
                 elif request.form.get('submit') == "save_isoxml":
@@ -2741,7 +2766,7 @@ def curator():
                         if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
                             template_dict['email_recipients'] += contact
                         
-                        if filename[0] == 'e':
+                        if edit:
                             template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully updated.\n" \
                                                           % data.get('title') + \
                                                           "Please check the landing page %s and contact us if there are any issues." \

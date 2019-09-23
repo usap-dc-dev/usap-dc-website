@@ -52,7 +52,7 @@ def prettify(elem):
     return reparsed.toprettyxml(indent="    ")
 
 
-def submitToDataCite(uid):
+def submitToDataCite(uid, edit=False):
     datacite_file = getDCXMLFileName(uid)
     # Read in Datacite connection details
     try:
@@ -82,36 +82,46 @@ def submitToDataCite(uid):
 
     # create the DOI json object
     try:
-        doi_json = {"data": {
-                    "type": "dois",
-                    "attributes": {
-                        "doi": doi,
-                        "event": "publish",
-                        "url": landing_page,
-                        "xml": xml_b64
-                    },
-                    "relationships": {
-                        "client": {
-                            "data": {
-                                "type": "clients",
-                                "id": dc_details['USER']
+        if edit:
+            doi_json = {"data": {"attributes": {"xml": xml_b64}}}
+        else:
+            doi_json = {"data": {
+                        "type": "dois",
+                        "attributes": {
+                            "doi": doi,
+                            "event": "publish",
+                            "url": landing_page,
+                            "xml": xml_b64
+                        },
+                        "relationships": {
+                            "client": {
+                                "data": {
+                                    "type": "clients",
+                                    "id": dc_details['USER']
+                                }
                             }
                         }
-                    }
-                    }
-                    }
+                        }
+                        }
     except Exception as e:
         return("Error generating DOI json object: %s" % str(e))
 
+    headers = {'Content-Type': 'application/vnd.api+json'}
+    response = requests.put(dc_details['SERVER'], headers=headers, data=json.dumps(doi_json), auth=(dc_details['USER'], dc_details['PASSWORD']))
+
     # Send DOI Create request to DataCite
     try:
-        headers = {'Content-Type': 'application/vnd.api+json'}
-        response = requests.post(dc_details['SERVER'], headers=headers, data=json.dumps(doi_json), auth=(dc_details['USER'], dc_details['PASSWORD']))
+        if edit:
+            response = requests.put(dc_details['SERVER'] + '/' + doi, headers=headers, data=json.dumps(doi_json), auth=(dc_details['USER'], dc_details['PASSWORD']))
+            msg = "Successfully updated dataset at DataCite, DOI: %s"
+        else:
+            response = requests.post(dc_details['SERVER'], headers=headers, data=json.dumps(doi_json), auth=(dc_details['USER'], dc_details['PASSWORD']))
+            msg = "Successfully registered dataset at DataCite, DOI: %s"
 
-        if response.status_code != 201:
+        if response.status_code not in [201, 200]:
             return("Error with request to create DOI at DataCite.  Status code: %s\n Error: %s" % (response.status_code, response.json()))
 
-        return("Successfully registered dataset at DataCite, DOI: %s" % doi)
+        return(msg % doi)
 
     except Exception as e:
         return("Error generating DOI: %s" % str(e))
@@ -1699,3 +1709,13 @@ def getCreatorEmails(uid):
     emails_string = '\n'.join(['"%s" <%s>' % (r.get('id'), r.get('email')) for r in res])
 
     return emails_string
+
+
+def getReplacedDataset(uid):
+    # determine if this dataset replaces an older one, and if so, return the replaced dataset id
+    conn, cur = connect_to_db()
+    query = "SELECT replaces FROM dataset WHERE id = '%s';" % uid
+    cur.execute(query)
+    res = cur.fetchone()
+    return res['replaces']
+

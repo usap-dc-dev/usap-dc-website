@@ -209,10 +209,14 @@
       </div>
 
       <div id="dcxmlTab", class="tabcontent">
-        <h4>DataCite XML for {{uid}}</h4>
+        <h4>DataCite XML for {{dc_uid}}</h4>
         <input type="hidden" name="dcxml_file" value="{{dcxml_file}}">
+        <input type="hidden" name="dc_uid" value="{{dc_uid}}">
         <button type="submit" name="submit" value="generate_dcxml" onclick="waitCursor()">Generate DataCite XML from DB</button>
         <button type="submit" name="submit" value="submit_to_datacite" onclick="waitCursor()">Submit To DataCite</button>
+        {%if replaced_dataset %}
+          <button type="submit" name="submit" value="update_replaced_dcxml" onclick="waitCursor()">Update XML For Replaced Dataset {{replaced_dataset}}</button>
+        {% endif %}
         <table>
         <tr>
            <td>
