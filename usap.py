@@ -48,6 +48,7 @@ app.config.update(
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     USAP_DOMAIN="http://www.usap-dc.org/",
+    NSF_AWARD_API="https://api.nsf.gov/services/v1/awards/",
     DEBUG=True
 )
 
@@ -3724,6 +3725,18 @@ def dashboard():
 
     cur.execute(query)
     awards = cur.fetchall()
+
+    # get created date for each award from NSF awards API
+    for a in awards:
+        url = "%s%s.json" % (app.config['NSF_AWARD_API'], a['award'])
+        json_url = urlopen(url)
+        data = json.loads(json_url.read())
+    
+        a['date_created'] = ''
+        if data.get('response') and data['response'].get('award') and len(data['response']['award']) > 0:
+            date = data['response']['award'][0].get('date')
+            # change date format
+            a['date_created'] = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
 
     return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
 

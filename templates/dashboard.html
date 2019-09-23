@@ -33,11 +33,11 @@
         </tr>
       {% endfor %}
 
-      {% for a in awards %}
+      {% for a in awards|sort(attribute='date_created', reverse=True) %}
         <tr class='w3-border'>
           <td>Award</td>
           <td>{{a.award}}: {{a.title}}</td>
-          <td></td>
+          <td>{{a.date_created}}</td>
           <td></td>
           <td><a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{a.award}}">View</a></td>
         </tr>
