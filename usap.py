@@ -2406,7 +2406,7 @@ def curator():
                         cf.updateEditFile(uid)
 
                         template_dict['message'].append("Successfully imported to database")
-                        template_dict['message'].append("Remember to update DataCite record")
+                        template_dict['message'].append("Remember to update DataCite and ISOXML records")
                         data = json.loads(request.form.get('json'))
                         
                         template_dict['email_recipients'] = cf.getCreatorEmails(uid)
@@ -2472,114 +2472,114 @@ def curator():
                             except Exception as err:
                                 template_dict['error'] = "Error copying uploaded files: " + str(err)
                                 problem = True
-
+                
                 # full curator workflow
-                elif request.form.get('submit') == 'full_workflow':
-                    # read in sql and submit to the database
-                    sql_str = request.form.get('sql').encode('utf-8')
-                    template_dict['tab'] = "sql"
-                    problem = False
-                    print("IMPORTING TO DB")
-                    try:
-                        # run sql to import data into the database
-                        (conn, cur) = connect_to_db()
-                        cur.execute(sql_str)
-                        cf.updateEditFile(uid)                     
+                # elif request.form.get('submit') == 'full_workflow':
+                #     # read in sql and submit to the database
+                #     sql_str = request.form.get('sql').encode('utf-8')
+                #     template_dict['tab'] = "sql"
+                #     problem = False
+                #     print("IMPORTING TO DB")
+                #     try:
+                #         # run sql to import data into the database
+                #         (conn, cur) = connect_to_db()
+                #         cur.execute(sql_str)
+                #         cf.updateEditFile(uid)                     
 
-                        template_dict['message'].append("Successfully imported to database")
-                        data = json.loads(request.form.get('json'))
+                #         template_dict['message'].append("Successfully imported to database")
+                #         data = json.loads(request.form.get('json'))
                         
-                        template_dict['email_recipients'] = cf.getCreatorEmails(uid)
-                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
-                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
-                            template_dict['email_recipients'] += contact
+                #         template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+                #         contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
+                #         if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
+                #             template_dict['email_recipients'] += contact
                         
-                        if edit:
-                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('landing_page', dataset_id=uid, _external=True)
-                        else:
-                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully registered.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('landing_page', dataset_id=uid, _external=True)
+                #         if edit:
+                #             template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
+                #                                           % data.get('title') + \
+                #                                           "Please check the landing page %s and contact us if there are any issues." \
+                #                                           % url_for('landing_page', dataset_id=uid, _external=True)
+                #         else:
+                #             template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully registered.\n" \
+                #                                           % data.get('title') + \
+                #                                           "Please check the landing page %s and contact us if there are any issues." \
+                #                                           % url_for('landing_page', dataset_id=uid, _external=True)
 
-                        coords = cf.getCoordsFromDatabase(uid)
-                        if coords is not None:
-                            template_dict['coords'] = coords
-                        template_dict['landing_page'] = '/view/dataset/%s' % uid
-                        template_dict['db_imported'] = True
-                        template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
-                    except Exception as err:
-                        template_dict['error'] = "Error Importing to database: " + str(err)
-                        problem = True
+                #         coords = cf.getCoordsFromDatabase(uid)
+                #         if coords is not None:
+                #             template_dict['coords'] = coords
+                #         template_dict['landing_page'] = '/view/dataset/%s' % uid
+                #         template_dict['db_imported'] = True
+                #         template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
+                #     except Exception as err:
+                #         template_dict['error'] = "Error Importing to database: " + str(err)
+                #         problem = True
 
-                    if not problem:
-                        # copy uploaded files to their permanent home
-                        print('Copying uploaded files')
-                        json_str = request.form.get('json').encode('utf-8')
-                        json_data = json.loads(json_str)
-                        timestamp = json_data.get('timestamp')
-                        if timestamp:
-                            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
-                            uid_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid)
-                            dest_dir = os.path.join(uid_dir, timestamp)
-                            try:
-                                if os.path.exists(dest_dir):
-                                    shutil.rmtree(dest_dir)
-                                shutil.copytree(upload_dir, dest_dir)
+                #     if not problem:
+                #         # copy uploaded files to their permanent home
+                #         print('Copying uploaded files')
+                #         json_str = request.form.get('json').encode('utf-8')
+                #         json_data = json.loads(json_str)
+                #         timestamp = json_data.get('timestamp')
+                #         if timestamp:
+                #             upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
+                #             uid_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid)
+                #             dest_dir = os.path.join(uid_dir, timestamp)
+                #             try:
+                #                 if os.path.exists(dest_dir):
+                #                     shutil.rmtree(dest_dir)
+                #                 shutil.copytree(upload_dir, dest_dir)
 
-                                # if this dataset is replacing an existing one
-                                # any files from data['filenames'] that were not in
-                                # the submission dir should be in the dataset dir
-                                # or the replaced dataset
-                                if json_data.get('related_dataset') and json_data.get('filenames'):
-                                    old_ds = get_datasets([json_data['related_dataset']])[0]
-                                    old_dir = old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/')
-                                    for f in json_data['filenames']:
-                                        if not os.path.exists(os.path.join(dest_dir, f)) and os.path.exists(os.path.join(old_dir, f)):
-                                            shutil.copy(os.path.join(old_dir, f), dest_dir)
+                #                 # if this dataset is replacing an existing one
+                #                 # any files from data['filenames'] that were not in
+                #                 # the submission dir should be in the dataset dir
+                #                 # or the replaced dataset
+                #                 if json_data.get('related_dataset') and json_data.get('filenames'):
+                #                     old_ds = get_datasets([json_data['related_dataset']])[0]
+                #                     old_dir = old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/')
+                #                     for f in json_data['filenames']:
+                #                         if not os.path.exists(os.path.join(dest_dir, f)) and os.path.exists(os.path.join(old_dir, f)):
+                #                             shutil.copy(os.path.join(old_dir, f), dest_dir)
 
-                                # change permissions
-                                os.chmod(uid_dir, 0o775)
-                                for root, dirs, files in os.walk(uid_dir):
-                                    for d in dirs:
-                                        os.chmod(os.path.join(root, d), 0o775)
-                                    for f in files:
-                                        os.chmod(os.path.join(root, f), 0o664)
-                            except Exception as err:
-                                template_dict['error'] = "Error copying uploaded files: " + str(err)
-                                problem = True
+                #                 # change permissions
+                #                 os.chmod(uid_dir, 0o775)
+                #                 for root, dirs, files in os.walk(uid_dir):
+                #                     for d in dirs:
+                #                         os.chmod(os.path.join(root, d), 0o775)
+                #                     for f in files:
+                #                         os.chmod(os.path.join(root, f), 0o664)
+                #             except Exception as err:
+                #                 template_dict['error'] = "Error copying uploaded files: " + str(err)
+                #                 problem = True
 
-                    if not problem:
-                        # DataCite DOI submission
-                        print('DataCite DOI submission')
-                        datacite_file, status = cf.getDataCiteXML(uid)
-                        if status == 0:
-                            template_dict['error'] = "Error: Unable to get DataCiteXML from database."
-                            problem = True
-                        else:
-                            msg = cf.submitToDataCite(uid)
-                            template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
-                            if msg.find("Error") >= 0:
-                                template_dict['error'] = msg
-                                problem = True
-                            else:
-                                template_dict['message'].append(msg)
+                #     if not problem:
+                #         # DataCite DOI submission
+                #         print('DataCite DOI submission')
+                #         datacite_file, status = cf.getDataCiteXML(uid)
+                #         if status == 0:
+                #             template_dict['error'] = "Error: Unable to get DataCiteXML from database."
+                #             problem = True
+                #         else:
+                #             msg = cf.submitToDataCite(uid)
+                #             template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
+                #             if msg.find("Error") >= 0:
+                #                 template_dict['error'] = msg
+                #                 problem = True
+                #             else:
+                #                 template_dict['message'].append(msg)
 
-                    if not problem:
-                        # generate ISO XML file and place in watch dir for geoportal.
-                        print('Generating ISO XML file')
-                        msg = cf.doISOXML(uid)
-                        template_dict['isoxml'] = cf.getISOXMLFromFile(uid)
-                        print(msg)
-                        if msg.find("Error") >= 0:
-                            template_dict['error'] = msg
-                            problem = True
-                        else:
-                            template_dict['message'].append(msg)
-
+                #     if not problem:
+                #         # generate ISO XML file and place in watch dir for geoportal.
+                #         print('Generating ISO XML file')
+                #         msg = cf.doISOXML(uid)
+                #         template_dict['isoxml'] = cf.getISOXMLFromFile(uid)
+                #         print(msg)
+                #         if msg.find("Error") >= 0:
+                #             template_dict['error'] = msg
+                #             problem = True
+                #         else:
+                #             template_dict['message'].append(msg)
+                
                 # save updates to the readme file
                 elif request.form.get('submit') == "save_readme":
                     template_dict.update(request.form.to_dict())
@@ -2685,8 +2685,9 @@ def curator():
                 elif request.form.get('submit') == "save_isoxml":
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "isoxml"
+                    dc_uid = template_dict['dc_uid']
                     xml_str = request.form.get('isoxml').encode('utf-8')
-                    isoxml_file = cf.getISOXMLFileName(uid)
+                    isoxml_file = cf.getISOXMLFileName(dc_uid)
                     try:
                         with open(isoxml_file, 'w') as out_file:
                             out_file.write(xml_str)
@@ -2700,10 +2701,22 @@ def curator():
                 elif request.form.get('submit') == "generate_isoxml":
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "isoxml"
-                    isoxml = cf.getISOXMLFromFile(uid)
+                    isoxml = cf.getISOXMLFromFile(uid, update=True)
                     if isoxml.find("Error") >= 0:
                         template_dict['error'] = "Error: Unable to generate ISO XML."
                     template_dict['isoxml'] = isoxml
+                    template_dict['dc_uid'] = uid
+
+                # update ISO XML for a replaced dataset
+                elif request.form.get('submit') == "update_replaced_isoxml":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "isoxml"
+                    old_uid = template_dict['replaced_dataset']
+                    isoxml = cf.getISOXMLFromFile(old_uid, update=True)
+                    if isoxml.find("Error") >= 0:
+                        template_dict['error'] = "Error: Unable to generate ISO XML."
+                    template_dict['isoxml'] = isoxml
+                    template_dict['dc_uid'] = old_uid
 
                 # Send email to creator and editor - for both datasets and projects
                 elif request.form.get('submit') == "send_email":

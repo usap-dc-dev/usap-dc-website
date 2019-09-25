@@ -89,7 +89,7 @@
       <div id="sqlTab", class="tabcontent">
         <h4>SQL for {{filename}}</h4>
         <button type="submit" name="submit" value="import_to_db" title="Import to DB and copy uploaded files" onclick="waitCursor()">Import to Database Only</button>
-        <button type="submit" name="submit" value="full_workflow" title="Import to DB, copy uploaded files, DataCite XML generation and DataCite submission, ISO XML generation and copying to watch dir." onclick="waitCursor()">Full Workflow</button>
+        <!-- <button type="submit" name="submit" value="full_workflow" title="Import to DB, copy uploaded files, DataCite XML generation and DataCite submission, ISO XML generation and copying to watch dir." onclick="waitCursor()">Full Workflow</button> -->
         <table>
         <tr>
            <td>
@@ -227,10 +227,14 @@
       </div>
 
       <div id="isoxmlTab", class="tabcontent">
-        <h4>ISO XML for {{uid}}</h4>
+        <h4>ISO XML for {{dc_uid}}</h4>
+        <input type="hidden" name="dcxml_file" value="{{dcxml_file}}">
         <input type="hidden" name="isoxml_file" value="{{isoxml_file}}">
         <button type="submit" name="submit" value="generate_isoxml" onclick="waitCursor()">Generate ISO XML from Datacite XML</button>
         <button type="submit" name="submit" value="save_isoxml" onclick="waitCursor()">Save in Watch Directory</button>
+        {%if replaced_dataset %}
+          <button type="submit" name="submit" value="update_replaced_isoxml" onclick="waitCursor()">Update ISO XML For Replaced Dataset {{replaced_dataset}}</button>
+        {% endif %}
         <table>
         <tr>
            <td>
@@ -424,7 +428,7 @@
             </thead>
 
             {% for sub in submissions %}
-                <tr {% if sub['status'] != 'Completed' %} style="font-weight: bold" {% endif %}>
+                <tr {% if sub['status'] != 'Completed' and sub['status'] != 'Edit completed'%} style="font-weight: bold" {% endif %}>
                     <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub.id}} </a></td>
                     <td>{{sub.date}}</td>
                     <td>{{sub.status}}</td>

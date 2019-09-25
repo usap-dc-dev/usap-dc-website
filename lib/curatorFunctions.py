@@ -171,10 +171,11 @@ def getDCXMLFileName(uid):
     return os.path.join(DCXML_FOLDER, uid)
 
 
-def getISOXMLFromFile(uid):
+def getISOXMLFromFile(uid, update=False):
     isoxml_file = getISOXMLFileName(uid)
     # check if datacite xml file already exists
-    if not os.path.exists(isoxml_file):
+    # if not, or if updating, run doISOXML to generate 
+    if not os.path.exists(isoxml_file) or update:
         msg = doISOXML(uid)
         if msg.find("Error") >= 0:
             return msg
@@ -1717,5 +1718,6 @@ def getReplacedDataset(uid):
     query = "SELECT replaces FROM dataset WHERE id = '%s';" % uid
     cur.execute(query)
     res = cur.fetchone()
-    return res['replaces']
-
+    if res:
+        return res['replaces']
+    return None

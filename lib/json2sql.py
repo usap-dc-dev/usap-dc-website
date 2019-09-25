@@ -110,11 +110,18 @@ def make_sql(data, id):
         query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["name"]
         cur.execute(query)
         res = cur.fetchone()
-        print(res)
         if res['count'] == 0:
             line = "INSERT INTO person(id,email,id_orcid) VALUES ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
             sql_out += line
     
+    # if this is a replacement dataset, increment the version number from the previous dataset
+    if data.get('related_dataset'):
+        query = "SELECT version::integer FROM dataset WHERE id = '%s';" % data['related_dataset']
+        cur.execute(query)
+        version = cur.fetchone()['version'] + 1
+    else:
+        version = 1
+
     sql_out += '\n--NOTE: submitter_id = JSON "name"\n'
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
@@ -128,7 +135,7 @@ def make_sql(data, id):
                     '; '.join(person_ids), 
                     release_date, 
                     data["abstract"], 
-                    '1', 
+                    version, 
                     url, 
                     'usap-dc', 
                     'English',
