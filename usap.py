@@ -418,7 +418,7 @@ def get_programs(conn=None, cur=None):
 def get_projects(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT * FROM initiative'
+    query = 'SELECT * FROM initiative ORDER BY ID'
     cur.execute(query)
     return cur.fetchall()
 
@@ -921,7 +921,7 @@ def not_found():
 
 
 def check_project_registration(msg_data):
-    # MOSTLY REDUNDANT - All checking done in HTML template, except for valid email address
+
     def default_func(field):
         return lambda data: field in data and bool(data[field])
 
@@ -933,7 +933,7 @@ def check_project_registration(msg_data):
         Validator(func=default_func("title"), msg="You must provide a title for the project"),
         Validator(func=default_func("pi_name_first"), msg="You must provide the PI's first name for the project"),
         Validator(func=default_func("pi_name_last"), msg="You must provide the PI's last name for the project"),
-        Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
+        # Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
         Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
         Validator(func=default_func('start'), msg='You must include a start date for the project'),
         Validator(func=default_func('end'), msg='You must include an end date for the project'),
@@ -1173,6 +1173,8 @@ def project(project_id=None):
     edit = False
     template = False 
     template_id = None
+    success = ""
+    error = ""
     if not project_id:
         project_id = request.form.get('project_id')
         template_id = request.args.get('template_id')
@@ -1193,224 +1195,130 @@ def project(project_id=None):
             return redirect(url_for('invalid_project_user', project_id=project_id))
 
     if request.method == 'POST':
-        msg_data = dict()
-        msg_data['name'] = session['user_info']['name']
-        if 'orcid' in session['user_info']:
-            msg_data['orcid'] = session['user_info']['orcid']
-        # if 'email' in session['user_info']:
-        #     msg_data['email'] = session['user_info']['email']
-        msg_data.update(request.form.to_dict())
-        del msg_data['entry']
-        if msg_data.get('entire_region') is not None:
-            del msg_data['entire_region']
+        if request.form.get('action') == 'Submit':
+            msg_data = process_form_data(request.form.to_dict())
 
-        # handle user added awards
-        if msg_data['award'] == 'Not In This List':
-            msg_data['award'] = "Not_In_This_List:" + msg_data.get('user_award')
-            del msg_data['user_award']
+            timestamp = format_time()
+            msg_data['timestamp'] = timestamp
 
-        # handle multiple parameters, awards, co-authors, etc
-        parameters = []
-        idx = 1
-        key = 'parameter1'
-        while key in msg_data:
-            if msg_data[key] != "":
-                parameters.append(msg_data[key])
-            del msg_data[key]
-            idx += 1
-            key = 'parameter' + str(idx)
-        msg_data['parameters'] = parameters
+            msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
+            check_project_registration(msg_data)
 
-        other_awards = []
-        idx = 1
-        key = 'award1'
-        while key in msg_data:
-            user_award_key = 'user_award' + str(idx)
-            if msg_data[key] != "":
-                if msg_data[key] == 'Not In This List':
-                    msg_data[key] = "Not_In_This_List:" + msg_data[user_award_key]
-                other_awards.append(msg_data[key])
-            del msg_data[key]
-            del msg_data[user_award_key]
-            idx += 1
-            key = 'award' + str(idx)
-       
-        msg_data['other_awards'] = other_awards
+            # get the data management plan and save it in the upload folder
+            dmp = request.files.get('dmp')
+            if dmp:
+                dmp_fname = secure_filename(dmp.filename)
+                msg_data['dmp_file'] = dmp_fname
 
-        copis = []
-        idx = 0
-        key = 'copi_name_last'
-        while key in msg_data:
-            if msg_data[key] != "":
-                copi = {'name_last': msg_data[key],
-                        'name_first': msg_data.get(key.replace('last', 'first')),
-                        'role': msg_data.get(key.replace('name_last', 'role')),
-                        'org': msg_data.get(key.replace('name_last', 'org'))
-                        }
-                copis.append(copi)
-            del msg_data[key]
-            if msg_data.get(key.replace('last', 'first')): 
-                del msg_data[key.replace('last', 'first')]
-            if msg_data.get(key.replace('name_last', 'role')): 
-                del msg_data[key.replace('name_last', 'role')] 
-            if msg_data.get(key.replace('name_last', 'org')): 
-                del msg_data[key.replace('name_last', 'org')]
-            idx += 1
-            key = 'copi_name_last' + str(idx)
-        msg_data['copis'] = copis
+                upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
+                msg_data['upload_directory'] = upload_dir
+                if not os.path.exists(upload_dir):
+                    os.makedirs(upload_dir)
 
-        if msg_data.get('program'):
-            msg_data['program'] = json.loads(msg_data['program'].replace("\'", "\""))
+                dmp.save(os.path.join(upload_dir, dmp_fname))
+            elif msg_data.get('current_dmp'):
+                msg_data['dmp_file'] = msg_data['current_dmp']
+                del msg_data['current_dmp']
 
-        websites = []
-        idx = 0
-        key = 'website_url'
-        while key in msg_data:
-            if msg_data[key] != "":
-                website = {'url': msg_data[key], 'title': msg_data.get(key.replace('url', 'title'))}
-                websites.append(website)
-            del msg_data[key]
-            if msg_data.get(key.replace('url', 'title')): 
-                del msg_data[key.replace('url', 'title')]
-            idx += 1
-            key = 'website_url' + str(idx)
-        msg_data['websites'] = websites
+            # save json file in submitted dir
+            submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+            if edit:
+                submitted_file = os.path.join(submitted_dir, "e" + project_id + ".json")
+            else:
+                # get next_id for project
+                next_id = getNextProjectRef()
+                updateNextProjectRef()
+                submitted_file = os.path.join(submitted_dir, next_id + ".json")
+            with open(submitted_file, 'w') as file:
+                file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+            os.chmod(submitted_file, 0o664)
 
-        deployments = []
-        idx = 0
-        key = 'deployment_name'
-        while key in msg_data:
-            if msg_data[key] != "":
-                depl = {'name': msg_data[key], 'type': msg_data.get(key.replace('name', 'type')), 'url': msg_data.get(key.replace('name', 'url'))}
-                deployments.append(depl)
-            del msg_data[key]
-            if msg_data.get(key.replace('name', 'type')):
-                del msg_data[key.replace('name', 'type')]
-            if msg_data.get(key.replace('name', 'url')):
-                del msg_data[key.replace('name', 'url')] 
-            idx += 1
-            key = 'deployment_name' + str(idx)
-        msg_data['deployments'] = deployments
+            # email RT queue
+            if edit:
+                message = "Project Edit.\n\nProject JSON: %scurator?uid=e%s\n" \
+                    % (request.url_root, project_id)
+            else:
+                message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
+                    % (request.url_root, next_id)
+            msg = MIMEText(message)
 
-        publications = []
-        idx = 0
-        key = 'publication'
-        while key in msg_data:
-            if msg_data[key] != "":
-                pub = {'name': msg_data[key], 'doi': msg_data.get(key.replace('publication', 'pub_doi'))}
-                publications.append(pub)
-            del msg_data[key]
-            if msg_data.get(key.replace('publication', 'pub_doi')): 
-                del msg_data[key.replace('publication', 'pub_doi')]
-            idx += 1
-            key = 'publication' + str(idx)
-        msg_data['publications'] = publications
+            sender = msg_data.get('email')
+            recipients = ['info@usap-dc.org']
 
-        locations = []
-        idx = 1
-        key = 'location1'
-        while key in msg_data:
-            if msg_data[key] != "":
-                locations.append(msg_data[key])
-            del msg_data[key]
-            idx += 1
-            key = 'location' + str(idx)
-        msg_data['locations'] = locations
+            if edit:
+                msg['Subject'] = 'USAP-DC Project Edit'
+            else: 
+                msg['Subject'] = 'USAP-DC Project Submission'
+            msg['From'] = sender
+            msg['To'] = ', '.join(recipients)
 
-        datasets = []
-        idx = 0
-        key = 'ds_repo'
-        while key in msg_data:
-            if msg_data[key] != "":
-                repo = {'repository': msg_data[key],
-                        'title': msg_data.get(key.replace('repo', 'title')),
-                        'url': msg_data.get(key.replace('repo', 'url')),
-                        'doi': msg_data.get(key.replace('repo', 'doi'))}
-                datasets.append(repo)
-            del msg_data[key] 
-            if msg_data.get(key.replace('repo', 'title')):
-                del msg_data[key.replace('repo', 'title')]
-            if msg_data.get(key.replace('repo', 'url')):
-                del msg_data[key.replace('repo', 'url')]
-            if msg_data.get(key.replace('repo', 'doi')):
-                del msg_data[key.replace('repo', 'doi')]
-            idx += 1
-            key = 'ds_repo' + str(idx)
-        msg_data['datasets'] = datasets
+            smtp_details = config['SMTP']
+            
+            s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
+            # identify ourselves to smtp client
+            s.ehlo()
+            # secure our email with tls encryption
+            s.starttls()
+            # re-identify ourselves as an encrypted connection
+            s.ehlo()
+            s.login(smtp_details["USER"], smtp_details["PASSWORD"])
+            # s.sendmail(sender, recipients, msg.as_string())
+            s.quit()
+            
+            return redirect('thank_you/project')
 
-        cross_dateline = False
-        if msg_data.get('cross_dateline') == 'on':
-            cross_dateline = True
-        msg_data['cross_dateline'] = cross_dateline
+        elif request.form.get('action') == "save":
 
-        timestamp = format_time()
-        msg_data['timestamp'] = timestamp
+            project_metadata = process_form_data(request.form.to_dict())
+            
+            full_name = {'first_name': '', 'last_name': ''}
+            if project_metadata.get('pi_name_first') and project_metadata.get('pi_name_last'):
+                full_name = {'first_name': project_metadata['pi_name_first'], 'last_name': project_metadata['pi_name_last']}
 
-        msg = MIMEText(json.dumps(msg_data, indent=4, sort_keys=True))
-        check_project_registration(msg_data)
+            # save to file
+            if user_info.get('orcid'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
+            elif user_info.get('id'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+            else:
+                error = "Unable to save project."
+            if save_file:
+                try:
+                    with open(save_file, 'w') as file:
+                        file.write(json.dumps(project_metadata, indent=4, sort_keys=True))
+                    success = "Saved project form"
+                except Exception as e:
+                    error = "Unable to project dataset."
+            return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
+                                   nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
+                                   locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
+                                   project_metadata=project_metadata, edit=edit, error=error, success=success)
 
-        # get the data management plan and save it in the upload folder
-        dmp = request.files.get('dmp')
-        if dmp:
-            dmp_fname = secure_filename(dmp.filename)
-            msg_data['dmp_file'] = dmp_fname
+        elif request.form.get('action') == "restore":
+            # restore from file
+            if user_info.get('orcid'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
+            elif user_info.get('id'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+            else:
+                error = "Unable to restore dataset"
+            if saved_file:
+                try:
+                    with open(saved_file, 'r') as file:
+                        project_metadata = json.load(file)
 
-            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
-            msg_data['upload_directory'] = upload_dir
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir)
-
-            dmp.save(os.path.join(upload_dir, dmp_fname))
-        elif msg_data.get('current_dmp'):
-            msg_data['dmp_file'] = msg_data['current_dmp']
-            del msg_data['current_dmp']
-
-        # save json file in submitted dir
-        submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-        if edit:
-            submitted_file = os.path.join(submitted_dir, "e" + project_id + ".json")
-        else:
-            # get next_id for project
-            next_id = getNextProjectRef()
-            updateNextProjectRef()
-            submitted_file = os.path.join(submitted_dir, next_id + ".json")
-        with open(submitted_file, 'w') as file:
-            file.write(json.dumps(msg_data, indent=4, sort_keys=True))
-        os.chmod(submitted_file, 0o664)
-
-        # email RT queue
-        if edit:
-            message = "Project Edit.\n\nProject JSON: %scurator?uid=e%s\n" \
-                % (request.url_root, project_id)
-        else:
-            message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
-                % (request.url_root, next_id)
-        msg = MIMEText(message)
-
-        sender = msg_data.get('email')
-        recipients = ['info@usap-dc.org']
-
-        if edit:
-            msg['Subject'] = 'USAP-DC Project Edit'
-        else: 
-            msg['Subject'] = 'USAP-DC Project Submission'
-        msg['From'] = sender
-        msg['To'] = ', '.join(recipients)
-
-        smtp_details = config['SMTP']
-        
-        s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
-        # identify ourselves to smtp client
-        s.ehlo()
-        # secure our email with tls encryption
-        s.starttls()
-        # re-identify ourselves as an encrypted connection
-        s.ehlo()
-        s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-        s.sendmail(sender, recipients, msg.as_string())
-        s.quit()
-        
-        return redirect('thank_you/project')
+                    full_name = {'first_name': '', 'last_name': ''}
+                    if project_metadata.get('pi_name_first') and project_metadata.get('pi_name_last'):
+                        full_name = {'first_name': project_metadata['pi_name_first'], 'last_name': project_metadata['pi_name_last']}
+                    success = "Restored project form"
+                except Exception as e:
+                    error = "Unable to restore dataset."
+            else:
+                error = "Unable to restore dataset."
+            return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
+                                   nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
+                                   locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
+                                   project_metadata=project_metadata, edit=edit, error=error, success=success)
 
     else:       
         session['project_metadata'] = {}
@@ -1447,14 +1355,165 @@ def project(project_id=None):
         if form_data.get('email'):
             email = form_data['email']
 
-        (conn, cur) = connect_to_db()
-        q = "SELECT id FROM initiative ORDER BY id;"
-        cur.execute(q)
-        programs = cur.fetchall()
-        return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=programs, persons=get_persons(),
+        return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=get_projects(), persons=get_persons(),
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
                                locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                project_metadata=session.get('project_metadata'), edit=edit)
+
+
+def process_form_data(form):
+    msg_data = dict()
+    msg_data['name'] = session['user_info']['name']
+    if 'orcid' in session['user_info']:
+        msg_data['orcid'] = session['user_info']['orcid']
+    # if 'email' in session['user_info']:
+    #     msg_data['email'] = session['user_info']['email']
+    msg_data.update(form)
+    if msg_data.get('entry'):
+        del msg_data['entry']
+    if msg_data.get('entire_region') is not None:
+        del msg_data['entire_region']
+
+    # handle user added awards
+    if msg_data['award'] == 'Not In This List':
+        msg_data['award'] = "Not_In_This_List:" + msg_data.get('user_award')
+        del msg_data['user_award']
+
+    # handle multiple parameters, awards, co-authors, etc
+    parameters = []
+    idx = 1
+    key = 'parameter1'
+    while key in msg_data:
+        if msg_data[key] != "":
+            parameters.append(msg_data[key])
+        del msg_data[key]
+        idx += 1
+        key = 'parameter' + str(idx)
+    msg_data['parameters'] = parameters
+
+    other_awards = []
+    idx = 1
+    key = 'award1'
+    while key in msg_data:
+        user_award_key = 'user_award' + str(idx)
+        if msg_data[key] != "":
+            if msg_data[key] == 'Not In This List':
+                msg_data[key] = "Not_In_This_List:" + msg_data[user_award_key]
+            other_awards.append(msg_data[key])
+        del msg_data[key]
+        del msg_data[user_award_key]
+        idx += 1
+        key = 'award' + str(idx)
+   
+    msg_data['other_awards'] = other_awards
+
+    copis = []
+    idx = 0
+    key = 'copi_name_last'
+    while key in msg_data:
+        if msg_data[key] != "":
+            copi = {'name_last': msg_data[key],
+                    'name_first': msg_data.get(key.replace('last', 'first')),
+                    'role': msg_data.get(key.replace('name_last', 'role')),
+                    'org': msg_data.get(key.replace('name_last', 'org'))
+                    }
+            copis.append(copi)
+        del msg_data[key]
+        if msg_data.get(key.replace('last', 'first')): 
+            del msg_data[key.replace('last', 'first')]
+        if msg_data.get(key.replace('name_last', 'role')): 
+            del msg_data[key.replace('name_last', 'role')] 
+        if msg_data.get(key.replace('name_last', 'org')): 
+            del msg_data[key.replace('name_last', 'org')]
+        idx += 1
+        key = 'copi_name_last' + str(idx)
+    msg_data['copis'] = copis
+
+    if msg_data.get('program'):
+        msg_data['program'] = json.loads(msg_data['program'].replace("\'", "\""))
+
+    websites = []
+    idx = 0
+    key = 'website_url'
+    while key in msg_data:
+        if msg_data[key] != "":
+            website = {'url': msg_data[key], 'title': msg_data.get(key.replace('url', 'title'))}
+            websites.append(website)
+        del msg_data[key]
+        if msg_data.get(key.replace('url', 'title')): 
+            del msg_data[key.replace('url', 'title')]
+        idx += 1
+        key = 'website_url' + str(idx)
+    msg_data['websites'] = websites
+
+    deployments = []
+    idx = 0
+    key = 'deployment_name'
+    while key in msg_data:
+        if msg_data[key] != "":
+            depl = {'name': msg_data[key], 'type': msg_data.get(key.replace('name', 'type')), 'url': msg_data.get(key.replace('name', 'url'))}
+            deployments.append(depl)
+        del msg_data[key]
+        if msg_data.get(key.replace('name', 'type')):
+            del msg_data[key.replace('name', 'type')]
+        if msg_data.get(key.replace('name', 'url')):
+            del msg_data[key.replace('name', 'url')] 
+        idx += 1
+        key = 'deployment_name' + str(idx)
+    msg_data['deployments'] = deployments
+
+    publications = []
+    idx = 0
+    key = 'publication'
+    while key in msg_data:
+        if msg_data[key] != "":
+            pub = {'name': msg_data[key], 'doi': msg_data.get(key.replace('publication', 'pub_doi'))}
+            publications.append(pub)
+        del msg_data[key]
+        if msg_data.get(key.replace('publication', 'pub_doi')): 
+            del msg_data[key.replace('publication', 'pub_doi')]
+        idx += 1
+        key = 'publication' + str(idx)
+    msg_data['publications'] = publications
+
+    locations = []
+    idx = 1
+    key = 'location1'
+    while key in msg_data:
+        if msg_data[key] != "":
+            locations.append(msg_data[key])
+        del msg_data[key]
+        idx += 1
+        key = 'location' + str(idx)
+    msg_data['locations'] = locations
+
+    datasets = []
+    idx = 0
+    key = 'ds_repo'
+    while key in msg_data:
+        if msg_data[key] != "":
+            repo = {'repository': msg_data[key],
+                    'title': msg_data.get(key.replace('repo', 'title')),
+                    'url': msg_data.get(key.replace('repo', 'url')),
+                    'doi': msg_data.get(key.replace('repo', 'doi'))}
+            datasets.append(repo)
+        del msg_data[key] 
+        if msg_data.get(key.replace('repo', 'title')):
+            del msg_data[key.replace('repo', 'title')]
+        if msg_data.get(key.replace('repo', 'url')):
+            del msg_data[key.replace('repo', 'url')]
+        if msg_data.get(key.replace('repo', 'doi')):
+            del msg_data[key.replace('repo', 'doi')]
+        idx += 1
+        key = 'ds_repo' + str(idx)
+    msg_data['datasets'] = datasets
+
+    cross_dateline = False
+    if msg_data.get('cross_dateline') == 'on':
+        cross_dateline = True
+    msg_data['cross_dateline'] = cross_dateline
+
+    return msg_data
 
 
 # get project data from DB and convert to json that can be displayed in the Register/Edit Project page
@@ -1658,7 +1717,8 @@ def home():
     with open("inc/recent_news.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
-            if row[0] == "#" or len(row) < 2: continue
+            if row[0] == "#" or len(row) < 2:
+                continue
             news_dict.append({"date": row[0], "news": row[1]})
         template_dict['news_dict'] = news_dict
     # read in recent data
@@ -1666,7 +1726,8 @@ def home():
     with open("inc/recent_data.txt") as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
-            if row[0] == "#" or len(row) < 4: continue
+            if row[0] == "#" or len(row) < 4: 
+                continue
             data_dict.append({"date": row[0], "link": row[1], "authors": row[2], "title": row[3]})
         template_dict['data_dict'] = data_dict
 

@@ -21,14 +21,34 @@
       {% include 'sidebar.html' %}
       
       <div id="main-content" class="col-xs-9">
-        <h2 style="float:left;" class="title">{% if edit %}Edit{% else %}Register{% endif %} Your Project</h2>
-        <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
-        <div style="clear:both"></div>
-        <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
+        {% if success|length > 0 %}
+        <div class="alert alert-success" style="width:800;">
+          <h4>{{success}}</h4>
+        </div>
+        {% endif %}
+        {% if error|length > 0 %}
+        <div class="alert alert-danger" style="width:800;">
+          <h4>{{error}}</h4>
+        </div>
+        {% endif %}
 
         <form method="post" action="/submit/project" method="POST" enctype="multipart/form-data" name="entry" id="entry" onLoad=reset()>
           <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
           <input class="form-control" type="hidden" name="project_id" value="{{project_metadata.project_id}}"/>
+
+          <h2 style="float:left;" class="title">{% if edit %}Edit{% else %}Register{% endif %} Your Project</h2>
+
+          <div style="float:right; margin-top: 1.44em;">
+            <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
+            <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
+            <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+          </div>
+
+          <!-- <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a> -->
+          <div style="clear:both"></div>
+          <span class="required" style="font-family: Georiga,'Times New Roman',Times,serif; color: #002783; float: right"> indicates a required field</span>
+
+
           <div class="form-group">
             <b>Main Award (from NSF FastLane database)</b>
             <div class="awardTemplate">
@@ -60,7 +80,7 @@
       
           <div class="form-group required">
             <b>Title:</b><br>
-            <textarea required class="form-control" name="title" id="title" rows="2" {% if edit %} readonly {% endif %}>{{project_metadata.get('title','')}}</textarea>
+            <textarea class="form-control" name="title" id="title" rows="2" {% if edit %} readonly {% endif %}>{{project_metadata.get('title','')}}</textarea>
           </div>
 
           <div class="form-group">
@@ -70,9 +90,9 @@
           <div class="form-group required" style="margin:10px 0 10px 0">
             <b>Main Contact:</b><br>
             <div class="input-group">
-              <input required class="input-sm form-control" type="text" size=8 id="pi_name_last" name="pi_name_last" value="{{full_name.last_name}}" placeholder="Last Name" /> 
-              <span  class="input-group-addon">,</span>
-              <input required class="input-sm form-control" type="text" size=8 id="pi_name_first" name="pi_name_first" value="{{full_name.first_name}}" placeholder="First Name" />
+              <input class="input-sm form-control" type="text" size=8 id="pi_name_last" name="pi_name_last" value="{{full_name.last_name}}" placeholder="Last Name" /> 
+              <span class="input-group-addon">,</span>
+              <input class="input-sm form-control" type="text" size=8 id="pi_name_first" name="pi_name_first" value="{{full_name.first_name}}" placeholder="First Name" />
             </div>
           </div>
 
@@ -85,7 +105,7 @@
    
           <div class="form-group required">
             <b>Email:</b><br>
-            <input class="form-control" type="text" name="email" id="email" value="{{email}}" required>
+            <input class="form-control" type="text" name="email" id="email" value="{{email}}" >
           </div>
 
 
@@ -139,9 +159,9 @@
               <th class="required">End Date:</th>
             </tr>
             <tr>
-              <td><input required type="date" name="start" id="start" size="20" value="{{project_metadata.get('start','')}}"></td>
+              <td><input  type="date" name="start" id="start" size="20" value="{{project_metadata.get('start','')}}"></td>
               <td></td>
-              <td><input required type="date" name="end" id="end" size="20" value="{{project_metadata.get('end','')}}"></td>
+              <td><input  type="date" name="end" id="end" size="20" value="{{project_metadata.get('end','')}}"></td>
             </tr>
           </table>
 
@@ -222,13 +242,13 @@
 
           <b class="required">Abstract:</b> <br>
           <i>(Please modify the original NSF award abstract to better describe the project results, if applicable)</i><br>
-          <textarea required name="sum" id="sum" rows="10" cols="80" {% if edit %} readonly {% endif %}>{{project_metadata.sum}}</textarea>
+          <textarea name="sum" id="sum" rows="10" cols="80" {% if edit %} readonly {% endif %}>{{project_metadata.sum}}</textarea>
 
           <br><br>
           <div class="form-group required">
             <b>Location(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
             <div id="locations">
-              <select required name="location1" id="location1" style="width:40em;margin-bottom: 3px">
+              <select name="location1" id="location1" style="width:40em;margin-bottom: 3px">
                 <option value="">(Select Term 1)</option>
                 {% for k in locations %}
                 <option value="{{k.id}}">{{k.id}}</option>
@@ -246,7 +266,7 @@
         <div class="form-group required">
           <b>GCMD Keyword(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
           <div id="parameters">
-            <select required name="parameter1" id="parameter1" style="width:40em;margin-bottom: 3px">
+            <select name="parameter1" id="parameter1" style="width:40em;margin-bottom: 3px">
               <option value="">(Select Term 1)</option>
               {% for k in parameters %}
                 <option value="{{k.id}}">{{k.id}}</option>
@@ -340,10 +360,11 @@
         <br><br> -->
 
         <b>Other comments relevant for data submission:</b><br>
-        <textarea name="other_comments" rows="3" cols="80"></textarea><br>
+        <textarea name="other_comments" rows="3" cols="80">{{project_metadata.other_comments}}</textarea><br>
         <br>
 
-        <button value="Submit" name="entry">Submit</button>
+        <button name="action" value="Submit">Submit</button>
+        <button type="submit" name="action" value="save">Save current session</button>
       </form>
 
     </div>
