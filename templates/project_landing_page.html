@@ -9,7 +9,10 @@
 <div id="metadata">
   <div class="header">
     Project Information
-    <div style="float:right"><button class="download" onclick="window.location.href = '/edit/project/{{data.proj_uid}}'";>Edit</button></div>
+    <div style="float:right">
+      <button class="download" onclick="location.href='mailto: info@usap-dc.org?subject=Reporting Issue with project {{data.proj_uid}}'">Report Issue</button>
+      <button class="download" onclick="window.location.href = '/edit/project/{{data.proj_uid}}'";>Edit</button>
+    </div>
   </div>
 
   <table class="borderless-table">
