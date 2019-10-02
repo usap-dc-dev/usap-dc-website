@@ -2,11 +2,16 @@
 {% set cur = "dashboard" %}
 {% block body %}
 <h2>User Dashboard{% if user_info.name %}: {{user_info.name}} {% endif %} <a name="top"></a></h2>
- <div id='dif-browser-table'>
-    <table class='sortable' preserve_style='row'>
 
+{% if not projects and not datasets and not awards %}
+  <h3>No projects, datasets or awards are currently linked to this account</h3>
+{% endif %}
+
+{% if projects %}
+  <h3>Projects</h3>
+  <div id='dif-browser-table'>
+    <table class='sortable' preserve_style='row'> 
       <tr>
-        <th style="width:6em;">Record Type</th>
         <th style="width:30em;">Title</th>
         <th style="width:6em;">Date Created</th>
         <th style="width:6em;">Last Modified</th>
@@ -15,34 +20,58 @@
 
       {% for p in projects %}
         <tr class='w3-border'>
-          <td>Project</td>
           <td>{{p.title}}</td>
           <td>{{p.date_created}}</td>
           <td>{{p.date_modified}}</td>
           <td><a href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">View</a> / <a href="{{url_for('project', project_id=p.proj_uid)}}">Edit</a> / <a href="{{url_for('project', template_id=p.proj_uid)}}">Create New Submission From This One</a></td>
         </tr>
       {% endfor %}
+    </table>
+  </div>
+{% endif %}
 
+{% if datasets %}
+  <h3>Datasets</h3>
+  <div id='dif-browser-table'>
+    <table class='sortable' preserve_style='row'> 
+      <tr>
+        <th style="width:30em;">Title</th>
+        <th style="width:6em;">Date Created</th>
+        <th style="width:6em;">Last Modified</th>
+        <th style="width:17em;">Actions</th>
+      </tr>
       {% for d in datasets %}
         <tr class='w3-border'>
-          <td>Dataset</td>
           <td>{{d.title}}</td>
           <td>{{d.date_created}}</td>
           <td>{{d.date_modified}}</td>
           <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a> / <a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a> / <a href="{{url_for('dataset', template_id=d.id)}}">Create New Submission From This One</a></td>
         </tr>
       {% endfor %}
+    </table>
+  </div>
+{% endif %}
 
+{% if awards %}
+  <h3>Awards</h3>
+  <div id='dif-browser-table'>
+    <table class='sortable' preserve_style='row'> 
+      <tr>
+        <th style="width:6em;">Award ID</th>
+        <th style="width:30em;">Title</th>
+        <th style="width:6em;">Date Created</th>
+        <th style="width:17em;">Actions</th>
+      </tr>
       {% for a in awards|sort(attribute='date_created', reverse=True) %}
         <tr class='w3-border'>
-          <td>Award</td>
-          <td>{{a.award}}: {{a.title}}</td>
+          <td>{{a.award}}</td>
+          <td>{{a.title}}</td>
           <td>{{a.date_created}}</td>
-          <td></td>
           <td><a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{a.award}}">View</a></td>
         </tr>
       {% endfor %}
     </table>
   </div>
+{% endif %}
 
 {% endblock body %}
