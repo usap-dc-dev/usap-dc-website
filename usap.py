@@ -654,6 +654,7 @@ def dataset(dataset_id=None):
                 if 'dataset_metadata' not in session:
                     session['dataset_metadata'] = dict()
                 session['dataset_metadata']['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
+                session['dataset_metadata']['release_date'] = datetime.now().strftime('%Y-%m-%d')
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), 
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
@@ -670,7 +671,8 @@ def dataset_db2form(uid):
         'abstract': db_data.get('abstract'),
         'name': db_data.get('submitter_id'),
         'title': db_data.get('title'),
-        'filenames': []
+        'filenames': [],
+        'release_date': db_data.get('release_date')
     }
 
     form_data['authors'] = []
@@ -850,6 +852,11 @@ def invalid_user(dataset_id):
 @app.route('/invalid_project_user/<project_id>')
 def invalid_project_user(project_id):
     return render_template('invalid_project_user.html', project_id=project_id)
+
+
+@app.route('/data_on_hold/<release_date>')
+def data_on_hold(release_date):
+    return render_template('data_on_hold.html', release_date=release_date)
 
 
 Validator = namedtuple('Validator', ['func', 'msg'])
@@ -1262,7 +1269,7 @@ def project(project_id=None):
             # re-identify ourselves as an encrypted connection
             s.ehlo()
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-            # s.sendmail(sender, recipients, msg.as_string())
+            s.sendmail(sender, recipients, msg.as_string())
             s.quit()
             
             return redirect('thank_you/project')
@@ -2023,12 +2030,15 @@ def landing_page(dataset_id):
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
-    # print(metadata)
+   
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
     usap_domain = app.config['USAP_DOMAIN']
-    # print(url)
+    
+    # check for proprietary hold
+    metadata['hold'] = datetime.strptime(metadata['release_date'], '%Y-%m-%d') > datetime.utcnow()
+
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
         # print(directory)
@@ -2263,6 +2273,13 @@ def makeCitation(metadata, dataset_id):
 
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
+    dataset_id = filename.split('/')[1]
+    # test for proprietary hold
+    ds = get_datasets([dataset_id])[0]
+    hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
+    if hold:
+        return redirect(url_for('data_on_hold', release_date=ds['release_date'])) 
+
     directory = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'])
     return send_from_directory(directory, filename, as_attachment=True)
 
@@ -2467,7 +2484,8 @@ def curator():
                         cf.updateEditFile(uid)
 
                         template_dict['message'].append("Successfully imported to database")
-                        template_dict['message'].append("Remember to update DataCite and ISOXML records")
+                        if edit:
+                            template_dict['message'].append("Remember to update DataCite and ISOXML records")
                         data = json.loads(request.form.get('json'))
                         
                         template_dict['email_recipients'] = cf.getCreatorEmails(uid)

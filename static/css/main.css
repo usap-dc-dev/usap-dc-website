@@ -749,9 +749,10 @@ content area & common elements
   margin-bottom: 10px;
 }
 
-textarea[disabled], input[disabled], textarea[readonly], input[readonly]{
+textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[disabled]{
     background-color: #eee;
     opacity: 1;
+    cursor: default;
 }
 
 .autocomplete {

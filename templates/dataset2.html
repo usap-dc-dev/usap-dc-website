@@ -112,8 +112,12 @@
             <br/>
           </div>
 
-
-
+          <div class="input-daterange input-group" id="datepicker">
+            <b>Release Date</b>
+            <p>Change this date to put a proprietry hold on your data.</p>
+            <input type="text" class="input-sm form-control" name="release_date" value="{{dataset_metadata.get('release_date','')}}"/>
+          </div>
+          <br>
 
           <div class="required">
             <input type="checkbox" name="agree" {% if dataset_metadata.get('agree') %}checked{% endif %}> I agree these file(s) will be posted online with a DOI.
@@ -132,6 +136,12 @@
 
 <script type="text/javascript">
   $(document).ready(function() {
+
+    $('#datepicker').datepicker({
+      format: "yyyy-mm-dd",
+      startView: 2
+    });
+
     $('button.prev-button').click(function() {
       window.history.back();
     });

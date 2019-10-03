@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% set cur = "data_on_hold" %}
+{% block body %}
+
+<style type="text/css">
+ #main {
+     padding: 20px;
+ }
+
+ #sidebar-div {
+     margin-top: 20px;
+ }
+</style>
+
+<div class="wrapper">
+  <div id="main">
+    <h3 style="text-align: center">This file is currently under a proprietary hold until {{release_date}}.</h3>
+  </div>
+</div>
+
+{% endblock body %}

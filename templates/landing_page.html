@@ -6,7 +6,9 @@
 
   $(document).ready(function() {
     $('.download').click(function() {
-      window.open($(this).attr('data-url'), '_blank');
+      if ($(this).attr('data-url')) {
+        window.open($(this).attr('data-url'), '_blank');
+      }
     });
 
     // add schema.org json_ld for google searches
@@ -253,17 +255,26 @@
     <div class="header small">
       Data Files
     </div>
+
+    {% if data.hold %}
+      <div class="field">
+        <div class="lprow2">
+          These files are under a proprietary hold until {{data.release_date}}
+        </div>
+      </div>
+    {% endif %}
+
     <div id="file-rows">
 
       {% for f in data.files %}
       <div class="lprow2">
        <div class="col1">
-        <div class="download" data-url="{{f['url']}}">
-         {% if f['url'].startswith('http://www.usap-dc.org/') %}
-         Download
-         {% else %}
-         External
-         {% endif %}
+        <div class="download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" {% endif %}>
+          {% if f['url'].startswith('http://www.usap-dc.org/') %}
+            Download
+          {% else %}
+            External
+          {% endif %}
        </div>
      </div>
      <div class="col2">

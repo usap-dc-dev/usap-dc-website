@@ -74,7 +74,10 @@ def parse_json(data):
 
 def make_sql(data, id):
     # --- prepare some parameter
-    release_date = data["timestamp"][0:10]
+    if data.get('release_date'):
+        release_date = data['release_date']
+    else:
+        release_date = data["timestamp"][0:10]
     date_created = data["timestamp"][0:10]
 
     url = 'http://www.usap-dc.org/dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
@@ -373,17 +376,17 @@ def editDatasetJson2sql(data, uid):
 
     # update database with edited values
     sql_out = ""
-    sql_out += "START TRANSACTION;\n\n"
+    sql_out += "START TRANSACTION;\n"
     for k in updates:
         if k == 'abstract':
-            sql_out += "--NOTE: UPDATING ABSTRACT\n"
+            sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
             sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (data['abstract'], uid)
         
         if k == 'authors':
-            sql_out += "--NOTE: UPDATING AUTHORS\n"
+            sql_out += "\n--NOTE: UPDATING AUTHORS\n"
 
             # remove existing co-pis from project_person_map
-            sql_out += "--NOTE: First remove all existing authors from dataset_person_map\n"
+            sql_out += "\n--NOTE: First remove all existing authors from dataset_person_map\n"
             sql_out += "DELETE FROM dataset_person_map WHERE dataset_id = '%s' and person_id != '%s';\n" % (uid, data['name'])
             # make sure authors are in person table
             person_ids = []
@@ -408,27 +411,27 @@ def editDatasetJson2sql(data, uid):
             # add people back in to project_person_map
             for person_id in person_ids:
                 if person_id != data['name']:
-                    sql_out += "--NOTE: adding %s to dataset_person_map\n" % person_id
+                    sql_out += "\n--NOTE: adding %s to dataset_person_map\n" % person_id
                     sql_out += "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (uid, person_id)
 
             # update creator field in dataset table
-            sql_out += "--NOTE: updating creator field in dataset table\n"
+            sql_out += "\n--NOTE: updating creator field in dataset table\n"
             sql_out += "UPDATE dataset SET creator = '%s' WHERE id = '%s';\n" % ('; '.join(person_ids), uid)
 
         if k == 'awards':
-            sql_out += "--NOTE: UPDATING AWARDS\n"
+            sql_out += "\n--NOTE: UPDATING AWARDS\n"
 
             # remove existing awards from dataset_award_map
-            sql_out += "--NOTE: First remove existing awards from dataset_award_map\n"
+            sql_out += "\n--NOTE: First remove existing awards from dataset_award_map\n"
             sql_out += "DELETE FROM dataset_award_map WHERE dataset_id = '%s';\n" % (uid)
-            sql_out += "--NOTE: Then remove dataset from project_dataset_map\n"
+            sql_out += "\n--NOTE: Then remove dataset from project_dataset_map\n"
             sql_out += "DELETE FROM project_dataset_map WHERE dataset_id = '%s';\n" % (uid)
 
             for award in data['awards_num']:
                 if award == 'None':
-                    sql_out += "--NOTE: NO AWARD SUBMITTED\n"
+                    sql_out += "\n--NOTE: NO AWARD SUBMITTED\n"
                 elif award == "Not In This List":
-                    sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+                    sql_out += "\n--NOTE: AWARD NOT IN PROVIDED LIST\n"
                 else:
                     # check if this award is already in the award table
                     query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
@@ -436,11 +439,11 @@ def editDatasetJson2sql(data, uid):
                     res = cur.fetchone()
                     if res['count'] == 0:
                         # Add award to award table
-                        sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                        sql_out += "\n--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
                         sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
-                        sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
+                        sql_out += "\n--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
                    
-                    sql_out += "--NOTE: add award %s to dataset_award_map\n" % award
+                    sql_out += "\n--NOTE: add award %s to dataset_award_map\n" % award
                     sql_out += "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (uid, award)
 
                     # look up award to see if already mapped to a program
@@ -474,13 +477,13 @@ def editDatasetJson2sql(data, uid):
                             sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), uid)   
 
         if k == 'content':
-            sql_out += "--NOTE: UPDATING DATA CONTENT DESCRIPTION IN README FILE\n"
+            sql_out += "\n--NOTE: UPDATING DATA CONTENT DESCRIPTION IN README FILE\n"
 
         if k == 'data_processing':
-            sql_out += "--NOTE: UPDATING DATA PROCESSING DESCRIPTION IN README FILE\n"
+            sql_out += "\n--NOTE: UPDATING DATA PROCESSING DESCRIPTION IN README FILE\n"
 
         if k == 'devices':
-            sql_out += "--NOTE: UPDATING INSTRUMENTS AND DEVICES DESCRIPTION IN README FILE\n"
+            sql_out += "\n--NOTE: UPDATING INSTRUMENTS AND DEVICES DESCRIPTION IN README FILE\n"
 
         if k == 'email':
             # first check if first author is already in person DB table - if not, email will get added when authors are updated elsewhere in the code
@@ -488,7 +491,7 @@ def editDatasetJson2sql(data, uid):
             cur.execute(query)
             res = cur.fetchone()
             if res['count'] > 0:
-                sql_out += "--NOTE: UPDATING EMAIL ADDRESS\n"
+                sql_out += "\n--NOTE: UPDATING EMAIL ADDRESS\n"
                 sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], pi_id)
         
         if k == 'feature_name':
@@ -497,11 +500,11 @@ def editDatasetJson2sql(data, uid):
             pass
 
         if k == 'issues':
-            sql_out += "--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"
+            sql_out += "\n--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"
 
         if k == 'name':
             if data["name"] != '':
-                sql_out += "--NOTE: UPDATING SUBMITTER\n"
+                sql_out += "\n--NOTE: UPDATING SUBMITTER\n"
 
                 # This will probably never be needed as the submitter would need to be in the DB to have permission to edit.
                 # But just in case!
@@ -521,34 +524,34 @@ def editDatasetJson2sql(data, uid):
                 sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (data['name'], uid)
 
         if k == 'orcid':
-            sql_out += "--NOTE: UPDATING ORCID FOR SUBMITTER\n"
+            sql_out += "\n--NOTE: UPDATING ORCID FOR SUBMITTER\n"
             sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['orcid'], data['name'])
 
         if k == 'procedures':
-            sql_out += "--NOTE: UPDATING ACQUISITION PROCEDURES DESCRIPTION IN README FILE\n"
+            sql_out += "\n--NOTE: UPDATING ACQUISITION PROCEDURES DESCRIPTION IN README FILE\n"
 
         if k == 'project': 
-            sql_out += "--NOTE: UPDATING INITIATIVE\n"
+            sql_out += "\n--NOTE: UPDATING INITIATIVE\n"
 
             # remove existing initiative from project_award_map
-            sql_out += "--NOTE: First remove existing initiatives from dataset_initiative_map\n"
+            sql_out += "\n--NOTE: First remove existing initiatives from dataset_initiative_map\n"
             sql_out += "DELETE FROM dataset_initiative_map WHERE dataset_id = '%s';\n" % (uid)
 
             if data.get('project') is not None and data['project'] != "":
-                sql_out += "--NOTE: adding initiative to dataset_initiative_map\n"
+                sql_out += "\n--NOTE: adding initiative to dataset_initiative_map\n"
                 sql_out += "INSERT INTO dataset_initiative_map (dataset_id, initiative_id) VALUES ('%s', '%s');\n" % \
                     (uid, data['project'])
 
         if k == 'publications':
-            sql_out += "--NOTE: UPDATING PUBLICATIONS\n"
+            sql_out += "\n--NOTE: UPDATING PUBLICATIONS\n"
 
             # remove existing publications from dataset_reference_map
-            sql_out += "--NOTE: First remove all existing publications from dataset_reference_map\n"
+            sql_out += "\n--NOTE: First remove all existing publications from dataset_reference_map\n"
             sql_out += "DELETE FROM dataset_reference_map WHERE dataset_id = '%s';\n" % uid
             
             # Add references
             if data.get('publications') is not None and len(data['publications']) > 0:
-                sql_out += "--NOTE: adding references\n"
+                sql_out += "\n--NOTE: adding references\n"
 
                 #first find the highest ref_uid already in the table
                 query = "SELECT MAX(ref_uid) FROM reference;"
@@ -580,33 +583,37 @@ def editDatasetJson2sql(data, uid):
             # related fields not currently stored in DB or Readme file, so this will do nothing.
             # Update will just be stored in the new json file.
             pass
+        
+        if k == 'release_date':      
+            sql_out += "\n--NOTE: UPDATING RELEASE DATE\n"
+            sql_out += "UPDATE dataset SET release_date = '%s' WHERE id = '%s';\n" % (data['release_date'], uid)
 
         if k == 'spatial_extents':
-            sql_out += "--NOTE: UPDATING DATASET_SPATIAL_MAP\n"
+            sql_out += "\n--NOTE: UPDATING DATASET_SPATIAL_MAP\n"
             sql_out += updateSpatialMap(uid, data, False)
 
         if k == 'start':
-            sql_out += "--NOTE: UPDATING START DATE\n"
+            sql_out += "\n--NOTE: UPDATING START DATE\n"
             sql_out += "UPDATE dataset_temporal_map SET start_date = '%s' WHERE dataset_id = '%s';\n" % (data['start'], uid)
 
         if k == 'stop':
-            sql_out += "--NOTE: UPDATING STOP DATE\n"
+            sql_out += "\n--NOTE: UPDATING STOP DATE\n"
             sql_out += "UPDATE dataset_temporal_map SET stop_date = '%s' WHERE dataset_id = '%s';\n" % (data['stop'], uid)
 
         if k == 'title':      
-            sql_out += "--NOTE: UPDATING TITLE\n"
+            sql_out += "\n--NOTE: UPDATING TITLE\n"
             sql_out += "UPDATE dataset SET title = '%s' WHERE id = '%s';\n" % (data['title'], uid)
 
         if k == 'user_keywords': 
-            sql_out += "--NOTE: UPDATING USER KEYWORDS\n"
+            sql_out += "\n--NOTE: UPDATING USER KEYWORDS\n"
 
             # remove existing locations from project_features
-            sql_out += "--NOTE: First remove all user keywords from dataset_keyword_map\n"
+            sql_out += "\n--NOTE: First remove all user keywords from dataset_keyword_map\n"
             sql_out += "DELETE FROM dataset_keyword_map WHERE dataset_id = '%s' AND keyword_id ~ 'uk-';\n" % uid
 
             if data["user_keywords"] != "":
                 last_id = None
-                sql_out += "--NOTE: add user keywords\n"
+                sql_out += "\n--NOTE: add user keywords\n"
                 for keyword in data["user_keywords"].split(','):
                     keyword = keyword.strip()
                     # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
