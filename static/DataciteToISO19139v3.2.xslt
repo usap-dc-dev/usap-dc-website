@@ -784,14 +784,16 @@
             </gmd:date>
         </xsl:if>
         
+
+        <!-- date_created in DB = Accepted Date in DataCite = published Date in ISO -->
         <xsl:choose>
-            <!-- Take 'Available' date first because that is YYYY-MM-DD -->
-            <xsl:when test="$datacite-dates/*[local-name() = 'date' and @dateType = 'Available'] != ''">
+            <!-- Take 'Accepted' date first because that is YYYY-MM-DD, otherwise publicationYear -->
+            <xsl:when test="$datacite-dates/*[local-name() = 'date' and @dateType = 'Accepted'] != ''">
                 <gmd:date>
                     <gmd:CI_Date>
                         <gmd:date>
                             <gco:Date>
-                                <xsl:value-of select="$datacite-dates/*[local-name() = 'date' and @dateType = 'Available'] "/>
+                                <xsl:value-of select="$datacite-dates/*[local-name() = 'date' and @dateType = 'Accepted'] "/>
                             </gco:Date>
                         </gmd:date>
                         <gmd:dateType>
@@ -803,25 +805,49 @@
                 </gmd:date>
             </xsl:when>
             <xsl:when test="string-length(//*[local-name() = 'publicationYear'])>0">
-            <gmd:date>
-            <gmd:CI_Date>
                 <gmd:date>
-                    <gco:Date>
-                        <xsl:value-of select="string(//*[local-name() = 'publicationYear'])"/>
-                    </gco:Date>
+                    <gmd:CI_Date>
+                        <gmd:date>
+                            <gco:Date>
+                                <xsl:value-of select="string(//*[local-name() = 'publicationYear'])"/>
+                            </gco:Date>
+                        </gmd:date>
+                        <gmd:dateType>
+                            <gmd:CI_DateTypeCode
+                                codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode"
+                                codeListValue="publication">publication</gmd:CI_DateTypeCode>
+                        </gmd:dateType>
+                    </gmd:CI_Date>
                 </gmd:date>
-                <gmd:dateType>
-                    <gmd:CI_DateTypeCode
-                        codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode"
-                        codeListValue="publication">publication</gmd:CI_DateTypeCode>
-                </gmd:dateType>
-            </gmd:CI_Date>
-        </gmd:date>
-        </xsl:when>
-           <xsl:otherwise>
+            </xsl:when>
+            <xsl:otherwise>
                 <gmd:date gco:nilReason="missing"/>
             </xsl:otherwise>
         </xsl:choose>
+
+        <!-- realease_date in DB = Available Date in DataCite = released Date in ISO -->
+        <xsl:choose>
+            <xsl:when test="$datacite-dates/*[local-name() = 'date' and @dateType = 'Available'] != ''">
+                <gmd:date>
+                    <gmd:CI_Date>
+                        <gmd:date>
+                            <gco:Date>
+                                <xsl:value-of select="$datacite-dates/*[local-name() = 'date' and @dateType = 'Available'] "/>
+                            </gco:Date>
+                        </gmd:date>
+                        <gmd:dateType>
+                            <gmd:CI_DateTypeCode
+                                codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode"
+                                codeListValue="released">released</gmd:CI_DateTypeCode>
+                        </gmd:dateType>
+                    </gmd:CI_Date>
+                </gmd:date>
+            </xsl:when>
+            <xsl:otherwise>
+                <gmd:date gco:nilReason="missing"/>
+            </xsl:otherwise>
+        </xsl:choose>
+
         <!-- the following test is designed to filter out update-metadata dates if these follow the convention
         that metadata update date strings are prefixed with 'metadata'-->
         <xsl:if
