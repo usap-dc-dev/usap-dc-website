@@ -2100,18 +2100,14 @@ def makeJsonLD(data, uid):
     creators = []
     for p in data.get('persons'):
         creator = {
-            "@type": "Role",
-            "roleName": "author",
-            "creator": {
-                "@type": "Person",
-                "additionalType": "geolink:Person",
-                "name": p.get('id'),
-                "email": p.get('email'),
-                "affiliation": {
-                    "@type": "Organization",
-                    "name": p.get('address')
-                }
-            } 
+            "@type": "Person",
+            "additionalType": "geolink:Person",
+            "name": p.get('id'),
+            "email": p.get('email'),
+            "affiliation": {
+                "@type": "Organization",
+                "name": p.get('address')
+            }
         }
         creators.append(creator)
 
@@ -2168,7 +2164,8 @@ def makeJsonLD(data, uid):
                 "additionalType": "http://www.w3.org/ns/dcat#DataCatalog",
                 "encodingFormat": "text/xml",
                 "name": "ISO Metadata Document",
-                "url": "http://get.iedadata.org/metadata/iso/usap/%siso.xml" % uid
+                "url": "http://get.iedadata.org/metadata/iso/usap/%siso.xml" % uid,
+                "contentUrl": url_for('file_download', filename='filename')
             },
             {
                 "@type": "DataDownload",
@@ -2176,7 +2173,9 @@ def makeJsonLD(data, uid):
                 "additionalType": "dcat:distribution",
                 "url": "http://dx.doi.org/%s" % data.get('doi'),
                 "name": "landing page",
-                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information"
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
+                "contentUrl": url_for('file_download', filename='filename'),
+                "encodingFormat": "text/html"
             },
             {
                 "@type": "DataDownload",
@@ -2184,7 +2183,9 @@ def makeJsonLD(data, uid):
                 "additionalType": "dcat:distribution",
                 "url": url_for('landing_page', dataset_id=uid),
                 "name": "landing page",
-                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information"
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
+                "contentUrl": url_for('file_download', filename='filename'),
+                "encodingFormat": "text/html"
             }
 
         ],
@@ -2196,30 +2197,25 @@ def makeJsonLD(data, uid):
         "contributor": awards,
         "license": [
             {
-                "@type": "DigitalDocument", 
+                "@type": "CreativeWork", 
                 "URL": "https://creativecommons.org/licenses/by-nc-sa/3.0/us/",
                 "name": "MD_Constraints",
                 "description": "useLimitation: Creative Commons Attribution-NonCommercial-Share Alike 3.0 United States [CC BY-NC-SA 3.0].   "
             },
             {
-                "@type": "DigitalDocument", 
+                "@type": "CreativeWork", 
                 "name": "MD_LegalConstraints",
                 "description": "accessConstraints: license.    otherConstraints: Creative Commons Attribution-NonCommercial-Share Alike 3.0 United States [CC BY-NC-SA 3.0].   "
             },
             {
-                "@type": "DigitalDocument",
+                "@type": "CreativeWork",
                 "name": "MD_SecurityConstraints",
                 "description": "classification: "
             }
         ],
         "publisher": {
-            "@type": "Role",
-            "roleName": "publisher",
-            "publisher": {
-                "@type": "Organization",
-                "name": "U.S. Antarctic Program (USAP) Data Center"
-            }
-
+            "@type": "Organization",
+            "name": "U.S. Antarctic Program (USAP) Data Center"
         },
         "spatialCoverage": spatial_coverage
         
