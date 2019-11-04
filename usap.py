@@ -2037,7 +2037,12 @@ def landing_page(dataset_id):
     usap_domain = app.config['USAP_DOMAIN']
     
     # check for proprietary hold
-    metadata['hold'] = datetime.strptime(metadata['release_date'], '%Y-%m-%d') > datetime.utcnow()
+    if len(metadata['release_date']) == 4:
+        metadata['hold'] = datetime.strptime(metadata['release_date'], '%Y') > datetime.utcnow()
+    elif len(metadata['release_date']) == 10:  
+        metadata['hold'] = datetime.strptime(metadata['release_date'], '%Y-%m-%d') > datetime.utcnow()
+    else:
+        metadata['hold'] = False
 
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
@@ -2275,7 +2280,14 @@ def file_download(filename):
 
     # test for proprietary hold
     ds = get_datasets([dataset_id])[0]
-    hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
+    # check for proprietary hold
+    if len(ds['release_date']) == 4:
+        hold = datetime.strptime(ds['release_date'], '%Y') > datetime.utcnow()
+    elif len(ds['release_date']) == 10:  
+        hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
+    else:
+        hold = False
+
     if hold:
         return redirect(url_for('data_on_hold', release_date=ds['release_date'])) 
 
