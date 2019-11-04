@@ -190,7 +190,7 @@ def get_datasets(dataset_ids):
     if len(dataset_ids) == 0:
         return []
     else:
-        (conn,cur) = connect_to_db()
+        (conn, cur) = connect_to_db()
         query_string = \
                    cur.mogrify(
                        '''SELECT d.*,
@@ -2269,7 +2269,9 @@ def makeCitation(metadata, dataset_id):
 
 @app.route('/dataset/<path:filename>')
 def file_download(filename):
-    dataset_id = filename.split('/')[1]
+    dataset_id = request.args.get('dataset_id')
+    if not dataset_id: 
+      redirect(url_for('not_found'))
     # test for proprietary hold
     ds = get_datasets([dataset_id])[0]
     hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()

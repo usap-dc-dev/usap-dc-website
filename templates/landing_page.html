@@ -7,7 +7,13 @@
   $(document).ready(function() {
     $('.download').click(function() {
       if ($(this).attr('data-url')) {
-        window.open($(this).attr('data-url'), '_blank');
+
+        if ($(this).attr('data-id')) {
+          window.open($(this).attr('data-url')+'?dataset_id='+$(this).attr('data-id'), '_blank');
+        }
+        else {
+          window.open($(this).attr('data-url'));
+        }
       }
     });
 
@@ -269,7 +275,7 @@
       {% for f in data.files %}
       <div class="lprow2">
        <div class="col1">
-        <div class="download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" {% endif %}>
+        <div class="download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" data-id="{{data.id}}" {% endif %}>
           {% if f['url'].startswith('http://www.usap-dc.org/') %}
             Download
           {% else %}
