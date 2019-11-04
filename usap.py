@@ -2271,7 +2271,8 @@ def makeCitation(metadata, dataset_id):
 def file_download(filename):
     dataset_id = request.args.get('dataset_id')
     if not dataset_id: 
-        redirect(url_for('not_found'))
+        return redirect(url_for('not_found'))
+
     # test for proprietary hold
     ds = get_datasets([dataset_id])[0]
     hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
