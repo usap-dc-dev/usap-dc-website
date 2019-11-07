@@ -138,18 +138,18 @@ $(document).ready(function() {
                 if (copis.length > 0) {
                     copi = copis[0].split(',');
                     $('#copi_name_last').attr('value', copi[0]);
-                    $('#copi_name_first').attr('value', copi[1]);
+                    $('#copi_name_first').attr('value', copi[1].trim());
                 
                     for (var i=1; i < copis.length; i++ ) {
                         copi = copis[i].split(',');
-                        var author = {'last_name': copi[0], 'first_name': copi[1]};
+                        var author = {'last_name': copi[0], 'first_name': copi[1].trim()};
                         addAuthorRow(author);
                     }
                 }
             }
             $("#entry textarea[name='title']").val(msg.title);
             $("#entry input[name='pi_name_last']").val(pi[0]);
-            $("#entry input[name='pi_name_first']").val(pi[1]);
+            $("#entry input[name='pi_name_first']").val(pi[1].trim());
             $("#entry input[name='org']").val(msg.org);
             if (msg.email) $("#entry input[name='email']").val(msg.email);
             $("#entry input[name='copi']").val(msg.copi);

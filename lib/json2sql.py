@@ -44,12 +44,14 @@ def parse_json(data):
     (first, last) = (data["author"]["first_name"], data["author"]["last_name"])
     data["author"] = "{}, {}".format(last, first)
     print("corrected author: ", data["author"])
-    if data["name"] != "":
-        (first, last) = data["name"].split(' ', 1)
-        data["name"] = "{}, {}".format(last, first)
-        print("corrected submitter: ", data["name"])
+    if data["submitter_name"] != "":
+        (first, last) = data["submitter_name"].split(' ', 1)
+        data["submitter_first"] = first
+        data["submitter_last"] = last
+        data["submitter_name"] = "{}, {}".format(last, first)
+        print("corrected submitter: ", data["submitter_name"])
     else:
-        data["name"] = data["author"]
+        data["submitter_name"] = data["author"]
 
     # --- fix award field
     for i in range(len(data["awards"])):
@@ -97,25 +99,43 @@ def make_sql(data, id):
         person_id = "%s, %s" % (last_name, first_name)
         person_ids.append(person_id)
 
-        query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % person_id
+        query = "SELECT  * FROM person WHERE id = '%s'" % person_id
         cur.execute(query)
         res = cur.fetchone()
   
-        if res['count'] == 0 and person_id != "":
+        if not res and person_id != "":
             if author == data["authors"][0]:
-                line = "INSERT INTO person(id,first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
+                line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"])
             else:
                 line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
 
             sql_out += line
 
-    if data["name"] not in person_ids and data["name"] != '':
-        query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["name"]
+            if person_id == data.get('submitter_name') and data.get('submitter_orcid'):
+                line = "UPDATE person SET id_orcid = '{}' WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                sql_out += line
+        else:
+            if person_id == data.get('submitter_name') and data.get('submitter_orcid') and data['submitter_orcid'] != res['id_orcid'] and data['submitter_orcid'] != '':
+                line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                sql_out += line  
+            if person_id == data.get('submitter_name') and data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
+                line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], person_id)
+                sql_out += line  
+
+    if data["submitter_name"] not in person_ids and data["submitter_name"] != '':
+        query = "SELECT * FROM person WHERE id = '%s'" % data["submitter_name"]
         cur.execute(query)
         res = cur.fetchone()
-        if res['count'] == 0:
-            line = "INSERT INTO person(id,email,id_orcid) VALUES ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
+        if not res:
+            line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], data["submitter_first"], data["submitter_last"], data.get("submitter_email", ''), data.get("submitter_orcid", ''))
             sql_out += line
+        else:
+            if data.get('submitter_orcid') and data['submitter_orcid'] != res['id_orcid'] and data['submitter_orcid'] != '':
+                line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], data['submitter_name'])
+                sql_out += line 
+            if data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
+                line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], data['submitter_name'])
+                sql_out += line   
     
     # if this is a replacement dataset, increment the version number from the previous dataset
     if data.get('related_dataset'):
@@ -125,7 +145,7 @@ def make_sql(data, id):
     else:
         version = 1
 
-    sql_out += '\n--NOTE: submitter_id = JSON "name"\n'
+    sql_out += '\n--NOTE: submitter_id = JSON "submitter_name"\n'
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
     sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,
@@ -134,7 +154,7 @@ def make_sql(data, id):
             .format(id,
                     dc_config['SHOULDER'] + id, 
                     data["title"], 
-                    data["name"], 
+                    data["submitter_name"], 
                     '; '.join(person_ids), 
                     release_date, 
                     data["abstract"], 
@@ -158,8 +178,8 @@ def make_sql(data, id):
             line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, person_id)
             sql_out += line
 
-    if data["name"] not in person_ids and data["name"] != '':
-        line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, data["name"])
+    if data["submitter_name"] not in person_ids and data["submitter_name"] != '':
+        line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, data["submitter_name"])
         sql_out += line
   
     sql_out += '\n--NOTE: AWARDS functions:\n'
@@ -345,9 +365,9 @@ def editDatasetJson2sql(data, uid):
     pi_id = "%s, %s" % (last_name, first_name)
 
     # submitter
-    if data["name"] != "":
-        (first, last) = data["name"].split(' ', 1)
-        data["name"] = "{}, {}".format(last, first)
+    if data["submitter_name"] != "":
+        (first, last) = data["submitter_name"].split(' ', 1)
+        data["submitter_name"] = "{}, {}".format(last, first)
 
     # compare original with edited json
     updates = set()
@@ -362,10 +382,10 @@ def editDatasetJson2sql(data, uid):
                 updates.add(k)    
 
     # check for orcid update
-    query = "SELECT id_orcid FROM person WHERE id = '%s'" % data['name']
+    query = "SELECT id_orcid FROM person WHERE id = '%s'" % data['submitter_name']
     cur.execute(query)
     res = cur.fetchone()
-    if res and res['id_orcid'] != data.get('orcid'):
+    if res and res['id_orcid'] != data.get('submitter_orcid'):
         updates.add('orcid')
 
     # --- fix award fields (throw out PI name)
@@ -387,7 +407,7 @@ def editDatasetJson2sql(data, uid):
 
             # remove existing co-pis from project_person_map
             sql_out += "\n--NOTE: First remove all existing authors from dataset_person_map\n"
-            sql_out += "DELETE FROM dataset_person_map WHERE dataset_id = '%s' and person_id != '%s';\n" % (uid, data['name'])
+            sql_out += "DELETE FROM dataset_person_map WHERE dataset_id = '%s' and person_id != '%s';\n" % (uid, data['submitter_name'])
             # make sure authors are in person table
             person_ids = []
             for author in data["authors"]:
@@ -396,21 +416,36 @@ def editDatasetJson2sql(data, uid):
                 person_id = "%s, %s" % (last_name, first_name)
                 person_ids.append(person_id)
 
-                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % person_id
+                # if already updating the submitter, don't need to do it here
+                if 'submitter_name' in updates and person_id == data['submitter_name']:
+                    continue
+
+                query = "SELECT  * FROM person WHERE id = '%s'" % person_id
                 cur.execute(query)
                 res = cur.fetchone()
           
-                if res['count'] == 0 and person_id != "":
+                if not res and person_id != "":
                     if author == data["authors"][0]:
-                        line = "INSERT INTO person(id,first_name, last_name, email, id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"], data["orcid"])
+                        line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"])
                     else:
                         line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
 
                     sql_out += line
 
+                    if person_id == data.get('submitter_name') and data.get('submitter_orcid'):
+                        line = "UPDATE person SET id_orcid = '{}' WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                        sql_out += line
+                else:
+                    if person_id == data.get('submitter_name') and data.get('submitter_orcid') and data['submitter_orcid'] != res['id_orcid'] and data['submitter_orcid'] != '':
+                        line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                        sql_out += line  
+                    if person_id == data.get('submitter_name') and data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
+                        line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], person_id)
+                        sql_out += line  
+
             # add people back in to project_person_map
             for person_id in person_ids:
-                if person_id != data['name']:
+                if person_id != data['submitter_name']:
                     sql_out += "\n--NOTE: adding %s to dataset_person_map\n" % person_id
                     sql_out += "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (uid, person_id)
 
@@ -502,35 +537,16 @@ def editDatasetJson2sql(data, uid):
         if k == 'issues':
             sql_out += "\n--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"
 
-        if k == 'name':
-            if data["name"] != '':
-                sql_out += "\n--NOTE: UPDATING SUBMITTER\n"
-
-                # This will probably never be needed as the submitter would need to be in the DB to have permission to edit.
-                # But just in case!
-                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["name"]
-                cur.execute(query)
-                res = cur.fetchone()
-                if res['count'] == 0:
-                    line = "INSERT INTO person(id,email,id_orcid) VALUES ('{}','{}','{}');\n".format(data["name"], data["email"], data["orcid"])
-                    sql_out += line
-                query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, data["name"])
-                cur.execute(query)
-                res = cur.fetchone()
-                if res['count'] == 0:
-                    line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, data["name"])
-                    sql_out += line
-
-                sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (data['name'], uid)
-
         if k == 'orcid':
             sql_out += "\n--NOTE: UPDATING ORCID FOR SUBMITTER\n"
-            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['orcid'], data['name'])
+            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], data['submitter_name'])
 
         if k == 'procedures':
             sql_out += "\n--NOTE: UPDATING ACQUISITION PROCEDURES DESCRIPTION IN README FILE\n"
 
         if k == 'project': 
+            if data['project'] == 'None' and orig['project'] is None:
+                continue
             sql_out += "\n--NOTE: UPDATING INITIATIVE\n"
 
             # remove existing initiative from project_award_map
@@ -599,6 +615,26 @@ def editDatasetJson2sql(data, uid):
         if k == 'stop':
             sql_out += "\n--NOTE: UPDATING STOP DATE\n"
             sql_out += "UPDATE dataset_temporal_map SET stop_date = '%s' WHERE dataset_id = '%s';\n" % (data['stop'], uid)
+        
+        if k == 'submitter_name':
+            if data["submitter_name"] != '':
+                sql_out += "\n--NOTE: UPDATING SUBMITTER\n"
+
+                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["submitter_name"]
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    first_name, last_name = data["submitter_name"].split(', ')
+                    line = "INSERT INTO person(id,first_name,last_name,email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], first_name, last_name, data.get("submitter_email", ''), data.get("submitter_orcid", ''))
+                    sql_out += line
+                query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, data["submitter_name"])
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, data["submitter_name"])
+                    sql_out += line
+
+                sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (data['submitter_name'], uid)
 
         if k == 'title':      
             sql_out += "\n--NOTE: UPDATING TITLE\n"

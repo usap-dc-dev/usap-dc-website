@@ -101,7 +101,7 @@ def connect_to_db():
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn, cur) = connect_to_db()
-    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award::integer<8000000 and a.award::integer>0400000' % ','.join(columns)
+    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award != \'None\' and a.award::integer<8000000 and a.award::integer>0400000' % ','.join(columns)
     
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
@@ -335,13 +335,14 @@ def get_platforms(conn=None, cur=None, dataset_id=None):
     return cur.fetchall()
 
 
-def get_persons(conn=None, cur=None, dataset_id=None):
+def get_persons(conn=None, cur=None, dataset_id=None, order=True):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if dataset_id:
         query += cur.mogrify(' WHERE id in (SELECT person_id FROM dataset_person_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+    if order:
+        query += cur.mogrify(' ORDER BY id')
     cur.execute(query)
     return cur.fetchall()
 
@@ -460,7 +461,7 @@ def check_user_permission(user_info, uid, project=False):
     # check if orcid or email address from user_info matches any of these users
     for p in persons:
         if (p.get('email') and p['email'] == user_info.get('email')) \
-           or (p.get('orcid') and p['orcid'] == user_info.get('orcid')):
+           or (p.get('id_orcid') and p['id_orcid'] == user_info.get('orcid')):
             return True
 
     return False
@@ -621,13 +622,9 @@ def dataset(dataset_id=None):
         if edit:
             form_data = dataset_db2form(dataset_id)
             session['dataset_metadata'] = form_data
-
-            email = ""
-            if user_info.get('email'):
-                email = user_info.get('email')
+            email = form_data.get('email')
             name = ""
-            if user_info.get('name'):
-                name = user_info.get('name')
+
         # Create new dataset using existing dataset as template
         elif template:
             form_data = dataset_db2form(template_id)
@@ -672,12 +669,20 @@ def dataset_db2form(uid):
         'name': db_data.get('submitter_id'),
         'title': db_data.get('title'),
         'filenames': [],
-        'release_date': db_data.get('release_date')
+        'release_date': db_data.get('release_date'),
+        'submitter_name': db_data.get('submitter_id')
     }
 
     form_data['authors'] = []
-    for author in db_data.get('creator').split('; '):
-        last_name, first_name = author.split(', ')
+    # for author in db_data.get('creator').split('; '):
+    main_author = None
+    for author in get_persons(dataset_id=uid, order=False):
+        last_name, first_name = author['id'].split(', ')
+        # don't include in list of authors if person is a submitter, but not creator
+        if author['id'] == db_data['submitter_id'] and not (last_name in db_data['creator'] and first_name in db_data['creator']):
+            continue
+        if not main_author:
+            main_author = author['id']
         form_data['authors'].append({'first_name': first_name, 'last_name': last_name})
 
     form_data['awards'] = []
@@ -692,9 +697,9 @@ def dataset_db2form(uid):
         form_data['geo_s'] = str(se.get('south'))
         form_data['geo_w'] = str(se.get('west'))
 
-    submitter = get_person(db_data.get('submitter_id'))
-    if submitter:
-        form_data['email'] = submitter.get('email')
+    creator = get_person(main_author)
+    if creator:
+        form_data['email'] = creator.get('email')
 
     form_data['publications'] = []
     for ref in db_data.get('references'):
@@ -783,8 +788,11 @@ def dataset_oldform2form(uid):
     else:
         submitted_file = os.path.join(submitted_dir, uid + ".json")
 
-    with open(submitted_file) as infile:
-        submitted_data = json.load(infile)
+    try:
+        with open(submitted_file) as infile:
+            submitted_data = json.load(infile)
+    except:
+            submitted_data = {}
 
     form_data = {'related_fields': submitted_data.get('related_fields'), 'feature_name': submitted_data.get('feature_name')}
     return form_data
@@ -876,7 +884,6 @@ def check_spatial_bounds(data):
 
 
 def check_dataset_submission(msg_data):
-    print(msg_data, file=sys.stderr)
 
     def default_func(field):
         return lambda data: field in data and bool(data[field]) and data[field] != "None"
@@ -895,7 +902,6 @@ def check_dataset_submission(msg_data):
         return True
 
     def check_valid_award(data):
-        print(data.get('awards'))
         return data.get('awards') is not None and data['awards'] != [""]
 
     validators = [
@@ -906,9 +912,11 @@ def check_dataset_submission(msg_data):
         Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
         Validator(func=check_valid_award, msg='You must select at least one NSF grant for the submission.'),
         Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid."),
-        Validator(func=default_func('filenames'), msg='You must include files in your submission.'),
         Validator(func=default_func('agree'), msg='You must agree to have your files posted with a DOI.')
     ]
+    if not msg_data.get('edit'):
+        validators.append(Validator(func=default_func('filenames'), msg='You must include files in your submission.'))
+    
     msg = ""
     for v in validators:
         if not v.func(msg_data):
@@ -997,7 +1005,7 @@ def dataset2(dataset_id=None):
 
         if request.form.get('action') == 'Submit':
             msg_data = copy.copy(session['dataset_metadata'])
-            msg_data['name'] = session['user_info'].get('name')
+            msg_data['submitter_name'] = session['user_info'].get('name')
             del msg_data['action']
 
             cross_dateline = False
@@ -1006,7 +1014,9 @@ def dataset2(dataset_id=None):
             msg_data['cross_dateline'] = cross_dateline
 
             if 'orcid' in session['user_info']:
-                msg_data['orcid'] = session['user_info']['orcid']
+                msg_data['submitter_orcid'] = session['user_info']['orcid']
+            if 'email' in session['user_info']:
+                msg_data['submitter_email'] = session['user_info']['email']
 
             msg_data['filenames'] = []
 
@@ -1070,7 +1080,10 @@ def dataset2(dataset_id=None):
                 message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             msg = MIMEText(message)
-            sender = msg_data.get('email')
+            if msg_data.get('submitter_email'):
+                sender = msg_data.get('submitter_email')
+            else:
+                sender = msg_data.get('email')
             recipients = ['info@usap-dc.org']
 
             if edit:
@@ -1249,7 +1262,11 @@ def project(project_id=None):
                     % (request.url_root, next_id)
             msg = MIMEText(message)
 
-            sender = msg_data.get('email')
+            # use submitter's email if available, otherwise the email given in the form
+            sender = msg_data.get('submitter_email')
+            if not sender: 
+                sender = msg_data.get('email')
+
             recipients = ['info@usap-dc.org']
 
             if edit:
@@ -1370,11 +1387,11 @@ def project(project_id=None):
 
 def process_form_data(form):
     msg_data = dict()
-    msg_data['name'] = session['user_info']['name']
+    msg_data['submitter_name'] = session['user_info']['name']
     if 'orcid' in session['user_info']:
-        msg_data['orcid'] = session['user_info']['orcid']
-    # if 'email' in session['user_info']:
-    #     msg_data['email'] = session['user_info']['email']
+        msg_data['submitter_orcid'] = session['user_info']['orcid']
+    if 'email' in session['user_info']:
+        msg_data['submitter_email'] = session['user_info']['email']
     msg_data.update(form)
     if msg_data.get('entry'):
         del msg_data['entry']
@@ -1684,6 +1701,7 @@ def authorized_orcid(resp):
         session['user_info']['email'] = email
     except:
         email = ''
+    print(session['user_info'])
 
     session['user_info']['is_curator'] = cf.isCurator()
     return redirect(session['next'])
@@ -2500,9 +2518,8 @@ def curator():
                         data = json.loads(request.form.get('json'))
                         
                         template_dict['email_recipients'] = cf.getCreatorEmails(uid)
-                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
-                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
-                            template_dict['email_recipients'] += contact
+                        # add contact and submitter to list of recipients
+                        template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
 
                         if edit:
                             template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
@@ -2759,10 +2776,9 @@ def curator():
                         data = json.loads(request.form.get('proj_json'))
                         
                         template_dict['email_recipients'] = cf.getCreatorEmails(uid)
-                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
-                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
-                            template_dict['email_recipients'] += contact
-                        
+                        # add contact and submitter to list of recipients
+                        template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
+
                         if edit:
                             template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully updated.\n" \
                                                           % data.get('title') + \
@@ -2869,14 +2885,32 @@ def curator():
                         data = json.load(infile)
                         submission_data = json.dumps(data, sort_keys=True, indent=4)
                         template_dict['json'] = submission_data
-                        # add contact to list of recipients
-                        contact = '\n"%s" <%s>' % (data.get('name'), data.get('email'))
-                        if data.get('email') and template_dict['email_recipients'].find(data.get('email')) == -1:
-                            template_dict['email_recipients'] += contact
+                        # add contact and submitter to list of recipients
+                        template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
                 except:
                     template_dict['error'] = "Can't read submission file: %s" % submission_file
 
     return render_template('curator.html', **template_dict)
+
+
+def getEmailsFromJson(data, email_recipients):
+    # add contact and submitter to list of recipients
+    email_recipients = ''
+    if data.get('email') and email_recipients.find(data.get('email')) == -1:
+        if data.get('pi_name_first') and data.get('pi_name_last'):
+            contact = '\n"%s %s" <%s>' % (data['pi_name_first'], data['pi_name_last'], data['email'])
+        elif data.get('authors') and data['authors'][0].get('first_name') and data['authors'][0].get('last_name'):
+            contact = '\n"%s %s" <%s>' % (data['authors'][0]['first_name'], data['authors'][0]['last_name'], data['email'])
+        else:
+            contact = '\n<%s>' % data['email']
+        email_recipients += contact
+    if data.get('submitter_email') and email_recipients.find(data.get('submitter_email')) == -1:
+        if data.get('submitter_name'):
+            submitter = '\n"%s" <%s>' % (data['submitter_name'], data['submitter_email'])
+        else:
+            submitter = '\n<%s>' % data['submitter_email']
+        email_recipients += submitter
+    return email_recipients
 
 
 @app.route('/curator/help', methods=['GET', 'POST'])

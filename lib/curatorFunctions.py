@@ -560,6 +560,12 @@ def projectJson2sql(data, uid):
                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], data['sum'].replace("'", "''"),  
                                                                                  data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10])
 
+    # generate the submitter's person id if we have their name
+    subm_id = None
+    if data.get('submitter_name'):
+        subm_first_name, subm_last_name = data['submitter_name'].split(' ')
+        subm_id = subm_last_name + ', ' + subm_first_name
+
     # Add PI to person table, if necessary, and project_person_map
     pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
     pi_id = pi_id.replace(',  ', ', ')
@@ -569,10 +575,10 @@ def projectJson2sql(data, uid):
     if len(res) == 0:
         sql_out += "--NOTE: adding PI to person table\n"
 
-        if data.get('orcid') and data['orcid'] != '':
+        if subm_id and subm_id == pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
             sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                        "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
-                (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['orcid'])
+                (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['submitter_orcid'])
         else:
             sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                        "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
@@ -585,9 +591,9 @@ def projectJson2sql(data, uid):
         if data.get('org') is not None and res[0]['organization'] != data['org']:
             sql_out += "--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
             sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], pi_id)
-        if data.get('orcid') is not None and res[0]['id_orcid'] != data['orcid']:
-            sql_out += "--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['orcid'])
-            sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], pi_id)
+        if subm_id and subm_id == pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
+            sql_out += "--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['submitter_orcid'])
+            sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], pi_id)
 
     sql_out += "--NOTE: adding PI %s to project_person_map\n" % pi_id
     sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n\n" % \
@@ -611,12 +617,21 @@ def projectJson2sql(data, uid):
         res = cur.fetchall()
         if len(res) == 0:
             sql_out += "--NOTE: adding %s to person table\n" % co_pi_id
-            sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
-                       "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
-                       (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
-        elif co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
-            sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
-            sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
+            if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
+                sql_out += "INSERT INTO person (id, first_name, last_name, organization, id_orcid) " \
+                           "VALUES ('%s', '%s', '%s' ,'%s', '%s');\n\n" % \
+                           (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'), data['submitter_orcid'])
+            else:
+                sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
+                           "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
+                           (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
+        else:
+            if co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
+                sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
+                sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
+            if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
+                sql_out += "--NOTE: updating orcid for %s to %s\n" % (co_pi_id, data['submitter_orcid'])
+                sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], co_pi_id)
         
         sql_out += "--NOTE: adding %s to project_person_map\n" % co_pi_id
         sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
@@ -842,6 +857,12 @@ def projectJson2sql(data, uid):
 def editProjectJson2sql(data, uid):
     conn, cur = connect_to_db()
 
+    # generate the submitter's person id if we have their name
+    subm_id = None
+    if data.get('submitter_name'):
+        subm_first_name, subm_last_name = data['submitter_name'].split(' ')
+        subm_id = subm_last_name + ', ' + subm_first_name
+
     pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
     pi_id = pi_id.replace(',  ', ', ')
 
@@ -863,10 +884,10 @@ def editProjectJson2sql(data, uid):
                 updates.add(k)
 
     # check for orcid update
-    query = "SELECT id_orcid FROM person WHERE id = '%s'" % pi_id
+    query = "SELECT id_orcid FROM person WHERE id = '%s'" % subm_id
     cur.execute(query)
     res = cur.fetchone()
-    if res and res['id_orcid'] != data.get('orcid'):
+    if res and res['id_orcid'] != data.get('submitter_orcid'):
         updates.add('orcid')
 
     # --- fix award fields (throw out PI name)
@@ -919,14 +940,24 @@ def editProjectJson2sql(data, uid):
                 query = "SELECT * FROM person WHERE id = '%s'" % co_pi_id
                 cur.execute(query)
                 res = cur.fetchall()
+
                 if len(res) == 0:
-                    sql_out += "\n--NOTE: adding %s to person table\n" % co_pi_id
-                    sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
-                               "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
-                               (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
-                elif co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
-                    sql_out += "\n--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
-                    sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
+                    sql_out += "--NOTE: adding %s to person table\n" % co_pi_id
+                    if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
+                        sql_out += "INSERT INTO person (id, first_name, last_name, organization, id_orcid) " \
+                                   "VALUES ('%s', '%s', '%s' ,'%s', '%s');\n\n" % \
+                                   (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'), data['submitter_orcid'])
+                    else:
+                        sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
+                                   "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
+                                   (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
+                else:
+                    if co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
+                        sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
+                        sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
+                    if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
+                        sql_out += "--NOTE: updating orcid for %s to %s\n" % (co_pi_id, data['submitter_orcid'])
+                        sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], co_pi_id)
                 
                 sql_out += "\n--NOTE: adding %s to project_person_map\n" % co_pi_id
                 sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
@@ -1054,7 +1085,7 @@ def editProjectJson2sql(data, uid):
         
         elif k == 'orcid':
             sql_out += "\n--NOTE: UPDATING ORCID\n"
-            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['orcid'], pi_id)
+            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], subm_id)
 
         elif k == 'org':
             sql_out += "\n--NOTE: UPDATING ORGANIZATION\n"
@@ -1108,7 +1139,7 @@ def editProjectJson2sql(data, uid):
             sql_out += "\n"
 
         elif k == 'pi_name':
-            sql_out += "\n--NOTE: UPDATING PI NAME\n"
+            sql_out += "\n--NOTE: UPDATING PI\n"
 
             # Remove old PI from project_person_map
             sql_out += "\n--NOTE: First remove all existing PI from project_person_map\n"
@@ -1121,10 +1152,10 @@ def editProjectJson2sql(data, uid):
             if len(res) == 0:
                 sql_out += "\n--NOTE: adding PI to person table\n"
 
-                if data.get('orcid') and data['orcid'] != '':
+                if subm_id and subm_id == pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
                     sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
-                        (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['orcid'])
+                        (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['submitter_orcid'])
                 else:
                     sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                                "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
@@ -1137,9 +1168,9 @@ def editProjectJson2sql(data, uid):
                 if data.get('org') is not None and res[0]['organization'] != data['org']:
                     sql_out += "\n--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
                     sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], pi_id)
-                if data.get('orcid') is not None and res[0]['id_orcid'] != data['orcid']:
-                    sql_out += "\n--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['orcid'])
-                    sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], pi_id)
+                # if subm_id and subm_id == pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
+                #     sql_out += "\n--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['submitter_orcid'])
+                #     sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], pi_id)
 
             # Insert new PI into project_person_map
             sql_out += "\n--NOTE: adding PI %s to project_person_map\n" % pi_id

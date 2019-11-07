@@ -2,12 +2,10 @@
   <div class="panel-heading">You are Logged in as</div>
   <div class="panel-body">
     <div>
-    {% if name|length > 0 %}
-	    {{name}}
-	{% else %}
-		{{email}}
-	{% endif %}
-	</div>
+      <p>{{session.user_info.name}}</p>
+  	  <p>{{session.user_info.email}}</p>
+      <p>{{session.user_info.orcid}}</p>
+	  </div>
     <a href="{{url_for('logout')}}">Log out</a>
   </div>
 </div>
