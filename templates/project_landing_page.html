@@ -121,7 +121,13 @@
                 </tr>
                 {% for p in data.persons %}
                   <tr>
-                    <td>{{p.id}}</td>
+                    <td>
+                      {% if p.orcid %}
+                        <a target="_blank" href="https://orcid.org/{{p.orcid}}">{{p.id}}</a>
+                      {% else %} 
+                        {{p.id}}
+                      {% endif %}
+                      </td>
                     <td>{{p.role}}</td>
                   </tr>
                 {% endfor %}

@@ -872,7 +872,7 @@ def editProjectJson2sql(data, uid):
     # compare original with edited json
     updates = set()
     for k in orig.keys():
-        if orig[k] != data.get(k):
+        if orig[k] != data.get(k) and not (orig[k] in ['None', None, ''] and data.get(k) in ['None', None, '']):
             print(k)
             print("orig:", orig.get(k))
             print("new:", data.get(k))
@@ -1621,7 +1621,7 @@ def addUserToDatasetOrProject(data):
             if data.get('orcid') and data['orcid'] != '' and res[0]['id_orcid'] != data['orcid']:
                 sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], person_id)
 
-        uid, title = data.get('dataset_or_project').split(': ')
+        uid, title = data.get('dataset_or_project').split(': ', 1)
         if uid[0] == 'p':
             # PROJECT
             sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \

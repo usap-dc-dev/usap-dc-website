@@ -480,7 +480,7 @@ $(document).ready(function() {
       $('#deployment_type').val(deployments[0].type);
       $('#deployment_url').val(deployments[0].url);
       
-      for (i=1; i < websites.length; i++ ) {
+      for (i=1; i < deployments.length; i++ ) {
         addDeploymentRow(deployments[i]);
       }
     }

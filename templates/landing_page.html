@@ -107,10 +107,13 @@
             Creator(s):
           </div>
           <div class="value-inline">
-            {{data['creator']}}
-            {% if data['creator_orcid'] %}
-            &nbsp&nbsp (<a href="orcid.org/{{data['creator_orcid']}}">ORCID</a>)
-            {% endif %}
+            {% for c in data['creator_orcids'] %}
+              {% if c.orcid %}
+                <a target="_blank" href="https://orcid.org/{{c.orcid}}">{{c.id}}</a>{{";" if not loop.last }}
+              {% else %}
+                {{c.id}}{{";" if not loop.last }}
+              {% endif %}
+            {% endfor %}
           </div>
         </div>
         {% endif %}

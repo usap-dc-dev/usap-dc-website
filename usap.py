@@ -27,6 +27,7 @@ import urllib
 import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
+from functools import partial
 
 
 app = Flask(__name__)
@@ -106,8 +107,6 @@ def get_nsf_grants(columns, award=None, only_inhabited=True):
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
     query_string += ' ORDER BY name,award'
-
-    print(query_string)
 
     cur.execute(query_string)
     return cur.fetchall()
@@ -460,11 +459,16 @@ def check_user_permission(user_info, uid, project=False):
         persons = get_persons(dataset_id=uid)
     # check if orcid or email address from user_info matches any of these users
     for p in persons:
-        if (p.get('email') and p['email'] == user_info.get('email')) \
+        if (p.get('email') and p['email'].lower() == user_info.get('email').lower()) \
            or (p.get('id_orcid') and p['id_orcid'] == user_info.get('orcid')):
             return True
 
     return False
+
+
+#sort list numerically instead of alphabetically
+def sortNumerically(val, replace_str, replace_str2=''):
+    return int(val.replace(replace_str, '0').replace(replace_str2, ''))
 
 
 @app.route('/edit/dataset/<dataset_id>', methods=['GET', 'POST'])
@@ -505,13 +509,12 @@ def dataset(dataset_id=None):
         if 'dataset_metadata' not in session:
             session['dataset_metadata'] = dict()   
         session['dataset_metadata'].update(request.form.to_dict())
-        # print(request.form.to_dict())
 
         publications_keys = [s for s in request.form.keys() if "publication" in s]
         remove_pub_keys = []
         if len(publications_keys) > 0:
             session['dataset_metadata']['publications'] = []
-            publications_keys.sort()
+            publications_keys.sort(key=partial(sortNumerically, replace_str='publication'))
             #remove any empty values
             for key in publications_keys:
                 if session['dataset_metadata'][key] == "":
@@ -527,10 +530,9 @@ def dataset(dataset_id=None):
                 session['dataset_metadata']['publications'].append(publication)
 
         awards_keys = [s for s in request.form.keys() if "award" in s]
-
         remove_award_keys = []
         if len(awards_keys) > 0:
-            awards_keys.sort()
+            awards_keys.sort(key=partial(sortNumerically, replace_str='award', replace_str2="user_"))
             #remove any empty values
             for key in awards_keys:
                 if session['dataset_metadata'][key] == "":
@@ -544,7 +546,7 @@ def dataset(dataset_id=None):
         remove_author_keys = []
         if len(author_keys) > 0:
             session['dataset_metadata']['authors'] = []
-            author_keys.sort()
+            author_keys.sort(key=partial(sortNumerically, replace_str='author_name_last'))
             #remove any empty values
             for key in author_keys:
                 if session['dataset_metadata'][key] == "":
@@ -674,16 +676,19 @@ def dataset_db2form(uid):
     }
 
     form_data['authors'] = []
-    # for author in db_data.get('creator').split('; '):
     main_author = None
-    for author in get_persons(dataset_id=uid, order=False):
-        last_name, first_name = author['id'].split(', ')
-        # don't include in list of authors if person is a submitter, but not creator
-        if author['id'] == db_data['submitter_id'] and not (last_name in db_data['creator'] and first_name in db_data['creator']):
-            continue
-        if not main_author:
-            main_author = author['id']
-        form_data['authors'].append({'first_name': first_name, 'last_name': last_name})
+    if db_data.get('creator'):
+        for author in db_data.get('creator').split('; '):
+            try:
+                last_name, first_name = author.split(', ')
+            except:
+                last_name, first_name = author.split(',')
+
+            if len(first_name) == 0: 
+                first_name = ' '
+            if not main_author:
+                main_author = author
+            form_data['authors'].append({'first_name': first_name, 'last_name': last_name})
 
     form_data['awards'] = []
     for award in db_data.get('awards'):
@@ -697,9 +702,10 @@ def dataset_db2form(uid):
         form_data['geo_s'] = str(se.get('south'))
         form_data['geo_w'] = str(se.get('west'))
 
-    creator = get_person(main_author)
-    if creator:
-        form_data['email'] = creator.get('email')
+    if main_author:
+        creator = get_person(main_author)
+        if creator:
+            form_data['email'] = creator.get('email')
 
     form_data['publications'] = []
     for ref in db_data.get('references'):
@@ -734,7 +740,6 @@ def dataset_db2form(uid):
         usap_domain = app.config['USAP_DOMAIN']
         if url.startswith(usap_domain):
             directory = os.path.join(current_app.root_path, url[len(usap_domain):])
-            # print(directory)
             file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
             omit = set(['readme.txt', '00README.txt', 'index.php', 'index.html', 'data.html'])
             file_paths = [f for f in file_paths if os.path.basename(f) not in omit]
@@ -756,7 +761,8 @@ def dataset_db2form(uid):
 def dataset_readme2form(uid):
     r = requests.get(url_for('readme', dataset_id=uid, _external=True))
     form_data = {}
-    if r.url != url_for('not_found', _external=True):
+    # check readme file is found and is plain text (not a pdf)
+    if r.url != url_for('not_found', _external=True) and r.headers.get('Content-Type') and r.headers['Content-Type'].find('text/plain') == 0:
         text = r.text
         start = text.find('Instruments and devices:') + len('Instruments and devices:')
         end = text.find('Acquisition procedures:')
@@ -770,7 +776,10 @@ def dataset_readme2form(uid):
         end = text.find('Limitations and issues:')
         c_p = text[start:end].replace('\r', '').split('\n\n')
         form_data['content'] = c_p[0].replace('\n', '')
-        form_data['data_processing'] = c_p[1].replace('\n', '')
+        if len(c_p) > 1:
+            form_data['data_processing'] = c_p[1].replace('\n', '')
+        else:
+            form_data['data_processing'] = ''
 
         start = text.find('Limitations and issues:') + len('Limitations and issues:')
         end = text.find('Checkboxes:')
@@ -1206,6 +1215,7 @@ def project(project_id=None):
         template = True
 
     user_info = session.get('user_info')
+    # user_info = {'name': 'test name', 'email': 'test@email.com'}
     if user_info is None:
         session['next'] = request.path
         return redirect(url_for('login'))
@@ -1363,12 +1373,12 @@ def project(project_id=None):
             session['project_metadata'] = form_data
 
         email = ""
-        if user_info.get('email'):
+        if user_info and user_info.get('email'):
             email = user_info.get('email')
 
         name = ""
         full_name = {'first_name': '', 'last_name': ''}
-        if user_info.get('name'):
+        if user_info and user_info.get('name'):
             name = user_info.get('name')
             names = name.split(' ')
             full_name = {'first_name': names[0], 'last_name': names[-1]}
@@ -1564,19 +1574,34 @@ def project_db2form(uid):
         'dmp_file': None
     }
 
+    main_contact = None
     for person in db_data.get('persons'):
-        if person.get('role') == 'Investigator and contact':
-            form_data['pi_name_first'] = person.get('name_first')
-            form_data['pi_name_last'] = person.get('name_last')
-            form_data['org'] = person.get('org')
-            form_data['email'] = person.get('email')
+        if person.get('role') == 'Investigator and contact' and not main_contact:
+            name_last, name_first = person.get('id').split(', ', 1)
+            form_data['pi_name_first'] = name_first
+            form_data['pi_name_last'] = name_last
+            form_data['org'] = person.get('org') or ''
+            form_data['email'] = person.get('email') or ''
+            main_contact = person
         else:
-            if not person.get('name_last') and not person.get('name_first'):
-                person['name_last'], person['name_first'] = person.get('id').replace(' ', '').split(',')
-            form_data['copis'].append({'name_first': person['name_first'],
-                                       'name_last': person['name_last'],
-                                       'org': person['org'],
+            name_last, name_first = person.get('id').split(', ', 1)
+            form_data['copis'].append({'name_first': name_first,
+                                       'name_last': name_last,
+                                       'org': person.get('org') or '',
                                        'role': person['role']})
+    # if nobody is listed as 'Investigator and contact', take the first 'Investigator'
+    if not main_contact:
+        for person in db_data.get('persons'):
+            if person.get('role') == 'Investigator':
+                name_last, name_first = person.get('id').split(', ', 1)
+                form_data['pi_name_first'] = name_first
+                form_data['pi_name_last'] = name_last
+                form_data['org'] = person.get('org') or ''
+                form_data['email'] = person.get('email') or ''
+                main_contact = person
+                # remove from copis list
+                form_data['copis'] = [copi for copi in form_data['copis'] if not (copi['name_first'] == name_first and copi['name_last'] == name_last)]
+                break
 
     awards = set()
     for award in db_data.get('funding'):
@@ -1701,7 +1726,6 @@ def authorized_orcid(resp):
         session['user_info']['email'] = email
     except:
         email = ''
-    print(session['user_info'])
 
     session['user_info']['is_curator'] = cf.isCurator()
     return redirect(session['next'])
@@ -1833,7 +1857,6 @@ def search_old():
                                persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
     elif request.method == 'POST':
         params = request.form.to_dict()
-        print(params)
         filtered = filter_datasets(**params)
 
         del params['spatial_bounds_interpolated']
@@ -2064,7 +2087,6 @@ def landing_page(dataset_id):
 
     if url.startswith(usap_domain):
         directory = os.path.join(current_app.root_path, url[len(usap_domain):])
-        # print(directory)
         file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
         omit = set(['readme.txt', '00README.txt', 'index.php', 'index.html', 'data.html'])
         file_paths = [f for f in file_paths if os.path.basename(f) not in omit]
@@ -2082,12 +2104,13 @@ def landing_page(dataset_id):
     if metadata.get('url_extra'):
         metadata['url_extra'] = os.path.basename(metadata['url_extra'])
 
-    creator_orcid = None
-
-    for p in metadata['persons'] or []:
-        if p['id'] == metadata['creator'] and p['id_orcid'] is not None:
-            creator_orcid = p['id_orcid']
-            break
+    metadata['creator_orcids'] = []
+    for c in metadata['creator'].split('; '):
+        p = get_person(c)
+        if p:
+            metadata['creator_orcids'].append({'id': p.get('id'), 'orcid': p.get('id_orcid')}) 
+        else:
+            metadata['creator_orcids'].append({'id': c, 'orcid': None})
 
     metadata['citation'] = makeCitation(metadata, dataset_id)
     metadata['json_ld'] = makeJsonLD(metadata, dataset_id)
@@ -2095,7 +2118,7 @@ def landing_page(dataset_id):
     # get count of how many times this dataset has been downloaded
     metadata['downloads'] = getDownloadsCount(dataset_id)
 
-    return render_template('landing_page.html', data=metadata, creator_orcid=creator_orcid)
+    return render_template('landing_page.html', data=metadata)
 
 
 def getDownloadsCount(uid):
@@ -2119,7 +2142,6 @@ def getDownloadsCount(uid):
 
 def makeJsonLD(data, uid):
     keywords = cf.getDatasetKeywords(uid)
-    print(data.get('data'))
     creators = []
     for p in data.get('persons'):
         creator = {
@@ -2317,7 +2339,12 @@ def file_download(filename):
 def readme(dataset_id):
     (conn, cur) = connect_to_db()
     cur.execute('''SELECT url_extra FROM dataset WHERE id=%s''', (dataset_id,))
-    url_extra = cur.fetchall()[0]['url_extra'][1:]
+    res = cur.fetchall()
+
+    if not res or not res[0]['url_extra']:
+        return redirect(url_for('not_found'))
+    url_extra = (res[0]['url_extra'])[1:]
+
     if url_extra.startswith('/'):
         url_extra = url_extra[1:]
     try:
@@ -2598,7 +2625,6 @@ def curator():
                 elif request.form.get('submit') == "assign_keywords":
                     template_dict['tab'] = "keywords"
                     assigned_keywords = request.form.getlist('assigned_keyword')
-                    print(assigned_keywords)
                     (msg, status) = cf.addKeywordsToDatabase(uid, assigned_keywords)
                     if status == 0:
                         template_dict['error'] = msg
@@ -2727,7 +2753,6 @@ def curator():
                         recipients_text = request.form.get('email_recipients').encode('utf-8')
                         recipients = recipients_text.splitlines()
 
-                        print(recipients)
                         msg['Subject'] = request.form.get('email_subject')
 
                         msg['From'] = sender
@@ -2944,7 +2969,6 @@ def catalog_browser():
     query = "SELECT DISTINCT dif_test.*, ST_AsText(dsm.bounds_geometry) AS bounds_geometry FROM dif_test LEFT JOIN dif_spatial_map dsm ON dsm.dif_id = dif_test.dif_id WHERE dif_test.dif_id !=''"
 
     if request.method == 'POST':
-        print(request.form)
 
         template_dict['pi_name'] = request.form.get('pi_name')
         template_dict['title'] = request.form.get('title')
@@ -2954,7 +2978,7 @@ def catalog_browser():
         all_selected = bool(int(request.form.get('all_selected')))
         template_dict['all_selected'] = all_selected
 
-        print(bool(int(request.form.get('all_selected'))))
+        # print(bool(int(request.form.get('all_selected'))))
         if (request.form.get('pi_name') != ""):
             query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
         if(request.form.get('title') != ""):
@@ -2972,7 +2996,6 @@ def catalog_browser():
     query += " ORDER BY dif_test.date_created DESC"
 
     query_string = cur.mogrify(query)
-    print(query_string)
     cur.execute(query_string)
     rows = cur.fetchall()
 
@@ -3073,14 +3096,14 @@ def genBank_datasets():
     cur.execute(ds_query_string)
     title = cur.fetchone()
     datasets = re.split(', |\) |\n', title['title'])
-    print(datasets)
+
     lines = []
     for ds in datasets:
         if ds.strip()[0] == "(":
             lines.append({'title': ds.replace("(", "")})
         else:
             lines.append({'title': ds, 'url': genbank_url + ds.replace(' ', '')})
-    print(lines)
+
     template_dict = {'lines': lines}
     return render_template("NSF-ANT05-37143_datasets.html", **template_dict)
 
@@ -3090,8 +3113,6 @@ def getfeatureinfo():
     print('getfeatureinfo')
     if request.args.get('layers') != "":
         url = urllib.unquote('http://api.usap-dc.org:81/wfs?' + urllib.urlencode(request.args))
-        print(url)
-        print(requests.get(url).text)
         return requests.get(url).text
     return None
 
@@ -3371,7 +3392,7 @@ def get_project(project_id):
                         FROM
                         project p
                         LEFT JOIN (
-                            SELECT pam.proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link, 
+                            SELECT pam.proj_uid AS a_proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link, 
                             'is_main_award', pam.is_main_award, 'pi_name', a.name)) funding
                             FROM project_award_map pam 
                             JOIN award a ON a.award=pam.award_id
@@ -3379,63 +3400,64 @@ def get_project(project_id):
                             LEFT JOIN program prog ON prog.id=apm.program_id
                             WHERE a.award != 'XXXXXXX'
                             GROUP BY pam.proj_uid
-                        ) a ON (p.proj_uid = a.proj_uid)
+                        ) a ON (p.proj_uid = a.a_proj_uid)
                         LEFT JOIN (
-                            SELECT pperm.proj_uid, json_agg(json_build_object('role', pperm.role ,'id', per.id, 'name_last', per.last_name, 
-                            'name_first', per.first_name, 'org', per.organization, 'email', per.email)) persons
+                            SELECT pperm.proj_uid AS per_proj_uid, json_agg(json_build_object('role', pperm.role ,'id', per.id, 'name_last', per.last_name, 
+                            'name_first', per.first_name, 'org', per.organization, 'email', per.email, 'orcid', per.id_orcid)
+                            ORDER BY pperm.oid) persons
                             FROM project_person_map pperm JOIN person per ON (per.id=pperm.person_id)
                             GROUP BY pperm.proj_uid
-                        ) per ON (p.proj_uid = per.proj_uid)
+                        ) per ON (p.proj_uid = per.per_proj_uid)
                         LEFT JOIN (
-                            SELECT pdifm.proj_uid, json_agg(dif) dif_records
+                            SELECT pdifm.proj_uid AS dif_proj_uid, json_agg(dif) dif_records
                             FROM project_dif_map pdifm JOIN dif ON (dif.dif_id=pdifm.dif_id)
                             GROUP BY pdifm.proj_uid
-                        ) dif ON (p.proj_uid = dif.proj_uid)
+                        ) dif ON (p.proj_uid = dif.dif_proj_uid)
                         LEFT JOIN (
-                            SELECT pim.proj_uid, json_agg(init) initiatives
+                            SELECT pim.proj_uid AS init_proj_uid, json_agg(init) initiatives
                             FROM project_initiative_map pim JOIN initiative init ON (init.id=pim.initiative_id)
                             GROUP BY pim.proj_uid
-                        ) init ON (p.proj_uid = init.proj_uid)
+                        ) init ON (p.proj_uid = init.init_proj_uid)
                         LEFT JOIN (
-                            SELECT prefm.proj_uid, json_agg(ref) reference_list
+                            SELECT prefm.proj_uid AS ref_proj_uid, json_agg(ref) reference_list
                             FROM project_ref_map prefm JOIN reference ref ON (ref.ref_uid=prefm.ref_uid)
                             GROUP BY prefm.proj_uid
-                        ) ref ON (p.proj_uid = ref.proj_uid)
+                        ) ref ON (p.proj_uid = ref.ref_proj_uid)
                         LEFT JOIN (
-                            SELECT pdm.proj_uid, json_agg(dataset) datasets
+                            SELECT pdm.proj_uid AS ds_proj_uid, json_agg(dataset) datasets
                             FROM project_dataset_map pdm JOIN project_dataset dataset ON (dataset.dataset_id=pdm.dataset_id)
                             GROUP BY pdm.proj_uid
-                        ) dataset ON (p.proj_uid = dataset.proj_uid)
+                        ) dataset ON (p.proj_uid = dataset.ds_proj_uid)
                         LEFT JOIN (
-                            SELECT pw.proj_uid, json_agg(pw) website
+                            SELECT pw.proj_uid AS website_proj_uid, json_agg(pw) website
                             FROM project_website pw
                             GROUP BY pw.proj_uid
-                        ) website ON (p.proj_uid = website.proj_uid)
+                        ) website ON (p.proj_uid = website.website_proj_uid)
                         LEFT JOIN (
-                            SELECT pdep.proj_uid, json_agg(pdep) deployment
+                            SELECT pdep.proj_uid AS dep_proj_uid, json_agg(pdep) deployment
                             FROM project_deployment pdep
                             GROUP BY pdep.proj_uid
-                        ) deployment ON (p.proj_uid = deployment.proj_uid)
+                        ) deployment ON (p.proj_uid = deployment.dep_proj_uid)
                          LEFT JOIN (
-                            SELECT pf.proj_uid, json_agg(pf) feature
+                            SELECT pf.proj_uid AS f_proj_uid, json_agg(pf) feature
                             FROM project_feature pf
                             GROUP BY pf.proj_uid
-                        ) feature ON (p.proj_uid = feature.proj_uid)                       
+                        ) feature ON (p.proj_uid = feature.f_proj_uid)                       
                         LEFT JOIN (
-                            SELECT psm.proj_uid, json_agg(psm) spatial_bounds
+                            SELECT psm.proj_uid AS sb_proj_uid, json_agg(psm) spatial_bounds
                             FROM project_spatial_map psm
                             GROUP BY psm.proj_uid
-                        ) sb ON (p.proj_uid = sb.proj_uid)
+                        ) sb ON (p.proj_uid = sb.sb_proj_uid)
                         LEFT JOIN (
-                            SELECT pgskm.proj_uid, json_agg(gsk) parameters
+                            SELECT pgskm.proj_uid AS param_proj_uid, json_agg(gsk) parameters
                             FROM project_gcmd_science_key_map pgskm JOIN gcmd_science_key gsk ON (gsk.id=pgskm.gcmd_key_id)
                             GROUP BY pgskm.proj_uid
-                        ) parameters ON (p.proj_uid = parameters.proj_uid)
+                        ) parameters ON (p.proj_uid = parameters.param_proj_uid)
                         LEFT JOIN (
-                            SELECT pglm.proj_uid, json_agg(gl) locations
+                            SELECT pglm.proj_uid AS loc_proj_uid, json_agg(gl) locations
                             FROM project_gcmd_location_map pglm JOIN gcmd_location gl ON (gl.id=pglm.loc_id)
                             GROUP BY pglm.proj_uid
-                        ) locations ON (p.proj_uid = locations.proj_uid)
+                        ) locations ON (p.proj_uid = locations.loc_proj_uid)
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
@@ -3447,7 +3469,6 @@ def project_browser():
 
     if request.method == 'POST':
         params = request.form.to_dict()
-        print(params)
         filtered = filter_datasets(**params)
 
         del params['spatial_bounds_interpolated']
@@ -3709,7 +3730,6 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         query_string += ' WHERE ' + ' AND '.join(conds)
 
     cur.execute(query_string)
-    print(query_string)
     return cur.fetchall()
 
 
