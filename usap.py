@@ -3344,8 +3344,11 @@ def parseSearch(resource):
     filters = resource.split('&')
     search = {}
     for f in filters:
-        filter, value = f.split('=')
-        search[filter] = value
+        try:
+            filter, value = f.split('=', 1)
+            search[filter] = value
+        except:
+            continue
     return search
 
 
