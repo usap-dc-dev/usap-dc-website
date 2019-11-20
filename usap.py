@@ -680,9 +680,9 @@ def dataset_db2form(uid):
     if db_data.get('creator'):
         for author in db_data.get('creator').split('; '):
             try:
-                last_name, first_name = author.split(', ')
+                last_name, first_name = author.split(', ', 1)
             except:
-                last_name, first_name = author.split(',')
+                last_name, first_name = author.split(',', 1)
 
             if len(first_name) == 0: 
                 first_name = ' '
@@ -2281,7 +2281,7 @@ def makeCitation(metadata, dataset_id):
 
         if len(creators) == 0: 
             creators = metadata['creator'].split(';')
-            (last_name, first_name) = creators[0].split(',')
+            (last_name, first_name) = creators[0].split(',', 1)
             first_names = first_name.strip().split(' ')
             if len(first_names) > 1:
                 middle_init = ' ' + first_names[1][0] + '. '
@@ -2300,7 +2300,7 @@ def makeCitation(metadata, dataset_id):
                 if pi.get('middle_name'):
                     middle_init = ' ' + pi['middle_name'][0] + '. '
             else:
-                (last_name, first_name) = pi['person_id'].split(',')
+                (last_name, first_name) = pi['person_id'].split(',', 1)
 
         if len(creators) > 1: 
             etal = ' et al. ' 
@@ -2517,15 +2517,22 @@ def curator():
                     template_dict['json'] = json_str
 
                     sql, readme_file = json2sql.json2sql(json_data, uid)
+
                     template_dict['sql'] = sql
                     template_dict['readme_file'] = readme_file
                     template_dict['tab'] = "sql"
-                    try:
-                        with open(readme_file) as infile:
-                            readme_text = infile.read()
-                    except:
-                        template_dict['error'] = "Can't read Read Me file"
-                    template_dict['readme'] = readme_text
+
+                    if 'Error writing README file' in readme_file:
+                        template_dict['error'] = readme_file
+                        if 'Read-only file system' in readme_file:
+                            template_dict['error'] += '\n---This is expected if you are running in DEV mode'
+                    else:
+                        try:
+                            with open(readme_file) as infile:
+                                readme_text = infile.read()
+                        except:
+                            template_dict['error'] = "Can't read Read Me file"
+                        template_dict['readme'] = readme_text
 
                 # read in sql and submit to the database only
                 elif request.form.get('submit') == 'import_to_db':
@@ -2554,10 +2561,12 @@ def curator():
                                                           "Please check the landing page %s and contact us if there are any issues." \
                                                           % url_for('landing_page', dataset_id=uid, _external=True)
                         else:
-                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully registered.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('landing_page', dataset_id=uid, _external=True)
+                            template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
+                                                          + "\nWe have processed your dataset %s, and added the dataset to the USAP-DC repository." % data.get('title') \
+                                                          + "\nThe dataset ID is %s." % uid \
+                                                          + "\nThe DOI for the dataset is %s." % 'TBD' \
+                                                          + "\nPlease check the landing page %s and contact us if there are any issues." % url_for('landing_page', dataset_id=uid, _external=True) \
+                                                          + "\n\nBest regards,"  
 
                         coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
@@ -2681,6 +2690,28 @@ def curator():
                             problem = True
                         else:
                             template_dict['message'].append(msg)
+
+                            message, doi = msg.split('DOI: ', 1)
+
+                            data = json.loads(request.form.get('json'))
+                            
+                            template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+                            # add contact and submitter to list of recipients
+                            template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
+
+                            if edit:
+                                template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
+                                                              % data.get('title') + \
+                                                              "Please check the landing page %s and contact us if there are any issues." \
+                                                              % url_for('landing_page', dataset_id=uid, _external=True)
+                            else:
+                                template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
+                                                              + "\nWe have processed your dataset %s, and added the dataset to the USAP-DC repository." % data.get('title') \
+                                                              + "\nThe dataset ID is %s." % uid \
+                                                              + "\nThe DOI for the dataset is %s." % doi \
+                                                              + "\nPlease check the landing page %s and contact us if there are any issues." % url_for('landing_page', dataset_id=uid, _external=True) \
+                                                              + "\n\nBest regards," 
+
                     except Exception as err:
                         template_dict['error'] = "Error updating DataCite XML file: " + str(err) + " " + datacite_file
 
@@ -2810,10 +2841,15 @@ def curator():
                                                           "Please check the landing page %s and contact us if there are any issues." \
                                                           % url_for('project_landing_page', project_id=uid, _external=True)
                         else:
-                            template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully registered.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('project_landing_page', project_id=uid, _external=True)
+                            template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
+                                                          + "\nThis is to confirm that your project, %s, has been successfully registered at USAP-DC." % data.get('title') \
+                                                          + "\nPlease check the landing page %s and contact us (info@usap-dc.org) if there are any issues." % url_for('project_landing_page', project_id=uid, _external=True) \
+                                                          + "\n\nWe have also prepared and submitted a catalog entry (DIF) at the Antarctic Master Directory (AMD)." \
+                                                          + "\nThe DIF ID will be %s." % 'TBC' \
+                                                          + "\nThe direct link to the AMD record will be %s." % 'TBC' \
+                                                          + "\n\nIt usually takes AMD staff a few business days to review the submission before it goes live." \
+                                                          + "\n\nBest regards,"
+
                         template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
                         template_dict['db_imported'] = True
                     except Exception as err:
@@ -2902,6 +2938,27 @@ def curator():
                         template_dict['error'] = msg
                     else:
                         template_dict['message'].append(msg)
+
+                        data = json.loads(request.form.get('proj_json'))
+                        
+                        template_dict['email_recipients'] = cf.getCreatorEmails(uid)
+                        # add contact and submitter to list of recipients
+                        template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
+
+                        if edit:
+                            template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully updated.\n" \
+                                                          % data.get('title') + \
+                                                          "Please check the landing page %s and contact us if there are any issues." \
+                                                          % url_for('project_landing_page', project_id=uid, _external=True)
+                        else:
+                            template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
+                                                          + "\nThis is to confirm that your project, %s, has been successfully registered at USAP-DC." % data.get('title') \
+                                                          + "\nPlease check the landing page %s and contact us (info@usap-dc.org) if there are any issues." % url_for('project_landing_page', project_id=uid, _external=True) \
+                                                          + "\n\nWe have also prepared and submitted a catalog entry (DIF) at the Antarctic Master Directory (AMD)." \
+                                                          + "\nThe DIF ID will be %s." % cf.getDifID(uid) \
+                                                          + "\nThe direct link to the AMD record will be %s." % cf.getDifUrl(uid) \
+                                                          + "\n\nIt usually takes AMD staff a few business days to review the submission before it goes live." \
+                                                          + "\n\nBest regards,"
 
             else:
                 # display submission json file

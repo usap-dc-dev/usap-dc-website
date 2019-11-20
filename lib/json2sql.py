@@ -624,7 +624,7 @@ def editDatasetJson2sql(data, uid):
                 cur.execute(query)
                 res = cur.fetchone()
                 if res['count'] == 0:
-                    first_name, last_name = data["submitter_name"].split(', ')
+                    first_name, last_name = data["submitter_name"].split(', ', 1)
                     line = "INSERT INTO person(id,first_name,last_name,email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], first_name, last_name, data.get("submitter_email", ''), data.get("submitter_orcid", ''))
                     sql_out += line
                 query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, data["submitter_name"])
@@ -680,38 +680,41 @@ def editDatasetJson2sql(data, uid):
 
 def write_readme(data, id):
     doc_dir = os.path.join("doc", id)
-    if not os.path.exists(doc_dir):
-        oldmask = os.umask(000)
-        os.makedirs(doc_dir, 0o775)
-        os.umask(oldmask)
+    try:
+        if not os.path.exists(doc_dir):
+            oldmask = os.umask(000)
+            os.makedirs(doc_dir, 0o775)
+            os.umask(oldmask)
 
-    out_filename = os.path.join(doc_dir, 'README_' + id + '.txt')
-    text = []
-    text.append('USAP-DC Dataset# ' + id + '\n')
-    text.append(data["timestamp"][:10] + '\n')
-    text.append('http://doi.org/10.15784/' + id + '\n')
-    text.append('\nabstract:\n')
-    text.append(data["abstract"] + '\n')
-    text.append('\nInstruments and devices:\n')
-    text.append(data["devices"] + '\n')
-    text.append('\nAcquisition procedures:\n')
-    text.append(data["procedures"] + '\n')
-    text.append('\nContent and processing steps:\n')
-    text.append(data["content"] + '\n\n')
-    text.append(data["data_processing"] + '\n')
-    text.append('\nLimitations and issues:\n')
-    text.append(data["issues"] + '\n')
-    text.append('\nCheckboxes:\n')
-    text.append('* All the data are referenced in time and space.\n')
-    text.append('* The data column, properties, and attributes listed/used in the data files are explained either in the description and/or the data files themselves.\n')
-    text.append('* Graphs and maps (if provided) have legends.\n')
-      
-    #--- write the text to output file
-    with open(out_filename, 'w') as out_file:
-        out_file.writelines(text)
-    os.chmod(out_filename, 0o664)
-    
-    return out_filename
+        out_filename = os.path.join(doc_dir, 'README_' + id + '.txt')
+        text = []
+        text.append('USAP-DC Dataset# ' + id + '\n')
+        text.append(data["timestamp"][:10] + '\n')
+        text.append('http://doi.org/10.15784/' + id + '\n')
+        text.append('\nabstract:\n')
+        text.append(data["abstract"] + '\n')
+        text.append('\nInstruments and devices:\n')
+        text.append(data["devices"] + '\n')
+        text.append('\nAcquisition procedures:\n')
+        text.append(data["procedures"] + '\n')
+        text.append('\nContent and processing steps:\n')
+        text.append(data["content"] + '\n\n')
+        text.append(data["data_processing"] + '\n')
+        text.append('\nLimitations and issues:\n')
+        text.append(data["issues"] + '\n')
+        text.append('\nCheckboxes:\n')
+        text.append('* All the data are referenced in time and space.\n')
+        text.append('* The data column, properties, and attributes listed/used in the data files are explained either in the description and/or the data files themselves.\n')
+        text.append('* Graphs and maps (if provided) have legends.\n')
+          
+        #--- write the text to output file
+        with open(out_filename, 'w') as out_file:
+            out_file.writelines(text)
+        os.chmod(out_filename, 0o664)
+        
+        return out_filename
+    except Exception as e:
+        return "Error writing README file: \n%s" % str(e)
 
 
 def json2sql(data, id):

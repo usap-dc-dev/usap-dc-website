@@ -563,8 +563,9 @@ def projectJson2sql(data, uid):
     # generate the submitter's person id if we have their name
     subm_id = None
     if data.get('submitter_name'):
-        subm_first_name, subm_last_name = data['submitter_name'].split(' ')
-        subm_id = subm_last_name + ', ' + subm_first_name
+        names = data['submitter_name'].split(' ')
+        if len(names) > 1:
+            subm_id = names[-1] + ', ' + names[0]
 
     # Add PI to person table, if necessary, and project_person_map
     pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
@@ -661,7 +662,7 @@ def projectJson2sql(data, uid):
         award = data['award'] 
         if 'Not_In_This_List' in data['award']:
             sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
-            (dummy, award) = data['award'].split(':')
+            (dummy, award) = data['award'].split(':', 1)
         # check if this award is already in the award table
         query = "SELECT * FROM  award WHERE award = '%s'" % award
         cur.execute(query)
@@ -694,7 +695,7 @@ def projectJson2sql(data, uid):
     for other_award in data['other_awards']:
         if 'Not_In_This_List' in other_award:
                 sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
-                (dummy, award) = other_award.split(':')
+                (dummy, award) = other_award.split(':', 1)
                 # check if this award is already in the award table
                 query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
                 cur.execute(query)
@@ -860,8 +861,9 @@ def editProjectJson2sql(data, uid):
     # generate the submitter's person id if we have their name
     subm_id = None
     if data.get('submitter_name'):
-        subm_first_name, subm_last_name = data['submitter_name'].split(' ')
-        subm_id = subm_last_name + ', ' + subm_first_name
+        names = data['submitter_name'].split(' ')
+        if len(names) > 1:
+            subm_id = names[-1] + ', ' + names[0]
 
     pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
     pi_id = pi_id.replace(',  ', ', ')
@@ -911,7 +913,7 @@ def editProjectJson2sql(data, uid):
                 sql_out += "DELETE FROM project_award_map WHERE proj_uid = '%s';\n" % uid
             elif 'Not_In_This_List' in data['award_num']:
                 sql_out += "\n--NOTE: Award not in provided list\n"
-                (dummy, award) = data['award_num'].split(':')
+                (dummy, award) = data['award_num'].split(':', 1)
                 # check if this award is already in the award table
                 query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
                 cur.execute(query)
@@ -1110,7 +1112,7 @@ def editProjectJson2sql(data, uid):
             for other_award in data['other_awards_num']:
                 if 'Not_In_This_List' in other_award:
                     sql_out += "\n--NOTE: AWARD NOT IN PROVIDED LIST\n"
-                    (dummy, award) = other_award.split(':')
+                    (dummy, award) = other_award.split(':', 1)
                     # check if this award is already in the award table
                     query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
                     cur.execute(query)
@@ -1310,6 +1312,10 @@ def getDifIDAndTitle(uid):
     return "USAP-%s_1" % res['award_id'], res['title']  
 
 
+def getDifUrl(uid):
+    return 'https://gcmd.nasa.gov/search/Metadata.do?entry=%s' % getDifID(uid)
+    
+
 def getDifXMLFileName(uid):
     return os.path.join(DIFXML_FOLDER, "%s.xml" % getDifID(uid))
 
@@ -1333,7 +1339,7 @@ def getDifXML(data, uid):
     # ---- personel
     if data.get('persons'):
         for person in data['persons']:
-            name_last, name_first = person.get('id').split(',')
+            name_last, name_first = person.get('id').split(',', 1)
             xml_pi = ET.SubElement(root, "Personnel")
             xml_pi_role = ET.SubElement(xml_pi, "Role")
             xml_pi_role.text = "INVESTIGATOR"
