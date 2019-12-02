@@ -3037,7 +3037,7 @@ def catalog_browser():
 
         # print(bool(int(request.form.get('all_selected'))))
         if (request.form.get('pi_name') != ""):
-            query += " AND dif_test.pi_name ~~* '%s'" % request.form['pi_name']
+            query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
         if(request.form.get('title') != ""):
             query += " AND dif_test.title ILIKE '%" + request.form['title'] + "%'"
         if(request.form.get('summary') != ""):
@@ -3559,13 +3559,13 @@ def project_browser():
         template_dict['award'] = request.form.get('award')
 
         if (request.form.get('pi_name') != ""):
-            query += " AND per.persons ~~* '%s'" % request.form['pi_name']
+            query += " AND per.persons ~* '%s'" % request.form['pi_name']
         if(request.form.get('title') != ""):
             query += " AND project.title ILIKE '%" + request.form['title'] + "%'"
         if(request.form.get('summary') != ""):
             query += " AND project.description ILIKE '%" + request.form['summary'] + "%'"
         if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
-            query += " AND a.awards ~~* '%s'" % request.form['award']
+            query += " AND a.awards ~* '%s'" % request.form['award']
 
     query += " ORDER BY project.date_created DESC"
 
@@ -3761,35 +3761,35 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
     conds = []
     if uid:
-        conds.append(cur.mogrify('dpv.uid=%s', (uid,)))
+        conds.append(cur.mogrify('dpv.uid = %s', (uid,)))
     if dp_title:
-        conds.append("dpv.title ~~* '%s' OR dpv.%s ~~* '%s'" % (dp_title, titles, dp_title))
+        conds.append("dpv.title ~* '%s' OR dpv.%s ~* '%s'" % (dp_title, titles, dp_title))
     if award:
-        conds.append(cur.mogrify('dpv.awards~~*%s', (award,)))
+        conds.append(cur.mogrify('dpv.awards ~* %s', (award,)))
     if person:
-        conds.append(cur.mogrify('dpv.persons~~*%s', (person,)))
+        conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
     if spatial_bounds_interpolated:
         conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
         conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
-        conds.append(cur.mogrify('dpv.science_programs~~*%s ', (sci_program,)))
+        conds.append(cur.mogrify('dpv.science_programs = %s ', (sci_program,)))
     if nsf_program:
-        conds.append(cur.mogrify('dpv.nsf_funding_programs~~*%s ', (nsf_program,)))
+        conds.append(cur.mogrify('dpv.nsf_funding_programs = %s ', (nsf_program,)))
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     if free_text:
-        conds.append(cur.mogrify("title ~~* %s OR description ~~* %s OR keywords ~~* %s OR persons ~~* %s OR " + d_or_p + " ~~* %s", 
+        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
-        conds.append(cur.mogrify('repositories ~~* %s ', (repo,)))
+        conds.append(cur.mogrify('repositories = %s ', (repo,)))
 
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
 
-    print(query_string)
+    # print(query_string)
 
     cur.execute(query_string)
     return cur.fetchall()
