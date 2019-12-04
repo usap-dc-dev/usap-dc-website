@@ -120,6 +120,13 @@ def submitToDataCite(uid, edit=False):
 
         if response.status_code not in [201, 200]:
             return("Error with request to create DOI at DataCite.  Status code: %s\n Error: %s" % (response.status_code, response.json()))
+        elif not edit:
+            #update doi in database
+            (conn, cur) = connect_to_db()
+            query = "UPDATE dataset SET doi='%s' WHERE id='%s';" % (doi, uid)
+            query += "UPDATE project_dataset SET doi = '%s' WHERE dataset_id = '%s';" % (doi, uid)
+            query += "COMMIT;" 
+            cur.execute(query)
 
         return(msg % doi)
 
@@ -193,13 +200,12 @@ def getISOXMLFileName(uid):
 
 
 def isRegisteredWithDataCite(uid):
-    with open(DATACITE_CONFIG) as dc_file:
-        dc_details = json.load(dc_file)
-    id = dc_details['SHOULDER'] + uid
-    dc_url = dc_details['SERVER'] + '/' + id
-    r = requests.get(dc_url)
-    return r.status_code == 200
-
+    (conn, cur) = connect_to_db()
+    query = "SELECT doi from dataset WHERE id = '%s'" % uid
+    cur.execute(query)
+    res = cur.fetchone()
+    return (res['doi'] and len(res['doi']) > 0)
+    
 
 def doISOXML(uid):
     # get datacite XML
@@ -1314,7 +1320,7 @@ def getDifIDAndTitle(uid):
 
 def getDifUrl(uid):
     return 'https://gcmd.nasa.gov/search/Metadata.do?entry=%s' % getDifID(uid)
-    
+
 
 def getDifXMLFileName(uid):
     return os.path.join(DIFXML_FOLDER, "%s.xml" % getDifID(uid))

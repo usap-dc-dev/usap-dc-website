@@ -148,11 +148,10 @@ def make_sql(data, id):
     sql_out += '\n--NOTE: submitter_id = JSON "submitter_name"\n'
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
-    sql_line = """INSERT INTO dataset (id,doi,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,
+    sql_line = """INSERT INTO dataset (id,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,
     status_id,url_extra,review_status,date_created,date_modified)
-    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}');\n""" \
+    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}');\n""" \
             .format(id,
-                    dc_config['SHOULDER'] + id, 
                     data["title"], 
                     data["submitter_name"], 
                     '; '.join(person_ids), 
@@ -170,8 +169,8 @@ def make_sql(data, id):
     sql_out += sql_line
 
     sql_out += '\n--NOTE: add to project_dataset table\n'
-    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, doi) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
-        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True), dc_config['SHOULDER'] + id)
+    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status) VALUES ('%s', '%s', '%s', '%s', 'exists');\n" % \
+        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True))
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
@@ -690,7 +689,7 @@ def write_readme(data, id):
         text = []
         text.append('USAP-DC Dataset# ' + id + '\n')
         text.append(data["timestamp"][:10] + '\n')
-        text.append('http://doi.org/10.15784/' + id + '\n')
+        text.append(dc_config['SERVER'] + '/' + dc_config['SHOULDER'] + id + '\n')
         text.append('\nabstract:\n')
         text.append(data["abstract"] + '\n')
         text.append('\nInstruments and devices:\n')

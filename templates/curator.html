@@ -490,42 +490,43 @@
       }
     });
 
+    if ($("#projects").text() != '') {
+      var project_rows = JSON.parse($("#projects").text());
+      var dataset_rows = JSON.parse($("#datasets").text());
 
-    var project_rows = JSON.parse($("#projects").text());
-    var dataset_rows = JSON.parse($("#datasets").text());
-
-    var d_ps = [];
-    var d_p;
-    for (var r of project_rows) {
-      if (r.uid) {
-        d_p = r.uid + ': ' + r.title;
-        d_ps.push(d_p);
+      var d_ps = [];
+      var d_p;
+      for (var r of project_rows) {
+        if (r.uid) {
+          d_p = r.uid + ': ' + r.title;
+          d_ps.push(d_p);
+        }
       }
-    }
-    for (r of dataset_rows) {
-      if (r.uid) {
-        d_p = r.uid + ': ' + r.title;
-        d_ps.push(d_p);
+      for (r of dataset_rows) {
+        if (r.uid) {
+          d_p = r.uid + ': ' + r.title;
+          d_ps.push(d_p);
+        }
       }
-    }
 
-    var persons_rows = JSON.parse($("#persons").text());
-    var persons = [];
-    for (r in persons_rows) {
-        row = persons_rows[r];
-        persons.push(row.id);
-    }
+      var persons_rows = JSON.parse($("#persons").text());
+      var persons = [];
+      for (r in persons_rows) {
+          row = persons_rows[r];
+          persons.push(row.id);
+      }
 
-    var orgs_rows = JSON.parse($("#orgs").text());
-    var orgs = [];
-    for (r in orgs_rows) {
-      org = orgs_rows[r];
-      orgs.push(org.name);
-    }
+      var orgs_rows = JSON.parse($("#orgs").text());
+      var orgs = [];
+      for (r in orgs_rows) {
+        org = orgs_rows[r];
+        orgs.push(org.name);
+      }
 
-    autocomplete(document.getElementById("dataset_or_project"), null, d_ps);
-    autocomplete(document.getElementById("name_last"), document.getElementById("name_first"), persons);
-    autocomplete(document.getElementById("org"), null, orgs);
+      autocomplete(document.getElementById("dataset_or_project"), null, d_ps);
+      autocomplete(document.getElementById("name_last"), document.getElementById("name_first"), persons);
+      autocomplete(document.getElementById("org"), null, orgs);
+    }
 
   });
 

@@ -2192,10 +2192,15 @@ def makeJsonLD(data, uid):
             }
         spatial_coverage.append(ex)
 
+    if data.get('doi'):
+        doi = data['doi']
+    else:
+        doi = 'TBD'
+
     json_ld = {
         "@context": "https://schema.org/",
         "@type": "Dataset",
-        "@id": "doi:" + data.get('doi'),
+        "@id": "doi:" + doi,
         "additionalType": ["geolink:Dataset", "vivo:Dataset"],
         "name": data.get('title'),
         "description": data.get('abstract'),
@@ -2214,9 +2219,9 @@ def makeJsonLD(data, uid):
             },
             {
                 "@type": "DataDownload",
-                "@id": "http://dx.doi.org/%s" % data.get('doi'),
+                "@id": "http://dx.doi.org/%s" % doi,
                 "additionalType": "dcat:distribution",
-                "url": "http://dx.doi.org/%s" % data.get('doi'),
+                "url": "http://dx.doi.org/%s" % doi,
                 "name": "landing page",
                 "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
@@ -2237,7 +2242,7 @@ def makeJsonLD(data, uid):
         "identifier": {
             "@type": "PropertyValue",
             "propertyID": "dataset identifier",
-            "value": "doi:" + data.get('doi')
+            "value": "doi:" + doi
         },
         "contributor": awards,
         "license": [
@@ -2405,58 +2410,59 @@ def curator():
                     template_dict['message'].append("Successfully added user")
             except Exception as err:
                 template_dict['error'] = "Error adding user: " + str(err)
-            
-        # get list of json files in submission directory, ordered by date
-        current_dir = os.getcwd()
-        os.chdir(submitted_dir)
-        files = filter(os.path.isfile, os.listdir(submitted_dir))
-        files = [os.path.join(submitted_dir, f) for f in files]  # add path to each file
-        files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-        os.chdir(current_dir)
+        
+        if not request.args.get('uid'):    
+            # get list of json files in submission directory, ordered by date
+            current_dir = os.getcwd()
+            os.chdir(submitted_dir)
+            files = filter(os.path.isfile, os.listdir(submitted_dir))
+            files = [os.path.join(submitted_dir, f) for f in files]  # add path to each file
+            files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            os.chdir(current_dir)
 
-        submissions = []
-        for f in files:
-            if f.find(".json") > 0:
-                date = datetime.utcfromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
-                f = os.path.basename(f)
-                uid = f.split(".json")[0]
-                # set submission status
-                if uid[0] == 'p':
-                    if not cf.isProjectImported(uid):
-                        status = "Pending"
-                        landing_page = ''
-                    else:
-                        status = "Ingested"
-                        landing_page = '/view/project/%s' % uid
-                elif uid[0:2] == 'ep':
-                    if cf.isEditComplete(uid):
-                        status = "Edit completed"
-                        landing_page = '/view/project/%s' % uid.replace('e', '') 
-                    else:
-                        status = "Pending"
-                        landing_page = ''
-                elif uid[0] == 'e':
-                    if cf.isEditComplete(uid):
-                        status = "Edit completed"
-                        landing_page = '/view/dataset/%s' % uid.replace('e', '') 
-                    else:
-                        status = "Pending"
-                        landing_page = ''            
-                else:
-                    if not cf.isDatabaseImported(uid):
-                        status = "Pending"
-                        landing_page = ''
-                    else:
-                        landing_page = '/view/dataset/%s' % uid
-                        if not cf.isRegisteredWithDataCite(uid):
-                            status = "Not yet registered with DataCite"
-                        elif not cf.ISOXMLExists(uid):
-                            status = "ISO XML file missing"
+            submissions = []
+            for f in files:
+                if f.find(".json") > 0:
+                    date = datetime.utcfromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
+                    f = os.path.basename(f)
+                    uid = f.split(".json")[0]
+                    # set submission status
+                    if uid[0] == 'p':
+                        if not cf.isProjectImported(uid):
+                            status = "Pending"
+                            landing_page = ''
                         else:
-                            status = "Completed"
-                submissions.append({'id': uid, 'date': date, 'status': status, 'landing_page': landing_page})
-   
-        template_dict['submissions'] = submissions
+                            status = "Ingested"
+                            landing_page = '/view/project/%s' % uid
+                    elif uid[0:2] == 'ep':
+                        if cf.isEditComplete(uid):
+                            status = "Edit completed"
+                            landing_page = '/view/project/%s' % uid.replace('e', '') 
+                        else:
+                            status = "Pending"
+                            landing_page = ''
+                    elif uid[0] == 'e':
+                        if cf.isEditComplete(uid):
+                            status = "Edit completed"
+                            landing_page = '/view/dataset/%s' % uid.replace('e', '') 
+                        else:
+                            status = "Pending"
+                            landing_page = ''            
+                    else:
+                        if not cf.isDatabaseImported(uid):
+                            status = "Pending"
+                            landing_page = ''
+                        else:
+                            landing_page = '/view/dataset/%s' % uid
+                            if not cf.isRegisteredWithDataCite(uid):
+                                status = "Not yet registered with DataCite"
+                            elif not cf.ISOXMLExists(uid):
+                                status = "ISO XML file missing"
+                            else:
+                                status = "Completed"
+                    submissions.append({'id': uid, 'date': date, 'status': status, 'landing_page': landing_page})
+
+            template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
 
         if request.args.get('uid') is not None:
