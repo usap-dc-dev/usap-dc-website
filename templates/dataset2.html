@@ -29,7 +29,7 @@
           <div style="float:right; margin-top: 20px;">
             <button class="btn btn-default" type="submit" name="action" value="save">Save current session</button>
             <button class="btn btn-default" type="submit" name="action" value="restore">Restore saved session</button>
-            <a target="_blank"  href="{{url_for('submit_help')}}" class="btn btn-primary">Help</a>
+            <a target="_blank"  href="{{url_for('submit_help', _anchor='dataset')}}" class="btn btn-primary">Help</a>
           </div>
           <div style="clear:both"></div>
           {% if edit %}<span class="help-block">All fields have been pre-populated with existing values</span>{% endif %}

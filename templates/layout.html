@@ -276,18 +276,13 @@
       <a href="http://www.iedadata.org"><img id="IEDA" alt="IEDA" src="{{ url_for('static', filename='imgs/header/ieda_logo_200x88.png') }}"/></a>
     </ieda-banner>
 
-
-<!--       <div id="page-header">
-        <h1><a title="U.S. Antarctic Program Data Center" href="/">U.S. Antarctic Program Data Center</a></h1>
-      </div>
-    -->
     <div id="ieda-menu-wrap">
       <ul id="ieda-menu">
-        <!--<li><a class="cur" href="/"><img src="/imgs/menu_home.gif" alt="Home Icon"/> Home</a></li>-->
         <li><a class="top_link" href="{{url_for('home')}}">About</a>
           <ul>
             <li><a href="{{url_for('home')}}">Home</a></li>
             <li><a href="{{url_for('overview')}}">Overview</a></li>
+            <li><a href="{{url_for('faq')}}">FAQ</a></li>
             <li><a href="{{url_for('stats')}}">Statistics</a></li>
           </ul>
         </li>
@@ -329,16 +324,14 @@
         <li><a href="{{url_for('contact')}}">Contact</a>
         </li>
         {% if session.user_info %}
-          <li><a href="{{url_for('dashboard')}}">Dashboard</a></li>
+          <li><a class="top_link" href="{{url_for('dashboard')}}">Dashboard</a></li>
           {% if session.user_info.is_curator %}
-            <li><a href="{{url_for('curator')}}">Curator Page</a></li>
+            <li><a class="top_link" href="{{url_for('curator')}}">Curator</a></li>
           {% endif %}
-          <li><a href="{{url_for('logout')}}">Logout</a></li>
+          <li><a class="top_link" href="{{url_for('logout')}}">Logout</a></li>
         {% else %}
-          <li><a href="{{url_for('dashboard')}}">Login</a></li>
+          <li><a class="top_link" href="{{url_for('dashboard')}}">Login</a></li>
         {% endif %}
-
-
       </ul>
     </div>
   </div>
@@ -353,8 +346,8 @@
   <p>
     <h1 style="color:red"><b> This page is currently under active development and may not be fully operational.</b></h1>
   </p>
-</div>
- -->
+</div> -->
+
     {% if cur == "home" %}
 
     {% block home %}{%endblock home %}

@@ -225,6 +225,27 @@
          </div>
         </div>
         {% endif %}
+
+        {% if data.keywords %}
+        <div class="lprow">
+          <div class="field">
+            Keywords
+          </div>
+          <div class="value">
+            {% for kw in data.keywords|sort(attribute='keyword_label') %}
+              <div id="kw_button_div" class="ck-button" {% if kw.keyword_description %} data-toggle="popover" data-placement="top" 
+              data-content="<b>Description:</b> {{kw.keyword_description}}" {% endif %}>
+                <label>
+                  <a class="kw-btn" href="{{url_for('dataset_search',free_text=kw.keyword_label)}}">
+                    <span>{{kw.keyword_label}}</span>
+                  </a>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
       </td>
 
       {% if data.get('spatial_extents') %}
@@ -303,14 +324,34 @@
   </div>
   {% endfor %}
   </div>
-
-</div>
+ </div>
+<!-- 
+  <div id="keywords">
+    <div class="header small">
+      Keywords
+    </div>
+    <div class="lprow-no-margin">
+      {% for kw in data.keywords|sort(attribute='keyword_label') %}
+        <div id="kw_button_div" class="ck-button" {% if kw.keyword_description %} data-toggle="popover" data-placement="top" 
+        data-content="<b>Description:</b> {{kw.keyword_description}}" {% endif %}>
+          <label>
+            <a class="kw-btn" href="{{url_for('dataset_search',free_text=kw.keyword_label)}}">
+              <span>{{kw.keyword_label}}</span>
+            </a>
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+  </div> -->
 
 {% if data.downloads >= 0 %}
 <div class="field">
-  This dataset has been downloaded {{data.downloads}} time{%if data.downloads != 1 %}s{% endif %} since March 2017 (based on unique date-IP combinations)
+  <p>
+    <!-- <br> -->
+    This dataset has been downloaded {{data.downloads}} time{%if data.downloads != 1 %}s{% endif %} since March 2017 (based on unique date-IP combinations)
+  </p>
 </div>
 {% endif %}
-
+</div>
 
 {% endblock body %}

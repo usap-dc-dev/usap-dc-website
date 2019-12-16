@@ -194,6 +194,7 @@ def get_datasets(dataset_ids):
                    cur.mogrify(
                        '''SELECT d.*,
                              CASE WHEN a.awards IS NULL THEN '[]'::json ELSE a.awards END,
+                             CASE WHEN k.keywords IS NULL THEN '[]'::json ELSE k.keywords END,
                              CASE WHEN par.parameters IS NULL THEN '[]'::json ELSE par.parameters END,
                              CASE WHEN l.locations IS NULL THEN '[]'::json ELSE l.locations END,
                              CASE WHEN per.persons IS NULL THEN '[]'::json ELSE per.persons END,
@@ -215,9 +216,14 @@ def get_datasets(dataset_ids):
                             GROUP BY dam.dataset_id
                         ) a ON (d.id = a.dataset_id)
                         LEFT JOIN (
-                            SELECT dkm.dataset_id, json_agg(k) keywords
-                            FROM dataset_keyword_map dkm JOIN keyword k ON (k.id=dkm.keyword_id)
-                            GROUP BY dkm.dataset_id
+                            SELECT kw.dataset_id, json_agg(kw) keywords FROM (
+                                SELECT dkm.dataset_id, ku.keyword_label AS keyword_label, ku.keyword_description AS keyword_description
+                                FROM dataset_keyword_map dkm JOIN keyword_usap ku ON (ku.keyword_id=dkm.keyword_id)
+                                UNION
+                                SELECT dkm.dataset_id, ki.keyword_label AS keyword_label, ki.keyword_description AS keyword_description
+                                FROM dataset_keyword_map dkm JOIN keyword_ieda ki ON (ki.keyword_id=dkm.keyword_id)   
+                            ) kw
+                            GROUP BY kw.dataset_id
                         ) k ON (d.id = k.dataset_id)
                         LEFT JOIN (
                             SELECT dparm.dataset_id, json_agg(par) parameters
@@ -1813,6 +1819,11 @@ def overview():
     return render_template('overview.html')
 
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+
 @app.route('/links')
 def links():
     return render_template('links.html')
@@ -2756,6 +2767,11 @@ def curator():
                             out_file.write(xml_str)
                             template_dict['message'].append("ISO XML file saved to watch directory.")
                         os.chmod(isoxml_file, 0o664)
+                        if not edit:
+                            # update Recent Data list
+                            error = cf.updateRecentData(dc_uid)
+                            if error:
+                                template_dict['error'] = error
 
                     except Exception as err:
                         template_dict['error'] = "Error saving ISO XML file to watch directory: " + str(err)
@@ -3524,6 +3540,22 @@ def get_project(project_id):
                             FROM project_gcmd_location_map pglm JOIN gcmd_location gl ON (gl.id=pglm.loc_id)
                             GROUP BY pglm.proj_uid
                         ) locations ON (p.proj_uid = locations.loc_proj_uid)
+                        LEFT JOIN ( 
+                            SELECT k_1.proj_uid, string_agg(k_1.keywords, '; '::text) AS keywords
+                            FROM (SELECT pkm.proj_uid, reverse(split_part(reverse(pkm.gcmd_key_id), ' >'::text, 1)) AS keywords
+                                  FROM project_gcmd_science_key_map pkm
+                                  UNION
+                                  SELECT plm.proj_uid, reverse(split_part(reverse(plm.loc_id), ' >'::text, 1)) AS keywords
+                                  FROM project_gcmd_location_map plm
+                                  UNION
+                                  SELECT pim.proj_uid, reverse(split_part(reverse(pim.gcmd_iso_id), ' >'::text, 1)) AS keywords
+                                  FROM project_gcmd_isotopic_map pim
+                                  UNION
+                                  SELECT ppm.proj_uid, reverse(split_part(reverse(ppm.platform_id), ' >'::text, 1)) AS keywords
+                                  FROM project_gcmd_platform_map ppm
+                                  ) k_1
+                            GROUP BY k_1.proj_uid
+                        ) keywords ON keywords.proj_uid = p.proj_uid
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
@@ -3795,7 +3827,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
 
-    # print(query_string)
+    print(query_string)
 
     cur.execute(query_string)
     return cur.fetchall()

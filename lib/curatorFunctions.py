@@ -29,6 +29,7 @@ ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
 PYTHON = "/opt/rh/python27/root/usr/bin/python"
 LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
 PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
+RECENT_DATA_FILE = "inc/recent_data.txt"
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -1764,3 +1765,33 @@ def getReplacedDataset(uid):
     if res:
         return res['replaces']
     return None
+
+
+def updateRecentData(uid):
+    # update the recent_data.txt file
+    conn, cur = connect_to_db()
+    query = "SELECT id, title, creator, release_date, string_agg(award_id,',') AS awards " + \
+            "FROM dataset ds LEFT JOIN dataset_award_map dam on dam.dataset_id = ds.id " + \
+            "WHERE ds.id = '%s'" % uid + \
+            "GROUP BY ds.id;"
+    cur.execute(query)
+    res = cur.fetchone()
+    if res:
+        newline = "%s\t<a href=/view/dataset/%s>%s</a>\t%s\t%s\n" % (res.get('release_date'), uid, res.get('awards', 'Award Not Known'), 
+                                                                     res.get('creator'), res.get('title'))
+
+        try:
+            # read in file
+            with open(RECENT_DATA_FILE, 'r') as rd_file:
+                lines = rd_file.readlines()
+            if newline not in lines:
+                # re-write file
+                with open(RECENT_DATA_FILE, 'w') as rd_file:
+                    rd_file.write(lines[0])
+                    rd_file.write(newline)
+                    for line in lines[1:]:
+                        rd_file.write(line)
+            return None
+        except Exception as e:
+            return("Error updating Recent Data file: %s" % str(e))
+    return("Error updating Recent Data file: can't find database record for %s." % uid)

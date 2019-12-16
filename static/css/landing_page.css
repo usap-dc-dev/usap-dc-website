@@ -165,3 +165,33 @@ font-size: 1.3em;
 .link-button:hover {
   text-decoration: underline
 }
+
+
+.ck-button {
+    margin:4px;
+    background-color:white;
+    border-radius:25px;
+    border:1px solid #757575;
+    overflow:auto;
+    float:left;
+}
+
+.ck-button a:hover {
+  text-decoration: none;
+}
+
+.ck-button label {
+    float:left;
+    margin: 0;
+}
+
+.ck-button label span {
+    text-align:center;
+    padding: 3px 7px 2px 7px;
+    display:block;
+}
+
+.ck-button:hover {
+    background-color: #92B9C5;
+    color:#fff;
+}

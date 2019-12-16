@@ -56,7 +56,7 @@ body{
     height: 9em;
     position: relative;
     background-color: white;
-    min-width:68.5em;
+    min-width:74.5em;
 
 }
 .ieda-header ieda-banner {
@@ -124,19 +124,20 @@ div#ieda-menu-wrap {
 ul#ieda-menu {
   height: 3em;
   list-style: none;
-  margin-left: 2.9em;
-  font: 100 1.2em/1em Open-Sans, Helvetica-Neue, Helvetica, Arial, sans-serif;
+  padding-left: 15px;
+  /*margin-left: 2.9em;*/
+  font: 100 1.18em/1em Open-Sans, Helvetica-Neue, Helvetica, Arial, sans-serif;
   background-color: #92b9c5;
 }
 ul#ieda-menu li {
-  margin: 0 0.15em;
+  /*margin: 0 0.15em;*/
   float: left;
   position: relative;
   z-index: 999;
   line-height: 3em;
 }
 ul#ieda-menu li a {
-  padding: 0 1.25em 0 1.25em;
+  padding: 0 1em 0 1em;
   border: 0;
   color: white;
   display: block;
@@ -798,3 +799,13 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
     color: red;
 }
 
+.question {
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 1.2em;
+  color: #337ab7;
+}
+
+.answer {
+  margin-left: 20px;
+}

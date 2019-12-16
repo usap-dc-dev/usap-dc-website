@@ -266,6 +266,25 @@
           </div>
         {% endif %}
 
+        {% if data.keywords %}
+          <div class="lprow">
+            <div class="field">
+              Keywords
+            </div>
+            <div class="value">
+              {% for kw in data.keywords.split('; ')|sort %}
+                <div id="kw_button_div" class="ck-button">
+                  <label>
+                    <a class="kw-btn" href="{{url_for('search',free_text=kw)}}">
+                      <span>{{kw}}</span>
+                    </a>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
       </td>
 
       {% if data.spatial_bounds %}

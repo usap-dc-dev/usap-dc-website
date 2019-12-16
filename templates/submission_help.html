@@ -8,13 +8,15 @@
        
 		<p>The <a target="_blank" href="https://www.nsf.gov/pubs/2016/nsf16055/nsf16055.jsp">NSF Antarctic Research Program</a> requires for each award that
 		<ol>
-		<li>metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly accessible archive;</li>
-		<li>metadata for all Antarctic supported data sets and derived data products must be submitted to the Antarctic Master Directory, via the USAP Data Center.</li>
+			<li>upon award, the lead investigator is required to register the project on the USAP Data Coordination Center (USAP-DC; <a href="{{url_for('home')}}">http://www.usap-dc.org/</a>) website. Registration will include submission of the Data Management Plan agreed to at the time of award. The Data Management Plan must be made publicly available at this time. Project registration within USAP-DC will ensure registration within the Antarctic Master Directory and will fulfill data sharing obligations under the Antarctic Treaty;
+
+			<li>metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly accessible archive;</li>
+			<li>metadata for all Antarctic supported data sets and derived data products must be submitted to the Antarctic Master Directory, via the USAP Data Center.</li>
 		</ol>
 		The <a href="{{url_for('home')}}">United States Antarctic Program Data Center (USAP-DC)</a> can help with both parts.
 		</p>
 
-		<h2>Registration of a project record</h2>
+		<h2 id="project">Registration of a project record</h2>
 	
 		<p>
 			PIs that have received an award from the NSF US Antarctic Program should setup a project page at USAP-DC for their award or for several awards that are part 
@@ -24,20 +26,34 @@
 			update this information to best reflect project outcomes. 
 		</p>
 		<p>
-			If datasets are available at a repository, please provide title and link to the dataset. If you submitted your data at USAP-DC we will retrieve that information 
-			from the USAP-DC database to link your AMD record to your dataset.
+			If datasets are available at a repository, please provide title and link to the dataset. If you submitted your data at USAP-DC we will retrieve that information from the USAP-DC database.
 		</p>
 		<p>
-			Based on this information USAP-DC will create the AMD metadata record and submit it to AMD.
+			If datasets, references or other information are not available at the time, they can be added at a later time to the project record using the “edit” button. 
 		</p>
 		<p>
-			Each AMD submission is verified by AMD staff and it takes usually several business days from submitting a record until a record goes live.
+			In case the project/award is part of an overarching science project (e.g. ANDRILL, WAIS Divide Ice Core), please select the initiative from the drop-down menu. This will enable users to search and filter for project that are part of such an initiative.  If your overarching science project or initiative is not listed, please add this in the comment box at the end and we update our list.
 		</p>
 		<p>
-			In addition, we will prepare a project page on the USAP-DC website with the key project information and products.
+			Location and GCMD keywords are based on pre-populated lists. The latter is based on the GCMD/AMD vocabulary and will be used to prepare the catalog entry for the Antarctic Master Directory.
 		</p>
 		<p>
-			Once the project page and the AMD record has been created it can be updated as new dataset or additional information becomes available by <a href="{{url_for('contact')}}">contacting us.</a>
+			Based on this information USAP-DC will prepare a project page on the USAP-DC website with the key project information and products, which includes links to the datasets, publications and awards.
+		</p>
+		<p>
+			This page can be updated using the “Edit” button located in the top right corner of the page. The edit button links to a prepopulated submission form, where edits and updates can be made. The submitted updates will be vetted by a USAP-DC curator before they are ingested into the database.  In case there are issues or questions, please <a href="{{url_for('contact')}}">contact us</a>.
+		</p>
+		<p>
+			Note that only users linked to the project by email address or ORCID can make edits. If a user tries to edit a project page, to which the user is not linked or for whom the authentication on file is insufficient, the user will be presented with an option to request this access.
+		</p>
+		<p>
+			Based on the project information, USAP-DC will create a metadata record (DIF) and submit it to the Antarctic Master Directory (AMD). 
+ 		</p>
+		<p>
+			Note: Each AMD submission is verified by AMD staff and it takes usually several business days from submitting a record until a record goes live.
+		</p>
+		<p>
+			In case there are issues or questions, please  <a href="{{url_for('contact')}}">contact us.</a>
 		</p>
 
 
@@ -55,8 +71,9 @@
 		<p>For NSF-funded Antarctic projects it is common practice to create an entry in the AMD for each funded award. This entry can contain one or multiple links to the actual dataset(s), which can be stored at different repositories (<a target="_blank" href="https://gcmd.gsfc.nasa.gov/search/Metadata.do?entry=USAP-0424589&subset=GCMD#metadata">example</a>).</p>
 
 
-		<h2>Depositing research data</h2>
-		<p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services for these data including data publication and long term archiving. However, if there is an <a href="{{url_for('repo_list')}}">existing disciplinary repository</a> well used in your field, the best practice is to submit your data to this repository and the USAP-DC asks that you contact us to coordinate.</p>
+		<h2 id="dataset">Depositing research data</h2>
+		<p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services for these data including data publication and long term archiving. However, if there is an <a href="{{url_for('repo_list')}}">existing disciplinary repository</a> that is commonly used in a field, the best practice is to submit your data to this repository.
+		</p>
 
 		<p>For submitting data to USAP-DC, please go to <a href="{{url_for('submit')}}">http://www.usap-dc.org/submit</a> and use the "Deposit" button.</p>
 
@@ -64,8 +81,17 @@
 
 		<p>At USAP-DC we will also create a data DOI for each dataset as part of the process. This DOI can be used to reference the dataset in publications.</p>
 
+		<p>For title and abstract use text that clearly describes the data good enough that it can be identified in searches and browsers. A good dataset title is short but contains enough details that the content is clear. The title will be used for creating a DOI.</p>
+
+		<p>The dataset will be link to an NSF award, if one exists. We will also use the award number to link the dataset to the existing project page for that award.</p>
+
+		<p>If there are relevant publications, e.g. that describe details of the dataset, those can be added. If available, please include the DOI, so we can link directly to the publication. Publication, including DOIs, can be added later using the “edit” function.</p>
+
+		<p>Please add details regarding instruments, acquisition and processing procedure that will allow future users to understand and use the data. Imagine what detail of information you like to see, if you would be reusing the data.</p>
+
 		<p>The submitted datasets will be reviewed by personnel from USAP-DC or NSIDC to check for data integrity, and that the necessary metadata information is submitted so that the data can be re-used in the future. The submission can be updated if necessary.</p>
-	
+
+		<p>Using the “edit” function users associated with the dataset will be able to update metadata information, e.g. references linked to the dataset. If a new version of the dataset is being submitted, it will likely be stored as a new dataset with a link to the previous version.</p>	
 
 
 
