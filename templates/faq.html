@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% set cur = "faq" %}
+{% block body %}
+
+<div class="container"> 
+	<h1 class="title">Frequently Asked Questions</h1>
+<!-- 	<ul>
+		<li><a href="#project">Project registration</a></li>
+		<li><a href="#dataset">Dataset submission</a></li>
+		<li><a href="#amd">AMD</a></li>
+		<li><a href="#search">Search and Download</a></li>
+	</ul> -->
+
+	<h3 id="project">Project registration</h3>
+
+	<ul>
+		<li>
+			<p class='question' id='qp1'>What is the difference between a project and an NSF award?</p>
+			<p class='answer' id='ap1' hidden>A project can represent a single NSF award or multiple awards that are part of one collaborative research project. Usually this means they have the same award title and share the same data management plan.</p>
+		</li>
+		<li>
+			<p class='question' id='qp2'>When should I register my NSF award?</p>
+			<p class='answer' id='ap2' hidden>You can register your project as soon as you have received and NSF award. The latest NSF guidelines suggest that you register your project sometime during the first year of the project, so you can list it in the first annual report.</p>
+		 </li>
+		<li>
+			<p class='question' id='qp3'>I don’t have any data yet. Should I register my award/project?</p>
+			<p class='answer' id='ap3' hidden>Yes, you can register your project, even I you have no datasets yet. You can update the project page as data are being produced.</p>
+		</li>
+		<li>
+			<p class='question' id='qp4'>Once I have registered a project, can I update the information?</p>
+			<p class='answer' id='ap4' hidden>Yes, we actually expect that the project pages are updated as (more) data become available. You can use the “edit” button on the project page to update your project. If you have issues or need other changes, you can check with us (e.g. email <a href="mailto: info@usap-dc.org">info@usap-dc.org</a>)</p>
+		</li>
+		<li>
+			<p class='question' id='qp5'>Can I register a project when I don’t have an NSF award?</p>
+			<p class='answer' id='ap5' hidden>The main purpose of project pages is to provide an overview and link to datasets provided by NSF-funded Antarctic projects. If you have data that are not linked to an NSF award and don’t find another center to deal with the data, please contact USAP-DC (<a href="mailto: info@usap-dc.org">info@usap-dc.org</a>) first to discuss potential options.</p>
+		</li>
+		<li>
+			<p class='question' id='qp6'>Why is my NSF award not listed and what should I do?</p>
+			<p class='answer' id='ap6' hidden>We are harvesting award information from an NSF database in regular intervals, but it is possible that an award is to recent or was missed. Add your award to the list, or contact us at (<a href="mailto: info@usap-dc.org">info@usap-dc.org</a>). We will update our database accordingly.</p>
+		</li>
+		<li>
+			<p class='question' id='qp7'>Do I have to submit my data to USAP-DC when I need to register my award?</p>
+			<p class='answer' id='ap7' hidden>No. You can create a project before you have data. You can also deposit your dataset at other repositories. In fact, in many cases using a disciplinary repository would be a better choice than using USAP-DC, because your peers will more likely search those databases [link to list?] Once you have deposited your dataset with another repository, you should update your project page and add the information that links to the dataset (you can use the edit button or email <a href="mailto: info@usap-dc.org">info@usap-dc.org</a>.</p>
+		</li>
+	</ul>
+
+	<h3 id="dataset">Dataset submission</h3>
+	<ul>
+		<li>
+			<p class='question' id='qd1'>What data can I send to USAP-DC?</p>
+			<p class='answer' id='ad1' hidden>There are no firm restrictions on the type of data that are send to USAP-DC. However, we prefer that data for which disciplinary repositories exist be send there. For data that are submitted to USAP-DC, we prefer that they are in an open and re-usable format such as text files, csv tables, netcdf, common image formats. We do except Excel formats. Binary data formats should be submitted with detailed description of the format and, if possible, example code to read the data. Special, proprietary formats that would require specific software should not be avoided.</p>
+		</li>
+		<li>
+			<p class='question' id='qd2'>Can I submit preliminary data?</p>
+			<p class='answer' id='ad2' hidden>We discourage submitting preliminary data. It is preferred to submit final datasets. If someone really need to submit preliminary data and submits a final version later, we will most likely ingest the later as a new version of the dataset. The preliminary data should be marked as such in title and description.</p>
+		</li>
+		<li>
+			<p class='question' id='qd3'>Will I get a DOI for my submitted dataset?</p>
+			<p class='answer' id='ad3' hidden>Yes, we prepare and register DOI (Digital Object Identifier) though <a target="_blank" href="https://datacite.org/">DataCite</a> for every dataset we ingest into the USAP-DC</p>
+		</li>
+		<li>
+			<p class='question' id='qd4'>Can I have proprietary hold on the dataset?</p>
+			<p class='answer' id='ad4' hidden>By default, we make a dataset publicly accessible once it is ingested. However, we can place a proprietary hold on the data, for example if you need to demonstrate that dataset exists for a publication, but don’t wont the data to be accessible before publication, or if you need to deposit your data at the end of the project, but a Ph.D. student is still working on the data. You can change the release data in the submission form. Other user will be able to see the dataset and its metadata, but won’t be able to download the data until the specified release data.</p>
+		</li>
+	</ul>
+
+	<h3 id="amd">AMD</h3>
+	<ul>
+		<li>
+			<p class='question' id='qa1'>Is the Antarctic Master Directory (AMD) part of USAP-DC?</p>
+			<p class='answer' id='aa1' hidden>No. The Antarctic Master Directory (AMD) is a metadata catalog that is run and maintained by NASA as subset of the Global Change Master Directory (GCMD). USAP-DC prepares and submits metadata to the GCMD/AMD as a service for its users and to ensure that submissions follows the AMD standard.</p>
+		</li>
+	</ul>
+
+	<h3 id="search">Search and Download</h3>
+	<ul>
+		<li>
+			<p class='question' id='qs1'>Why are some data only available on request?</p>
+			<p class='answer' id='as1' hidden>A few, very large dataset (10s of GByte or TByte) are stored at an offline archive. It is not practical to download these datasets using the standard web interface. We work with interested users to make the full or a selected subset of these data available and transfer those using the most adequate way.</p>
+		</li>
+	</ul>
+
+
+</div>
+
+<script>
+	$(".question").click(function(){
+		if (this.id) {
+			var ans_id = this.id.replace('q','a');
+			$("#"+ans_id).toggle('slow');
+		}
+	});
+</script>
+{% endblock body %}
