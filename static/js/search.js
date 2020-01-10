@@ -5,6 +5,7 @@ var sci_programs = [];
 var nsf_programs = [];
 var awards = [];
 var repos = [];
+var locations = [];
 var map;
 
 $(document).ready(function() {
@@ -20,8 +21,9 @@ $(document).ready(function() {
     $('#nsf_program-input').typeahead({autoSelect: false});
     $('#award-input').typeahead({autoSelect: false});
     $('#repo-input').typeahead({autoSelect: false});
+    $('#location-input').typeahead({autoSelect: false});
     
-    $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo').change(function() {
+    $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo, #location').change(function() {
         $('[data-toggle="tooltip"]').tooltip('hide');
 
         var selected = {
@@ -31,11 +33,12 @@ $(document).ready(function() {
             award: $('.selectpicker[name="award"]').val(),
             sci_program: $('.selectpicker[name="sci_program"]').val(),
             repo: $('.selectpicker[name="repo"]').val(),
+            location: $('.selectpicker[name="location"]').val(),
         };
          updateMenusWithSelected(selected, false);
     });
 
-    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #dp_type-input, #repo-input').focus(function() {
+    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #dp_type-input, #repo-input, #location-input').focus(function() {
         var el = $(this);
         var newVal = el.val();
         if (newVal == "All") {
@@ -43,14 +46,14 @@ $(document).ready(function() {
         }
     });
 
-    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #dp_type-input, #repo-input').blur(function() {
+    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #dp_type-input, #repo-input, #location-input').blur(function() {
         var bluredElement = $(this);
         if (bluredElement.val() === "") {
             bluredElement.val("All");
         }
     });
 
-    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #repo-input').change(function() {
+    $('#award-input, #sci_program-input, #person-input, #nsf_program-input, #repo-input, #location-input').change(function() {
         // need to put in a delay so that some browsers (eg Firefox) can catch up with the focus
       
         window.setTimeout(function() {
@@ -97,6 +100,14 @@ $(document).ready(function() {
                         $('.selectpicker[name="repo"]').val(newVal);
                     }
                     break;
+                case 'location-input':
+                    if (locations.indexOf(newVal) == -1) {
+                        $('#location-input').val("All");
+                        $('.selectpicker[name="location"]').val("");
+                    } else {
+                        $('.selectpicker[name="location"]').val(newVal);
+                    }
+                    break;
                 default:
                     return;
             }
@@ -107,7 +118,8 @@ $(document).ready(function() {
                 nsf_program: $('.selectpicker[name="nsf_program"]').val(),
                 award: $('.selectpicker[name="award"]').val(),
                 sci_program: $('.selectpicker[name="sci_program"]').val(),
-                repo: $('.selectpicker[name="repo"]').val()
+                repo: $('.selectpicker[name="repo"]').val(),
+                location: $('.selectpicker[name="location"]').val()
             };
             updateMenusWithSelected(selected, false);   
         }, 300);
@@ -359,6 +371,7 @@ function updateMenusWithSelected(selected) {
         nsf_programs = opts.nsf_program;
         awards = opts.award;
         repos = opts.repo;
+        locations = opts.location;
 
         $('#dp_title').data('typeahead').source = makeAutocompleteSource(titles);
         $('#sci_program-input').data('typeahead').source = makeAutocompleteSource(sci_programs);
@@ -366,6 +379,7 @@ function updateMenusWithSelected(selected) {
         $('#person-input').data('typeahead').source = makeAutocompleteSource(persons);
         $('#award-input').data('typeahead').source = makeAutocompleteSource(awards);
         $('#repo-input').data('typeahead').source = makeAutocompleteSource(repos);
+        $('#location-input').data('typeahead').source = makeAutocompleteSource(locations);
       }
     });
 }
@@ -418,6 +432,9 @@ function fill_opts(menu_name, opts, selected) {
             break;
         case 'repo':
             if(!selected) $('#repo-input').val("All"); else $('#repo-input').val(selected);
+            break;
+        case 'location':
+            if(!selected) $('#location-input').val("All"); else $('#location-input').val(selected);
             break;
     }
 

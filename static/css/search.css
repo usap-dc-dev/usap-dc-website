@@ -217,6 +217,14 @@ width: 100%;
  min-height: 2.9em;
  margin-left: 0;
  margin-top: -1.5em;
+ margin-bottom: 3.9em;
+}
+
+.row4_no_mbot {
+ position: static;
+ min-height: 2.9em;
+ margin-left: 0;
+ margin-top: -1.5em;
 }
 
 .col1_long {

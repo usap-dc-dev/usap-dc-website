@@ -97,3 +97,9 @@ input, textarea {
   margin-left:-75px;  
   z-index: 99;
 }
+
+.right-caret > .caret {
+    position: absolute;
+    left: 85%;
+    top: 16px;
+}

@@ -818,19 +818,55 @@ def projectJson2sql(data, uid):
                 (uid, dep.get('name'), dep.get('type'), dep.get('url'))
         sql_out += "\n"
 
-    # Add features/locations
-    if data.get('locations') is not None and len(data['locations']) > 0:
-        sql_out += "--NOTE: adding gcmd_locations\n"
-        for loc in data['locations']:
-            sql_out += "INSERT INTO project_gcmd_location_map (proj_uid, loc_id) VALUES ('%s', '%s');\n" % (uid, loc)
-        sql_out += "\n"
+    # Add locations
+    if data.get('locations') and len(data['locations']) > 0:
+        sql_out += "--NOTE: adding locations\n"
 
-    if data.get('location_free') is not None and data['location_free'] != '':
-        free_locs = data['location_free'].split(',')
-        if len(free_locs) > 0:
-            sql_out += "--NOTE: adding free text locations to project_features\n"
-            for loc in free_locs:
-                sql_out += "INSERT INTO project_feature (proj_uid, feature_name) VALUES ('%s', '%s');\n" % (uid, loc.strip())
+        next_id = False
+        gcmd_locations = []
+        for loc in data['locations']:
+            if 'Not_In_This_List' in loc:
+                sql_out += "--NOTE: LOCATION NOT IN PROVIDED LIST\n"
+                (dummy, loc) = loc.split(':', 1)
+
+            query = "SELECT * FROM keyword_usap WHERE keyword_label = '%s';" % loc
+            cur.execute(query)
+            res = cur.fetchone()
+            if not res:
+                sql_out += "--ADDING LOCATION %s TO keyword_usap TABLE\n" % loc
+
+                # first work out the last keyword_id used
+                query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                cur.execute(query)
+                res = cur.fetchone()
+                if not next_id:
+                    last_id = res['keyword_id'].replace('uk-', '')
+                    next_id = int(last_id) + 1
+                else:
+                    next_id += 1
+                # now insert new record into db
+                sql_out += "INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_description, keyword_type_id, source) VALUES ('uk-%s', '%s', '', 'kt-0006', 'submission Placename');\n" % \
+                    (next_id, loc)
+                sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s','uk-%s'); -- %s\n" % (uid, next_id, loc)
+
+            else:
+                sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s','%s'); -- %s\n" % (uid, res['keyword_id'], loc)
+                # if GCMD_location add to project_gcmd_location_map
+                query = "SELECT * FROM gcmd_location WHERE keyword_id = '%s';" % res['keyword_id']
+                cur.execute(query)
+                res = cur.fetchone()
+                if res:
+                    sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','%s');\n" % (uid, res['id'])
+                    gcmd_locations.append(res['id'])
+        # If not included, add Continent->Antarctica and OCEAN -> Southern Ocean to the project_gcmd_location_map.  
+        # These can be deleted by the curator is desired.
+        if 'CONTINENT > ANTARCTICA' not in gcmd_locations:
+            sql_out += "--NOTE: Suggested gcmd_location. Remove if not appropriate for this project:\n"
+            sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','CONTINENT > ANTARCTICA');\n" % uid
+        if 'OCEAN > SOUTHERN OCEAN' not in gcmd_locations:
+            sql_out += "--NOTE: Suggested gcmd_location. Remove if not appropriate for this project:\n"
+            sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','OCEAN > SOUTHERN OCEAN');\n" % uid
+
         sql_out += "\n"
 
     # Add GCMD keywords
@@ -1065,36 +1101,62 @@ def editProjectJson2sql(data, uid):
             sql_out += "\n--NOTE: UPDATING END DATE\n"
             sql_out += "UPDATE project SET end_date = '%s' WHERE proj_uid = '%s';\n" % (data['end'], uid)
 
-        elif k == 'location_free':
-            sql_out += "\n--NOTE: UPDATING FREE TEXT LOCATIONS\n"
-
-            # remove existing locations from project_features
-            sql_out += "\n--NOTE: First remove all existing locations from project_feature\n"
-            sql_out += "DELETE FROM project_feature WHERE proj_uid = '%s';\n" % uid
-
-            if data.get('location_free') is not None and data['location_free'] != '':
-                free_locs = data['location_free'].split(',')
-                if len(free_locs) > 0:
-                    sql_out += "\n--NOTE: adding free text locations to project_features\n"
-                    for loc in free_locs:
-                        sql_out += "INSERT INTO project_feature (proj_uid, feature_name) VALUES ('%s', '%s');\n" % (uid, loc.strip())
-                sql_out += "\n"
-
         elif k == 'locations':
-            sql_out += "\n--NOTE: UPDATING GCMD LOCATIONS\n"
+            sql_out += "\n--NOTE: UPDATING LOCATIONS\n"
 
             # remove existing locations from project_gcmd_location_map
-            sql_out += "\n--NOTE: First remove all existing locations from project_gcmd_location_map\n"
+            sql_out += "\n--NOTE: First remove all existing locations from project_keyword_map and project_gcmd_location_map\n"
+            sql_out += """DELETE FROM project_keyword_map pkm WHERE proj_uid = '%s' AND keyword_id IN (SELECT keyword_id FROM vw_location);\n""" % uid
             sql_out += "DELETE FROM project_gcmd_location_map WHERE proj_uid = '%s';\n" % uid
 
-            sql_out += "\n--NOTE: adding gcmd_locations\n"
+            sql_out += "\n--NOTE: adding locations\n"
+            next_id = False
+            gcmd_locations = []
             for loc in data['locations']:
-                sql_out += "INSERT INTO project_gcmd_location_map (proj_uid, loc_id) VALUES ('%s', '%s');\n" % (uid, loc)
-            sql_out += "\n"
-        
-        elif k == 'orcid':
-            sql_out += "\n--NOTE: UPDATING ORCID\n"
-            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], subm_id)
+                if 'Not_In_This_List' in loc:
+                    sql_out += "--NOTE: LOCATION NOT IN PROVIDED LIST\n"
+                    (dummy, loc) = loc.split(':', 1)
+
+                query = "SELECT * FROM keyword_usap WHERE keyword_label = '%s';" % loc
+                cur.execute(query)
+                res = cur.fetchone()
+                if not res:
+                    sql_out += "--ADDING LOCATION %s TO keyword_usap TABLE\n" % loc
+
+                    # first work out the last keyword_id used
+                    query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if not next_id:
+                        last_id = res['keyword_id'].replace('uk-', '')
+                        next_id = int(last_id) + 1
+                    else:
+                        next_id += 1
+                    # now insert new record into db
+                    sql_out += "INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_description, keyword_type_id, source) VALUES ('uk-%s', '%s', '', 'kt-0006', 'submission Placename');\n" % \
+                        (next_id, loc)
+                    sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s','uk-%s'); -- %s\n" % (uid, next_id, loc)
+
+                else:
+                    sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s','%s'); -- %s\n" % (uid, res['keyword_id'], loc)
+                    # if GCMD_location add to project_gcmd_location_map
+                    query = "SELECT * FROM gcmd_location WHERE keyword_id = '%s';" % res['keyword_id']
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if res:
+                        sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','%s');\n" % (uid, res['id'])
+                        gcmd_locations.append(res['id'])
+            # If not included, add Continent->Antarctica and OCEAN -> Southern Ocean to the project_gcmd_location_map.  
+            # These can be deleted by the curator is desired.
+            if 'CONTINENT > ANTARCTICA' not in gcmd_locations:
+                sql_out += "--NOTE: Suggested gcmd_location. Remove if not appropriate for this project:\n"
+                sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','CONTINENT > ANTARCTICA');\n" % uid
+            if 'OCEAN > SOUTHERN OCEAN' not in gcmd_locations:
+                sql_out += "--NOTE: Suggested gcmd_location. Remove if not appropriate for this project:\n"
+                sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','OCEAN > SOUTHERN OCEAN');\n" % uid   
+            elif k == 'orcid':
+                sql_out += "\n--NOTE: UPDATING ORCID\n"
+                sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], subm_id)
 
         elif k == 'org':
             sql_out += "\n--NOTE: UPDATING ORGANIZATION\n"
@@ -1420,8 +1482,8 @@ def getDifXML(data, uid):
             xml_space_geom_south.text = str(sb['east'])
 
     # --- location
-    if data.get('locations'):
-        for location in data['locations']:
+    if data.get('gcmd_locations'):
+        for location in data['gcmd_locations']:
             loc_val = location['id'].split('>')
             xml_loc = ET.SubElement(root, "Location")
             xml_loc_cat = ET.SubElement(xml_loc, "Location_Category")

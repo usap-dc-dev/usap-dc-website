@@ -61,7 +61,6 @@ def parse_json(data):
     # --- should add something here to check lat lon fields
 
     for field in fields:
-        # print(field)
         if field not in data:
             print(field)
             data[field] = ''
@@ -182,19 +181,22 @@ def make_sql(data, id):
         sql_out += line
   
     sql_out += '\n--NOTE: AWARDS functions:\n'
+    if len(data.get('awards') and data['awards']) == 0:
+        sql_out += "--NOTE: NO AWARD SUBMITTED\n"
     for award in data['awards']:
         if award == 'None':
             sql_out += "--NOTE: NO AWARD SUBMITTED\n"
-        elif award == "Not In This List":
-            sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
         else:
+            if 'Not_In_This_List' in award:
+                sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
+                (dummy, award) = award.split(':', 1)
             # check if this award is already in the award table
             query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
             cur.execute(query)
             res = cur.fetchone()
             if res['count'] == 0:
                 # Add award to award table
-                sql_out += "--NOTE: Adding award %s to award table. Curator should update with any know fields.\n" % award
+                sql_out += "--NOTE: Adding award %s to award table. Curator should update with any known fields.\n" % award
                 sql_out += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
                 sql_out += "--UPDATE award SET iscr='f', isipy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
                 sql_out += "INSERT INTO dataset_award_map(dataset_id,award_id) VALUES ('%s','%s');\n" % (id, award)
@@ -242,7 +244,7 @@ def make_sql(data, id):
                         sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), id)    
      
     # sql_out += "\n--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
-    sql_out += "UPDATE dataset SET review_person='{}' WHERE id='{}';\n".format(curator, id)
+    sql_out += "\nUPDATE dataset SET review_person='{}' WHERE id='{}';\n".format(curator, id)
 
     sql_out += "\n--NOTE: spatial and temp map, check coordinates\n"
 
@@ -306,13 +308,48 @@ def make_sql(data, id):
 
         sql_out += "\n"
 
+    # Add locations
+    if data.get('locations') and len(data['locations']) > 0:
+        sql_out += "--NOTE: adding locations\n"
+
+        next_id = False
+        for loc in data['locations']:
+            if 'Not_In_This_List' in loc:
+                sql_out += "--NOTE: LOCATION NOT IN PROVIDED LIST\n"
+                (dummy, loc) = loc.split(':', 1)
+
+            query = "SELECT * FROM keyword_usap WHERE keyword_label = '%s';" % loc
+            cur.execute(query)
+            res = cur.fetchone()
+            if not res:
+                sql_out += "--ADDING LOCATION %s TO keyword_usap TABLE\n" % loc
+
+                # first work out the last keyword_id used
+                query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                cur.execute(query)
+                res = cur.fetchone()
+                if not next_id:
+                    last_id = res['keyword_id'].replace('uk-', '')
+                    next_id = int(last_id) + 1
+                else:
+                    next_id += 1
+                # now insert new record into db
+                sql_out += "INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_description, keyword_type_id, source) VALUES ('uk-%s', '%s', '', 'kt-0006', 'submission Placename');\n" % \
+                    (next_id, loc)
+                sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('%s','uk-%s'); -- %s\n" % (id, next_id, loc)
+
+            else:
+                sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('%s','%s'); -- %s\n" % (id, res['keyword_id'], loc)
+               
+        sql_out += "\n"
+
     sql_out += "--NOTE: add keywords\n"
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0001'); -- Antarctica\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0052'); -- Cryosphere\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0009'); -- Glaciers and Ice sheets\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0067'); -- Snow Ice\n".format(id)
-    sql_out += "INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0031'); -- Glaciology\n".format(id)
-    sql_out += "--INSERT into dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0032'); -- Ice Core Records\n".format(id)
+    sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0001'); -- Antarctica\n".format(id)
+    sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0052'); -- Cryosphere\n".format(id)
+    sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0009'); -- Glaciers and Ice sheets\n".format(id)
+    sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0067'); -- Snow Ice\n".format(id)
+    sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0031'); -- Glaciology\n".format(id)
+    sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0032'); -- Ice Core Records\n".format(id)
 
     # user keywords
     if data["user_keywords"] != "":
@@ -464,9 +501,10 @@ def editDatasetJson2sql(data, uid):
             for award in data['awards_num']:
                 if award == 'None':
                     sql_out += "\n--NOTE: NO AWARD SUBMITTED\n"
-                elif award == "Not In This List":
-                    sql_out += "\n--NOTE: AWARD NOT IN PROVIDED LIST\n"
                 else:
+                    if 'Not_In_This_List' in award:
+                        sql_out += "\n--NOTE: Award not in provided list\n"
+                        (dummy, award) = award.split(':', 1)
                     # check if this award is already in the award table
                     query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
                     cur.execute(query)
@@ -536,6 +574,47 @@ def editDatasetJson2sql(data, uid):
         if k == 'issues':
             sql_out += "\n--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"
 
+        if k == 'locations':
+            sql_out += "\n--NOTE: UPDATING LOCATIONS\n"
+
+            # remove existing locations from dataset_keyword_map
+            sql_out += "\n--NOTE: First remove all existing locations from dataset_keyword_map\n"
+            sql_out += """DELETE FROM dataset_keyword_map dkm WHERE dataset_id = '%s' AND keyword_id IN (SELECT keyword_id FROM vw_location);\n""" % uid
+            
+            # Add locations
+            if data.get('locations') is not None and len(data['locations']) > 0:
+                sql_out += "\n--NOTE: adding locations\n"
+            next_id = False
+            for loc in data['locations']:
+                if 'Not_In_This_List' in loc:
+                    sql_out += "--NOTE: LOCATION NOT IN PROVIDED LIST\n"
+                    (dummy, loc) = loc.split(':', 1)
+
+                query = "SELECT * FROM keyword_usap WHERE keyword_label = '%s';" % loc
+                cur.execute(query)
+                res = cur.fetchone()
+                if not res:
+                    sql_out += "--ADDING LOCATION %s TO keyword_usap TABLE\n" % loc
+
+                    # first work out the last keyword_id used
+                    query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if not next_id:
+                        last_id = res['keyword_id'].replace('uk-', '')
+                        next_id = int(last_id) + 1
+                    else:
+                        next_id += 1
+                    # now insert new record into db
+                    sql_out += "INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_description, keyword_type_id, source) VALUES ('uk-%s', '%s', '', 'kt-0006', 'submission Placename');\n" % \
+                        (next_id, loc)
+                    sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('%s','uk-%s'); -- %s\n" % (uid, next_id, loc)
+
+                else:
+                    sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('%s','%s'); -- %s\n" % (uid, res['keyword_id'], loc)
+                   
+            sql_out += "\n"
+
         if k == 'orcid':
             sql_out += "\n--NOTE: UPDATING ORCID FOR SUBMITTER\n"
             sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], data['submitter_name'])
@@ -577,7 +656,6 @@ def editDatasetJson2sql(data, uid):
                 for pub in data['publications']:
                     # see if they are already in the references table
                     query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('text'))
-                    print(query)
                     cur.execute(query)
                     res = cur.fetchall()
                     if len(res) == 0:

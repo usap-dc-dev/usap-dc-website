@@ -6,6 +6,7 @@
 <div id="awards_list" hidden>{% if dataset_metadata['awards']|length > 0 %}{{dataset_metadata['awards']|tojson}}{% endif %}</div>
 <div id="pubs_list" hidden>{% if dataset_metadata['publications']|length > 0 %}{{dataset_metadata['publications']|tojson}}{% endif %}</div>
 <div id="persons" hidden>{{persons|tojson}}</div>
+<div id="locations_list" hidden>{% if dataset_metadata['locations']|length > 0 %}{{dataset_metadata['locations']|tojson}}{% endif %}</div>
 
 <script type="text/javascript">
 
@@ -30,6 +31,11 @@
     persons.push(row.id);
   }
 
+  var locations = [];
+  if ($("#locations_list").text().length > 0) {
+    locations = JSON.parse($("#locations_list").text());
+  }
+
   $(document).ready(function() {
     var author_wrapper = $('#more_authors');
     var author_counter = 1;
@@ -37,6 +43,9 @@
     var award_counter = 1;
     var pub_wrapper = $('#more_publications');
     var pub_counter = 1;
+    var location_wrapper = $('#more_locations');
+    var location_counter = 1;
+
     var check = $('input[name="entire_region"]');
     var w = $('input[name="geo_w"]');
     var e = $('input[name="geo_e"]');
@@ -168,6 +177,64 @@
           }
       });
     }
+
+
+
+  // if reloading, populate any added location fields
+  $('#location').attr('value', locations[0]);
+  for (i=1; i < locations.length; i++ ) {
+    var location = locations[i];
+    addLocationRow(location);
+  }
+
+  $('#addLocationRow').click(function (e) {
+      //code to add another file
+      e.preventDefault();
+      addLocationRow();
+    });
+
+  $(location_wrapper).on("click","#removeLocationRow", function(e){ //user click on remove field
+    e.preventDefault(); 
+    $(this).parent('div').parent('div').remove();
+    location_counter--;
+  });
+
+
+  $(".location_input").on("change", function() {
+      if ($(this).val() == "Not In This List") {
+        $(this).parent('div').find('.user_location_input').attr('type','text');
+      } else {
+        $(this).parent('div').find('.user_location_input').attr('type','hidden');
+      }
+    });
+
+  function addLocationRow(location) {
+    var extraLocation = $('.locationTemplate').clone();
+      //increment the element ids
+      $(extraLocation).find('#location-dropdown').attr({'id': 'location-dropdown'+location_counter});
+      $(extraLocation).find('#location').attr({'id': 'location'+location_counter, 'name': 'location'+location_counter, 'value': ''});
+      $(extraLocation).find('#location_dropdown').attr({'id': 'location_dropdown'+location_counter}).html('None <span class="caret"></span>');
+      $(extraLocation).find('#user_location').attr({'id': 'user_location'+location_counter, 'name': 'user_location'+location_counter, 'type':'hidden', 'value': ''});
+      $(extraLocation).find('#removeLocationRow').show();
+      $(extraLocation).find('#extraLocationLine').show();
+      if (location !== null) {
+        $(extraLocation).find('#location'+location_counter).attr('value', location);
+      }
+      $(location_wrapper).append($('<div/>', {'class' : 'extraLocation', html: extraLocation.html()}));
+      location_counter++;
+
+      $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+      $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+      $(".location_input").on("change", function() {
+          if ($(this).val() == "Not In This List") {
+            $(this).parent('div').find('.user_location_input').attr('type','text');
+          } else {
+            $(this).parent('div').find('.user_location_input').attr('type','hidden');
+          }
+      });
+    }
+
 
 
   // if reloading, populate any added publication fields
@@ -342,11 +409,38 @@
               {% for project in projects |sort %}
               {% set proj = project['id'] %}
               <option value="{{proj}}" {% if proj == dataset_metadata.get('project','') %} selected="selected" {% endif %}>{{proj}}</option>
-
               {% endfor %}
             </select>
           </div>
 
+          <!-- Locations -->
+          <div class="form-group">
+            <label for="location">Location</label>
+            <div class="locationTemplate">
+              <div id='extraLocationLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+              <div class="dropdown" id="location-dropdown" style="width:240px;">
+                <input type="hidden" id="location" name="location" class="location_input" value="{{dataset_metadata.get('locations',['None'])[0]}}"/>
+                <button type="button" id="location_dropdown" style="text-align:left; width:225px;" data-toggle="dropdown" class="right-caret dropdown-toggle btn btn-default form-control removable">
+                  {{dataset_metadata.get('locations',['None'])[0]}}
+                  <span class="right-caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a data-toggle="tooltip" data-placement="right">None</a></li>
+                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your location in this list" data-placement="right">Not In This List</a></li>
+                  {% for location in locations %}
+                    {% set loc = location.keyword_label %}
+                    <li><a {% if location.keyword_description %} data-toggle="tooltip" title="{{location.keyword_description}}" data-placement="right" {% endif %}>{{loc}}</a></li>
+                  {% endfor %}
+                </ul>
+                <a href="#locationForm" id="removeLocationRow" class="remover"><i class="fa fa-remove"></i></a>
+                <input class="input-sm form-control removable user_location_input" type="hidden" size=10 id="user_location" name="user_location" placeholder="Enter Location"/> 
+                <div style="clear:both"></div>
+
+              </div>
+            </div>
+            <div id="more_locations"></div>
+            <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another locations</span></a>
+          </div>
 
           <div class="form-group">
             <label for="user_keywords">User Keywords</label>

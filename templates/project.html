@@ -76,8 +76,7 @@
             <div id="more_awards"></div>
             <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add additional award linked to project</span></a>
           </div>
-
-      
+   
           <div class="form-group required">
             <b>Title:</b><br>
             <textarea class="form-control" name="title" id="title" rows="2" {% if edit %} readonly {% endif %}>{{project_metadata.get('title','')}}</textarea>
@@ -245,22 +244,34 @@
           <textarea name="sum" id="sum" rows="10" cols="80" {% if edit %} readonly {% endif %}>{{project_metadata.sum}}</textarea>
 
           <br><br>
-          <div class="form-group required">
-            <b>Location(s):</b> &nbsp;<i>(terms from the <a class="external" href="http://gcmd.gsfc.nasa.gov/Resources/valids/archives/keyword_list.html">GCMD</a> Keyword list)</i><br>
-            <div id="locations">
-              <select name="location1" id="location1" style="width:40em;margin-bottom: 3px">
-                <option value="">(Select Term 1)</option>
-                {% for k in locations %}
-                <option value="{{k.id}}">{{k.id}}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <button type="button" id="add-location">Add Term</button>
-          </div>
 
-          <div class="form-group">
-            <b>Location(s) - not GCMD:</b> &nbsp;<i>(Free text, separated by commas)</i>
-            <textarea class="form-control" name="location_free" id="location_free" rows="1">{{project_metadata.location_free}}</textarea>
+          <!-- Locations -->
+          <div class="form-group required">
+            <label for="location">Location</label>
+            <div class="locationTemplate">
+              <div id='extraLocationLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
+              <div class="dropdown" id="location-dropdown" style="width:240px;">
+                <input type="hidden" id="location" name="location" class="location_input" value="{{project_metadata.get('locations',['None'])[0]}}"/>
+                <button type="button" id="location_dropdown" style="text-align:left; width:225px;" data-toggle="dropdown" class="right-caret dropdown-toggle btn btn-default form-control removable">
+                  {{project_metadata.get('locations',['None'])[0]}}
+                  <span class="right-caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a data-toggle="tooltip" data-placement="right">None</a></li>
+                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your location in this list" data-placement="right">Not In This List</a></li>
+                  {% for location in locations %}
+                    {% set loc = location.keyword_label %}
+                    <li><a {% if location.keyword_description %} data-toggle="tooltip" title="{{location.keyword_description}}" data-placement="right" {% endif %}>{{loc}}</a></li>
+                  {% endfor %}
+                </ul>
+                <a href="#locationForm" id="removeLocationRow" class="remover"><i class="fa fa-remove"></i></a>
+                <input class="input-sm form-control removable user_location_input" type="hidden" size=10 id="user_location" name="user_location" placeholder="Enter Location"/> 
+                <div style="clear:both"></div>
+
+              </div>
+            </div>
+            <div id="more_locations"></div>
+            <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another locations</span></a>
           </div>
 
         <div class="form-group required">

@@ -102,7 +102,8 @@ def connect_to_db():
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn, cur) = connect_to_db()
-    query_string = 'SELECT %s FROM award a WHERE a.award != \'XXXXXXX\' and a.award != \'None\' and a.award::integer<8000000 and a.award::integer>0400000' % ','.join(columns)
+    query_string = """SELECT %s FROM award a WHERE a.award != 'XXXXXXX' and a.award != 'None' and a.award ~ '^[0-9]' 
+                      and a.award::integer<8000000 and a.award::integer>0400000""" % ','.join(columns) 
     
     if only_inhabited:
         query_string += ' AND EXISTS (SELECT award_id FROM dataset_award_map dam WHERE dam.award_id=a.award)'
@@ -231,9 +232,9 @@ def get_datasets(dataset_ids):
                             GROUP BY dparm.dataset_id
                         ) par ON (d.id = par.dataset_id)
                         LEFT JOIN (
-                            SELECT dlm.dataset_id, json_agg(l) locations
-                            FROM dataset_location_map dlm JOIN location l ON (l.id=dlm.location_id)
-                            GROUP BY dlm.dataset_id
+                            SELECT dataset_id, json_agg(keyword_label) locations
+                            FROM vw_dataset_location vdl
+                            GROUP BY dataset_id
                         ) l ON (d.id = l.dataset_id)
                         LEFT JOIN (
                             SELECT dperm.dataset_id, json_agg(per) persons
@@ -314,6 +315,15 @@ def get_locations(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT DISTINCT id FROM gcmd_location'
     query += cur.mogrify(' ORDER BY id')
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_usap_locations(conn=None, cur=None, dataset_id=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = "SELECT * FROM vw_location"
+    query += cur.mogrify(' ORDER BY keyword_label')
     cur.execute(query)
     return cur.fetchall()
 
@@ -465,7 +475,7 @@ def check_user_permission(user_info, uid, project=False):
         persons = get_persons(dataset_id=uid)
     # check if orcid or email address from user_info matches any of these users
     for p in persons:
-        if (p.get('email') and p['email'].lower() == user_info.get('email').lower()) \
+        if (p.get('email') and user_info.get('email') and p['email'].lower() == user_info['email'].lower()) \
            or (p.get('id_orcid') and p['id_orcid'] == user_info.get('orcid')):
             return True
 
@@ -535,18 +545,37 @@ def dataset(dataset_id=None):
                 publication = {'text': pub_text, 'doi': pub_doi}
                 session['dataset_metadata']['publications'].append(publication)
 
-        awards_keys = [s for s in request.form.keys() if "award" in s]
-        remove_award_keys = []
+        awards_keys = [s for s in request.form.keys() if "award" in s and "user" not in s]
+        awards = []
         if len(awards_keys) > 0:
-            awards_keys.sort(key=partial(sortNumerically, replace_str='award', replace_str2="user_"))
-            #remove any empty values
+            awards_keys.sort(key=partial(sortNumerically, replace_str='award'))
             for key in awards_keys:
-                if session['dataset_metadata'][key] == "":
-                    remove_award_keys.append(key)
+                if session['dataset_metadata'][key] != "" and session['dataset_metadata'][key] != "None":
+                    if session['dataset_metadata'][key] == 'Not In This List':
+                        user_award_fld = 'user_' + key
+                        award_name = "Not_In_This_List:" + session['dataset_metadata'].get(user_award_fld)
+                        del session['dataset_metadata'][user_award_fld]
+                    else:
+                        award_name = session['dataset_metadata'].get(key)
+                    awards.append(award_name)
                 del session['dataset_metadata'][key]
-            for k in remove_award_keys: 
-                awards_keys.remove(k)
-            session['dataset_metadata']['awards'] = [request.form.get(key) for key in awards_keys]
+            session['dataset_metadata']['awards'] = awards
+
+        locations_keys = [s for s in request.form.keys() if "location" in s and "user" not in s]
+        locations = []
+        if len(locations_keys) > 0:
+            locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
+            for key in locations_keys:
+                if session['dataset_metadata'][key] != "" and session['dataset_metadata'][key] != "None":
+                    if session['dataset_metadata'][key] == 'Not In This List':
+                        user_loc_fld = 'user_' + key
+                        location_name = "Not_In_This_List:" + session['dataset_metadata'].get(user_loc_fld)
+                        del session['dataset_metadata'][user_loc_fld]
+                    else:
+                        location_name = session['dataset_metadata'].get(key)
+                    locations.append(location_name)
+                del session['dataset_metadata'][key]
+            session['dataset_metadata']['locations'] = locations
 
         author_keys = [s for s in request.form.keys() if "author_name_last" in s]
         remove_author_keys = []
@@ -575,7 +604,7 @@ def dataset(dataset_id=None):
         if request.form.get('action') == "Previous Page":
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons())
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(),)
 
         elif request.form.get('action') == "save":
             # save to file
@@ -594,7 +623,7 @@ def dataset(dataset_id=None):
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -617,7 +646,7 @@ def dataset(dataset_id=None):
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
 
         if edit:
             return redirect('/edit/dataset2/' + dataset_id)
@@ -663,7 +692,7 @@ def dataset(dataset_id=None):
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), 
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
-                               persons=get_persons(), edit=edit, template=template)
+                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
 
 
 # get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
@@ -678,7 +707,8 @@ def dataset_db2form(uid):
         'title': db_data.get('title'),
         'filenames': [],
         'release_date': db_data.get('release_date'),
-        'submitter_name': db_data.get('submitter_id')
+        'submitter_name': db_data.get('submitter_id'),
+        'locations': db_data.get('locations')
     }
 
     form_data['authors'] = []
@@ -728,7 +758,7 @@ def dataset_db2form(uid):
     keywords = cf.getDatasetKeywords(uid)
     form_data['user_keywords'] = ''
     for kw in keywords:
-        if kw.get('keyword_id')[0:2] == 'uk':
+        if kw.get('keyword_id')[0:2] == 'uk' and kw.get('keyword_label') not in form_data['locations']:
             if form_data['user_keywords'] != '':
                 form_data['user_keywords'] += ', '
             form_data['user_keywords'] += kw.get('keyword_label')
@@ -1234,6 +1264,9 @@ def project(project_id=None):
         if request.form.get('action') == 'Submit':
             msg_data = process_form_data(request.form.to_dict())
 
+            # save first
+            success, error, full_name = save_project(msg_data)
+
             timestamp = format_time()
             msg_data['timestamp'] = timestamp
 
@@ -1310,28 +1343,11 @@ def project(project_id=None):
         elif request.form.get('action') == "save":
 
             project_metadata = process_form_data(request.form.to_dict())
+            success, error, full_name = save_project(project_metadata)
             
-            full_name = {'first_name': '', 'last_name': ''}
-            if project_metadata.get('pi_name_first') and project_metadata.get('pi_name_last'):
-                full_name = {'first_name': project_metadata['pi_name_first'], 'last_name': project_metadata['pi_name_last']}
-
-            # save to file
-            if user_info.get('orcid'):
-                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
-            elif user_info.get('id'):
-                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
-            else:
-                error = "Unable to save project."
-            if save_file:
-                try:
-                    with open(save_file, 'w') as file:
-                        file.write(json.dumps(project_metadata, indent=4, sort_keys=True))
-                    success = "Saved project form"
-                except Exception as e:
-                    error = "Unable to project dataset."
             return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
                                    nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                                   locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
+                                   locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                    project_metadata=project_metadata, edit=edit, error=error, success=success)
 
         elif request.form.get('action') == "restore":
@@ -1357,7 +1373,7 @@ def project(project_id=None):
                 error = "Unable to restore dataset."
             return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
                                    nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                                   locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
+                                   locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                    project_metadata=project_metadata, edit=edit, error=error, success=success)
 
     else:       
@@ -1397,8 +1413,34 @@ def project(project_id=None):
 
         return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=get_projects(), persons=get_persons(),
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                               locations=get_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
+                               locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                project_metadata=session.get('project_metadata'), edit=edit)
+
+
+def save_project(project_metadata):
+    success = ""
+    error = ""
+    user_info = session.get('user_info')
+
+    full_name = {'first_name': '', 'last_name': ''}
+    if project_metadata.get('pi_name_first') and project_metadata.get('pi_name_last'):
+        full_name = {'first_name': project_metadata['pi_name_first'], 'last_name': project_metadata['pi_name_last']}
+
+    # save to file
+    if user_info.get('orcid'):
+        save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
+    elif user_info.get('id'):
+        save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+    else:
+        error = "Unable to save project."
+    if save_file:
+        try:
+            with open(save_file, 'w') as file:
+                file.write(json.dumps(project_metadata, indent=4, sort_keys=True))
+            success = "Saved project form"
+        except Exception as e:
+            error = "Unable to project dataset."
+    return success, error, full_name
 
 
 def process_form_data(form):
@@ -1516,15 +1558,20 @@ def process_form_data(form):
         key = 'publication' + str(idx)
     msg_data['publications'] = publications
 
+    locations_keys = [s for s in request.form.keys() if "location" in s and "user" not in s]
     locations = []
-    idx = 1
-    key = 'location1'
-    while key in msg_data:
-        if msg_data[key] != "":
-            locations.append(msg_data[key])
-        del msg_data[key]
-        idx += 1
-        key = 'location' + str(idx)
+    if len(locations_keys) > 0:
+        locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
+        for key in locations_keys:
+            if msg_data[key] != "" and msg_data[key] != "None":
+                if msg_data[key] == 'Not In This List':
+                    user_loc_fld = 'user_' + key
+                    location_name = "Not_In_This_List:" + msg_data.get(user_loc_fld)
+                    del msg_data[user_loc_fld]
+                else:
+                    location_name = msg_data.get(key)
+                locations.append(location_name)
+            del msg_data[key]
     msg_data['locations'] = locations
 
     datasets = []
@@ -1633,7 +1680,7 @@ def project_db2form(uid):
 
     if db_data.get('locations'):
         for l in db_data.get('locations'):
-            form_data['locations'].append(l.get('id'))
+            form_data['locations'].append(l)
 
     if db_data.get('feature'):
         features = []
@@ -3536,23 +3583,34 @@ def get_project(project_id):
                             GROUP BY pgskm.proj_uid
                         ) parameters ON (p.proj_uid = parameters.param_proj_uid)
                         LEFT JOIN (
-                            SELECT pglm.proj_uid AS loc_proj_uid, json_agg(gl) locations
+                            SELECT proj_uid, json_agg(keyword_label) locations
+                                FROM vw_project_location vdl
+                                GROUP BY proj_uid
+                        ) locations ON (p.proj_uid = locations.proj_uid)
+                        LEFT JOIN (
+                            SELECT pglm.proj_uid AS loc_proj_uid, json_agg(gl) gcmd_locations
                             FROM project_gcmd_location_map pglm JOIN gcmd_location gl ON (gl.id=pglm.loc_id)
                             GROUP BY pglm.proj_uid
-                        ) locations ON (p.proj_uid = locations.loc_proj_uid)
+                        ) gcmd_locations ON (p.proj_uid = gcmd_locations.loc_proj_uid)
                         LEFT JOIN ( 
                             SELECT k_1.proj_uid, string_agg(k_1.keywords, '; '::text) AS keywords
-                            FROM (SELECT pkm.proj_uid, reverse(split_part(reverse(pkm.gcmd_key_id), ' >'::text, 1)) AS keywords
-                                  FROM project_gcmd_science_key_map pkm
+                            FROM (SELECT pskm.proj_uid, reverse(split_part(reverse(pskm.gcmd_key_id), ' >'::text, 1)) AS keywords
+                                  FROM project_gcmd_science_key_map pskm
                                   UNION
-                                  SELECT plm.proj_uid, reverse(split_part(reverse(plm.loc_id), ' >'::text, 1)) AS keywords
-                                  FROM project_gcmd_location_map plm
-                                  UNION
+                                  -- SELECT plm.proj_uid, reverse(split_part(reverse(plm.loc_id), ' >'::text, 1)) AS keywords
+                                  -- FROM project_gcmd_location_map plm
+                                  -- UNION
                                   SELECT pim.proj_uid, reverse(split_part(reverse(pim.gcmd_iso_id), ' >'::text, 1)) AS keywords
                                   FROM project_gcmd_isotopic_map pim
                                   UNION
                                   SELECT ppm.proj_uid, reverse(split_part(reverse(ppm.platform_id), ' >'::text, 1)) AS keywords
                                   FROM project_gcmd_platform_map ppm
+                                  UNION
+                                  SELECT pkm.proj_uid, ku.keyword_label AS keywords
+                                  FROM project_keyword_map pkm JOIN keyword_usap ku ON (ku.keyword_id=pkm.keyword_id)
+                                  UNION
+                                  SELECT pkm.proj_uid, ki.keyword_label AS keywords
+                                  FROM project_keyword_map pkm JOIN keyword_ieda ki ON (ki.keyword_id=pkm.keyword_id) 
                                   ) k_1
                             GROUP BY k_1.proj_uid
                         ) keywords ON keywords.proj_uid = p.proj_uid
@@ -3711,7 +3769,7 @@ def dataset_search():
 
 @app.route('/filter_joint_menus', methods=['GET'])
 def filter_joint_menus():
-    keys = ['person', 'free_text', 'sci_program', 'award', 'dp_title', 'nsf_program', 'spatial_bounds_interpolated', 'dp_type', 'repo']
+    keys = ['person', 'free_text', 'sci_program', 'award', 'dp_title', 'nsf_program', 'spatial_bounds_interpolated', 'dp_type', 'repo', 'location']
     params = request.args.to_dict()
     # if reseting:
     if params == {}:
@@ -3768,6 +3826,13 @@ def filter_joint_menus():
             for r in d['repositories'].split(';'):
                 repos.add(r.strip())
 
+    dp_locations = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'location'})
+    locations = set()
+    for d in dp_locations:
+        if d['locations']:
+            for l in d['locations'].split(';'):
+                locations.add(l.strip())
+
     return flask.jsonify({
         'dp_title': sorted(titles),
         'person': sorted(persons),
@@ -3775,12 +3840,13 @@ def filter_joint_menus():
         'award': sorted(awards),
         'sci_program': sorted(sci_programs),
         # 'dp_type': sorted(dp_types),
-        'repo': sorted(repos)
+        'repo': sorted(repos),
+        'location': sorted(locations)
     })
 
 
 def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None, person=None, spatial_bounds_interpolated=None, sci_program=None,
-                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, exclude=False):
+                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, location=None, exclude=False):
 
     (conn, cur) = connect_to_db()
 
@@ -3817,6 +3883,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         conds.append(cur.mogrify('dpv.nsf_funding_programs = %s ', (nsf_program,)))
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
+    if location:
+        conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
@@ -3826,8 +3894,6 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
-
-    print(query_string)
 
     cur.execute(query_string)
     return cur.fetchall()

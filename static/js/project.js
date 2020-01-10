@@ -84,6 +84,8 @@ $(document).ready(function() {
     var website_counter = 1;
     var deployment_wrapper = $('#more_deployments');
     var deployment_counter = 1;
+    var location_wrapper = $('#more_locations');
+    var location_counter = 1;
 
 
     var check = $('input[name="entire_region"]');
@@ -161,35 +163,62 @@ $(document).ready(function() {
         }
         });
       }
-    
     });
 
-    // if editing, populate any added location fields
-    if (locations.length > 0) {
-      $('#location1').val(locations[0]);
-      
-      for (i=1; i < locations.length; i++ ) {
-        addLocation(locations[i]);
-      }
-    }
 
-    $('#add-location').click(function(e) {
+  // if reloading, populate any added location fields
+  $('#location').attr('value', locations[0]);
+  for (i=1; i < locations.length; i++ ) {
+    var location = locations[i];
+    addLocationRow(location);
+  }
+
+  $('#addLocationRow').click(function (e) {
+      //code to add another file
       e.preventDefault();
-      addLocation();
+      addLocationRow();
     });
 
-    function addLocation(location) {
-      var $cloned = $("#locations select[name='location1']").clone();
-      var idx = $('#locations').children().length+1;
-      $cloned.attr('name','location'+idx);
-      $cloned.attr('id', 'location'+idx);
-      $cloned.removeAttr('required');
-      $cloned.children().first().text('(Select Term ' + idx + ')');
-      $('#locations').append($cloned);
+  $(location_wrapper).on("click","#removeLocationRow", function(e){ //user click on remove field
+    e.preventDefault(); 
+    $(this).parent('div').parent('div').remove();
+    location_counter--;
+  });
 
-      if (typeof location != 'undefined') {
-        $('#location'+idx).val(location);
+
+  $(".location_input").on("change", function() {
+      if ($(this).val() == "Not In This List") {
+        $(this).parent('div').find('.user_location_input').attr('type','text');
+      } else {
+        $(this).parent('div').find('.user_location_input').attr('type','hidden');
       }
+    });
+
+  function addLocationRow(location) {
+    var extraLocation = $('.locationTemplate').clone();
+      //increment the element ids
+      $(extraLocation).find('#location-dropdown').attr({'id': 'location-dropdown'+location_counter});
+      $(extraLocation).find('#location').attr({'id': 'location'+location_counter, 'name': 'location'+location_counter, 'value': ''});
+      $(extraLocation).find('#location_dropdown').attr({'id': 'location_dropdown'+location_counter}).html('None <span class="caret"></span>');
+      $(extraLocation).find('#user_location').attr({'id': 'user_location'+location_counter, 'name': 'user_location'+location_counter, 'type':'hidden', 'value': ''});
+      $(extraLocation).find('#removeLocationRow').show();
+      $(extraLocation).find('#extraLocationLine').show();
+      if (location !== null) {
+        $(extraLocation).find('#location'+location_counter).attr('value', location);
+      }
+      $(location_wrapper).append($('<div/>', {'class' : 'extraLocation', html: extraLocation.html()}));
+      location_counter++;
+
+      $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+      $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
+      $(".location_input").on("change", function() {
+          if ($(this).val() == "Not In This List") {
+            $(this).parent('div').find('.user_location_input').attr('type','text');
+          } else {
+            $(this).parent('div').find('.user_location_input').attr('type','hidden');
+          }
+      });
     }
 
 
@@ -517,7 +546,6 @@ $(document).ready(function() {
 
       deployment_counter++;
     }
-
 });
 
 function autocomplete(inp, inp2, arr) {
