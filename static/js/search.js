@@ -5,7 +5,7 @@ var sci_programs = [];
 var nsf_programs = [];
 var awards = [];
 var repos = [];
-var locations = [];
+// var locations = [];
 var map;
 
 $(document).ready(function() {
@@ -21,7 +21,7 @@ $(document).ready(function() {
     $('#nsf_program-input').typeahead({autoSelect: false});
     $('#award-input').typeahead({autoSelect: false});
     $('#repo-input').typeahead({autoSelect: false});
-    $('#location-input').typeahead({autoSelect: false});
+    // $('#location-input').typeahead({autoSelect: false});
     
     $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo, #location').change(function() {
         $('[data-toggle="tooltip"]').tooltip('hide');
@@ -33,7 +33,7 @@ $(document).ready(function() {
             award: $('.selectpicker[name="award"]').val(),
             sci_program: $('.selectpicker[name="sci_program"]').val(),
             repo: $('.selectpicker[name="repo"]').val(),
-            location: $('.selectpicker[name="location"]').val(),
+            // location: $('.selectpicker[name="location"]').val(),
         };
          updateMenusWithSelected(selected, false);
     });
@@ -100,14 +100,14 @@ $(document).ready(function() {
                         $('.selectpicker[name="repo"]').val(newVal);
                     }
                     break;
-                case 'location-input':
-                    if (locations.indexOf(newVal) == -1) {
-                        $('#location-input').val("All");
-                        $('.selectpicker[name="location"]').val("");
-                    } else {
-                        $('.selectpicker[name="location"]').val(newVal);
-                    }
-                    break;
+                // case 'location-input':
+                //     if (locations.indexOf(newVal) == -1) {
+                //         $('#location-input').val("All");
+                //         $('.selectpicker[name="location"]').val("");
+                //     } else {
+                //         $('.selectpicker[name="location"]').val(newVal);
+                //     }
+                //     break;
                 default:
                     return;
             }
@@ -119,7 +119,7 @@ $(document).ready(function() {
                 award: $('.selectpicker[name="award"]').val(),
                 sci_program: $('.selectpicker[name="sci_program"]').val(),
                 repo: $('.selectpicker[name="repo"]').val(),
-                location: $('.selectpicker[name="location"]').val()
+                // location: $('.selectpicker[name="location"]').val()
             };
             updateMenusWithSelected(selected, false);   
         }, 300);
@@ -371,7 +371,7 @@ function updateMenusWithSelected(selected) {
         nsf_programs = opts.nsf_program;
         awards = opts.award;
         repos = opts.repo;
-        locations = opts.location;
+        // locations = opts.location;
 
         $('#dp_title').data('typeahead').source = makeAutocompleteSource(titles);
         $('#sci_program-input').data('typeahead').source = makeAutocompleteSource(sci_programs);
@@ -379,7 +379,7 @@ function updateMenusWithSelected(selected) {
         $('#person-input').data('typeahead').source = makeAutocompleteSource(persons);
         $('#award-input').data('typeahead').source = makeAutocompleteSource(awards);
         $('#repo-input').data('typeahead').source = makeAutocompleteSource(repos);
-        $('#location-input').data('typeahead').source = makeAutocompleteSource(locations);
+        // $('#location-input').data('typeahead').source = makeAutocompleteSource(locations);
       }
     });
 }

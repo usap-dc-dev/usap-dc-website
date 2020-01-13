@@ -3826,12 +3826,13 @@ def filter_joint_menus():
             for r in d['repositories'].split(';'):
                 repos.add(r.strip())
 
-    dp_locations = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'location'})
-    locations = set()
-    for d in dp_locations:
-        if d['locations']:
-            for l in d['locations'].split(';'):
-                locations.add(l.strip())
+    # Not using yet
+    # dp_locations = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'location'})
+    # locations = set()
+    # for d in dp_locations:
+    #     if d['locations']:
+    #         for l in d['locations'].split(';'):
+    #             locations.add(l.strip())
 
     return flask.jsonify({
         'dp_title': sorted(titles),
@@ -3841,7 +3842,7 @@ def filter_joint_menus():
         'sci_program': sorted(sci_programs),
         # 'dp_type': sorted(dp_types),
         'repo': sorted(repos),
-        'location': sorted(locations)
+        # 'location': sorted(locations)
     })
 
 
@@ -3883,8 +3884,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         conds.append(cur.mogrify('dpv.nsf_funding_programs = %s ', (nsf_program,)))
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
-    if location:
-        conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
+    # if location:
+    #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
