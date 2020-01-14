@@ -1148,7 +1148,27 @@ def dataset2(dataset_id=None):
             s.ehlo()
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
-            s.quit()          
+            s.quit()      
+
+            # add to submission table
+            conn, cur = connect_to_db()
+            if edit:
+                submission_type = 'dataset edit'
+                uid = 'e' + dataset_id
+                query = "SELECT * FROM submission WHERE uid = '%s'" % uid
+                cur.execute(query)
+                res = cur.fetchone()
+                if res:
+                    query = "DELETE FROM submission WHERE uid = '%s'" % uid
+                    cur.execute(query)
+            else:
+                submission_type = 'dataset submission'
+                uid = next_id
+            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update) VALUES ('%s', '%s', 'Pending', '%s', '%s')" \
+                    % (uid, submission_type, timestamp, timestamp[0:10])
+
+            cur.execute(query)
+            cur.execute('COMMIT')    
 
             return redirect('/thank_you/dataset')
         elif request.form['action'] == 'Previous Page':
@@ -1337,6 +1357,26 @@ def project(project_id=None):
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
+
+            # add to submission table
+            conn, cur = connect_to_db()
+            if edit:
+                submission_type = 'project edit'
+                uid = 'e' + project_id
+                query = "SELECT * FROM submission WHERE uid = '%s'" % uid
+                cur.execute(query)
+                res = cur.fetchone()
+                if res:
+                    query = "DELETE FROM submission WHERE uid = '%s'" % uid
+                    cur.execute(query)
+            else:
+                submission_type = 'project submission'
+                uid = next_id
+            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update) VALUES ('%s', '%s', 'Pending', '%s', '%s')" \
+                    % (uid, submission_type, timestamp, timestamp[0:10])
+            
+            cur.execute(query)
+            cur.execute('COMMIT')   
             
             return redirect('thank_you/project')
 
@@ -2443,6 +2483,8 @@ def map():
 def curator():
     template_dict = {}
     template_dict['message'] = []
+    template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
+    (conn, cur) = connect_to_db()
 
     # login
     if (not cf.isCurator()):
@@ -2471,54 +2513,21 @@ def curator():
         
         if not request.args.get('uid'):    
             # get list of json files in submission directory, ordered by date
-            current_dir = os.getcwd()
-            os.chdir(submitted_dir)
-            files = filter(os.path.isfile, os.listdir(submitted_dir))
-            files = [os.path.join(submitted_dir, f) for f in files]  # add path to each file
-            files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            os.chdir(current_dir)
+            query = "SELECT * FROM submission ORDER BY submitted_date DESC"
+            cur.execute(query)
+            res = cur.fetchall()
+            if res:
+                submissions = []
+                for sub in res:
+                    uid = sub['uid']
+                    landing_page = ''
+                    if sub['submission_type'].find('project') == 0 and sub['status'] != 'Pending':
+                        landing_page = '/view/project/%s' % uid.replace('e', '') 
+                    elif sub['submission_type'].find('dataset') == 0 and sub['status'] != 'Pending':
+                        landing_page = '/view/dataset/%s' % uid.replace('e', '')
 
-            submissions = []
-            for f in files:
-                if f.find(".json") > 0:
-                    date = datetime.utcfromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
-                    f = os.path.basename(f)
-                    uid = f.split(".json")[0]
-                    # set submission status
-                    if uid[0] == 'p':
-                        if not cf.isProjectImported(uid):
-                            status = "Pending"
-                            landing_page = ''
-                        else:
-                            status = "Ingested"
-                            landing_page = '/view/project/%s' % uid
-                    elif uid[0:2] == 'ep':
-                        if cf.isEditComplete(uid):
-                            status = "Edit completed"
-                            landing_page = '/view/project/%s' % uid.replace('e', '') 
-                        else:
-                            status = "Pending"
-                            landing_page = ''
-                    elif uid[0] == 'e':
-                        if cf.isEditComplete(uid):
-                            status = "Edit completed"
-                            landing_page = '/view/dataset/%s' % uid.replace('e', '') 
-                        else:
-                            status = "Pending"
-                            landing_page = ''            
-                    else:
-                        if not cf.isDatabaseImported(uid):
-                            status = "Pending"
-                            landing_page = ''
-                        else:
-                            landing_page = '/view/dataset/%s' % uid
-                            if not cf.isRegisteredWithDataCite(uid):
-                                status = "Not yet registered with DataCite"
-                            elif not cf.ISOXMLExists(uid):
-                                status = "ISO XML file missing"
-                            else:
-                                status = "Completed"
-                    submissions.append({'id': uid, 'date': date, 'status': status, 'landing_page': landing_page})
+                    submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
+                                        'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update']})
 
             template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
@@ -2528,6 +2537,14 @@ def curator():
             uid = filename.replace('e', '')
             template_dict['uid'] = uid
             edit = filename[0] == 'e'
+
+            query = "SELECT * FROM submission WHERE uid = '%s'" % filename
+            cur.execute(query)
+            res = cur.fetchone()
+            if res:
+                template_dict['status'] = res['status']
+                if res['comments']:
+                    template_dict['comments'] = res['comments']
             
             # get list of creator emails from db (if already in db)
             template_dict['email_recipients'] = cf.getCreatorEmails(uid)
@@ -2537,13 +2554,19 @@ def curator():
                 template_dict['type'] = 'project'
                 template_dict['tab'] = "project_json"
                 template_dict['email_subject'] = "Message From USAP-DC regarding project %s" % uid
-                # check whether dataset as already been imported to database
+                # check whether project as already been imported to database
                 template_dict['db_imported'] = cf.isProjectImported(uid)
-                # if the dataset is already imported, retrieve any coordinates already in the dataset_spatial_map table
+                # if the project is already imported, retrieve any coordinates already in the dataset_spatial_map table
                 if template_dict['db_imported']:
                     coords = cf.getProjectCoordsFromDatabase(uid)
                     if coords is not None:
-                        template_dict['coords'] = coords 
+                        template_dict['coords'] = coords
+
+                if edit:
+                    template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required']
+                else:
+                    template_dict['status_options'] = ['Pending', 'DIF XML file missing', 
+                                                       'Completed', 'Rejected', 'No Action Required']  
 
             else:
                 template_dict['type'] = 'dataset'
@@ -2562,7 +2585,11 @@ def curator():
                     template_dict['dc_uid'] = uid
                 if not edit:
                     template_dict['replaced_dataset'] = cf.getReplacedDataset(uid)
-                
+                    template_dict['status_options'] = ['Pending', 'Not yet registered with DataCite', 'ISO XML file missing', 
+                                                       'Completed', 'Rejected', 'No Action Required'] 
+                else:
+                    template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required']
+        
             submission_file = os.path.join(submitted_dir, filename + ".json")
             template_dict['filename'] = submission_file
             template_dict['sql'] = "Will be generated after you click on Create SQL and Readme in JSON tab."
@@ -2606,7 +2633,6 @@ def curator():
                     print("IMPORTING TO DB")
                     try:
                         # run sql to import data into the database
-                        (conn, cur) = connect_to_db()
                         cur.execute(sql_str)
                         cf.updateEditFile(uid)
 
@@ -2638,6 +2664,7 @@ def curator():
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
                         template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
+
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True
@@ -2679,6 +2706,12 @@ def curator():
                             except Exception as err:
                                 template_dict['error'] = "Error copying uploaded files: " + str(err)
                                 problem = True
+
+                        # Update submission table
+                        if edit:
+                            update_status('e' + uid, 'Edit completed')
+                        else:
+                            update_status(uid, 'Not yet registered with DataCite')
                 
                 # save updates to the readme file
                 elif request.form.get('submit') == "save_readme":
@@ -2775,6 +2808,8 @@ def curator():
                                                               + "\nThe DOI for the dataset is %s." % doi \
                                                               + "\nPlease check the landing page %s and contact us if there are any issues." % url_for('landing_page', dataset_id=uid, _external=True) \
                                                               + "\n\nBest regards," 
+                            # Update submission table
+                            update_status(uid, 'ISO XML file missing')
 
                     except Exception as err:
                         template_dict['error'] = "Error updating DataCite XML file: " + str(err) + " " + datacite_file
@@ -2819,6 +2854,9 @@ def curator():
                             error = cf.updateRecentData(dc_uid)
                             if error:
                                 template_dict['error'] = error
+                            else:
+                                # Update submission table
+                                update_status(uid, 'Completed')
 
                     except Exception as err:
                         template_dict['error'] = "Error saving ISO XML file to watch directory: " + str(err)
@@ -2874,6 +2912,20 @@ def curator():
                     except Exception as err:
                         template_dict['error'] = "Error sending email: " + str(err)
 
+                # Update status or comments - for both datasets and projects
+                elif request.form.get('submit') == "change_status":
+                    template_dict['tab'] = 'status'
+                    try:
+                        status = request.form.get('status')
+                        comments = request.form.get('comment_text')
+                        template_dict['comments'] = comments
+                        query = "UPDATE submission SET (status, comments, last_update) = ('%s', '%s', '%s') WHERE uid = '%s'; COMMIT;" \
+                                % (status, comments, datetime.now().strftime('%Y-%m-%d'), filename)
+                        cur.execute(query)
+                        template_dict['message'].append("Submission status and/or comments updated.")
+                    except Exception as err:
+                        template_dict['error'] = "Error updating status and/or comments: " + str(err)
+
                 # PROJECT CURATION
 
                 # read in json and convert to sql
@@ -2894,7 +2946,6 @@ def curator():
                     print("IMPORTING TO DB")
                     try:
                         # run sql to import data into the database
-                        (conn, cur) = connect_to_db()
                         cur.execute(sql_str)
                         cf.updateEditFile(uid)
                         template_dict['message'].append("Successfully imported to database")
@@ -2943,6 +2994,12 @@ def curator():
                             except Exception as e:
                                 return ("ERROR: unable to copy data management plan to award directory. \n" + str(e))
                                 problem = True
+
+                        # Update submission table
+                        if edit:
+                            update_status('e' + uid, 'Edit completed')
+                        else:
+                            update_status(uid, 'DIF XML file missing')
 
                 # update spatial bounds in database
                 elif request.form.get('submit') == "project_spatial_bounds":
@@ -2994,6 +3051,8 @@ def curator():
                             out_file.write(xml_str)
                             template_dict['message'].append("DIF XML file saved to watch directory.")
                         os.chmod(difxml_file, 0o664)
+                        # Update submission table
+                        update_status(uid, 'Completed')
 
                     except Exception as err:
                         template_dict['error'] = "Error saving DIF XML file to watch directory: " + str(err)
@@ -3062,6 +3121,14 @@ def getEmailsFromJson(data, email_recipients):
             submitter = '\n<%s>' % data['submitter_email']
         email_recipients += submitter
     return email_recipients
+
+
+def update_status(uid, status):
+    (conn, cur) = connect_to_db()
+    today = datetime.now().strftime('%Y-%m-%d')
+    query = "UPDATE submission SET (status, last_update) = ('%s', '%s') WHERE uid = '%s'; COMMIT;" \
+        % (status, today, uid)
+    cur.execute(query)
 
 
 @app.route('/curator/help', methods=['GET', 'POST'])

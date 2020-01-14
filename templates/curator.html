@@ -2,6 +2,15 @@
 {% set cur = "curator" %}
 {% block body %}
 
+<div id="comments" hidden>
+  <div id="comments_header" class="window-header">
+    <span id="comments_title"></span><span class='close_comments_btn close_btn'>X</span>
+  </div>
+  <div id="comments_body">
+    <p id="comments_text"></p>
+  </div>
+</div>
+
 <div class="border">
 <div class="content">
 
@@ -62,15 +71,14 @@
           <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
-          <button class="tablinks" onclick="openTab(event, 'emailTab')"  {% if tab == 'email' %} id="defaultOpen" {% endif %}>Send Email</button>
         {% elif type == 'project' %}
           <button class="tablinks" onclick="openTab(event, 'projectJsonTab')" {% if tab == 'project_json' %} id="defaultOpen" {% endif %}>JSON</button>
           <button class="tablinks" onclick="openTab(event, 'projectSqlTab')" {% if tab == 'project_sql' %} id="defaultOpen" {% endif %}>SQL</button>
           <button class="tablinks" onclick="openTab(event, 'projectSpatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
           <button class="tablinks" onclick="openTab(event, 'difxmlTab')"  {% if tab == 'difxml' %} id="defaultOpen" {% endif %}>DIF XML</button>
-          <button class="tablinks" onclick="openTab(event, 'emailTab')"  {% if tab == 'email' %} id="defaultOpen" {% endif %}>Send Email</button>
         {% endif %}
-
+          <button class="tablinks" onclick="openTab(event, 'emailTab')"  {% if tab == 'email' %} id="defaultOpen" {% endif %}>Send Email</button>
+          <button class="tablinks" onclick="openTab(event, 'statusTab')"  {% if tab == 'status' %} id="defaultOpen" {% endif %}>Change Status / Comments</button>
       </div>
     <form method="post" enctype="multipart/form-data">
 
@@ -260,6 +268,24 @@
         </div>
       </div>
 
+
+      <div id="statusTab", class="tabcontent">
+        <h4>Change the submission status or edit a comment</h4>
+ 
+        <div>
+          <b>Status</b><br/>
+          <select name='status'>
+            {% for opt in status_options %}
+              <option value="{{opt}}" {% if opt == status %} selected {% endif %}>{{opt}}</option>
+            {% endfor %}
+          </select>
+          <br><br>
+          <b>Comments</b><br/>
+          <textarea id="comment_text" name="comment_text" cols="100" rows="5">{{comments}}</textarea>
+          <br><br>
+          <button type="submit" name="submit" value="change_status" onclick="waitCursor()">Update</button>
+        </div>
+      </div>
       
 
       <div id="projectJsonTab", class="tabcontent active">
@@ -421,17 +447,24 @@
               <tr>
                 <th>Submission</th>
                 <th>Submitted Date</th>
+                <th>Last Update</th>
                 <th>Status</th>
+                <th>Comments</th>
                 <th>Landing Page</th>
+                <th hidden>comments_text</th>
               </tr>
             </thead>
 
             {% for sub in submissions %}
-                <tr {% if sub['status'] != 'Completed' and sub['status'] != 'Edit completed'%} style="font-weight: bold" {% endif %}>
+                <tr {% if sub['status'] not in no_action_status %} style="font-weight: bold" {% endif %}>
                     <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub.id}} </a></td>
                     <td>{{sub.date}}</td>
+                    <td>{{sub.last_update}}</td>
                     <td>{{sub.status}}</td>
+                    <td>{% if sub.comments %}
+                        <button type="button" class="in-table-button abstract-button" id="comments_btn" onclick="showComments(this);"><b>View Comments</b></button>{% endif %}</td>
                     <td>{% if sub.landing_page %} <a target="_blank" href={{sub['landing_page']}}>{{sub.landing_page}}</a> {% endif %}</td>
+                    <td hidden>{{sub.comments}}</td>
                 </tr>
             {% endfor %}
         </table>
@@ -447,6 +480,9 @@
 <script>
 
   $(document).ready(function(){
+    //Make the DIV element draggagle:
+    dragElement(document.getElementById(("comments")));
+    
     //for keywords tab
     $('[data-toggle="popover"]').popover({html: true, container: 'body', trigger:"hover"});
     new_kw_counter = 1;
@@ -526,6 +562,8 @@
       autocomplete(document.getElementById("dataset_or_project"), null, d_ps);
       autocomplete(document.getElementById("name_last"), document.getElementById("name_first"), persons);
       autocomplete(document.getElementById("org"), null, orgs);
+
+
     }
 
   });
@@ -747,6 +785,72 @@
     });
   }
 
+  function showComments(el) {
+    var header = $(el).closest('table').find('th');
+    var comments_ind = 999;
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "comments_text") comments_ind = i;
+    }
 
+    var row = $(el).closest('tr');
+    var comments = row.children('td').eq(comments_ind).text();
+    $("#comments_text").html(comments);
+    var x = event.pageX;
+    var y = event.pageY;
+
+
+    $("#comments_title").text('Comments');
+    $("#comments").css({top:y+"px", left:x-400+"px"}).show();   
+  }
+
+  $('.close_comments_btn').click(function() {
+    $("#comments").hide();
+  });
+
+  /*
+    functions to hangle dragging an element by its header
+  */
+  function dragElement(elmnt) {
+    console.log(elmnt)
+    if (elmnt === null) return;
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    if (document.getElementById(elmnt.id + "_header")) {
+      /* if present, the header is where you move the DIV from:*/
+      document.getElementById(elmnt.id + "_header").onmousedown = dragMouseDown;
+    } else {
+      /* otherwise, move the DIV from anywhere inside the DIV:*/
+      elmnt.onmousedown = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+      e = e || window.event;
+      // get the mouse cursor position at startup:
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+      e = e || window.event;
+      // calculate the new cursor position:
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      // set the element's new position:
+      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+      /* stop moving when mouse button is released:*/
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
 </script>
 {% endblock body %}

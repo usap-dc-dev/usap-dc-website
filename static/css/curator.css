@@ -147,3 +147,49 @@ textarea {
     resize: vertical;
 }
 html.wait, html.wait * { cursor: wait !important; }
+
+.in-table-button {
+  background:none!important;
+  color:#069;
+  border:none; 
+  padding:0!important;
+  font: inherit;
+  cursor: pointer;
+}
+
+#comments {
+  background: #fff;
+  border: 2px solid #000;
+  position: absolute;
+  font-family: arial;
+  height: 20em;
+  padding: 0.5em;
+  width: 30em;
+  z-index: 1000;
+  overflow: hidden;  
+  resize: both;
+  min-height:10em;
+  min-width:22em;
+}
+
+#comments_text {
+  line-height: 1.7em;
+  position: absolute;
+  height: 82%;
+  overflow: auto; 
+  padding: 10px;
+}
+
+.close_btn {
+    float:right;
+    padding:2px 5px;
+    background:#ccc;
+    cursor: pointer;
+}
+
+.close_btn:hover {
+    float:right;
+    padding:2px 5px;
+    background:#ccc;
+    color:#fff;
+}
