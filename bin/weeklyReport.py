@@ -2,7 +2,6 @@
 # Run as a cron task to generate weekly report
 # run from main usap-dc directory with python bin/weeklyReport
 
-import os
 import datetime
 import psycopg2
 import psycopg2.extras
@@ -11,11 +10,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-
-SUBMITTED_FOLDER = "../submitted"
-ISOXML_FOLDER = "../watch/isoxml"
-config = json.loads(open('../config.json', 'r').read())
-config.update(json.loads(open('../inc/report_config.json', 'r').read()))
+config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
+config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
 
 def connect_to_db():
@@ -29,45 +25,16 @@ def connect_to_db():
     return (conn, cur)
 
 
-def isDatabaseImported(uid):
-    (conn, cur) = connect_to_db()
-    query = "SELECT COUNT(*) from dataset WHERE id = '%s'" % uid
+def querySubmissionTable(cur, submission_type, status):
+    query = "SELECT * FROM submission WHERE submission_type = '%s' AND status = '%s';" % (submission_type, status)
     cur.execute(query)
-    res = cur.fetchone()
-    return res['count'] > 0
-
-
-def isProjectImported(uid):
-    (conn, cur) = connect_to_db()
-    query = "SELECT COUNT(*) from project WHERE proj_uid = '%s'" % uid
-    cur.execute(query)
-    res = cur.fetchone()
-    return res['count'] > 0
-
-
-def isEditComplete(uid):
-    submission_file = os.path.join(SUBMITTED_FOLDER, uid + ".json")
-    if not os.path.exists(submission_file):
-        return False
-    with open(submission_file) as infile:
-        data = json.load(infile)
-    return data.get('edit_complete')
-
-
-def isRegisteredWithDataCite(uid):
-    (conn, cur) = connect_to_db()
-    query = "SELECT doi from dataset WHERE id = '%s'" % uid
-    cur.execute(query)
-    res = cur.fetchone()
-    return (res['doi'] and len(res['doi']) > 0)
-
-
-def ISOXMLExists(uid):
-    return os.path.exists(getISOXMLFileName(uid))
-
-
-def getISOXMLFileName(uid):
-    return os.path.join(ISOXML_FOLDER, "%siso.xml" % uid)
+    res = cur.fetchall()
+    msg = ""
+    for d in res:
+        url = config['CURATOR_PAGE'] % d['uid']
+        msg += """<li><a href="%s">%s</a> %s</li>""" % (url, d['uid'], d['submitted_date'].strftime('%Y-%m-%d'))
+    msg += """</ul>"""
+    return msg
 
 
 def sendEmail(message, subject):
@@ -99,6 +66,7 @@ if __name__ == '__main__':
     # get current date
     today = datetime.date.today()
     week_ago = today - datetime.timedelta(days=7)
+    (conn, cur) = connect_to_db()
 
     title = "USAP-DC WEEKLY REPORT: %s TO %s" % (week_ago, today)
 
@@ -107,48 +75,6 @@ if __name__ == '__main__':
 
     msg = """<html><head></head><body><h1>%s</h1>""" % title
 
-    # List any new datasets or projects have been registered.
-
-    # First get SUBMISSIONS from the last week
-    current_dir = os.getcwd()
-    os.chdir(SUBMITTED_FOLDER)
-    files = filter(os.path.isfile, os.listdir(SUBMITTED_FOLDER))
-    files = [os.path.join(SUBMITTED_FOLDER, f) for f in files]  # add path to each file
-    files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-    os.chdir(current_dir)
-
-    pending_projects = []
-    pending_datasets = []
-    pending_project_edits = []
-    pending_dataset_edits = []
-    not_registered = []
-    no_iso = []
-    for f in files:
-        if f.find(".json") > 0:
-            date = datetime.date.fromtimestamp(os.path.getmtime(f))
-            f = os.path.basename(f)
-            uid = f.split(".json")[0]
-            url = config['CURATOR_PAGE'] % uid
-            if uid[0] == 'p':
-                if not isProjectImported(uid):
-                    pending_projects.append("""<li><a href="%s">%s</a> %s</li>""" % (url, uid, date))
-            elif uid[0:2] == 'ep':
-                if not isEditComplete(uid):
-                    pending_project_edits.append("""<li><a href="%s">%s</a> %s</li>""" % (url, uid[1:], date))
-            elif uid[0] == 'e':
-                if not isEditComplete(uid):
-                    pending_dataset_edits.append("""<li><a href="%s">%s</a> %s</li>""" % (url, uid[1:], date))           
-            else:
-                if not isDatabaseImported(uid):
-                    pending_datasets.append("""<li><a href="%s">%s</a> %s</li>""" % (url, uid, date))
-                else:
-                    if not isRegisteredWithDataCite(uid):
-                        not_registered.append("""<li><a href="%s">%s</a> %s</li>""" % (url, uid, date))
-                    elif not ISOXMLExists(uid):
-                        no_iso.append("""<li><a href="%s">%s</a> %s</li>""" % (url, uid, date))
-
-    # Get datasets INGESTED in last week
-    (conn, cur) = connect_to_db()
     query = "SELECT * FROM dataset WHERE date_created > '%s';" % week_ago
     cur.execute(query)
     res = cur.fetchall()
@@ -190,34 +116,25 @@ if __name__ == '__main__':
     msg += """</ul>"""
 
     msg += """<h3>Datasets Not Yet Ingested:</h3><ul>"""
-    for line in pending_datasets:
-        msg += line
-    msg += """</ul>"""
+    msg += querySubmissionTable(cur, 'dataset submission', 'Pending')
 
     msg += """<h3>Datasets Not Yet Registered With Datacite:</h3><ul>"""
-    for line in not_registered:
-        msg += line
-    msg += """</ul>"""
+    msg += querySubmissionTable(cur, 'dataset submission', 'Not yet registered with DataCite')
 
     msg += """<h3>Datasets Missing ISO XML:</h3><ul>"""
-    for line in no_iso:
-        msg += line
-    msg += """</ul>"""
+    msg += querySubmissionTable(cur, 'dataset submission', 'ISO XML file missing')
 
     msg += """<h3>Projects Not Yet Ingested:</h3><ul>"""
-    for line in pending_projects:
-        msg += line
-    msg += """</ul>"""
+    msg += querySubmissionTable(cur, 'project submission', 'Pending')
+
+    msg += """<h3>Project Missing DIF XML:</h3><ul>"""
+    msg += querySubmissionTable(cur, 'project submission', 'DIF XML file missing')
 
     msg += """<h3>Pending Dataset Edits:</h3><ul>"""
-    for line in pending_dataset_edits:
-        msg += line
-    msg += """</ul>"""
+    msg += querySubmissionTable(cur, 'dataset edit', 'Pending')
 
     msg += """<h3>Pending Project Edits:</h3><ul>"""
-    for line in pending_project_edits:
-        msg += line
-    msg += """</ul>"""  
+    msg += querySubmissionTable(cur, 'project edit', 'Pending')
 
     # datasets that are not yet archived in  glacier
     query = "SELECT id, title, archived_date FROM dataset d LEFT JOIN dataset_archive da ON da.dataset_id = d.id WHERE archived_date is NULL ORDER BY id"
