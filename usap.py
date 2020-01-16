@@ -48,13 +48,10 @@ app.config.update(
     AWARDS_FOLDER="awards",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
-    USAP_DOMAIN="http://www.usap-dc.org/",
-    NSF_AWARD_API="https://api.nsf.gov/services/v1/awards/",
     DEBUG=True
 )
 
 app.config.update(json.loads(open('config.json', 'r').read()))
-
 
 app.debug = app.config['DEBUG']
 app.secret_key = app.config['SECRET_KEY']

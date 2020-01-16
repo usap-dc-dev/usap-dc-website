@@ -303,12 +303,12 @@
                 disabled 
             {% else %} 
                 data-url="{{f['url']}}" 
-                {% if f['url'].startswith('http://www.usap-dc.org/') %} 
+                {% if '//www.usap-dc.org/' in f['url'] %} 
                     data-id="{{data.id}}" 
                 {% endif %} 
             {% endif %}
         >
-          {% if f['url'].startswith('http://www.usap-dc.org/') %}
+          {% if '//www.usap-dc.org/' in f['url'] %}
             Download
           {% else %}
             External
@@ -325,24 +325,6 @@
   {% endfor %}
   </div>
  </div>
-<!-- 
-  <div id="keywords">
-    <div class="header small">
-      Keywords
-    </div>
-    <div class="lprow-no-margin">
-      {% for kw in data.keywords|sort(attribute='keyword_label') %}
-        <div id="kw_button_div" class="ck-button" {% if kw.keyword_description %} data-toggle="popover" data-placement="top" 
-        data-content="<b>Description:</b> {{kw.keyword_description}}" {% endif %}>
-          <label>
-            <a class="kw-btn" href="{{url_for('dataset_search',free_text=kw.keyword_label)}}">
-              <span>{{kw.keyword_label}}</span>
-            </a>
-          </label>
-        </div>
-      {% endfor %}
-    </div>
-  </div> -->
 
 {% if data.downloads >= 0 %}
 <div class="field">

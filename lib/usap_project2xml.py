@@ -14,6 +14,7 @@ dif_id = 'USAP-1341476'
 in_file = '{}.json'.format(dif_id)
 dif_file = '{}.xml'.format(dif_id)
 sql_file = '{}.sql'.format(dif_id)
+config = json.loads(open('config.json', 'r').read())
 
 
 def prettify(elem):
@@ -279,7 +280,7 @@ class DifData:
         xml_org_sname = ET.SubElement(xml_org_name, "Long_Name")
         xml_org_sname.text = "United States Polar Program - Data Center"
         xml_org_url = ET.SubElement(xml_org, "Organization_URL")
-        xml_org_url.text = "http://www.usap-dc.org/"
+        xml_org_url.text = config['USAP_DOMAIN']
 
         xml_org_pers = ET.SubElement(xml_org, "Personnel")
         xml_org_pers_role = ET.SubElement(xml_org_pers, "Role")

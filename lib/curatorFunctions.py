@@ -6,7 +6,7 @@ import psycopg2
 import psycopg2.extras
 import sys
 import requests
-from flask import session, url_for, current_app
+from flask import session, url_for, current_app, request
 from subprocess import Popen, PIPE
 import base64
 from datetime import datetime
@@ -1532,7 +1532,7 @@ def getDifXML(data, uid):
     xml_org_sname = ET.SubElement(xml_org_name, "Long_Name")
     xml_org_sname.text = "United States Polar Program - Data Center"
     xml_org_url = ET.SubElement(xml_org, "Organization_URL")
-    xml_org_url.text = "http://www.usap-dc.org/"
+    xml_org_url.text = request.url_root
 
     xml_org_pers = ET.SubElement(xml_org, "Personnel")
     xml_org_pers_role = ET.SubElement(xml_org_pers, "Role")

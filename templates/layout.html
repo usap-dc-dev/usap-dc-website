@@ -47,7 +47,7 @@
       "@id": "http://doi.org/10.17616/R31898",
       "additionalType": "gdx:ResearchRepositoryService",
       "name": "U.S. Antarctic Program Data Center",
-      "url": "http://www.usap-dc.org/index",
+      "url": "{{url_for('home',_external=True)}}",
       "category": ["Earth Science, Polar Science"],
       "description": "The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (AMD) to comply with the Antarctic Treaty; facilitate submission of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (SCAR) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (IEDA) and the Antarctic and Arctic Data Consortium (A2DC). As of 2016, USAP-DC is now partnered with the National Snow and Ice Data Center (NSIDC) to manage glaciology data for the US Antarctic Program.",
       "sameAs": "https://www.re3data.org/repository/r3d100010660",
@@ -61,7 +61,7 @@
         "@type": "ContactPoint",
         "name": "USAP-DC Manager",
         "email": "info@usap-dc.org",
-        "url": "http://www.usap-dc.org/contact",
+        "url": "{{url_for('contact',_external=True)}}",
         "contactType": "technical support"
       },
       "funder": {
@@ -126,7 +126,7 @@
         "name": "USAP-DC Catalog",
         "itemListElement": [{
           "@type": "DataCatalog",
-          "@id": "http://www.usap-dc.org/search",
+          "@id": "{{url_for('search',_external=True)}}",
           "name": "US Antarctic Program Data Center Catlog",
           "audience": {
             "@type": "Audience",
@@ -149,13 +149,13 @@
       },
       {
         "@type": "CreateAction",
-        "@id": "http://www.usap-dc.org/submit",
+        "@id": "{{url_for('submit',_external=True)}}",
         "additionalType": "gdx:SubmissionService",
         "name": "Submit Data to US Antarctic Program Data Center",
         "description": "Web application to support submitting a dataset to USAP-DC or Registering a project with the Antarctic Master Directory. Requires a sign in using Google or ORCID (free registration). Datasets will be registered with a DOI after acceptance for accession to repository.",
         "target": {
           "@type": "EntryPoint",
-          "url": "http://www.usap-dc.org/submit"
+          "url": "{{url_for('submit',_external=True)}}"
         }
       }
       ]

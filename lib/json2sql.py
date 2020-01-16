@@ -81,7 +81,7 @@ def make_sql(data, id):
         release_date = data["timestamp"][0:10]
     date_created = data["timestamp"][0:10]
 
-    url = 'http://www.usap-dc.org/dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
+    url = config['USAP_DOMAIN'] + '/dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
     
     curator = "Nitsche"
 

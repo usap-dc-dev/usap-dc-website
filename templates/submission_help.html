@@ -8,7 +8,7 @@
        
 		<p>The <a target="_blank" href="https://www.nsf.gov/pubs/2016/nsf16055/nsf16055.jsp">NSF Antarctic Research Program</a> requires for each award that
 		<ol>
-			<li>upon award, the lead investigator is required to register the project on the USAP Data Coordination Center (USAP-DC; <a href="{{url_for('home')}}">http://www.usap-dc.org/</a>) website. Registration will include submission of the Data Management Plan agreed to at the time of award. The Data Management Plan must be made publicly available at this time. Project registration within USAP-DC will ensure registration within the Antarctic Master Directory and will fulfill data sharing obligations under the Antarctic Treaty;
+			<li>upon award, the lead investigator is required to register the project on the USAP Data Coordination Center (USAP-DC; <a href="{{url_for('home')}}">{{url_for('home', _external=True)}}/</a>) website. Registration will include submission of the Data Management Plan agreed to at the time of award. The Data Management Plan must be made publicly available at this time. Project registration within USAP-DC will ensure registration within the Antarctic Master Directory and will fulfill data sharing obligations under the Antarctic Treaty;
 
 			<li>metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly accessible archive;</li>
 			<li>metadata for all Antarctic supported data sets and derived data products must be submitted to the Antarctic Master Directory, via the USAP Data Center.</li>
@@ -75,7 +75,7 @@
 		<p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services for these data including data publication and long term archiving. However, if there is an <a href="{{url_for('repo_list')}}">existing disciplinary repository</a> that is commonly used in a field, the best practice is to submit your data to this repository.
 		</p>
 
-		<p>For submitting data to USAP-DC, please go to <a href="{{url_for('submit')}}">http://www.usap-dc.org/submit</a> and use the "Deposit" button.</p>
+		<p>For submitting data to USAP-DC, please go to <a href="{{url_for('submit')}}">{{url_for('submit', _external=True)}}</a> and use the "Deposit" button.</p>
 
 		<p>After logging in, the submitter is asked to fill out a web form that collects information (metadata) about the dataset to support the curation and long-term archiving of the data, search and discovery by others, and to provide basic information necessary for future researchers to make use of your data. At the end you can upload one or many data files. If you have a very large dataset, e.g. many Giga or Terabytes in size, please <a href="{{url_for('contact')}}">contact us</a> directly to arrange for separate data transfer.</p>
 
