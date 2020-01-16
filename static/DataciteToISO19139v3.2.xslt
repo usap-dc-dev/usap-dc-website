@@ -134,8 +134,9 @@
                                 <gmd:linkage>
                                     <gmd:URL>
                                     <xsl:choose>
-                                        <xsl:when test="$datacentre='US Antarctic Program Data Center (USAP-DC)'"> 
-                                            <xsl:value-of select="string('http://www.usap-dc.org/static/imgs/header/usaplogo.png')"/>
+                                        <xsl:when test="$datacentre='US Antarctic Program Data Center (USAP-DC)'">
+                                            <xsl:variable name="url_ini" select="//*[local-name() = 'alternateIdentifier']"/> 
+                                            <xsl:value-of select="concat(substring-before($url_ini, '://'), string('://www.usap-dc.org/static/imgs/header/usaplogo.png'))"/>
                                         </xsl:when>
                                         <xsl:when test="$datacentre='EarthChem Library (ECL)'"> 
                                             <xsl:value-of select="string('http://www.earthchem.org/sites/earthchem.org/files/arthemia_logo.jpg')"/>
@@ -612,10 +613,10 @@
                                             </gmd:URL>
                                         </gmd:linkage>
                                         <gmd:protocol>
-                                            <gco:CharacterString>WWW:LINK-1.0-http--link</gco:CharacterString>
+                                            <gco:CharacterString>WWW:LINK-1.0-http--link-test</gco:CharacterString>
                                         </gmd:protocol>
                                         <gmd:name>
-                                            <gco:CharacterString>Landing Page</gco:CharacterString>
+                                            <gco:CharacterString>Landing Page test</gco:CharacterString>
                                         </gmd:name>
                                         <gmd:description>
                                             <gco:CharacterString>
