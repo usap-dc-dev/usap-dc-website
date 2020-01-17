@@ -44,7 +44,7 @@ def parse_json(data):
     (first, last) = (data["author"]["first_name"], data["author"]["last_name"])
     data["author"] = "{}, {}".format(last, first)
     print("corrected author: ", data["author"])
-    if data["submitter_name"] != "":
+    if data.get('submitter_name') and data["submitter_name"] != "":
         (first, last) = data["submitter_name"].split(' ', 1)
         data["submitter_first"] = first
         data["submitter_last"] = last

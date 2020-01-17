@@ -1838,21 +1838,23 @@ def updateRecentData(uid):
             "GROUP BY ds.id;"
     cur.execute(query)
     res = cur.fetchone()
+    entries = {}
     if res:
         newline = "%s\t<a href=/view/dataset/%s>%s</a>\t%s\t%s\n" % (res.get('release_date'), uid, res.get('awards', 'Award Not Known'), 
                                                                      res.get('creator'), res.get('title'))
-
         try:
             # read in file
             with open(RECENT_DATA_FILE, 'r') as rd_file:
                 lines = rd_file.readlines()
+            for line in lines[1:]:
+                entries[line] = line[0:10]
             if newline not in lines:
+                entries[newline] = newline[0:10]
                 # re-write file
                 with open(RECENT_DATA_FILE, 'w') as rd_file:
                     rd_file.write(lines[0])
-                    rd_file.write(newline)
-                    for line in lines[1:]:
-                        rd_file.write(line)
+                    for entry in sorted(entries.items(), key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=True):
+                        rd_file.write(entry[0])
             return None
         except Exception as e:
             return("Error updating Recent Data file: %s" % str(e))
