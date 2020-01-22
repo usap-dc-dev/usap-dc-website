@@ -3647,17 +3647,17 @@ def get_project(project_id):
                             GROUP BY pgskm.proj_uid
                         ) parameters ON (p.proj_uid = parameters.param_proj_uid)
                         LEFT JOIN (
-                            SELECT proj_uid, json_agg(keyword_label) locations
+                            SELECT proj_uid AS loc_proj_uid, json_agg(keyword_label) locations
                                 FROM vw_project_location vdl
                                 GROUP BY proj_uid
-                        ) locations ON (p.proj_uid = locations.proj_uid)
+                        ) locations ON (p.proj_uid = locations.loc_proj_uid)
                         LEFT JOIN (
-                            SELECT pglm.proj_uid AS loc_proj_uid, json_agg(gl) gcmd_locations
+                            SELECT pglm.proj_uid AS gcmd_loc_proj_uid, json_agg(gl) gcmd_locations
                             FROM project_gcmd_location_map pglm JOIN gcmd_location gl ON (gl.id=pglm.loc_id)
                             GROUP BY pglm.proj_uid
-                        ) gcmd_locations ON (p.proj_uid = gcmd_locations.loc_proj_uid)
+                        ) gcmd_locations ON (p.proj_uid = gcmd_locations.gcmd_loc_proj_uid)
                         LEFT JOIN ( 
-                            SELECT k_1.proj_uid, string_agg(k_1.keywords, '; '::text) AS keywords
+                            SELECT k_1.proj_uid AS kw_proj_uid, string_agg(k_1.keywords, '; '::text) AS keywords
                             FROM (SELECT pskm.proj_uid, reverse(split_part(reverse(pskm.gcmd_key_id), ' >'::text, 1)) AS keywords
                                   FROM project_gcmd_science_key_map pskm
                                   UNION
@@ -3677,7 +3677,7 @@ def get_project(project_id):
                                   FROM project_keyword_map pkm JOIN keyword_ieda ki ON (ki.keyword_id=pkm.keyword_id) 
                                   ) k_1
                             GROUP BY k_1.proj_uid
-                        ) keywords ON keywords.proj_uid = p.proj_uid
+                        ) keywords ON keywords.kw_proj_uid = p.proj_uid
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
