@@ -1,5 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/usapdc_home.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="https://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/usapdc_home.dwt.php" codeOutsideHTMLIsLocked="false" -->
 <head>
   <title>United States Antarctic Program Data Center (USAP-DC)</title>
   <meta name="Description" content="United States Antarctic Program Data Center (USAP-DC)" />
@@ -15,7 +15,7 @@
   <meta name="google-signin-client_id" content="721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com"/>
   <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.png') }}" type="image/x-icon"/>
   <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet"/>
-  <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css"/>
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
 
 
@@ -37,14 +37,14 @@
   <script type="application/ld+json">
     {
       "@context": {
-        "@vocab": "http://schema.org/",
+        "@vocab": "https://schema.org/",
         "gdx": "https://geodex.org/voc/"
       },
       "@type": [
       "Service",
       "Organization"
       ],
-      "@id": "http://doi.org/10.17616/R31898",
+      "@id": "https://doi.org/10.17616/R31898",
       "additionalType": "gdx:ResearchRepositoryService",
       "name": "U.S. Antarctic Program Data Center",
       "url": "{{url_for('home',_external=True)}}",
@@ -53,9 +53,9 @@
       "sameAs": "https://www.re3data.org/repository/r3d100010660",
       "identifier": {
         "@type": "PropertyValue",
-        "propertyID": "http://purl.org/spar/datacite/doi",
+        "propertyID": "https://purl.org/spar/datacite/doi",
         "value": "10.17616/R31898",
-        "url": "http://doi.org/10.17616/R31898"
+        "url": "https://doi.org/10.17616/R31898"
       },
       "contactPoint": {
         "@type": "ContactPoint",
@@ -66,16 +66,16 @@
       },
       "funder": {
         "@type": "Organization",
-        "@id": "http://dx.doi.org/10.13039/100000087",
+        "@id": "https://dx.doi.org/10.13039/100000087",
         "legalName": "Division Of Polar Programs",
         "alternateName": "NSF-OPP",
-        "url": "http://www.nsf.gov",
+        "url": "https://www.nsf.gov",
         "parentOrganization": {
           "@type": "Organization",
-          "@id": "http://dx.doi.org/10.13039/100000001",
+          "@id": "https://dx.doi.org/10.13039/100000001",
           "legalName": "National Science Foundation",
           "alternateName": "NSF",
-          "url": "http://www.nsf.gov"
+          "url": "https://www.nsf.gov"
         }
       },
       "logo": {
@@ -104,7 +104,7 @@
           "@type": "Organization",
           "@id": "https://viaf.org/viaf/142992181/",
           "name": "Lamont-Doherty Earth Observatory",
-          "url": "http://www.ldeo.columbia.edu/",
+          "url": "https://www.ldeo.columbia.edu/",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "61 Route 9W",
@@ -117,7 +117,7 @@
             "@type": "Organization",
             "@id": "https://viaf.org/viaf/156836332/",
             "legalName": "Columbia University",
-            "url": "http://www.columbia.edu/"
+            "url": "https://www.columbia.edu/"
           }
         }
       },
@@ -138,13 +138,13 @@
       "potentialAction": [
       {
         "@type": "SearchAction",
-        "@id": "http://www.earthchem.org/library/search",
+        "@id": "https://www.earthchem.org/library/search",
         "additionalType": "gdx:SearchService",
         "name": "EarthChem Library Search",
         "description": "Search for datasets in the EarthChem Library repository",
         "target": {
           "@type": "EntryPoint",
-          "url": "http://www.earthchem.org/library/search"
+          "url": "https://www.earthchem.org/library/search"
         }
       },
       {
@@ -273,7 +273,7 @@
     </div>
 
     <ieda-banner>
-      <a href="http://www.iedadata.org"><img id="IEDA" alt="IEDA" src="{{ url_for('static', filename='imgs/header/ieda_logo_200x88.png') }}"/></a>
+      <a href="https://www.iedadata.org"><img id="IEDA" alt="IEDA" src="{{ url_for('static', filename='imgs/header/ieda_logo_200x88.png') }}"/></a>
     </ieda-banner>
 
     <div id="ieda-menu-wrap">
@@ -367,15 +367,15 @@
         <tr style="border-style: none; ">        
           <td  style="border-style: none; width: 15%" ></td>
           <td  style="border-style: none; width: 60%"  >  
-            <p> Hosted at <a href="http://www.ldeo.columbia.edu">Lamont-Doherty Earth Observatory</a> of <a href="http://www.columbia.edu">Columbia University</a>.</p> 
+            <p> Hosted at <a href="https://www.ldeo.columbia.edu">Lamont-Doherty Earth Observatory</a> of <a href="https://www.columbia.edu">Columbia University</a>.</p> 
             <p>Site licensed under <a href="{{url_for('legal')}}">Creative Commons Attribution-Noncommercial-Share Alike 3.0</a> </p>
-            <p>    Part of the <a href="http://www.iedadata.org">IEDA Data Facility</a> | <a href="{{url_for('legal')}}">Acknowledgments</a> | <a href="{{url_for('privacy')}}">Privacy</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
+            <p>    Part of the <a href="https://www.iedadata.org">IEDA Data Facility</a> | <a href="{{url_for('legal')}}">Acknowledgments</a> | <a href="{{url_for('privacy')}}">Privacy</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
           </td> 
           <td style="border-style: none; width: 5%; ">
-            <a href="http://www.nsf.gov"><img id="nsf_logo" alt="NSF logo" src="{{url_for('static',filename='imgs/nsf1.gif')}}" width="60"/></a>
+            <a href="https://www.nsf.gov"><img id="nsf_logo" alt="NSF logo" src="{{url_for('static',filename='imgs/nsf1.gif')}}" width="60"/></a>
           </td>
           <td style="border-style: none; width: 20%" >
-            Funded by the <a href="http://www.nsf.gov">US National Science Foundation (NSF)</a>
+            Funded by the <a href="https://www.nsf.gov">US National Science Foundation (NSF)</a>
           </td>
         </tr>
       </table>

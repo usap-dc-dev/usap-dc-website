@@ -124,7 +124,7 @@ $(document).ready(function() {
         var award_num = val.split(' ')[0];
         $.ajax({
         method: 'GET',
-        url: 'http://' + window.location.hostname + '/submit/projectinfo?award='+award_num,
+        url: 'https://' + window.location.hostname + '/submit/projectinfo?award='+award_num,
         success: function(msg) {
             pi = msg.name.split(',');
             //reset co-pis

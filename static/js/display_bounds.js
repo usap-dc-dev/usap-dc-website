@@ -86,7 +86,7 @@ function MapClient() {
     title: "LIMA 240m",
     visible: true,
     source: new ol.source.TileWMS({
-        url: "http://api.usap-dc.org:81/wfs?",
+        url: "https://api.usap-dc.org:8443/wfs?",
         params: {
         layers: "LIMA 240m",
         transparent: true

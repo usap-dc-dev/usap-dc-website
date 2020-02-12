@@ -187,7 +187,7 @@ function MapClient() {
     }),  
   });
 
-  var api_url = 'http://api.usap-dc.org:81/wfs?';
+  var api_url = 'https://api.usap-dc.org:8443/wfs?';
   var gmrt = new ol.layer.Tile({
     type: 'base',
     title: "GMRT Synthesis",
@@ -271,7 +271,7 @@ function updateMenusWithSelected(selected, reset) {
   if (selected.dif_id === undefined) return;
   return $.ajax({
     method: 'GET',
-    url: 'http://' + window.location.hostname + '/filter_dif_menus',
+    url: 'https://' + window.location.hostname + '/filter_dif_menus',
     data: selected,
 
     success: function(opts) {

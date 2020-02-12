@@ -17,7 +17,7 @@ function MapClient(zoom) {
     });
     this.map = map;
 
-    var api_url = 'http://api.usap-dc.org:81/wfs?';
+    var api_url = 'https://api.usap-dc.org:8443/wfs?';
 
     var scar = new ol.layer.Tile({
     type: 'base',
@@ -265,7 +265,7 @@ function MapClient(zoom) {
     if (layers.length > 0) {
         $.ajax({
             type: "GET",
-            url: 'http://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
+            url: 'https://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
             data: {
             "query_layers" : layers,
             "layers": layers,

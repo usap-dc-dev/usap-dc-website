@@ -254,7 +254,7 @@ function MapClient2() {
     }),  
   });
 
-  var api_url = 'http://api.usap-dc.org:81/wfs?';
+  var api_url = 'https://api.usap-dc.org:8443/wfs?';
   var gmrt = new ol.layer.Tile({
     type: 'base',
     title: "GMRT Synthesis",
@@ -346,7 +346,7 @@ function updateMenusWithSelected(selected) {
     }
     return $.ajax({
       method: 'GET',
-      url: 'http://' + window.location.hostname + '/filter_joint_menus',
+      url: 'https://' + window.location.hostname + '/filter_joint_menus',
       data: selected,
 
       success: function(opts) {
@@ -505,7 +505,7 @@ function MapClient() {
     
     });
 
-    var api_url = 'http://api.usap-dc.org:81/wfs?';
+    var api_url = 'https://api.usap-dc.org:8443/wfs?';
     var gmrt = new ol.layer.Tile({
     type: 'base',
     title: "GMRT Synthesis",
@@ -647,7 +647,7 @@ function MapClient() {
         if (layers.length > 0) {
             $.ajax({
                 type: "GET",
-                url: 'http://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
+                url: 'https://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
                 data: {
                 "query_layers" : layers,
                 "layers": layers,

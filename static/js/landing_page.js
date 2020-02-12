@@ -14,7 +14,7 @@ $(document).ready(function() {
 	    var projection = ol.proj.get('EPSG:3031');
 	    projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
 	    projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
-		var api_url = 'http://api.usap-dc.org:81/wfs?';
+		var api_url = 'https://api.usap-dc.org:8443/wfs?';
 
 	    var map = new ol.Map({	// set to GMRT SP bounds
 		target: 'map',

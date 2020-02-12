@@ -3302,7 +3302,7 @@ def genBank_datasets():
 def getfeatureinfo():
     print('getfeatureinfo')
     if request.args.get('layers') != "":
-        url = urllib.unquote('http://api.usap-dc.org:81/wfs?' + urllib.urlencode(request.args))
+        url = urllib.unquote('https://api.usap-dc.org:8443/wfs?' + urllib.urlencode(request.args))
         return requests.get(url).text
     return None
 
