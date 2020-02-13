@@ -265,7 +265,7 @@ function MapClient(zoom) {
     if (layers.length > 0) {
         $.ajax({
             type: "GET",
-            url: 'https://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
+            url: window.location.protocol + '//' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
             data: {
             "query_layers" : layers,
             "layers": layers,

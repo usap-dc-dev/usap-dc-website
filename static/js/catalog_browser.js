@@ -271,7 +271,7 @@ function updateMenusWithSelected(selected, reset) {
   if (selected.dif_id === undefined) return;
   return $.ajax({
     method: 'GET',
-    url: 'https://' + window.location.hostname + '/filter_dif_menus',
+    url: window.location.protocol + '//' + window.location.hostname + '/filter_dif_menus',
     data: selected,
 
     success: function(opts) {

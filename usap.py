@@ -86,13 +86,19 @@ orcid = oauth.remote_app('orcid',
 config = json.loads(open('config.json', 'r').read())
 
 
-def connect_to_db():
+def connect_to_db(curator=False):
     info = config['DATABASE']
+    if curator and cf.isCurator():
+        user = info['USER_CURATOR']
+        password = info['PASSWORD_CURATOR']
+    else:
+        user = info['USER']
+        password = info['PASSWORD']
     conn = psycopg2.connect(host=info['HOST'],
                             port=info['PORT'],
                             database=info['DATABASE'],
-                            user=info['USER'],
-                            password=info['PASSWORD'])
+                            user=user,
+                            password=password)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn, cur)
 
@@ -2481,7 +2487,7 @@ def curator():
     template_dict = {}
     template_dict['message'] = []
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
-    (conn, cur) = connect_to_db()
+    (conn, cur) = connect_to_db(curator=True)
 
     # login
     if (not cf.isCurator()):
@@ -3121,7 +3127,7 @@ def getEmailsFromJson(data, email_recipients):
 
 
 def update_status(uid, status):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = connect_to_db(curator=True)
     today = datetime.now().strftime('%Y-%m-%d')
     query = "UPDATE submission SET (status, last_update) = ('%s', '%s') WHERE uid = '%s'; COMMIT;" \
         % (status, today, uid)
@@ -4046,6 +4052,6 @@ app.jinja_env.globals.update(filter_awards=lambda awards: [aw for aw in awards i
 app.jinja_env.globals.update(json_dumps=json.dumps)
 
 if __name__ == "__main__":
-    SECRET_KEY = 'development key'
-    app.secret_key = SECRET_KEY
-    app.run(host=app.config['SERVER_NAME'], debug=True, ssl_context=context, threaded=True)
+    # SECRET_KEY = 'development key'
+    # app.secret_key = SECRET_KEY
+    app.run(host=app.config['SERVER_NAME'], debug=True, threaded=True)

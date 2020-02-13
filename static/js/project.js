@@ -120,11 +120,12 @@ $(document).ready(function() {
         $(this).parent('div').find('.user_award_input').attr('type','hidden');
       }
 
+
       if (val != '' && val != 'Not_In_This_List') {
         var award_num = val.split(' ')[0];
         $.ajax({
         method: 'GET',
-        url: 'https://' + window.location.hostname + '/submit/projectinfo?award='+award_num,
+        url: window.location.protocol + '//' + window.location.hostname + '/submit/projectinfo?award='+award_num,
         success: function(msg) {
             pi = msg.name.split(',');
             //reset co-pis

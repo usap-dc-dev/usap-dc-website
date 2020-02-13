@@ -17,15 +17,17 @@ config = json.loads(open('../config.json', 'r').read())
 
 exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-"]
 
+
 def connect_to_db():
     info = config['DATABASE']
     conn = psycopg2.connect(host=info['HOST'],
                             port=info['PORT'],
                             database=info['DATABASE'],
-                            user=info['USER'],
-                            password=info['PASSWORD'])
+                            user=info['USER_CURATOR'],
+                            password=info['PASSWORD_CURATOR'])
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn, cur)
+
 
 if __name__ == '__main__':
 
@@ -42,7 +44,7 @@ if __name__ == '__main__':
     if type(conn) is str:
         out_text = conn
     else:
-        filename = "%s-access_log.%s-%02d" %(DOMAIN, year, month)
+        filename = "%s-access_log.%s-%02d" % (DOMAIN, year, month)
         log_file = os.path.join(LOGS_DIR, filename)
         print(log_file)
         #log_file = "test.log"
@@ -55,11 +57,11 @@ if __name__ == '__main__':
                 if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
                     sql = '''INSERT INTO access_logs_downloads (remote_host, time, resource_requested, resource_size, referer, user_agent) 
                              VALUES ('%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
-                                log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
-                                log_line_data['request_header_user_agent'])
+                              log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
+                              log_line_data['request_header_user_agent'])
                     try:
                         cur.execute(sql)
-                        num +=1
+                        num += 1
                     except:
                         #entry already exists, do nothing
                         pass

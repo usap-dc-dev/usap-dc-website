@@ -9,24 +9,12 @@ Modified for USAP-DC curator page by Neville Shane March 1 2018
 
 import os
 import json
-import psycopg2
 from flask import url_for
 import usap
 from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap
 
 config = json.loads(open('config.json', 'r').read())
 dc_config = json.loads(open('inc/datacite.json', 'r').read())
-
-
-def connect_to_db():
-    info = config['DATABASE']
-    conn = psycopg2.connect(host=info['HOST'],
-                            port=info['PORT'],
-                            database=info['DATABASE'],
-                            user=info['USER'],
-                            password=info['PASSWORD'])
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    return (conn, cur)
 
 
 def parse_json(data):
@@ -89,7 +77,7 @@ def make_sql(data, id):
     sql_out += 'START TRANSACTION;\n\n'
     sql_out += '--NOTE: include NSF PI(s), submitter, and author(s); email+orcid optional\n'
 
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db(curator=True)
 
     person_ids = []
     for author in data["authors"]:
@@ -390,7 +378,7 @@ def make_sql(data, id):
 
 
 def editDatasetJson2sql(data, uid):
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db(curator=True)
 
     # get existing values from the database and compare them with the JSON file
     orig = usap.dataset_db2form(uid)

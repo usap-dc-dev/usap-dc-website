@@ -10,8 +10,8 @@ def connect_to_db():
     conn = psycopg2.connect(host=info['HOST'],
                             port=info['PORT'],
                             database=info['DATABASE'],
-                            user=info['USER'],
-                            password=info['PASSWORD'])
+                            user=info['USER_CURATOR'],
+                            password=info['PASSWORD_CURATOR'])
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn, cur)
 
@@ -22,7 +22,6 @@ def makeGeom(record):
     west = record['west']
     south = record['south']
     cross_dateline = record['cross_dateline']
-
 
     mid_point_lat = (south - north) / 2 + north
     mid_point_long = (east - west) / 2 + west

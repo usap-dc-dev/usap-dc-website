@@ -303,12 +303,12 @@
                 disabled 
             {% else %} 
                 data-url="{{f['url']}}" 
-                {% if '//www.usap-dc.org/' in f['url'] %} 
+                {% if '.usap-dc.org/' in f['url'] %} 
                     data-id="{{data.id}}" 
                 {% endif %} 
             {% endif %}
         >
-          {% if '//www.usap-dc.org/' in f['url'] %}
+          {% if '.usap-dc.org/' in f['url'] %}
             Download
           {% else %}
             External

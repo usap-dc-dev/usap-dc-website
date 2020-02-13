@@ -2,8 +2,6 @@ import json
 import xml.dom.minidom as minidom
 import xml.etree.ElementTree as ET
 import os
-import psycopg2
-import psycopg2.extras
 import sys
 import requests
 from flask import session, url_for, current_app, request
@@ -32,17 +30,6 @@ PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
 RECENT_DATA_FILE = "inc/recent_data.txt"
 
 config = json.loads(open('config.json', 'r').read())
-
-
-def connect_to_db():
-    info = config['DATABASE']
-    conn = psycopg2.connect(host=info['HOST'],
-                            port=info['PORT'],
-                            database=info['DATABASE'],
-                            user=info['USER'],
-                            password=info['PASSWORD'])
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    return (conn, cur)
 
 
 def prettify(elem):
@@ -123,7 +110,7 @@ def submitToDataCite(uid, edit=False):
             return("Error with request to create DOI at DataCite.  Status code: %s\n Error: %s" % (response.status_code, response.json()))
         elif not edit:
             #update doi in database
-            (conn, cur) = connect_to_db()
+            (conn, cur) = usap.connect_to_db(curator=True)
             query = "UPDATE dataset SET doi='%s' WHERE id='%s';" % (doi, uid)
             query += "UPDATE project_dataset SET doi = '%s' WHERE dataset_id = '%s';" % (doi, uid)
             query += "COMMIT;" 
@@ -138,7 +125,7 @@ def submitToDataCite(uid, edit=False):
 def getDataCiteXML(uid):
     print('in getDataCiteXML')
     status = 1
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     if type(conn) is str:
         out_text = conn
     else:
@@ -201,7 +188,7 @@ def getISOXMLFileName(uid):
 
 
 def isRegisteredWithDataCite(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT doi from dataset WHERE id = '%s'" % uid
     cur.execute(query)
     res = cur.fetchone()
@@ -259,7 +246,7 @@ def isCurator():
 
 
 def addKeywordsToDatabase(uid, keywords):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
         out_text = conn
@@ -302,7 +289,7 @@ def addKeywordsToDatabase(uid, keywords):
 
 
 def isDatabaseImported(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT COUNT(*) from dataset WHERE id = '%s'" % uid
     cur.execute(query)
     res = cur.fetchone()
@@ -310,7 +297,7 @@ def isDatabaseImported(uid):
 
 
 def isProjectImported(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT COUNT(*) from project WHERE proj_uid = '%s'" % uid
     cur.execute(query)
     res = cur.fetchone()
@@ -318,7 +305,7 @@ def isProjectImported(uid):
 
 
 def updateSpatialMap(uid, data, run_update=True):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
         out_text = conn
@@ -368,7 +355,7 @@ def updateSpatialMap(uid, data, run_update=True):
 
 
 def updateProjectSpatialMap(uid, data, run_update=True):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
         out_text = conn
@@ -418,21 +405,21 @@ def updateProjectSpatialMap(uid, data, run_update=True):
 
 
 def getCoordsFromDatabase(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid
     cur.execute(query)
     return cur.fetchone()
 
 
 def getProjectCoordsFromDatabase(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM project_spatial_map WHERE proj_uid = '%s';" % uid
     cur.execute(query)
     return cur.fetchone()
 
 
 def addAwardToDataset(uid, award):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
         out_text = conn
@@ -480,7 +467,7 @@ def addAwardToDataset(uid, award):
 
 
 def addAwardToProject(uid, award, is_main_award):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
         out_text = conn
@@ -512,7 +499,7 @@ def addAwardToProject(uid, award, is_main_award):
 
 def getKeywordsFromDatabase():
     # for each keyword_type, get all keywords from database  
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT REPLACE(keyword_type_id, '-', '_') AS id, * FROM keyword_type;"
     cur.execute(query)
     keyword_types = cur.fetchall()
@@ -530,7 +517,7 @@ def getKeywordsFromDatabase():
 
 
 def getDatasetKeywords(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db()
     query = "SELECT dkm.keyword_id, ku.keyword_label FROM dataset_keyword_map dkm " + \
             "JOIN keyword_usap ku ON ku.keyword_id = dkm.keyword_id " + \
             "WHERE dkm.dataset_id = '%s' " % uid + \
@@ -549,7 +536,7 @@ def projectJson2sql(data, uid):
     if data.get('edit') and data['edit'] == 'True':
         return editProjectJson2sql(data, uid)
 
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db(curator=True)
 
     # --- fix award fields (throw out PI name)
     if data["award"] not in ["None", "Not In This List"] and len(data["award"].split(" ", 1)) > 1:
@@ -899,7 +886,7 @@ def projectJson2sql(data, uid):
 
 
 def editProjectJson2sql(data, uid):
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db(curator=True)
 
     # generate the submitter's person id if we have their name
     subm_id = None
@@ -1363,7 +1350,7 @@ def isEditComplete(uid):
 
 
 def getDifID(uid):
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db()
     query = "SELECT award_id FROM project_award_map WHERE is_main_award = 'True' AND proj_uid = '%s';" % uid
     cur.execute(query)
     res = cur.fetchone()
@@ -1371,7 +1358,7 @@ def getDifID(uid):
 
 
 def getDifIDAndTitle(uid):
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db()
     query = "SELECT award_id, title FROM project_award_map pam " \
             "JOIN award a ON pam.award_id = a.award " \
             "WHERE pam.is_main_award = 'True' AND pam.proj_uid = '%s';" % uid
@@ -1629,7 +1616,7 @@ def getDifXML(data, uid):
 
 
 def addDifToDB(uid):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
         out_text = conn
@@ -1667,7 +1654,7 @@ def addDifToDB(uid):
 
 def addUserToDatasetOrProject(data):
     try:
-        (conn, cur) = connect_to_db()
+        (conn, cur) = usap.connect_to_db(curator=True)
         sql_out = ""
 
         person_id = data['name_last'] + ', ' + data['name_first'] 
@@ -1793,7 +1780,7 @@ def makeBoundsGeom(north, south, east, west, cross_dateline):
 
 
 def getCreatorEmails(uid):
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db()
     if uid[0] == 'p':
         # get project creators
         query = "SELECT id, email FROM person JOIN project_person_map ppm ON person.id = ppm.person_id " + \
@@ -1820,7 +1807,7 @@ def getCreatorEmails(uid):
 
 def getReplacedDataset(uid):
     # determine if this dataset replaces an older one, and if so, return the replaced dataset id
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db()
     query = "SELECT replaces FROM dataset WHERE id = '%s';" % uid
     cur.execute(query)
     res = cur.fetchone()
@@ -1831,7 +1818,7 @@ def getReplacedDataset(uid):
 
 def updateRecentData(uid):
     # update the recent_data.txt file
-    conn, cur = connect_to_db()
+    conn, cur = usap.connect_to_db()
     query = "SELECT id, title, creator, release_date, string_agg(award_id,',') AS awards " + \
             "FROM dataset ds LEFT JOIN dataset_award_map dam on dam.dataset_id = ds.id " + \
             "WHERE ds.id = '%s'" % uid + \

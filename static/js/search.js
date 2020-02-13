@@ -346,7 +346,7 @@ function updateMenusWithSelected(selected) {
     }
     return $.ajax({
       method: 'GET',
-      url: 'https://' + window.location.hostname + '/filter_joint_menus',
+      url: window.location.protocol + '//' + window.location.hostname + '/filter_joint_menus',
       data: selected,
 
       success: function(opts) {
@@ -647,7 +647,7 @@ function MapClient() {
         if (layers.length > 0) {
             $.ajax({
                 type: "GET",
-                url: 'https://' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
+                url: window.location.protocol + '//' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
                 data: {
                 "query_layers" : layers,
                 "layers": layers,
