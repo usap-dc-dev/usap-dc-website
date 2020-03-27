@@ -962,7 +962,8 @@ def check_dataset_submission(msg_data):
         Validator(func=check_spatial_bounds, msg="Spatial bounds are invalid."),
         Validator(func=default_func('agree'), msg='You must agree to have your files posted with a DOI.')
     ]
-    if not msg_data.get('edit'):
+
+    if not msg_data.get('edit') or msg_data.get('edit') == 'False':
         validators.append(Validator(func=default_func('filenames'), msg='You must include files in your submission.'))
     
     msg = ""
@@ -3373,6 +3374,89 @@ def dataset_json(dataset_id):
 @app.route('/project_json/<project_id>')
 def project_json(project_id):
     return flask.jsonify(get_project(project_id))
+
+
+def crossref2ref_text(item):
+    # probably not needed - all publications appear to have a DOI that works with the API
+    ref_text = ""
+    if item.get('author'):
+        for author in item['author']:
+            first_names = author['given'].split(' ')
+            initials = ""
+            for name in first_names:
+                initials += "%s." % name[0]
+
+            ref_text += "%s, %s" % (author['family'], initials)
+
+    year = ""
+    if item.get('published_online'):
+        year = item['published_online']['date-parts'][0][0]
+    elif item.get('published_print'):
+        year = item['published_print']['date-parts'][0][0]
+    elif item.get('created'):
+        year = item['created']['date-parts'][0][0]
+    
+    if year != "":
+        ref_text += "(%s). " % year
+
+    if item.get('title'):
+        ref_text += " %s." % item['title'][0]
+
+    if item.get('container-title'):
+        ref_text += " %s" % item['container-title'][0]
+
+    if item.get('volume'):
+        ref_text += ", %s" % item['volume']
+
+    if item.get('issue'):
+        ref_text += "(%s)" % item['issue']
+
+    if item.get('page'):
+        ref_text += ", %s" % item['page']
+
+    ref_text += "."
+
+    print("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text
+
+    return ref_text
+
+
+@app.route('/crossref_pubs', methods=['POST'])
+def crossref_pubs():
+
+    api = 'https://api.crossref.org/works?filter=award.number:'
+    bib_api = 'https://api.crossref.org/works/%s/transform/text/x-bibliography'
+
+    awards = request.form.getlist('awards[]')
+    pubs = []
+    if awards:
+        for award_id in awards:
+            if award_id != "None": 
+
+                r = requests.get(api + award_id).json()
+                items = r['message']['items']
+                # for each publication, see if it has a DOI
+                for item in items:
+                    ref_doi = item.get('DOI')
+                    if ref_doi and ref_doi != '':
+                        # use the DOI to get the cite-as text from the x-bibliography API
+                        bib_url = bib_api % ref_doi
+                        r_bib = requests.get(bib_url)
+                        if r_bib.status_code == 200 and r_bib.content:
+                            # split off the DOI in the cite-as string, as we don't need in our ref_text
+                            ref_text = r_bib.content.rsplit(' doi', 1)[0]
+                        else:
+                            # if x-bibliography API doesn't return anything, generate ref_text from what we have in crossref
+                            ref_text = crossref2ref_text(item)
+                    else:
+                        # if no DOI, generate ref_text from what we have in crossref
+                        ref_text = crossref2ref_text(item)
+
+                    ref_text = unicode(ref_text, 'utf-8')
+                    pub = {'doi': ref_doi, 'ref_text': ref_text}
+                    pubs.append(pub)
+
+    return flask.jsonify(pubs)
 
 
 @app.route('/stats', methods=['GET'])

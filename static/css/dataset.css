@@ -103,3 +103,26 @@ input, textarea {
     left: 85%;
     top: 16px;
 }
+
+#crossref {
+  background: #fff;
+  border: 2px solid #000;
+  position: absolute;
+  font-family: arial;
+  height: 460px;
+  padding: 0.5em;
+  top: -1000px;
+  left: -1000px;
+  width: 800px;
+  z-index: 1000;
+}
+
+#crossref_body {
+  padding: 10px;
+  height:365px;
+  overflow: auto;
+}
+
+#crossref_btn {
+  display: none;
+}

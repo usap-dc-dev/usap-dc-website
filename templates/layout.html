@@ -169,16 +169,17 @@
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-layerswitcher/src/ol3-layerswitcher.js')}}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.js')}}"></script>
   {% endif %}
+  {% if cur == 'project' %}
+    <script src="{{ url_for('static', filename='js/project.js') }}" type="text/javascript"></script>
+  {% endif %}
   {% if cur == 'dataset' or cur == 'project' %}
     <script type="text/javascript" src="{{ url_for('static', filename='js/dropdown-select.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/display_bounds.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/crossref.js') }}"></script>
   {% endif %}
   <script src="https://apis.google.com/js/platform.js" async defer></script>
   {% if cur=='home' or cur=='map' %}
   <script type="text/javascript" src="{{ url_for('static', filename='js/mapInit.js') }}"></script>
-  {% endif %}
-  {% if cur == 'project' %}
-  <script src="{{ url_for('static', filename='js/project.js') }}" type="text/javascript"></script>
   {% endif %}
   {% if cur == 'thank_you' %}
   <script src="{{ url_for('static', filename='js/thank_you.js') }}" type="text/javascript"></script>

@@ -326,11 +326,23 @@
         <div class="form-group" name="publicationsForm">
           <label for="publication">Project Publications</label>
           <span><i>Include DOI where known</i></span>
+          
+          <button type="button" id="crossref_btn" style="margin-bottom:2px">Search Crossref for publications associated with linked awards</button>
+          <div id="crossref">
+            <div id="crossref_header" class="window-header">
+              <span id="crossref_title"></span><span id='crossref_x_btn' class='close_btn'>X</span>
+            </div>
+            <div id="crossref_body"></div>
+            <div id="crossref_footer">
+              <button id="close_crossref_btn" type="button" class="btn btn-primary btn-sm confirm-btn close_crossref_btn"></button>
+            </div>
+          </div>
+
           <div class="publicationTemplate">
             <div id='extraPubLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
             <textarea id="publication" name="publication" class="form-control removable" style="margin-bottom:2px"></textarea>
             <a href="#publicationsForm" id="removePubRow" class="remover"><i class="fa fa-remove"></i></a>
-            <input class="input-sm form-control removable" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
+            <input class="input-sm form-control removable pub_doi" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
             <div style="clear:both"></div>
           </div>
           <div id="more_publications"></div>

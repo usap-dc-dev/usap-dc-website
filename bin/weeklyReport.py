@@ -9,6 +9,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import crossref
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
@@ -135,6 +136,10 @@ if __name__ == '__main__':
 
     msg += """<h3>Pending Project Edits:</h3><ul>"""
     msg += querySubmissionTable(cur, 'project edit', 'Pending')
+
+    msg += """<h3>New publications found using Crossref:</h3><ul>"""
+    msg += crossref.get_crossref_pubs()
+    msg += """</ul>"""
 
     # datasets that are not yet archived in  glacier
     query = "SELECT id, title, archived_date FROM dataset d LEFT JOIN dataset_archive da ON da.dataset_id = d.id WHERE archived_date is NULL ORDER BY id"

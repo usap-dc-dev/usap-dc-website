@@ -111,6 +111,18 @@ $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip({container: 'body'}); 
 
+    $('#close_crossref_btn').click(function() {
+      $(".crossref_pubs").each(function() {
+        if ($(this).prop('checked')) {
+          var doi = $(this).attr('id');
+          var name = $(this).attr('name');
+          addPubRow({doi:doi, name:name});
+        } 
+      });
+      $("#crossref_body").empty();
+      $("#crossref").hide();
+    });
+
     $('#award').change(function() {
       var title = pi = institution = email = copi = start = end = cr = ipy = null;
       var val = $('#award').val();
@@ -120,9 +132,9 @@ $(document).ready(function() {
         $(this).parent('div').find('.user_award_input').attr('type','hidden');
       }
 
-
-      if (val != '' && val != 'Not_In_This_List') {
+      if (val != '' && val != 'Not In This List' && val != 'None') {
         var award_num = val.split(' ')[0];
+        $("#crossref_btn").show();
         $.ajax({
         method: 'GET',
         url: window.location.protocol + '//' + window.location.hostname + '/submit/projectinfo?award='+award_num,
@@ -163,6 +175,8 @@ $(document).ready(function() {
             $("#entry textarea[name='sum']").val(msg.sum);
         }
         });
+      } else {
+        $("#crossref_btn").hide();
       }
     });
 
@@ -374,11 +388,8 @@ $(document).ready(function() {
 
   
   // if editing, populate any added publication fields
-  if (publications.length > 0) {
-    $('#publication').html(publications[0].name);
-    $('#pub_doi').val(publications[0].doi);
-  
-    for (i=1; i < publications.length; i++ ) {
+  if (publications.length > 0) {  
+    for (i=0; i < publications.length; i++ ) {
       addPubRow(publications[i]);
     }
   }
@@ -396,18 +407,24 @@ $(document).ready(function() {
   });
 
   function addPubRow(publication) {
-      var extraPub = $('.publicationTemplate').clone();
-      //increment the element ids
-      $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html('');
-      $(extraPub).find('#pub_doi').attr({'id': 'pub_doi'+pub_counter, 'name': 'pub_doi'+pub_counter, 'value': ''});
-      $(extraPub).find('#removePubRow').show();
-      $(extraPub).find('#extraPubLine').show();
-      if (typeof publication != 'undefined') {
-          $(extraPub).find('#publication'+pub_counter).html(publication.name);
-          $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
+      if (publication && $('#publication').val() === "") {
+        $('#publication').html(publication.name);
+        $('#pub_doi').val(publication.doi);
       }
-      $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
-      pub_counter++;
+      else {
+        var extraPub = $('.publicationTemplate').clone();
+        //increment the element ids
+        $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html('');
+        $(extraPub).find('#pub_doi').attr({'id': 'pub_doi'+pub_counter, 'name': 'pub_doi'+pub_counter, 'value': ''});
+        $(extraPub).find('#removePubRow').show();
+        $(extraPub).find('#extraPubLine').show();
+        if (typeof publication != 'undefined') {
+            $(extraPub).find('#publication'+pub_counter).html(publication.name);
+            $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
+        }
+        $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
+        pub_counter++;
+      }   
   }
 
   // if editing, populate any added award fields
@@ -460,6 +477,7 @@ $(document).ready(function() {
             $(this).parent('div').find('.user_award_input').attr('type','text');
           } else {
             $(this).parent('div').find('.user_award_input').attr('type','hidden');
+            $("#crossref_btn").show();
           }
       });
     }
@@ -660,6 +678,3 @@ function autocomplete(inp, inp2, arr) {
       closeAllLists(e.target);
   });
 }
-
-
-

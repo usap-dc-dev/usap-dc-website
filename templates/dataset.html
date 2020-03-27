@@ -82,6 +82,17 @@
       $(this).find('.help-block').show();
     });
 
+    $('#close_crossref_btn').click(function() {
+      $(".crossref_pubs").each(function() {
+        if ($(this).prop('checked')) {
+          var doi = $(this).attr('id');
+          var name = $(this).attr('name');
+          addPubRow({doi:doi, text:name});
+        } 
+      });
+      $("#crossref_body").empty();
+      $("#crossref").hide();
+    });
 
   // if reloading, populate any added author fields
   if (authors.length > 0) {
@@ -143,12 +154,19 @@
 
 
   $(".award_input").on("change", function() {
-      if ($(this).val() == "Not In This List") {
-        $(this).parent('div').find('.user_award_input').attr('type','text');
-      } else {
-        $(this).parent('div').find('.user_award_input').attr('type','hidden');
+    if ($(this).val() == "Not In This List") {
+      $(this).parent('div').find('.user_award_input').attr('type','text');
+      $("#crossref_btn").hide();
+    } else {
+      $(this).parent('div').find('.user_award_input').attr('type','hidden');
+      if ($(this).val() == "None") {
+        $("#crossref_btn").hide();
       }
-    });
+      else {
+        $("#crossref_btn").show();
+      }
+    }
+  });
 
   function addAwardRow(award) {
     var extraAward = $('.awardTemplate').clone();
@@ -174,6 +192,7 @@
             $(this).parent('div').find('.user_award_input').attr('type','text');
           } else {
             $(this).parent('div').find('.user_award_input').attr('type','hidden');
+            $("#crossref_btn").show();
           }
       });
     }
@@ -239,12 +258,10 @@
 
   // if reloading, populate any added publication fields
   if (publications.length > 0) {
-    $('#publication').html(publications[0].text);
-    $('#pub_doi').attr('value', publications[0].doi);
-  }
-  for (i=1; i < publications.length; i++ ) {
-    var publication = publications[i];
-    addPubRow(publication);
+    for (i=0; i < publications.length; i++ ) {
+      var publication = publications[i];
+      addPubRow(publication);
+    }
   }
 
   $('#addPubRow').click(function (e) {
@@ -260,20 +277,25 @@
   });
 
   function addPubRow(publication) {
-    var extraPub = $('.publicationTemplate').clone();
-      //increment the element ids
-      $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html('');
-      $(extraPub).find('#pub_doi').attr({'id': 'pub_doi'+pub_counter, 'name': 'pub_doi'+pub_counter, 'value': ''});
-      $(extraPub).find('#removePubRow').show();
-      $(extraPub).find('#extraPubLine').show();
-      if (typeof publication != 'undefined') {
-        $(extraPub).find('#publication'+pub_counter).html(publication.text);
-        $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
-      }
-      $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
-      pub_counter++;
+    if (publication && $('#publication').val() === "") {
+      $('#publication').html(publication.text);
+      $('#pub_doi').val(publication.doi);
     }
-
+    else {
+      var extraPub = $('.publicationTemplate').clone();
+        //increment the element ids
+        $(extraPub).find('#publication').attr('id', 'publication'+pub_counter).attr('name', 'publication'+pub_counter).html('');
+        $(extraPub).find('#pub_doi').attr({'id': 'pub_doi'+pub_counter, 'name': 'pub_doi'+pub_counter, 'value': ''});
+        $(extraPub).find('#removePubRow').show();
+        $(extraPub).find('#extraPubLine').show();
+        if (typeof publication != 'undefined') {
+          $(extraPub).find('#publication'+pub_counter).html(publication.text);
+          $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
+        }
+        $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
+        pub_counter++;
+      }
+    }
   });
 
 </script>
@@ -384,11 +406,23 @@
           <div class="form-group" name="publicationsForm">
             <label for="publication">Relevant Publications</label>
             <span><i>Include DOI where known</i></span>
+            
+            <button type="button" id="crossref_btn" style="margin-bottom:2px">Search Crossref for publications associated with linked awards</button>
+            <div id="crossref">
+              <div id="crossref_header" class="window-header">
+                <span id="crossref_title"></span><span id='crossref_x_btn' class='close_btn'>X</span>
+              </div>
+              <div id="crossref_body"></div>
+              <div id="crossref_footer">
+                <button id="close_crossref_btn" type="button" class="btn btn-primary btn-sm confirm-btn close_crossref_btn"></button>
+              </div>
+            </div>
+
             <div class="publicationTemplate">
               <div id='extraPubLine' style="height:10px;font-size:10px;display:none;">&nbsp;</div>
               <textarea id="publication" name="publication" class="form-control removable" ></textarea>
               <a href="#publicationsForm" id="removePubRow" class="remover"><i class="fa fa-remove"></i></a>
-              <input class="input-sm form-control removable" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
+              <input class="input-sm form-control removable pub_doi" type="text" size=10 id="pub_doi" name="pub_doi" value="" placeholder="DOI"/> 
 
               <div style="clear:both"></div>
             </div>

@@ -25,3 +25,5 @@ package.json
 settings.json
 landing_page_old.css
 .gitignore
+dataset.dev/
+doc.dev
