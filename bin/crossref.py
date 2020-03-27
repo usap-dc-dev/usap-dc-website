@@ -4,12 +4,15 @@ import psycopg2
 import psycopg2.extras
 import json
 import requests
+import time
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
 api = 'https://api.crossref.org/works?filter=award.number:'
 bib_api = 'https://api.crossref.org/works/%s/transform/text/x-bibliography'
+
+log_file = '/web/usap-dc/htdocs/inc/crossref_harvest.log'
 
 
 def connect_to_db():
@@ -68,13 +71,16 @@ def crossref2ref_text(item):
     return ref_text
 
 
-def get_crossref_pubs(verbose=False):
+def get_crossref_pubs(verbose=False, new_only=True):
     (conn, cur) = connect_to_db()
     query = "SELECT * FROM project_award_map"
     cur.execute(query)
     res = cur.fetchall()
     output = ""
     old_uid = 0
+    if new_only:
+        with open (log_file, "r") as file:
+            last_harvest_datetime = file.read()
 
     # for each entry in the project_award map, get the award_id, and look up publications in crossref
     for p in res:
@@ -87,6 +93,14 @@ def get_crossref_pubs(verbose=False):
         items = r['message']['items']
         # for each publication, see if it has a DOI
         for item in items:
+
+            # if new_only parameter is set, only harvest publications that were indexed since the last time we ran the harvest
+            if new_only:
+                index_datetime = item['indexed']['timestamp']
+                if index_datetime < last_harvest_datetime:
+                    continue
+            
+
             ref_doi = item.get('DOI')
             if ref_doi and ref_doi != '':
                 # use the DOI to get the cite-as text from the x-bibliography API
@@ -134,6 +148,11 @@ def get_crossref_pubs(verbose=False):
                     print("Added reference %s: %s to project %s" % (ref_uid, ref_text, proj_uid))
 
     cur.execute("COMMIT")
+
+    # write timestamp to log
+    with open(log_file, 'w') as file:
+        file.write(str(time.time()))
+
     return output
 
 
@@ -152,4 +171,4 @@ def generate_ref_uid(old_uid):
 
 
 if __name__ == '__main__':
-    get_crossref_pubs(verbose=True)
+    get_crossref_pubs(verbose=True, new_only=True)
