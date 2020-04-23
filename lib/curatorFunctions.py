@@ -1846,3 +1846,22 @@ def updateRecentData(uid):
         except Exception as e:
             return("Error updating Recent Data file: %s" % str(e))
     return("Error updating Recent Data file: can't find database record for %s." % uid)
+
+
+def getLandingPage(uid):
+    landing_page = ''
+    conn, cur = usap.connect_to_db()
+    if (uid.find('p') > -1):
+        query = "SELECT COUNT(*) FROM project WHERE proj_uid = '%s';" % uid.replace('e', '')
+        cur.execute(query)
+        res = cur.fetchone()
+        if res['count'] > 0:
+            landing_page = '/view/project/%s' % uid.replace('e', '')
+    else:
+        query = "SELECT COUNT(*) FROM dataset WHERE id = '%s';" % uid.replace('e', '')
+        cur.execute(query)
+        res = cur.fetchone()
+        if res['count'] > 0:
+            landing_page = '/view/dataset/%s' % uid.replace('e', '')
+
+    return landing_page

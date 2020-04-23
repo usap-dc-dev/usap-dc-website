@@ -495,6 +495,7 @@ def sortNumerically(val, replace_str, replace_str2=''):
 def dataset(dataset_id=None):
     error = ''
     success = ''
+    session['error'] = False
     # make some space in the session cookie by clearing any project_metadata
     if session.get('project_metadata'):
         del session['project_metadata']
@@ -877,6 +878,7 @@ def failed_captcha(e):
 
 @app.errorhandler(BadSubmission)
 def invalid_dataset(e):
+    session['error'] = True
     return render_template('error.html', error_message=str(e), back_url=e.redirect, name=session['user_info']['name'])
 
 
@@ -1026,6 +1028,7 @@ def dataset2(dataset_id=None):
     error = ""
     success = ""
     edit = False 
+    session['error'] = False
     if not dataset_id:
         dataset_id = request.form.get('dataset_id') 
     if dataset_id and dataset_id != '':
@@ -1275,7 +1278,6 @@ def project(project_id=None):
         template = True
 
     user_info = session.get('user_info')
-    # user_info = {'name': 'test name', 'email': 'test@email.com'}
     if user_info is None:
         session['next'] = request.path
         return redirect(url_for('login'))
@@ -1288,6 +1290,7 @@ def project(project_id=None):
         if request.form.get('action') == 'Submit':
             msg_data = process_form_data(request.form.to_dict())
 
+            session['project_metadata'] = msg_data
             # save first
             success, error, full_name = save_project(msg_data)
 
@@ -1420,23 +1423,29 @@ def project(project_id=None):
                                    locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                    project_metadata=project_metadata, edit=edit, error=error, success=success)
 
-    else:       
-        session['project_metadata'] = {}
-        form_data = {}
-        if edit:
-            # Load up existing project data for EDIT
-            form_data = project_db2form(project_id)
-            session['project_metadata'] = form_data
-        if template:
-            # Load up existing project as template for new submission
-            form_data = project_db2form(template_id)
-            # remove dmp_link if creating new submission
-            if form_data.get('dmp_file'):
-                del(form_data['dmp_file'])
-            # remove project_id when creating new submission
-            if form_data.get('project_id'):
-                del(form_data['project_id'])
-            session['project_metadata'] = form_data
+    else:  
+        # if returning after an unsuccessful submission, repopulate form with the existing metadata
+        if session.get('error') and session.get('project_metadata'):
+            form_data = session['project_metadata']
+            session['error'] = False
+        else:
+            session['project_metadata'] = {}
+            form_data = {}
+        
+            if edit:
+                # Load up existing project data for EDIT
+                form_data = project_db2form(project_id)
+                session['project_metadata'] = form_data
+            if template:
+                # Load up existing project as template for new submission
+                form_data = project_db2form(template_id)
+                # remove dmp_link if creating new submission
+                if form_data.get('dmp_file'):
+                    del(form_data['dmp_file'])
+                # remove project_id when creating new submission
+                if form_data.get('project_id'):
+                    del(form_data['project_id'])
+                session['project_metadata'] = form_data
 
         email = ""
         if user_info and user_info.get('email'):
@@ -1483,7 +1492,7 @@ def save_project(project_metadata):
                 file.write(json.dumps(project_metadata, indent=4, sort_keys=True))
             success = "Saved project form"
         except Exception as e:
-            error = "Unable to project dataset."
+            error = "Unable to save project."
     return success, error, full_name
 
 
@@ -2524,12 +2533,7 @@ def curator():
                 submissions = []
                 for sub in res:
                     uid = sub['uid']
-                    landing_page = ''
-                    if sub['submission_type'].find('project') == 0 and sub['status'] != 'Pending':
-                        landing_page = '/view/project/%s' % uid.replace('e', '') 
-                    elif sub['submission_type'].find('dataset') == 0 and sub['status'] != 'Pending':
-                        landing_page = '/view/dataset/%s' % uid.replace('e', '')
-
+                    landing_page = cf.getLandingPage(uid)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update']})
 
@@ -2567,7 +2571,7 @@ def curator():
                         template_dict['coords'] = coords
 
                 if edit:
-                    template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required']
+                    template_dict['status_options'] = ['Pending', 'Edit completed', 'Rejected', 'No Action Required']
                 else:
                     template_dict['status_options'] = ['Pending', 'DIF XML file missing', 
                                                        'Completed', 'Rejected', 'No Action Required']  
@@ -2924,7 +2928,7 @@ def curator():
                         comments = request.form.get('comment_text')
                         template_dict['comments'] = comments
                         query = "UPDATE submission SET (status, comments, last_update) = ('%s', '%s', '%s') WHERE uid = '%s'; COMMIT;" \
-                                % (status, comments, datetime.now().strftime('%Y-%m-%d'), filename)
+                                % (status, comments.replace("'", "''"), datetime.now().strftime('%Y-%m-%d'), filename)
                         cur.execute(query)
                         template_dict['message'].append("Submission status and/or comments updated.")
                     except Exception as err:
