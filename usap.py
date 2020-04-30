@@ -56,6 +56,21 @@ app.config.update(json.loads(open('config.json', 'r').read()))
 app.debug = app.config['DEBUG']
 app.secret_key = app.config['SECRET_KEY']
 
+# ---------------------
+# Register API blueprints
+# ---------------------
+from api.projects import projects_page
+from api.datasets import datasets_page
+from api.persons import persons_page
+from api.awards import awards_page
+
+app.register_blueprint(projects_page)
+app.register_blueprint(datasets_page)
+app.register_blueprint(persons_page)
+app.register_blueprint(awards_page)
+
+
+
 oauth = OAuth()
 google = oauth.remote_app('google',
                           base_url='https://www.google.com/accounts/',
