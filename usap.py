@@ -5,7 +5,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app
+from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app, Blueprint
 from random import randint
 import os
 from flask_oauth import OAuth
@@ -28,10 +28,13 @@ import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
 from functools import partial
+from api.api_v1 import blueprint as api_v1
+# from api.api_v2 import blueprint as api_v2
+import api.settings as rp_settings
+import traceback
 
 
 app = Flask(__name__)
-
 
 ############
 # Load configuration
@@ -56,19 +59,21 @@ app.config.update(json.loads(open('config.json', 'r').read()))
 app.debug = app.config['DEBUG']
 app.secret_key = app.config['SECRET_KEY']
 
-# ---------------------
-# Register API blueprints
-# ---------------------
-from api.projects import projects_page
-from api.datasets import datasets_page
-from api.persons import persons_page
-from api.awards import awards_page
 
-app.register_blueprint(projects_page)
-app.register_blueprint(datasets_page)
-app.register_blueprint(persons_page)
-app.register_blueprint(awards_page)
+app.register_blueprint(api_v1)
+# set up api v2 for future use
+# app.register_blueprint(api_v2)
 
+app.config['SWAGGER_UI_DOC_EXPANSION'] = rp_settings.RESTPLUS_SWAGGER_UI_DOC_EXPANSION
+app.config['RESTPLUS_VALIDATE'] = rp_settings.RESTPLUS_VALIDATE
+app.config['RESTPLUS_MASK_SWAGGER'] = rp_settings.RESTPLUS_MASK_SWAGGER
+app.config['ERROR_404_HELP'] = rp_settings.RESTPLUS_ERROR_404_HELP
+app.config['BUNDLE_ERRORS'] = rp_settings.RESTPLUS_BUNDLE_ERRORS
+
+
+@app.route('/api')
+def api():
+    return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
 
 oauth = OAuth()
@@ -897,14 +902,23 @@ def invalid_dataset(e):
     return render_template('error.html', error_message=str(e), back_url=e.redirect, name=session['user_info']['name'])
 
 
+@app.errorhandler(psycopg2.OperationalError)
+def db_error(e):
+    print(traceback.format_exc())
+    msg = "Error connecting to database. Please contact info@usap-dc.org"
+    return render_template('error.html', error_message=msg)
+
+
 #@app.errorhandler(OAuthException)
 def oauth_error(e):
     return render_template('error.html', error_message=str(e))
 
 
-#@app.errorhandler(Exception)
+@app.errorhandler(Exception)
 def general_error(e):
-    return render_template('error.html', error_message=str(e))
+    print(traceback.format_exc())
+    msg = "Oops, there is an error on this page.  Please contact info@usap-dc.org"
+    return render_template('error.html', error_message=msg)
 
 
 #@app.errorhandler(InvalidDatasetException)
