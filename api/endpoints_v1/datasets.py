@@ -3,7 +3,7 @@ from flask import request, json, jsonify, Response
 import usap
 from datetime import datetime
 from collections import OrderedDict
-from flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
+from api.lib.flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
 import api.models as models
 
 
@@ -13,21 +13,21 @@ ns = Namespace('datasets', description='Operations related to datasets', ordered
 
 #input arguments
 datasets_arguments = reqparse.RequestParser()
-datasets_arguments.add_argument('dataset_uid', help='USAP-DC dataset identification number')
-datasets_arguments.add_argument('award', help='award number')
-datasets_arguments.add_argument('person', help='name of anybody involved in the dataset')
-datasets_arguments.add_argument('release_date', type=inputs.date,  help='release date of dataset in YYYY-MM-DD format')
-datasets_arguments.add_argument('keywords', action='split', help='keyword assigned to dataset - can filter on multiple keywords using a comma separated list')
-datasets_arguments.add_argument('locations', action='split', help='location of dataset - can filter on multiple locations using a comma separated list')
-datasets_arguments.add_argument('nsf_funding_program', help='name of NSF funding program')
-datasets_arguments.add_argument('science_program', help='name of science program')
-datasets_arguments.add_argument('repository', help='repository dataset has been submitted to')
-datasets_arguments.add_argument('title', help='dataset title')
-datasets_arguments.add_argument('doi', help='dataset DOI')
-datasets_arguments.add_argument('north', type=float, help='northern boundary of dataset')
-datasets_arguments.add_argument('south', type=float, help='southern boundary of dataset')
-datasets_arguments.add_argument('east', type=float, help='eastern boundary of dataset')
-datasets_arguments.add_argument('west', type=float, help='western boundary of dataset')
+datasets_arguments.add_argument('dataset_uid', help='USAP-DC dataset identification number', example='600030')
+datasets_arguments.add_argument('award', help='award number', example='0724929')
+datasets_arguments.add_argument('person', help='name of anybody involved in the dataset (can be partial)', example='Nitsche')
+datasets_arguments.add_argument('release_date', type=inputs.date,  help='returns datasets released on or after this date (in YYYY-MM-DD format)', example='2019-01-01')
+datasets_arguments.add_argument('keywords', action='split', help='keyword assigned to dataset - can filter on multiple keywords using a comma separated list', example='penguin')
+datasets_arguments.add_argument('locations', action='split', help='location of dataset - can filter on multiple locations using a comma separated list', example='Amundsen Sea')
+datasets_arguments.add_argument('nsf_funding_program', help='name of NSF funding program', example='Antarctic Earth Sciences')
+datasets_arguments.add_argument('science_program', help='name of science program', example='Allan Hills')
+# datasets_arguments.add_argument('repository', help='repository dataset has been submitted to')
+datasets_arguments.add_argument('title', help='(any part of) dataset title', example='Vostok Ice Core Chemistry')
+datasets_arguments.add_argument('doi', help='dataset DOI', example='10.15784/601046')
+datasets_arguments.add_argument('north', type=float, help='northern boundary of dataset', example='-80')
+datasets_arguments.add_argument('south', type=float, help='southern boundary of dataset', example='-89')
+datasets_arguments.add_argument('east', type=float, help='eastern boundary of dataset', example='100')
+datasets_arguments.add_argument('west', type=float, help='western boundary of dataset', example='10')
 
 
 #model for the projects associated with each dataset
@@ -69,8 +69,15 @@ def getQuery():
                    JOIN dataset_view dv ON dv.uid = d.id
                    WHERE TRUE"""
 
+base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
+examples = """Base URL: {0}\n
+        Examples:
+            {0}?person=Frank
+            {0}?keywords=penguin,cryosphere
+            {0}?north=-80&south=-88&east=100&west=10""".format(base_url)
 
-@ns.route('/')
+
+@ns.route('/', doc={'description': examples})
 class DatasetsCollection(Resource):
     @ns.expect(datasets_arguments)
     @ns.marshal_with(dataset_model)
@@ -179,8 +186,11 @@ class DatasetsCollection(Resource):
 
         return results
 
+example = """Base URL: {0}\n
+        Example:
+            {0}600030""".format(base_url)
 
-@ns.route('/<dataset_uid>')
+@ns.route('/<dataset_uid>', doc={'description': example})
 class DatasetItem(Resource):
     @ns.marshal_with(dataset_model)
     @ns.response(404, 'Dataset not found.')

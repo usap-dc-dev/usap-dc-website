@@ -3,7 +3,7 @@ from flask import request, json, jsonify, Response
 import usap
 from datetime import datetime
 from collections import OrderedDict
-from flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
+from api.lib.flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
 import api.models as models
 
 
@@ -13,15 +13,15 @@ ns = Namespace('awards', description='Operations related to awards', ordered=Tru
 
 #input arguments
 awards_arguments = reqparse.RequestParser()
-awards_arguments.add_argument('award_uid', help='Award ID')
-awards_arguments.add_argument('title', help="award title")
-awards_arguments.add_argument('pi_id', help="PI's name_uid (usually in the form: LastName, FirstName)")
-awards_arguments.add_argument('copi', help="co-PI's name")
-awards_arguments.add_argument('dir_code', help="directorate code")
-awards_arguments.add_argument('div_code', help="division code")
-awards_arguments.add_argument('start_date',type=inputs.date,  help='start date of award in YYYY-MM-DD format'),
-awards_arguments.add_argument('expiry_date',type=inputs.date,  help='expiry date of award in YYYY-MM-DD format'),
-awards_arguments.add_argument('nsf_funding_program', help='name of NSF funding program')
+awards_arguments.add_argument('award_uid', help='award number', example='0724929')
+awards_arguments.add_argument('title', help="(any part of) award title", example="Antarctic Ice Cores")
+awards_arguments.add_argument('pi', help="PI's name (can be partial)", example="Carbotte, Suzanne")
+awards_arguments.add_argument('copi', help="co-PI's name (can be partial)", example="Tinto")
+awards_arguments.add_argument('dir_code', help="directorate code", example="GEO")
+awards_arguments.add_argument('div_code', help="division code", example="PLR")
+awards_arguments.add_argument('start_date',type=inputs.date,  help='returns awards with start dates on or after this date (in YYYY-MM-DD format)', example="2018-05-01"),
+awards_arguments.add_argument('expiry_date',type=inputs.date,  help='returns awards with expiry dates on or before this date (in YYYY-MM-DD format)', example="2019-09-10"),
+awards_arguments.add_argument('nsf_funding_program', help='name of NSF funding program', example="Antarctic Earth Sciences")
 
 # #model for the datasets associated with each award
 datasets_fields = models.getDatasetsShortModel(ns)
@@ -41,17 +41,24 @@ award_model = ns.model('Award', OrderedDict([
     ('div_code', fields.String(attribute='div')),
     ('iscr', fields.Boolean),
     ('isipy', fields.Boolean),
-    ('nsf_funding_programs', fields.String(attribute='program_id')),
+    ('nsf_funding_programs', fields.String(attribute='programs')),
     ('projects', fields.List(fields.Nested(projects_fields))),
     ('datasets', fields.List(fields.Nested(datasets_fields))),
 ]))
+
 
 
 #database query used to find results
 def getQuery():
     return """SELECT  *
                FROM award a
-               LEFT JOIN award_program_map apm ON apm.award_id = a.award
+               LEFT JOIN (
+                    SELECT apm.award_id,
+                    string_agg(apm.program_id, '; '::text) AS programs
+                    FROM
+                    award_program_map apm
+                    GROUP BY apm.award_id
+               ) aprog ON aprog.award_id = a.award
                LEFT JOIN (
                     SELECT pam.award_id, 
                     json_agg(json_build_object('title', proj.title, 'proj_uid', proj.proj_uid)) AS projects
@@ -66,16 +73,23 @@ def getQuery():
                 ) ad ON ad.award_id = a.award
                        WHERE TRUE"""
 
+base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
+examples = """Base URL: {0}\n
+    Examples:
+        {0}?pi=Carbotte, Suzanne
+        {0}?dir_code=GEO&div_code=PLR
+        {0}?start_date=2018-05-01&end_date=2018-09-10""".format(base_url)
 
-@ns.route('/')
-class AwardssCollection(Resource):
+
+@ns.route('/', doc={'description': examples})
+class AwardsCollection(Resource):
     @ns.expect(awards_arguments)
     @ns.marshal_with(award_model)
     @ns.response(200, 'Success')
     @ns.response(400, 'Validation Error')
     @ns.response(404, 'No awards found.')
+    @ns.doc({})
     def get(self):
-
         """Returns list of all awards, filtered by the provided parameters"""
         query_parameters = awards_arguments.parse_args()
 
@@ -118,7 +132,7 @@ class AwardssCollection(Resource):
             query += " AND a.title ~* %s"
             to_filter.append(title)          
         if nsf_funding_program:
-            query += " AND apm.program_id ~* %s"
+            query += " AND programs ~* %s"
             to_filter.append(nsf_funding_program)
 
         query += ';'
@@ -143,8 +157,12 @@ class AwardssCollection(Resource):
 
         return results
 
+example = """Base URL: {0}\n
+        Example:
+            {0}0724929""".format(base_url)
 
-@ns.route('/<award_uid>')
+
+@ns.route('/<award_uid>', doc={'description': example})
 class AwardItem(Resource):
     @ns.marshal_with(award_model)
     @ns.response(404, 'Award not found.')

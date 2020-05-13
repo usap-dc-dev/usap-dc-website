@@ -3,7 +3,7 @@ from flask import request, json, jsonify, Response
 import usap
 from datetime import datetime
 from collections import OrderedDict
-from flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
+from api.lib.flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
 import api.models as models
 
 
@@ -13,10 +13,10 @@ ns = Namespace('persons', description='Operations related to people', ordered=Tr
 
 #input arguments
 persons_arguments = reqparse.RequestParser()
-persons_arguments.add_argument('person_uid', help='USAP-DC person id (usually in the form: LastName, FirstName)')
-persons_arguments.add_argument('first_name', help="person's first name")
-persons_arguments.add_argument('last_name', help="person's last name")
-persons_arguments.add_argument('organization', help="person's institue or orgainzation")
+persons_arguments.add_argument('person_uid', help='USAP-DC person id (usually in the form: LastName, FirstName)', example="Bell, Robin")
+persons_arguments.add_argument('first_name', help="person's first name", example='Robin')
+persons_arguments.add_argument('last_name', help="person's last name", example='Bell')
+persons_arguments.add_argument('organization', help="person's institute or organization (can be partial)", example='Columbia')
 
 
 #model for the datasets associated with each person
@@ -53,8 +53,14 @@ def getQuery():
                     ) pd ON pd.person_id = p.id
                        WHERE TRUE"""
 
+base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
+examples = """Base URL: {0}\n
+    Examples:
+            {0}?first_name=Frank
+            {0}?last_name=Bell&organization=Columbia""".format(base_url)
 
-@ns.route('/')
+
+@ns.route('/', doc={'description': examples})
 class PersonsCollection(Resource):
     @ns.expect(persons_arguments)
     @ns.marshal_with(person_model)
@@ -110,8 +116,11 @@ class PersonsCollection(Resource):
 
         return results
 
+example = """Base URL: {0}\n
+        Example:
+            {0}Bell, Robin""".format(base_url)
 
-@ns.route('/<person_uid>')
+@ns.route('/<person_uid>', doc={'description': example})
 class PersonItem(Resource):
     @ns.marshal_with(person_model)
     @ns.response(404, 'Person not found.')

@@ -1,5 +1,5 @@
 # setting up v2 for future use!
-from flask_restplus import Api
+from api.lib.flask_restplus import Api
 from flask import Blueprint
 from endpoints_v2.datasets import ns as datasets_ns
 from endpoints_v2.projects import ns as projects_ns

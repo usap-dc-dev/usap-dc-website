@@ -1,4 +1,4 @@
-from flask_restplus import Api
+from api.lib.flask_restplus import Api
 from flask import Blueprint
 from endpoints_v1.datasets import ns as datasets_ns
 from endpoints_v1.projects import ns as projects_ns

@@ -3,7 +3,7 @@ from flask import request, json, jsonify, Response
 import usap
 from datetime import datetime
 from collections import OrderedDict
-from flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
+from api.lib.flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
 import api.models as models
 
 
@@ -13,23 +13,23 @@ ns = Namespace('projects', description='Operations related to projects', ordered
 
 #input arguments
 projects_arguments = reqparse.RequestParser()
-projects_arguments.add_argument('proj_uid', help='USAP-DC project identification number')
-projects_arguments.add_argument('cruise_id', help='cruise id for any ship expeditions associated with the project')
-projects_arguments.add_argument('start_date', type=inputs.date,  help='start date of project in YYYY-MM-DD format')
-projects_arguments.add_argument('end_date', type=inputs.date,  help='end date of project in YYYY-MM-DD format')
-projects_arguments.add_argument('award', help='award number')
-projects_arguments.add_argument('person', help='name of anybody involved in the project')
-projects_arguments.add_argument('keywords', action='split', help='keyword assigned to project - can filter on multiple keywords using a comma separated list')
-projects_arguments.add_argument('locations', action='split', help='location of project - can filter on multiple locations using a comma separated list')
-projects_arguments.add_argument('nsf_funding_program', help='name of NSF funding program')
-projects_arguments.add_argument('science_program', help='name of science program')
-projects_arguments.add_argument('repository', help='repository datasets associated with the project have been submitted to')
-projects_arguments.add_argument('title', help='project title')
-projects_arguments.add_argument('dif_id', help='DIF ID for the project')
-projects_arguments.add_argument('north', type=float, help='northern boundary of dataset')
-projects_arguments.add_argument('south', type=float, help='southern boundary of dataset')
-projects_arguments.add_argument('east', type=float, help='eastern boundary of dataset')
-projects_arguments.add_argument('west', type=float, help='western boundary of dataset')
+projects_arguments.add_argument('proj_uid', help='USAP-DC project identification number', example='p0000114')
+projects_arguments.add_argument('cruise_id', help='cruise id for any ship expeditions associated with the project', example='NBP0103')
+projects_arguments.add_argument('start_date', type=inputs.date,  help='returns projects with start dates on or after this date (in YYYY-MM-DD format)' , example='2010-05-01')
+projects_arguments.add_argument('end_date', type=inputs.date,  help='returns awards with expiry dates on or before this date (in YYYY-MM-DD format)', example='2015-09-10')
+projects_arguments.add_argument('award', help='award number', example='0724929')
+projects_arguments.add_argument('person', help='name of anybody involved in the dataset (can be partial)', example='Nitsche')
+projects_arguments.add_argument('keywords', action='split', help='keyword assigned to project - can filter on multiple keywords using a comma separated list', example='penguin')
+projects_arguments.add_argument('locations', action='split', help='location of project - can filter on multiple locations using a comma separated list', example='Amundsen Sea')
+projects_arguments.add_argument('nsf_funding_program', help='name of NSF funding program', example='Antarctic Earth Sciences')
+projects_arguments.add_argument('science_program', help='name of science program', example='Allan Hills')
+# projects_arguments.add_argument('repository', help='repository datasets associated with the project have been submitted to')
+projects_arguments.add_argument('title', help='(any part of) project title', example='Marine Record of Cryosphere')
+projects_arguments.add_argument('dif_id', help='DIF ID for the project', example='USAP-1644245_1')
+projects_arguments.add_argument('north', type=float, help='northern boundary of dataset', example='-80')
+projects_arguments.add_argument('south', type=float, help='southern boundary of dataset', example='-89')
+projects_arguments.add_argument('east', type=float, help='eastern boundary of dataset', example='100')
+projects_arguments.add_argument('west', type=float, help='western boundary of dataset', example='10')
 
 
 #model for the datasets associated with each project
@@ -83,8 +83,15 @@ def getQuery():
             ) depl ON depl.proj_uid = p.proj_uid
            WHERE TRUE"""
 
+base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
+examples = """Base URL: {0}\n
+    Examples:
+        {0}?person=Frank
+        {0}?locations=Ross Sea,South Shetland Islands
+        {0}?north=-80&south=-88&east=100&west=10""".format(base_url)
 
-@ns.route('/')
+
+@ns.route('/', doc={'description': examples})
 class ProjectsCollection(Resource):
     @ns.expect(projects_arguments)
     @ns.marshal_with(project_model)
@@ -199,8 +206,12 @@ class ProjectsCollection(Resource):
 
         return results
 
+example = """Base URL: {0}\n
+        Example:
+            {0}p0000114""".format(base_url)
 
-@ns.route('/<proj_uid>')
+
+@ns.route('/<proj_uid>', doc={'description': example})
 class ProjectItem(Resource):
     @ns.marshal_with(project_model)
     @ns.response(404, 'Project not found.')
@@ -220,7 +231,6 @@ class ProjectItem(Resource):
                 res['datasets'] = json.loads(res['datasets'])
                 for ds in res.get('datasets'):
                     ds['landing_page'] = "%sview/dataset/%s" % (config['USAP_DOMAIN'], ds['dataset_uid'])
-                    print(ds['landing_page'])
             if res.get('deployments'):
                 res['deployments'] = json.loads(res['deployments'])
         except Exception as e:
