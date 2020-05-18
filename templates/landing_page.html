@@ -84,7 +84,12 @@
           </div>
           <div class="value">
             {% for record in data['dif_records'] %}
-            <a target=_new href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record['dif_id']}}">{{record['dif_id']}}</a><br/>
+              {% if record['cmr_url'] %}
+                <a target=_new href="{{record['cmr_url']}}">{{record['dif_id']}}</a>
+              {% else %}
+                {{record['dif_id']}}
+              {% endif %}
+              <br/>
             {% endfor %}
           </div>
         </div>

@@ -2258,7 +2258,25 @@ def landing_page(dataset_id):
     # get count of how many times this dataset has been downloaded
     metadata['downloads'] = getDownloadsCount(dataset_id)
 
+    # get CMR/GCMD URLs for dif records
+    getCMRUrls(metadata['dif_records'])
+
     return render_template('landing_page.html', data=metadata)
+
+
+def getCMRUrls(dif_records):
+    # get the CMR pages for each dif record
+    for rec in dif_records:
+        # use the CMR API to get the concept-id
+        try: 
+            api_url = app.config['CMR_API'] + rec['dif_id']
+            r = requests.get(api_url).json()
+            concept_id = r['feed']['entry'][0]['id']
+            # generate the GCMD page URL
+            rec['cmr_url'] = app.config['CMR_URL'] + concept_id + '.html'
+        except:
+            pass   
+
 
 
 def getDownloadsCount(uid):
