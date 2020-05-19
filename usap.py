@@ -28,9 +28,9 @@ import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
 from functools import partial
-from api.api_v1 import blueprint as api_v1
-# from api.api_v2 import blueprint as api_v2
-import api.settings as rp_settings
+from services.api_v1 import blueprint as api_v1
+# from services.api_v2 import blueprint as api_v2
+import services.settings as rp_settings
 import traceback
 
 
