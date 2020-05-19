@@ -168,9 +168,14 @@
               AMD - DIF Record(s)
             </div>
             <div class="value">
-              {% for record in data.dif_records %}
-              <a target="_blank" href="https://gcmd.nasa.gov/search/Metadata.do?entry={{record.dif_id}}">{{record.dif_id}}</a><br/>
-              {% endfor %}
+              {% for record in data['dif_records'] %}
+                {% if record['cmr_url'] %}
+                  <a target=_new href="{{record['cmr_url']}}">{{record['dif_id']}}</a>
+                {% else %}
+                  {{record['dif_id']}}
+                {% endif %}
+                <br/>
+            {% endfor %}
             </div>
           </div>
         {% endif %}

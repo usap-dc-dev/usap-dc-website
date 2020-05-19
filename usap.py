@@ -3699,6 +3699,9 @@ def project_landing_page(project_id):
             dmps = None
     metadata['dmps'] = dmps
 
+    # get CMR/GCMD URLs for dif records
+    getCMRUrls(metadata['dif_records'])
+
     return render_template('project_landing_page.html', data=metadata)
 
 
