@@ -80,7 +80,7 @@ def get_crossref_pubs(verbose=False, new_only=True):
     old_uid = 0
     if new_only:
         with open (log_file, "r") as file:
-            last_harvest_datetime = file.read()
+            last_harvest_datetime = float(file.read())
 
     # for each entry in the project_award map, get the award_id, and look up publications in crossref
     for p in res:
@@ -96,7 +96,7 @@ def get_crossref_pubs(verbose=False, new_only=True):
 
             # if new_only parameter is set, only harvest publications that were indexed since the last time we ran the harvest
             if new_only:
-                index_datetime = item['indexed']['timestamp']
+                index_datetime = item['indexed']['timestamp']/1000
                 if index_datetime < last_harvest_datetime:
                     continue
             
