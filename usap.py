@@ -2469,7 +2469,7 @@ def makeCitation(metadata, dataset_id):
             etal = ' et al. ' 
         year = metadata['release_date'].split('-')[0]
 
-        citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: %s.' % (initcap(last_name), first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
+        citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: https://doi.org/%s.' % (initcap(last_name), first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
         return citation
     except:
         return None
