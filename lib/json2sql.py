@@ -11,7 +11,7 @@ import os
 import json
 from flask import url_for
 import usap
-from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap
+from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap, checkAltIds
 
 config = json.loads(open('config.json', 'r').read())
 dc_config = json.loads(open('inc/datacite.json', 'r').read())
@@ -33,7 +33,7 @@ def parse_json(data):
     data["author"] = "{}, {}".format(last, first)
     print("corrected author: ", data["author"])
     if data.get('submitter_name') and data["submitter_name"] != "":
-        (first, last) = data["submitter_name"].split(' ', 1)
+        (first, last) = data["submitter_name"].rsplit(' ', 1)
         data["submitter_first"] = first
         data["submitter_last"] = last
         data["submitter_name"] = "{}, {}".format(last, first)
@@ -91,6 +91,9 @@ def make_sql(data, id):
         res = cur.fetchone()
   
         if not res and person_id != "":
+            # look for other possible person IDs that could belong to this person (maybe with/without middle initial)
+            sql_out += checkAltIds(person_id, first_name, last_name, 'AUTHOR')
+ 
             if author == data["authors"][0]:
                 line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"])
             else:
@@ -114,6 +117,9 @@ def make_sql(data, id):
         cur.execute(query)
         res = cur.fetchone()
         if not res:
+            # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
+            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'], data['submitter_email'])           
+
             line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], data["submitter_first"], data["submitter_last"], data.get("submitter_email", ''), data.get("submitter_orcid", ''))
             sql_out += line
         else:
@@ -390,8 +396,9 @@ def editDatasetJson2sql(data, uid):
 
     # submitter
     if data["submitter_name"] != "":
-        (first, last) = data["submitter_name"].split(' ', 1)
+        (first, last) = data["submitter_name"].rsplit(' ', 1)
         data["submitter_name"] = "{}, {}".format(last, first)
+        print("SUBMITTER NAME: ", data["submitter_name"])
 
     # compare original with edited json
     updates = set()
@@ -444,11 +451,14 @@ def editDatasetJson2sql(data, uid):
                 if 'submitter_name' in updates and person_id == data['submitter_name']:
                     continue
 
-                query = "SELECT  * FROM person WHERE id = '%s'" % person_id
+                query = "SELECT * FROM person WHERE id = '%s'" % person_id
                 cur.execute(query)
                 res = cur.fetchone()
           
                 if not res and person_id != "":
+                    # look for other possible person IDs that could belong to this person (maybe with/without middle initial)
+                    sql_out += checkAltIds(person_id, first_name, last_name, 'AUTHOR')
+
                     if author == data["authors"][0]:
                         line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"])
                     else:
@@ -690,6 +700,10 @@ def editDatasetJson2sql(data, uid):
                 res = cur.fetchone()
                 if res['count'] == 0:
                     first_name, last_name = data["submitter_name"].split(', ', 1)
+                    # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
+                    sql_out += checkAltIds(data['submitter_name'], first_name, last_name, 'SUBMITTER_NAME', data['submitter_orcid'], data['submitter_email'])           
+
+
                     line = "INSERT INTO person(id,first_name,last_name,email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], first_name, last_name, data.get("submitter_email", ''), data.get("submitter_orcid", ''))
                     sql_out += line
                 query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, data["submitter_name"])

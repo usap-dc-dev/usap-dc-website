@@ -530,6 +530,22 @@ def getDatasetKeywords(uid):
     return cur.fetchall() 
 
 
+def checkAltIds(person_id, first_name, last_name, field, id_orcid=None, email=None): 
+    conn, cur = usap.connect_to_db(curator=True)
+    query = "SELECT * FROM person WHERE id ~ '%s' AND id ~'%s'" % (first_name.split(' ')[0], last_name.split(' ')[0])
+    if id_orcid: 
+        query += " OR id_orcid = '%s'" % id_orcid
+    if email:
+        query += " OR email = '%s'" % email
+
+    cur.execute(query)
+    res = cur.fetchall()
+    if len(res) > 0:
+        alt_users = "; ".join(u['id'] for u in res)
+        return "--NOTE: ONE OR MORE POSSIBLE DATABASE ENTRIES FOUND FOR %s:\n--%s.\n--UPDATE %s IN JSON TAB TO CHANGE USER ID.\n" % (person_id, alt_users, field)
+    return ""
+
+
 def projectJson2sql(data, uid):
 
     # check if we are editing an existing project
@@ -557,7 +573,7 @@ def projectJson2sql(data, uid):
     # generate the submitter's person id if we have their name
     subm_id = None
     if data.get('submitter_name'):
-        names = data['submitter_name'].split(' ')
+        names = data['submitter_name'].rsplit(' ',1)
         if len(names) > 1:
             subm_id = names[-1] + ', ' + names[0]
 
@@ -569,12 +585,17 @@ def projectJson2sql(data, uid):
     res = cur.fetchall()
     if len(res) == 0:
         sql_out += "--NOTE: adding PI to person table\n"
-
         if subm_id and subm_id == pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
+            # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid or email match)
+            sql_out += checkAltIds(pi_id, data.get('pi_name_first'), data.get('pi_name_last'), 'PI_NAME_FIRST AND PI_NAME_LAST', data['submitter_orcid'], data.get('email'))
+
             sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                        "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
                 (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['submitter_orcid'])
         else:
+            # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or email match)
+            sql_out += checkAltIds(pi_id, data.get('pi_name_first'), data.get('pi_name_last'), 'PI_NAME_FIRST AND PI_NAME_LAST', email=data.get('email'))
+
             sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                        "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
                 (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'))
@@ -613,10 +634,15 @@ def projectJson2sql(data, uid):
         if len(res) == 0:
             sql_out += "--NOTE: adding %s to person table\n" % co_pi_id
             if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
+                # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
+                sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS', data['submitter_orcid'])
+
                 sql_out += "INSERT INTO person (id, first_name, last_name, organization, id_orcid) " \
                            "VALUES ('%s', '%s', '%s' ,'%s', '%s');\n\n" % \
                            (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'), data['submitter_orcid'])
             else:
+                # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
+                sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS')
                 sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
                            "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
                            (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
@@ -891,7 +917,7 @@ def editProjectJson2sql(data, uid):
     # generate the submitter's person id if we have their name
     subm_id = None
     if data.get('submitter_name'):
-        names = data['submitter_name'].split(' ')
+        names = data['submitter_name'].rsplit(' ',1)
         if len(names) > 1:
             subm_id = names[-1] + ', ' + names[0]
 
@@ -975,11 +1001,17 @@ def editProjectJson2sql(data, uid):
 
                 if len(res) == 0:
                     sql_out += "--NOTE: adding %s to person table\n" % co_pi_id
+
                     if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
+                        # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
+                        sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS', data['submitter_orcid'])
+
                         sql_out += "INSERT INTO person (id, first_name, last_name, organization, id_orcid) " \
                                    "VALUES ('%s', '%s', '%s' ,'%s', '%s');\n\n" % \
                                    (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'), data['submitter_orcid'])
                     else:
+                        # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
+                        sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS')
                         sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
                                    "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
                                    (co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), co_pi.get('org'))
@@ -1211,10 +1243,16 @@ def editProjectJson2sql(data, uid):
                 sql_out += "\n--NOTE: adding PI to person table\n"
 
                 if subm_id and subm_id == pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
+                    # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid or email match)
+                    sql_out += checkAltIds(pi_id, data.get('pi_name_first'), data.get('pi_name_last'), 'PI_NAME_FIRST AND PI_NAME_LAST', data['submitter_orcid'], data.get('email'))
+
                     sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
                         (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'), data['submitter_orcid'])
                 else:
+                    # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or email match)
+                    sql_out += checkAltIds(pi_id, data.get('pi_name_first'), data.get('pi_name_last'), 'PI_NAME_FIRST AND PI_NAME_LAST', email=data.get('email'))
+
                     sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                                "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
                         (pi_id, data.get('pi_name_first'), data.get('pi_name_last'), data.get('email'), data.get('org'))
