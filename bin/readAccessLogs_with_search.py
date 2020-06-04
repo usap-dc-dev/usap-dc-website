@@ -15,7 +15,7 @@ line_parser = apache_log_parser.make_parser("%h %l %u %t \"%r\" %>s %b \"%{Refer
 
 config = json.loads(open('../config.json', 'r').read())
 
-exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-"]
+exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-", "5.188.210", "5.188.211"]
 
 
 def connect_to_db():

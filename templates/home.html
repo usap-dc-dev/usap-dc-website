@@ -39,42 +39,17 @@
   <div style="clear:both"></div>
 
   <h2>Welcome</h2>
-  <p>The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a>; facilitate <a href="/submit">submission</a> of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (<a class="external" href="http://www.iedadata.org/">IEDA</a>) and the Antarctic and Arctic Data Consortium (<a class="external" href="http://www.a2dc.org/">A2DC</a>). As of 2016, USAP-DC is partnered with the National Snow and Ice Data Center (<a class="external" href="https://nsidc.org">NSIDC</a>) to manage glaciology data for the US Antarctic Program.</p><br/>
+  <p>The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We provide a central USAP Project Catalog for all projects funded by the NSF Antarctic program and a Data Repository for research datasets derived from these projects. Data managed include the NSF research related glaciology data collection formerly managed  through NSIDC. We register datasets in the Antarctic Master Directory (<a class="external" href="http://gcmd.nasa.gov/portals/amd/">AMD</a>) to comply with the <a class="external" href="http://www.ats.aq/e/ats.htm">Antarctic Treaty</a> and represent the U.S. in Scientific Committee on Antarctic Research (<a class="external" href="http://www.scar.org/data-products/scadm">SCAR</a>) activities.</p><br/>
 
 
-  <div class="map-container">
-    <div class="map-btn-container">
-      <em>Map shows datasets registered with the USAP-DC. Dots show the locations of the centroid of the geographic bounding box  for each data set or the point locations for datasets from single sites (e.g. ice cores). Click on  centroid locations to view the full bounding box as provided by the contributing scientists as well as more information about the datasets.</em>
-    </div>
-    <div id="map">
-      <div id="drawing-buttons">
-        <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
-          <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
-        </div>
-        <div id="rect-icon" data-mode="Box" class="drawing-button">
-          <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
-        </div>
-        <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
-          <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
-        </div>
-      </div>
-        <form method="get" action="/dataset_search">
-          <input name="spatial_bounds" type="hidden"/>
-          <input name="spatial_bounds_interpolated" type="hidden"/>
-          <div id="clear-search-buttons">
-            <button type="submit" class="btn btn-primary btn-sm"  id="search-button">Search</button>
-            <button type="button" class="btn btn-primary btn-sm"  id="clear-button">Clear</button>
-          </div> 
-        </form>
-    </div>  
-  </div>
+
   
 
   <div class="split">
 
     <div class="left">
       <h3>Recent News</h3>
-      <div style="height:430px;line-height:120%;font-size:1.3em">
+      <div style="font-size:1.2em">
         <ul>
           {% for news in news_dict %}
           {% if loop.index < 6 %}
@@ -84,24 +59,53 @@
         </ul>
         <a class="read-more-button" href="{{url_for('news')}}">READ MORE »</a>
       </div> 
+
+      <h3>Recent Data</h3>
+      <div style="font-size:1.2em">
+        <ul>
+          {% for data in data_dict %}
+          {% if loop.index < 6 %}
+          <li><h5><b>{{data.date}}</b><p>{{data.link|safe}}&nbsp;{{data.authors}}&nbsp;{{data.title}}</p></h5></li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+        <a class="read-more-button" href="{{url_for('data')}}">READ MORE »</a>
+      </div>
     </div>
-    
     <div class="right">
-     <h3>Recent Data</h3>
-     <div style="height:430px;line-height:120%;font-size:1.3em">
-      <ul>
-        {% for data in data_dict %}
-        {% if loop.index < 6 %}
-        <li><h5><b>{{data.date}}</b><p>{{data.link|safe}}&nbsp;{{data.authors}}&nbsp;{{data.title}}</p></h5></li>
-        {% endif %}
-        {% endfor %}
-      </ul>
-      <a class="read-more-button" href="{{url_for('data')}}">READ MORE »</a>
+      <div class="map-container">
+        <div class="map-btn-container">
+          <em>Map shows datasets registered with the USAP-DC. Dots show the locations of the centroid of the geographic bounding box  for each data set or the point locations for datasets from single sites (e.g. ice cores). Click on  centroid locations to view the full bounding box as provided by the contributing scientists as well as more information about the datasets.</em>
+        </div>
+        <div id="map-box">
+        <div id="map">
+          <div id="drawing-buttons">
+            <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
+              <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
+            </div>
+            <div id="rect-icon" data-mode="Box" class="drawing-button">
+              <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
+            </div>
+            <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
+              <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
+            </div>
+          </div>
+          <form method="get" action="/dataset_search">
+            <input name="spatial_bounds" type="hidden"/>
+            <input name="spatial_bounds_interpolated" type="hidden"/>
+            <div id="clear-search-buttons">
+              <button type="submit" class="btn btn-primary btn-sm"  id="search-button">Search</button>
+              <button type="button" class="btn btn-primary btn-sm"  id="clear-button">Clear</button>
+            </div> 
+          </form>
+        </div>
+        </div>  
+      </div>
     </div>
 
   </div>
 
-</div>
+
 </div>
 
 {% endblock home %}

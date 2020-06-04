@@ -49,7 +49,7 @@
       "name": "U.S. Antarctic Program Data Center",
       "url": "{{url_for('home',_external=True)}}",
       "category": ["Earth Science, Polar Science"],
-      "description": "The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We register datasets in the Antarctic Master Directory (AMD) to comply with the Antarctic Treaty; facilitate submission of datasets to long-term archives; and represent the U.S. in Scientific Committee on Antarctic Research (SCAR) activities. USAP-DC is a member of the Interdisciplinary Earth Data Alliance (IEDA) and the Antarctic and Arctic Data Consortium (A2DC). As of 2016, USAP-DC is now partnered with the National Snow and Ice Data Center (NSIDC) to manage glaciology data for the US Antarctic Program.",
+      "description": "The U.S. Antarctic Program Data Center (USAP-DC) supports investigators funded by the National Science Foundation in documenting, preserving, and disseminating their research results. We provide a central USAP Project Catalog for all projects funded by the NSF Antarctic program and a Data Repository for research datasets derived from these projects. Data managed include the NSF research related glaciology data collection formerly managed  through NSIDC. We register datasets in the Antarctic Master Directory (AMD) to comply with the Antarctic Treaty and represent the U.S. in Scientific Committee on Antarctic Research (SCAR) activities.",
       "sameAs": "https://www.re3data.org/repository/r3d100010660",
       "identifier": {
         "@type": "PropertyValue",
@@ -80,7 +80,7 @@
       },
       "logo": {
         "@type": "ImageObject",
-        "url": "https://www.iedadata.org/wp-content/themes/IEDA/assets/img/logo.png"
+        "url": "{{url_for('static', filename='imgs/header/usap_dc_logo.png', _external=True)}}"
       },
       "publishingPrinciples": {
         "@type": "DigitalDocument",
@@ -92,33 +92,22 @@
       },
       "parentOrganization": {
         "@type": "Organization",
-        "@id": "https://www.iedadata.org/",
-        "name": "Interdisciplinary Earth Data Alliance (IEDA)",
-        "url": "https://www.iedadata.org/",
-        "description": "The IEDA data facilitys mission is to support, sustain, and advance the geosciences by providing data services for observational geoscience data from the Ocean, Earth, and Polar Sciences. IEDA systems serve as primary community data collections for global geochemistry and marine geoscience research and support the preservation, discovery, retrieval, and analysis of a wide range of observational field and analytical data types. Our tools and services are designed to facilitate data discovery and reuse for focused disciplinary research and to support interdisciplinary research and data integration.",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://www.iedadata.org/wp-content/themes/IEDA/assets/img/logo.png"
+        "@id": "https://viaf.org/viaf/142992181/",
+        "name": "Lamont-Doherty Earth Observatory",
+        "url": "https://www.ldeo.columbia.edu/",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "61 Route 9W",
+          "addressLocality": "Palisades",
+          "addressRegion": "NY",
+          "postalCode": "10964-1000",
+          "addressCountry": "USA"
         },
         "parentOrganization": {
           "@type": "Organization",
-          "@id": "https://viaf.org/viaf/142992181/",
-          "name": "Lamont-Doherty Earth Observatory",
-          "url": "https://www.ldeo.columbia.edu/",
-          "address": {
-            "@type": "PostalAddress",
-            "streetAddress": "61 Route 9W",
-            "addressLocality": "Palisades",
-            "addressRegion": "NY",
-            "postalCode": "10964-1000",
-            "addressCountry": "USA"
-          },
-          "parentOrganization": {
-            "@type": "Organization",
-            "@id": "https://viaf.org/viaf/156836332/",
-            "legalName": "Columbia University",
-            "url": "https://www.columbia.edu/"
-          }
+          "@id": "https://viaf.org/viaf/156836332/",
+          "legalName": "Columbia University",
+          "url": "https://www.columbia.edu/"
         }
       },
       "hasOfferCatalog": {
@@ -268,14 +257,16 @@
 
   <div class="ieda-header">
 
+    <ieda-banner>
+            <a href="/"><img id="IEDA" alt="IEDA" height="67" src="{{ url_for('static', filename='imgs/header/usap_dc_logo.png') }}"/></a>
+    </ieda-banner>
+
     <div id="page-header">
       <h1 style="margin-bottom:0;margin-top:3px;"><a title="U.S. ANTARCTIC PROGRAM DATA CENTER" href="/"><em>USAP-DC</em></a></h1>
       <h4 style="margin-top:0;">U.S. ANTARCTIC PROGRAM DATA CENTER</h4>
     </div>
 
-    <ieda-banner>
-      <a href="https://www.iedadata.org"><img id="IEDA" alt="IEDA" src="{{ url_for('static', filename='imgs/header/ieda_logo_200x88.png') }}"/></a>
-    </ieda-banner>
+
 
     <div id="ieda-menu-wrap">
       <ul id="ieda-menu">
@@ -283,9 +274,9 @@
           <ul>
             <li><a href="{{url_for('home')}}">Home</a></li>
             <li><a href="{{url_for('overview')}}">Overview</a></li>
-            <li><a href="{{url_for('faq')}}">FAQ</a></li>
+            <li><a href="{{url_for('news')}}">News</a></li>
+            <li><a href="{{url_for('data')}}">Recent Data</a></li>
             <li><a href="{{url_for('stats')}}">Statistics</a></li>
-            <li><a href="{{url_for('api')}}">API</a></li>
           </ul>
         </li>
         <li><a class="top_link" href="{{url_for('submit')}}">Contribute</a>
@@ -302,24 +293,25 @@
             <li><a href="https://gcmd.gsfc.nasa.gov/KeywordSearch/Freetext.do?Portal=amd&amp;MetadataType=0&amp;Freetext=DIF%2FIDN_Node%3A+AMD*">Search AMD</a></li>
           </ul>
         </li>
-        <li><a class="top_link" href="#">Other IEDA Resources</a>
+        <li><a class="top_link" href="#">Services and Support</a>
           <ul>
-            <li><a href="http://www.marine-geo.org/portals/antarctic/">Polar Ship Data</a></li>
-            <li><a href="http://www.marine-geo.org/tools/GMRTMapTool/sp/">GMRT-SP MapTool</a></li> 
-            <li><a href="http://www.geomapapp.org/">GeoMapApp</a></li>
-            <li><a href="http://media.marine-geo.org/category/6/78">MediaBank</a></li>
-            <li><a href="http://app.iedadata.org/compliance/dmp/">Data Management Plan</a></li>
-            <li><a href="http://www.geosamples.org/">SESAR</a></li>
+            <li><a href="{{url_for('api')}}">Web Services</a></li>
+            <li><a href="{{url_for('faq')}}">FAQ</a></li>
+            <li><a href="https://ezdmp.org/">Data Management Plan</a></li>
           </ul>
         </li>
-        <li><a class="top_link" href="#">Partner Resources</a>
+        <li><a class="top_link" href="#">Other Resources</a>
           <ul>
             <li><a href="https://gcmd.nasa.gov/Data/portals/amd/">Antarctic Master Directory (AMD)</a></li>
             <li><a href="{{url_for('sdls')}}">Antarctic Seismic Data Library System (SDLS)</a></li>
             <li><a href="https://search.dataone.org/data">DataOne</a></li>
+            <li><a href="http://www.geomapapp.org/">GeoMapApp</a></li>
+            <li><a href="https://www.gmrt.org/GMRTMapTool/sp/">GMRT-SP MapTool</a></li> 
             <li><a href="http://icereader.org">iceREADER</a></li>
             <li><a href="{{url_for('links')}}">Polar Related Links</a></li>
+            <li><a href="https://www.rvdata.us/">Polar Ship Data</a></li>
             <li><a href="https://nsidc.org/data/agdc/related-data">Related data at NSDIC</a></li>
+            <li><a href="http://www.geosamples.org/">SESAR</a></li>          
             <li><a href="https://www.ncdc.noaa.gov/data-access/paleoclimatology-data/datasets/ice-core">WDC Ice Core Gateway</a></li>
           </ul>
         </li>
@@ -371,7 +363,7 @@
           <td  style="border-style: none; width: 60%"  >  
             <p> Hosted at <a href="https://www.ldeo.columbia.edu">Lamont-Doherty Earth Observatory</a> of <a href="https://www.columbia.edu">Columbia University</a>.</p> 
             <p>Site licensed under <a href="{{url_for('legal')}}">Creative Commons Attribution-Noncommercial-Share Alike 3.0</a> </p>
-            <p>    Part of the <a href="https://www.iedadata.org">IEDA Data Facility</a> | <a href="{{url_for('legal')}}">Acknowledgments</a> | <a href="{{url_for('privacy')}}">Privacy</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
+            <p><a href="{{url_for('legal')}}">Acknowledgments</a> | <a href="{{url_for('privacy')}}">Privacy</a> | <a class="noline" href="{{url_for('contact')}}">Contact</a></p>
           </td> 
           <td style="border-style: none; width: 5%; ">
             <a href="https://www.nsf.gov"><img id="nsf_logo" alt="NSF logo" src="{{url_for('static',filename='imgs/nsf1.gif')}}" width="60"/></a>

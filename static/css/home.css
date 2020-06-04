@@ -1,13 +1,25 @@
 #content h3{ display:inline; }
 #content ul{ margin-top:1em; }
 
-#map {
+#map-box {
+    width:100%;
     position: relative;
-    margin: auto;
-    width:57.6em;
-    height:57.6em;
-    border:2px solid black;
 }
+#map-box:before{
+    content: "";
+    display: block;
+    padding-top: 100%;  /* ratio of 1:1*/
+    margin-bottom: 10px;
+}
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border:2px solid black;
+}
+
 .ol-mouse-position {
     position: absolute;
     left: 3.6em;
@@ -28,7 +40,7 @@
 }
 .map-btn-container {
     margin: auto;
-    width:57.6em;
+    width:100%;
     /*height:34px;*/
 }
 .map-text-container {

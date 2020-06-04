@@ -17,163 +17,195 @@
   </form>
 
   <div id="sm_submissions_chart_div"></div>
-  <div id="dl_users_downloads_chart_div"></div>
-  <div id="dl_numfiles_bytes_chart_div"></div>
 
-  <p class="stats-text"> Number of downloads for each dataset (based on unique date-IP combinations)*</p>
-  <div class="scrollable-window">
-    <table style="width:98%" class="nested_table">
-      <tr>
-        <th style="width:4em;">Count</th>
-        <th style="width:7em;">ID</th>
-        <th style="width:55%;">Title</th>
-        <th>Creator(s)</th>
-        <th style="width:7.5em;">Date Released</th>
-      </tr>
-      {% for d in download_numbers %}
-      <tr>
-        <td>{{d.count}}</td>
-        <td><a href={{url_for('landing_page', dataset_id=d.id)}} target="_blank">{{d.id}}</a></td>
-        <td>{{d.title}}</td>
-        <td>{{d.creator}}</td>
-        <td>{{d.release_date}}</td>
-      </tr>
-      {% endfor %}
-    </table>
+  <div id="dl_users_downloads_chart_div"></div>
+  <div class="stats-limits-div" id="dl_users">
+    <input type="hidden" class="options">
+    <input type="hidden" class="data">
+    <input type="hidden" class="target">
+    <b>IP addresses </b> 
+    Min: <input type="number" class="ymin1">
+    Max: <input type="number" class="ymax1">
+    <b>Downloads </b> 
+    Min: <input type="number" class="ymin2">
+    Max: <input type="number" class="ymax2">
+    <button type="button" onclick="replot(this)">Replot</button>
   </div>
 
-  <p class="stats-text">Search Statistics**</p>
-
-
-  <div class="search-stats">
-      <table class="nested_table">
+  <div id="dl_numfiles_bytes_chart_div"></div>
+  <div class="stats-limits-div" id="dl_files">
+    <input type="hidden" class="options">
+    <input type="hidden" class="data">
+    <input type="hidden" class="target">
+    <b>Number of files </b> 
+    Min: <input type="number" class="ymin1">
+    Max: <input type="number" class="ymax1">
+    <b>MB </b> 
+    Min: <input type="number" class="ymin2">
+    Max: <input type="number" class="ymax2">
+    <button type="button" onclick="replot(this)">Replot</button>
+  </div>
+ 
+  <!-- only curators can see stats below -->
+  {% if session.user_info and session.user_info.is_curator %}
+    <p class="stats-text"> Number of downloads for each dataset (based on unique date-IP combinations)*</p>
+    <div class="scrollable-window">
+      <table style="width:98%" class="nested_table">
         <tr>
           <th style="width:4em;">Count</th>
-          <th>Repository</th>
+          <th style="width:7em;">ID</th>
+          <th style="width:55%;">Title</th>
+          <th>Creator(s)</th>
+          <th style="width:7.5em;">Date Released</th>
         </tr>
-        {% for k,v in searches.repos|dictsort(false, 'value', reverse=true) %}
+        {% for d in download_numbers %}
         <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
+          <td>{{d.count}}</td>
+          <td><a href={{url_for('landing_page', dataset_id=d.id)}} target="_blank">{{d.id}}</a></td>
+          <td>{{d.title}}</td>
+          <td>{{d.creator}}</td>
+          <td>{{d.release_date}}</td>
         </tr>
         {% endfor %}
       </table>
     </div>
-  <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Science Programs</th>
-        </tr>
-        {% for k,v in searches.sci_progs|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div>
-  <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>NSF Programs</th>
-        </tr>
-        {% for k,v in searches.nsf_progs|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div>
 
-  <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Person</th>
-        </tr>
-        {% for k,v in searches.persons|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div>
-  <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Award</th>
-        </tr>
-        {% for k,v in searches.awards|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div>
+    <p class="stats-text">Search Statistics**</p>
 
-  <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Title</th>
-        </tr>
-        {% for k,v in searches.titles|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div>
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Repository</th>
+          </tr>
+          {% for k,v in searches.repos|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Science Programs</th>
+          </tr>
+          {% for k,v in searches.sci_progs|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div>
 
-  <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Free Text</th>
-        </tr>
-        {% for k,v in searches.free_texts|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div>
-<!--   <div class="search-stats">
-      <table class="nested_table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Spatial Bounds</th>
-        </tr>
-        {% for k,v in searches.spatial_bounds|dictsort(false, 'value', reverse=true) %}
-        <tr>
-          <td>{{v}}</td>
-          <td>{{k}}</td>
-        </tr>
-        {% endfor %}
-      </table>
-  </div> -->
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>NSF Programs</th>
+          </tr>
+          {% for k,v in searches.nsf_progs|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div>
 
-  <div>
-    <p><b>
-      * Download statistics collection began in March 2017
-    </b></p>
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Person</th>
+          </tr>
+          {% for k,v in searches.persons|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div>
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Award</th>
+          </tr>
+          {% for k,v in searches.awards|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div>
+
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Title</th>
+          </tr>
+          {% for k,v in searches.titles|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div>
+
+    <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Free Text</th>
+          </tr>
+          {% for k,v in searches.free_texts|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div>
+  <!--   <div class="search-stats">
+        <table class="nested_table">
+          <tr>
+            <th style="width:4em;">Count</th>
+            <th>Spatial Bounds</th>
+          </tr>
+          {% for k,v in searches.spatial_bounds|dictsort(false, 'value', reverse=true) %}
+          <tr>
+            <td>{{v}}</td>
+            <td>{{k}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </div> -->
+
+    <div>
       <p><b>
-      ** Search statistics collection began in May 2019
-    </b></p>
+        * Download statistics collection began in March 2017
+      </b></p>
+        <p><b>
+        ** Search statistics collection began in May 2019
+      </b></p>
+    </div>
   </div>
-</div>
+{% endif %}
 
 
 <script type="text/javascript">
   google.load("visualization", "1", {packages: ["corechart","table","annotatedtimeline"] });
+ 
+ 
+
 
   //downloads: number of files and MB
   var dl_numfiles_bytes_array= JSON.parse($("#download_numfiles_bytes").text());
@@ -200,9 +232,10 @@
   google.setOnLoadCallback(function() {
     drawChart(sm_submissions_array, 'USAP-DC Monthly Submissions', 'Month', 'Number of submissions', 'sm_submissions_chart_div');
 
-    drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div');
+    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests*', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div', $("#dl_users"));
 
-    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests*', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div');
+
+    drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div', $("#dl_files"));
    
   });
 
@@ -210,6 +243,21 @@
     var date = new Date(date_str);
     var userTimezoneOffset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() + userTimezoneOffset);
+  }
+
+  function replot(elem){
+    var thisDiv = $(elem).parent();
+    var ymin1 = thisDiv.children(".ymin1").val();
+    var ymax1 = thisDiv.children(".ymax1").val();
+    var ymin2 = thisDiv.children(".ymin2").val();
+    var ymax2 = thisDiv.children(".ymax2").val();
+    var d_data = new google.visualization.DataTable(thisDiv.children(".data").val());
+    var d_options = JSON.parse(thisDiv.children(".options").val());
+    var target = thisDiv.children(".target").val();
+    d_options.vAxes[0].viewWindow = {min: ymin1, max: ymax1};
+    d_options.vAxes[1].viewWindow = {min: ymin2, max: ymax2};
+    var d_chart= new google.visualization.AreaChart(document.getElementById(target));
+    d_chart.draw(d_data,d_options);
   }
 
   function drawChart(d_array, title, x_title, y_title, target) {
@@ -231,7 +279,7 @@
   }
 
 
-  function drawChart2(d_array, title, x_title, y_title1, y_title2, legend1, legend2, target) {
+  function drawChart2(d_array, title, x_title, y_title1, y_title2, legend1, legend2, target, replotDiv) {
     var d_data = new google.visualization.DataTable();
     d_data.addColumn('date', 'Month');
     d_data.addColumn('number', legend1);
@@ -240,8 +288,8 @@
     var d_options = {
       title: title,
       hAxis: {title: x_title},
-      vAxes: {0: {title: y_title1, minValue: 0},
-              1: {title: y_title2, minValue: 0},
+      vAxes: {0: {title: y_title1},
+              1: {title: y_title2, gridlines: {color:'none'}},
   
       },
       series: {0: {targetAxisIndex: 0},
@@ -249,6 +297,20 @@
     };
     var d_chart= new google.visualization.AreaChart(document.getElementById(target));
     d_chart.draw(d_data,d_options);
+
+    var chartLayout = d_chart.getChartLayoutInterface();
+    var chartBounds = chartLayout.getChartAreaBoundingBox();
+    var min_value1 = 0;//Math.round(chartLayout.getVAxisValue(chartBounds.top + chartBounds.height, 0));
+    var max_value1 = Math.round(chartLayout.getVAxisValue(chartBounds.top, 0));
+    var min_value2 = 0;//Math.round(chartLayout.getVAxisValue(chartBounds.top + chartBounds.height, 1));
+    var max_value2 = Math.round(chartLayout.getVAxisValue(chartBounds.top, 1));
+    replotDiv.children(".ymin1").val(min_value1);
+    replotDiv.children(".ymax1").val(max_value1);
+    replotDiv.children(".ymin2").val(min_value2);
+    replotDiv.children(".ymax2").val(max_value2);
+    replotDiv.children(".data").val(d_data.toJSON());
+    replotDiv.children(".options").val(JSON.stringify(d_options));
+    replotDiv.children(".target").val(target);
   }
 
   $(document).ready(function() {

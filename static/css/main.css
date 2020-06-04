@@ -60,29 +60,22 @@ body{
 
 }
 .ieda-header ieda-banner {
-    float: right;
-    display: block;
-    width:14.4em;
+    float: left;
+    padding: 1px 15px;
 }
 
-.ieda-header ieda-banner img {
-    width:80%;
-    height:80%;
-}
 .ieda-header h1 {
       font-size: 2.3em;
       font-family: "Optima Bold";
 }
+
 #usap-dc-banner{
 	  /*position:relative;*/
     height:200%;
     /*width:100%;*/
 }
 
-
-
 #page-header {
-  padding: 0 2.16em;
   text-align: left;
   float:left;
   margin-top: 0.14em;
@@ -620,8 +613,7 @@ content area & common elements
   color: #fff;
   font-size: 0.96em;
   display: inline-block;
-  margin-top: 2em;
-  margin-bottom: 2em;
+  margin-bottom: 1.5em;
   padding: 1em 1em;
 }
 
@@ -634,16 +626,15 @@ content area & common elements
   margin-top: 0.72em;
 }
 .left {
-  width: 45%;
+  width: 33%;
   float: left;
 }
 .right {
-  width: 45%;
+  width: 65%;
   float: right;
 }
-
 .split h3 {
-  margin: 1.2em 0 0.5em 0;
+  margin: 0 0 0.5em 0;
   padding-bottom: 0.15em;
   border-bottom: 1px dotted;
   font-weight: 400;
@@ -653,6 +644,7 @@ content area & common elements
 }
 .split ul {
   list-style: circle outside;
+  padding-left: 20px;
 }
 .loginBtn {
   box-sizing: border-box;
@@ -808,4 +800,12 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
 
 .answer {
   margin-left: 20px;
+}
+
+.stats-limits-div {
+  margin: 10px 0 30px 127px;
+}
+
+.stats-limits-div input[type=number] {
+  width:80px;
 }
