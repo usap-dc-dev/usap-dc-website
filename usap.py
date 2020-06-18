@@ -2268,6 +2268,8 @@ def landing_page(dataset_id):
 
 def getCMRUrls(dif_records):
     # get the CMR pages for each dif record
+    if not dif_records:
+        return
     for rec in dif_records:
         # use the CMR API to get the concept-id
         try: 
