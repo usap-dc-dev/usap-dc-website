@@ -1844,7 +1844,7 @@ def getReplacedDataset(uid):
 def updateRecentData(uid):
     # update the recent_data.txt file
     conn, cur = usap.connect_to_db()
-    query = "SELECT id, title, creator, release_date, string_agg(award_id,',') AS awards " + \
+    query = "SELECT id, title, creator, date_created, string_agg(award_id,',') AS awards " + \
             "FROM dataset ds LEFT JOIN dataset_award_map dam on dam.dataset_id = ds.id " + \
             "WHERE ds.id = '%s'" % uid + \
             "GROUP BY ds.id;"
@@ -1852,7 +1852,7 @@ def updateRecentData(uid):
     res = cur.fetchone()
     entries = {}
     if res:
-        newline = "%s\t<a href=/view/dataset/%s>%s</a>\t%s\t%s\n" % (res.get('release_date'), uid, res.get('awards', 'Award Not Known'), 
+        newline = "%s\t<a href=/view/dataset/%s>%s</a>\t%s\t%s\n" % (res.get('date_created'), uid, res.get('awards', 'Award Not Known'), 
                                                                      res.get('creator'), res.get('title'))
         try:
             # read in file
