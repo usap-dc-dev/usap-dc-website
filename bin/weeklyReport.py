@@ -141,17 +141,6 @@ if __name__ == '__main__':
     msg += crossref.get_crossref_pubs()
     msg += """</ul>"""
 
-    # datasets that are not yet archived in  glacier
-    query = "SELECT id, title, archived_date FROM dataset d LEFT JOIN dataset_archive da ON da.dataset_id = d.id WHERE archived_date is NULL ORDER BY id"
-    cur.execute(query)
-    res = cur.fetchall()
-    if res:
-        msg += """<h3>Datasets Not Archived in Glacier:</h3><ul>"""
-        for r in res:
-            url = config['DATASET_LANDING_PAGE'] % r['id']
-            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], unicode(r['title'], 'utf-8'))
-            
-        msg += """</ul>"""
 
     # Check if data set has a valid dif
     query = "SELECT id, title, dif_id FROM dataset d LEFT JOIN dataset_dif_map dfm ON dfm.dataset_id = d.id WHERE dif_id is NULL ORDER BY id"
@@ -170,6 +159,17 @@ if __name__ == '__main__':
     res = cur.fetchall()
     if res:
         msg += """<h3>Datasets not Linked to a Project:</h3><ul>"""
+        for r in res:
+            url = config['DATASET_LANDING_PAGE'] % r['id']
+            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], unicode(r['title'], 'utf-8'))
+        msg += """</ul>"""
+
+    # datasets that are not yet archived in glacier
+    query = "SELECT id, title, archived_date FROM dataset d LEFT JOIN dataset_archive da ON da.dataset_id = d.id WHERE archived_date is NULL ORDER BY id"
+    cur.execute(query)
+    res = cur.fetchall()
+    if res:
+        msg += """<h3>Datasets Not Archived in Glacier:</h3><ul>"""
         for r in res:
             url = config['DATASET_LANDING_PAGE'] % r['id']
             msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], unicode(r['title'], 'utf-8'))

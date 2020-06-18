@@ -633,6 +633,14 @@ content area & common elements
   width: 65%;
   float: right;
 }
+.banner-left {
+  width: 45%;
+  float: left;
+}
+.banner-right {
+  width: 45%;
+  float: right;
+}
 .split h3 {
   margin: 0 0 0.5em 0;
   padding-bottom: 0.15em;

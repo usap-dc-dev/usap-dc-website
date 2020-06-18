@@ -49,6 +49,8 @@ app.config.update(
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
     AWARDS_FOLDER="awards",
+    CROSSREF_FILE="inc/crossref_sql.txt",
+    OLD_CROSSREF_FILE="inc/old_crossref_sql.txt",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     DEBUG=True
@@ -2539,6 +2541,15 @@ def map():
     return render_template('data_map.html')
 
 
+def get_crossref_sql():
+    try:
+        with open(app.config['CROSSREF_FILE']) as infile:
+            sql = infile.read()
+    except:
+        sql = "No Crossref SQL file to be ingested"
+    return sql
+
+
 @app.route('/curator', methods=['GET', 'POST'])
 def curator():
     template_dict = {}
@@ -2554,23 +2565,47 @@ def curator():
         template_dict['need_login'] = False
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
 
-        # if Add User To Dataset / Project button pressed
+
+        # if Add User To Dataset / Project, or Ingest Crossref button pressed
         if request.args.get('fnc') is not None:
             return render_template('curator.html', type=request.args['fnc'], projects=filter_datasets_projects(dp_type='Project'),
                                    datasets=filter_datasets_projects(dp_type='Dataset'), persons=get_persons(), orgs=get_orgs(), 
-                                   roles=get_roles())
+                                   roles=get_roles(), crossref_sql=get_crossref_sql())
 
         # if Add User submit button pressed
         if request.method == 'POST' and request.form.get('submit') == 'add_user':
+            message = []
+            error = None 
             try:
                 msg = cf.addUserToDatasetOrProject(request.form)
                 if msg:
-                    template_dict['error'] = "Error adding user: " + msg
+                    error = "Error adding user: " + msg
                 else:
-                    template_dict['message'].append("Successfully added user")
+                    message.append("Successfully added user")
             except Exception as err:
-                template_dict['error'] = "Error adding user: " + str(err)
-        
+                error = "Error adding user: " + str(err)
+            finally:
+                return render_template('curator.html', type='addUser', projects=filter_datasets_projects(dp_type='Project'),
+                                   datasets=filter_datasets_projects(dp_type='Dataset'), persons=get_persons(), orgs=get_orgs(), 
+                                   roles=get_roles(), error=error, message=message)
+
+        # if Add Import Crossref button pressed
+        if request.method == 'POST' and request.form.get('submit') == 'crossref_to_db':
+            message = []
+            error = None 
+            try:
+                # run sql to import data into the database
+                sql_str = request.form.get('crossref_sql').encode('utf-8')   
+                cur.execute(sql_str)
+                # rename crossref file once it has been ingested
+                os.rename(app.config['CROSSREF_FILE'], app.config['OLD_CROSSREF_FILE'])
+
+                message.append("Successfully imported to database")                        
+            except Exception as err:
+                error = "Error importing Crossref Publications: " + str(err)
+            finally:
+                return render_template('curator.html', type='addCrossref', crossref_sql=sql_str, message=message, error=error)
+            
         if not request.args.get('uid'):    
             # get list of json files in submission directory, ordered by date
             query = "SELECT * FROM submission ORDER BY submitted_date DESC"
@@ -3427,6 +3462,21 @@ def project_json(project_id):
     return flask.jsonify(get_project(project_id))
 
 
+def isNsfFunder(funders, award):
+    nsf_dois = ['10.13039/100000001', '10.13039/100000087', '10.13039/100000162', '10.13039/100007352', '10.13039/100006447']
+    nsf_names = ['National Science Foundation', 'NSF', 'Polar', 'Antarctic', 'Ice Sheets', 'WAIS', 'LTER', 'Southern Ocean',
+                 'National Stroke Foundation', 'National Sleep Foundation']
+
+    award_dash = award[0:2] + "-" + award[2:]
+    for funder in funders:
+        if funder.get('DOI') and funder['DOI'] in nsf_dois and funder.get('award') and (award in funder['award'] or award_dash in funder['award']): 
+           return True
+        if funder.get('name') and any(n in funder['name'] for n in nsf_names) and funder.get('award') and (award in funder['award'] or award_dash in funder['award']):
+           return True
+
+    return False
+
+
 def crossref2ref_text(item):
     # probably not needed - all publications appear to have a DOI that works with the API
     ref_text = ""
@@ -3475,7 +3525,7 @@ def crossref2ref_text(item):
 @app.route('/crossref_pubs', methods=['POST'])
 def crossref_pubs():
 
-    api = 'https://api.crossref.org/works?filter=award.number:'
+    api = 'https://api.crossref.org/works?filter=funder:10.13039/100000001,funder:10.13039/100000087,award.number:'
     bib_api = 'https://api.crossref.org/works/%s/transform/text/x-bibliography'
 
     awards = request.form.getlist('awards[]')
@@ -3488,6 +3538,8 @@ def crossref_pubs():
                 items = r['message']['items']
                 # for each publication, see if it has a DOI
                 for item in items:
+                    if not isNsfFunder(item.get('funder'), award_id):
+                        continue
                     ref_doi = item.get('DOI')
                     if ref_doi and ref_doi != '':
                         # use the DOI to get the cite-as text from the x-bibliography API

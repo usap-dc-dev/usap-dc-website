@@ -13,6 +13,8 @@ api = 'https://api.crossref.org/works?filter=award.number:'
 bib_api = 'https://api.crossref.org/works/%s/transform/text/x-bibliography'
 
 log_file = '/web/usap-dc/htdocs/inc/crossref_harvest.log'
+sql_file = '/web/usap-dc/htdocs/inc/crossref_sql.txt'
+ref_uid_file = '/web/usap-dc/htdocs/inc/ref_uid'
 
 
 def connect_to_db():
@@ -71,13 +73,29 @@ def crossref2ref_text(item):
     return ref_text
 
 
-def get_crossref_pubs(verbose=False, new_only=True):
+def isNsfFunder(funders, award, doi):
+    nsf_dois = ['10.13039/100000001', '10.13039/100000087', '10.13039/100000162', '10.13039/100007352', '10.13039/100006447']
+    nsf_names = ['National Science Foundation', 'NSF', 'Polar', 'Antarctic', 'Ice Sheets', 'WAIS', 'LTER', 'Southern Ocean']
+
+
+    award_dash = award[0:2] + "-" + award[2:]
+    for funder in funders:
+        if funder.get('DOI') and funder['DOI'] in nsf_dois and funder.get('award') and (award in funder['award'] or award_dash in funder['award']): 
+           return True
+        if funder.get('name') and any(n in funder['name'] for n in nsf_names) and funder.get('award') and (award in funder['award'] or award_dash in funder['award']):
+            return True
+    return False
+
+
+def get_crossref_pubs(new_only=True):
     (conn, cur) = connect_to_db()
     query = "SELECT * FROM project_award_map"
     cur.execute(query)
     res = cur.fetchall()
     output = ""
-    old_uid = 0
+    sql = ""
+    new_refs = {}
+    new_proj_refs = set()
     if new_only:
         with open (log_file, "r") as file:
             last_harvest_datetime = float(file.read())
@@ -86,26 +104,33 @@ def get_crossref_pubs(verbose=False, new_only=True):
     for p in res:
         proj_uid = p['proj_uid']
         award_id = p['award_id']
-        if verbose:
-            print("AWARD: %s") % award_id
+
+        if award_id == "None":
+            continue
         r = requests.get(api + award_id).json()
 
-        items = r['message']['items']
+        items = r['message'].get('items')
+        if not items:
+            continue
         # for each publication, see if it has a DOI
         for item in items:
-
+            # try and check whether the reference has NSF as the funder - this should weed out most non-polar refs
+            is_nsf = isNsfFunder(item.get('funder'), award_id, item.get('DOI'))
+            # comment out SQL for non-nsf refs so that Curator can decide whether to add it to DB
+            if is_nsf: 
+                comment =  '' 
+            else: 
+                comment = '--'
             # if new_only parameter is set, only harvest publications that were indexed since the last time we ran the harvest
             if new_only:
                 index_datetime = item['indexed']['timestamp']/1000
                 if index_datetime < last_harvest_datetime:
                     continue
-            
 
             ref_doi = item.get('DOI')
             if ref_doi and ref_doi != '':
                 # use the DOI to get the cite-as text from the x-bibliography API
                 bib_url = bib_api % ref_doi
-                # print(bib_url)
                 r_bib = requests.get(bib_url)
                 if r_bib.status_code == 200 and r_bib.content:
                     # split off the DOI in the cite-as string, as we don't need in our ref_text
@@ -117,37 +142,59 @@ def get_crossref_pubs(verbose=False, new_only=True):
                 # if no DOI, generate ref_text from what we have in crossref
                 ref_text = crossref2ref_text(item)
 
-            # check if publicaton already exists in reference table, using DOI or ref_text
             ref_text = unicode(ref_text, 'utf-8')
-            query = "SELECT * FROM reference WHERE doi = '%s' OR ref_text = '%s'" % (ref_doi, ref_text)
-            cur.execute(query)
-            res2 = cur.fetchall()
-            sql = ""
-            if len(res2) == 0:
-                # If not already in reference table, add to table
-                # first generate ref_uid
-                ref_uid, old_uid = generate_ref_uid(old_uid)
-                sql += "INSERT INTO reference (ref_uid, ref_text, doi, from_crossref) VALUES ('%s', '%s', '%s', 't');\n" % (ref_uid, ref_text, ref_doi)
+
+            # check if publication has already been added during this run of this script
+            if ref_doi in new_refs:
+                ref_uid = new_refs[ref_doi]
             else:
-                ref_uid = res2[0]['ref_uid']
+                # check if publicaton already exists in reference table, using DOI or ref_text
+                query = "SELECT * FROM reference WHERE doi = '%s' OR ref_text = '%s'" % (ref_doi, ref_text)
+                cur.execute(query)
+                res2 = cur.fetchall()
+
+                if len(res2) == 0:
+                    # If not already in reference table, add to table
+                    ref_uid = generate_ref_uid()
+                    sql += comment + "INSERT INTO reference (ref_uid, ref_text, doi, from_crossref) VALUES ('%s', '%s', '%s', 't');\n" % (ref_uid, ref_text, ref_doi)
+                else:
+                    ref_uid = res2[0]['ref_uid']
+
+                new_refs[ref_doi] = ref_uid
 
             # Add to project_ref_map, if not already there
+            # Check DB and also if already added during this run of the script
+            proj_ref = "%s-%s" % (proj_uid, ref_uid)
+
             query = "SELECT COUNT(*) FROM project_ref_map WHERE proj_uid='%s' AND ref_uid='%s'" % (proj_uid, ref_uid)
             cur.execute(query)
             res2 = cur.fetchone()
-            if res2['count'] == 0:
-                sql += "INSERT INTO project_ref_map (proj_uid, ref_uid) VALUES ('%s', '%s');" % (proj_uid, ref_uid)
-            if sql != "":
-                if verbose:
-                    print(sql)
-                cur.execute(sql)
+            if res2['count'] == 0 and proj_ref not in new_proj_refs:
+                new_proj_refs.add(proj_ref)
+                sql += comment + "INSERT INTO project_ref_map (proj_uid, ref_uid) VALUES ('%s', '%s');\n" % (proj_uid, ref_uid)
+
+                # include project details to help curator decide whether to include
+                query = "SELECT * FROM project_view WHERE uid = '%s'" % proj_uid
+                cur.execute(query)
+                proj = cur.fetchone()
+                sql += "-- Project Title: %s\n-- Project People: %s\n" % (proj['title'], proj['persons'])
+
+                # include commented link to API URL so curator can check if not sure whether to include
+                sql += "-- %s%s\n\n" % (api, award_id)
+
+                # generate list for Weekly Report
                 proj_url = config['PROJECT_LANDING_PAGE'] % proj_uid
-                output += """<li><a href="%s">%s</a> %s</li>""" % (proj_url, proj_uid, ref_text)
-
-                if verbose:
-                    print("Added reference %s: %s to project %s" % (ref_uid, ref_text, proj_uid))
-
-    cur.execute("COMMIT")
+                if is_nsf:
+                    output += """<li><a href="%s">%s</a> %s</li>""" % (proj_url, proj_uid, ref_text)
+                else:
+                    output += """<li><i>(<a href="%s">%s</a> %s)</i></li>""" % (proj_url, proj_uid, ref_text)
+    
+    if sql != '':    
+        # write sql to a file to be ingested by curator       
+        sql += "\nCOMMIT;\n"
+        with open(sql_file, 'a') as file:
+            # file.write(sql.encode(encoding="ascii", errors="replace"))
+            file.write(sql.encode('utf-8'))
 
     # write timestamp to log
     with open(log_file, 'w') as file:
@@ -156,19 +203,16 @@ def get_crossref_pubs(verbose=False, new_only=True):
     return output
 
 
-def generate_ref_uid(old_uid):
-    if old_uid == 0:
-        (conn, cur) = connect_to_db()
-        #first find the highest ref_uid already in the table
-        query = "SELECT MAX(ref_uid) FROM reference;"
-        cur.execute(query)
-        res = cur.fetchall()
-        old_uid = int(res[0]['max'].replace('ref_', ''))
+def generate_ref_uid():
+    old_uid = int(open(ref_uid_file, 'r').readline().strip())
+    new_uid = old_uid + 1
+    ref_uid = 'ref_%0*d' % (7, new_uid)
 
-    old_uid += 1
-    ref_uid = 'ref_%0*d' % (7, old_uid)
-    return ref_uid, old_uid
+    with open(ref_uid_file, 'w') as refFile:
+        refFile.write(str(new_uid))
+
+    return ref_uid
 
 
 if __name__ == '__main__':
-    get_crossref_pubs(verbose=True, new_only=True)
+    get_crossref_pubs(new_only=True)

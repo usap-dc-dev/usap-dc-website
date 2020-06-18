@@ -433,12 +433,24 @@
         </div>
       </form>
 
-
-
+    {% elif type == 'addCrossref' %}
+      <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
+      <h3>Ingest Crossref Publications</h3>
+      <form action="{{url_for('curator')}}" method="post" enctype="multipart/form-data">
+        <button type="submit" name="submit" value="crossref_to_db" title="Import Crossref Publications" onclick="waitCursor()">Import to Database</button>
+        <table>
+        <tr>
+           <td>
+               <textarea id="crossref_sql" name="crossref_sql" cols="130" rows="50">{{ crossref_sql }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </form>
     {% else %}
 
     <div style="padding:10px;">
       <a class="btn btn-primary" href="{{url_for('curator',fnc='addUser')}}">Add User To Dataset / Project</a>
+      <a class="btn btn-primary" href="{{url_for('curator',fnc='addCrossref')}}">Ingest Crossref Publications</a>
     </div>
 
       <div id='dif-browser-table'>

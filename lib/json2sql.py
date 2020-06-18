@@ -11,7 +11,7 @@ import os
 import json
 from flask import url_for
 import usap
-from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap, checkAltIds
+from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap, checkAltIds, generate_ref_uid
 
 config = json.loads(open('config.json', 'r').read())
 dc_config = json.loads(open('inc/datacite.json', 'r').read())
@@ -118,7 +118,7 @@ def make_sql(data, id):
         res = cur.fetchone()
         if not res:
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
-            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'], data['submitter_email'])           
+            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'], data.get('submitter_email'))           
 
             line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], data["submitter_first"], data["submitter_last"], data.get("submitter_email", ''), data.get("submitter_orcid", ''))
             sql_out += line
@@ -277,12 +277,6 @@ def make_sql(data, id):
     if data.get('publications') is not None and len(data['publications']) > 0:
         sql_out += "--NOTE: adding references\n"
 
-        #first find the highest ref_uid already in the table
-        query = "SELECT MAX(ref_uid) FROM reference;"
-        cur.execute(query)
-        res = cur.fetchall()
-        old_uid = int(res[0]['max'].replace('ref_', ''))
-
         for pub in data['publications']:
             # see if they are already in the references table
             query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('text'))
@@ -290,8 +284,7 @@ def make_sql(data, id):
             res = cur.fetchall()
             if len(res) == 0:
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
-                old_uid += 1
-                ref_uid = 'ref_%0*d' % (7, old_uid)
+                ref_uid = generate_ref_uid()
                 sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
                     (ref_uid, pub.get('text'), pub.get('doi'))
             else:
@@ -645,12 +638,6 @@ def editDatasetJson2sql(data, uid):
             if data.get('publications') is not None and len(data['publications']) > 0:
                 sql_out += "\n--NOTE: adding references\n"
 
-                #first find the highest ref_uid already in the table
-                query = "SELECT MAX(ref_uid) FROM reference;"
-                cur.execute(query)
-                res = cur.fetchall()
-                old_uid = int(res[0]['max'].replace('ref_', ''))
-
                 for pub in data['publications']:
                     # see if they are already in the references table
                     query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('text'))
@@ -658,8 +645,7 @@ def editDatasetJson2sql(data, uid):
                     res = cur.fetchall()
                     if len(res) == 0:
                         # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
-                        old_uid += 1
-                        ref_uid = 'ref_%0*d' % (7, old_uid)
+                        ref_uid = generate_ref_uid
                         sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
                             (ref_uid, pub.get('text'), pub.get('doi'))
                     else:
@@ -701,7 +687,7 @@ def editDatasetJson2sql(data, uid):
                 if res['count'] == 0:
                     first_name, last_name = data["submitter_name"].split(', ', 1)
                     # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
-                    sql_out += checkAltIds(data['submitter_name'], first_name, last_name, 'SUBMITTER_NAME', data['submitter_orcid'], data['submitter_email'])           
+                    sql_out += checkAltIds(data['submitter_name'], first_name, last_name, 'SUBMITTER_NAME', data['submitter_orcid'], data.get('submitter_email'))          
 
 
                     line = "INSERT INTO person(id,first_name,last_name,email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], first_name, last_name, data.get("submitter_email", ''), data.get("submitter_orcid", ''))

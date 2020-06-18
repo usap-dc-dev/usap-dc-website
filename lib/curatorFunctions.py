@@ -28,6 +28,7 @@ PYTHON = "/opt/rh/python27/root/usr/bin/python"
 LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
 PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
 RECENT_DATA_FILE = "inc/recent_data.txt"
+REF_UID_FILE = "inc/ref_uid"
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -750,12 +751,6 @@ def projectJson2sql(data, uid):
     if data.get('publications') is not None and len(data['publications']) > 0:
         sql_out += "--NOTE: adding references\n"
 
-        #first find the highest ref_uid already in the table
-        query = "SELECT MAX(ref_uid) FROM reference;"
-        cur.execute(query)
-        res = cur.fetchall()
-        old_uid = int(res[0]['max'].replace('ref_', ''))
-
         for pub in data['publications']:
             # see if they are already in the references table
             query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
@@ -763,8 +758,7 @@ def projectJson2sql(data, uid):
             res = cur.fetchall()
             if len(res) == 0:
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
-                old_uid += 1
-                ref_uid = 'ref_%0*d' % (7, old_uid)
+                ref_uid = generate_ref_uid()
                 sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
                     (ref_uid, pub.get('name'), pub.get('doi'))
             else:
@@ -1297,12 +1291,6 @@ def editProjectJson2sql(data, uid):
             if data.get('publications') is not None and len(data['publications']) > 0:
                 sql_out += "\n--NOTE: adding references\n"
 
-                #first find the highest ref_uid already in the table
-                query = "SELECT MAX(ref_uid) FROM reference;"
-                cur.execute(query)
-                res = cur.fetchall()
-                old_uid = int(res[0]['max'].replace('ref_', ''))
-
                 for pub in data['publications']:
                     # see if they are already in the references table
                     query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
@@ -1310,8 +1298,7 @@ def editProjectJson2sql(data, uid):
                     res = cur.fetchall()
                     if len(res) == 0:
                         sql_out += "\n--NOTE: adding %s to reference table\n" % pub['name']
-                        old_uid += 1
-                        ref_uid = 'ref_%0*d' % (7, old_uid)
+                        ref_uid = generate_ref_uid()
                         sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
                             (ref_uid, pub.get('name'), pub.get('doi'))
                     else:
@@ -1903,3 +1890,14 @@ def getLandingPage(uid):
             landing_page = '/view/dataset/%s' % uid.replace('e', '')
 
     return landing_page
+
+
+def generate_ref_uid():
+    old_uid = int(open(REF_UID_FILE, 'r').readline().strip())
+    new_uid = old_uid + 1
+    ref_uid = 'ref_%0*d' % (7, new_uid)
+
+    with open(REF_UID_FILE, 'w') as refFile:
+        refFile.write(str(new_uid))
+
+    return ref_uid
