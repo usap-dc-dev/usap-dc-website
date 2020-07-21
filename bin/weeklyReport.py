@@ -143,7 +143,12 @@ if __name__ == '__main__':
 
 
     # Check if data set has a valid dif
-    query = "SELECT id, title, dif_id FROM dataset d LEFT JOIN dataset_dif_map dfm ON dfm.dataset_id = d.id WHERE dif_id is NULL ORDER BY id"
+    query = """SELECT id, title, dif_id FROM dataset d 
+               LEFT JOIN dataset_dif_map dfm ON dfm.dataset_id = d.id 
+               LEFT JOIN dataset_weekly_report dwr ON dwr.dataset_id = d.id
+               WHERE dif_id IS NULL 
+               AND no_dif IS NOT TRUE
+               ORDER BY id"""
     cur.execute(query)
     res = cur.fetchall()
     if res:
@@ -154,7 +159,12 @@ if __name__ == '__main__':
         msg += """</ul>"""
 
     # Check if datasets not linked to projects
-    query = "SELECT id, title, proj_uid FROM dataset d LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = d.id WHERE proj_uid is NULL ORDER BY id"
+    query = """SELECT id, title, proj_uid FROM dataset d 
+               LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = d.id 
+               LEFT JOIN dataset_weekly_report dwr ON dwr.dataset_id = d.id
+               WHERE proj_uid is NULL 
+               AND no_project IS NOT TRUE
+               ORDER BY id"""
     cur.execute(query)
     res = cur.fetchall()
     if res:

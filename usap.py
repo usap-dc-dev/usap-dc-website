@@ -2681,6 +2681,7 @@ def curator():
                                                        'Completed', 'Rejected', 'No Action Required'] 
                 else:
                     template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required']
+                template_dict['weekly_report_options'] = cf.getWeeklyReportOptions(uid)
         
             submission_file = os.path.join(submitted_dir, filename + ".json")
             template_dict['filename'] = submission_file
@@ -3017,6 +3018,22 @@ def curator():
                         template_dict['message'].append("Submission status and/or comments updated.")
                     except Exception as err:
                         template_dict['error'] = "Error updating status and/or comments: " + str(err)
+                    
+
+                    if template_dict['type'] == 'dataset':
+                        try:
+                            ds_dif = request.form.get('ds_dif_cbx') != None
+                            ds_proj = request.form.get('ds_proj_cbx') != None
+                            template_dict["weekly_report_options"] = {'dataset_id': uid, 'no_dif': ds_dif, 'no_project': ds_proj}
+                            query = """INSERT INTO dataset_weekly_report(dataset_id, no_dif, no_project) VALUES (%s, %s, %s)
+                                       ON CONFLICT (dataset_id) DO
+                                       UPDATE SET no_dif=%s, no_project=%s;
+                                    """ % (uid, ds_dif, ds_proj, ds_dif, ds_proj)
+                            cur.execute(query)
+
+                        except Exception as err:
+                            template_dict['error'] = "Error updating Weekly Report options: " + str(err)
+
 
                 # PROJECT CURATION
 

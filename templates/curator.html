@@ -283,8 +283,18 @@
           <b>Comments</b><br/>
           <textarea id="comment_text" name="comment_text" cols="100" rows="5">{{comments}}</textarea>
           <br><br>
+
+          {% if type == 'dataset' %}
+            <h4>The following will determine how the dataset appears in the Weekly Report:</h4>
+            <input type="checkbox" id="ds_dif_cbx" name="ds_dif_cbx" {% if weekly_report_options.no_dif %} checked {% endif %} >
+            <label for="ds_dif_cbx">Dataset does not have associated DIF record</label><br>
+            <input type="checkbox" id="ds_proj_cbx" name="ds_proj_cbx" {% if weekly_report_options.no_project %} checked {% endif %} >
+            <label for="ds_proj_cbx">Dataset does not have associated project</label><br>
+            <br>
+          {% endif %}
           <button type="submit" name="submit" value="change_status" onclick="waitCursor()">Update</button>
         </div>
+
       </div>
       
 

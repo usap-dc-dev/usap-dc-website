@@ -1901,3 +1901,12 @@ def generate_ref_uid():
         refFile.write(str(new_uid))
 
     return ref_uid
+
+
+def getWeeklyReportOptions(uid):
+    conn, cur = usap.connect_to_db(curator=True)
+    query = "SELECT * FROM dataset_weekly_report WHERE dataset_id = '%s';" % uid.replace('e', '')
+    cur.execute(query)
+    res = cur.fetchone()
+    return res
+
