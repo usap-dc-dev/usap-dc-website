@@ -32,6 +32,7 @@ from services.api_v1 import blueprint as api_v1
 # from services.api_v2 import blueprint as api_v2
 import services.settings as rp_settings
 import traceback
+import pandas as pd
 
 
 app = Flask(__name__)
@@ -3662,7 +3663,8 @@ def stats():
             LEFT JOIN dif_test dt ON d.id_orig = dt.dif_id;''') 
     cur.execute(query)
     data = cur.fetchall()
-    submissions = {}
+    months =  pd.date_range(start_date,end_date,freq='MS').strftime("%Y-%m-01").tolist()
+    submissions = {m: {'bytes': 0, 'num_files': 0, 'submissions': set()} for m in months}
     for row in data:
         if row['dif_date'] is not None:
             date = row['dif_date']
@@ -3682,12 +3684,9 @@ def stats():
         bytes = row['file_size']
         num_files = row['file_count']
         submission = row['dataset_id']
-        if submissions.get(month):
-            submissions[month]['bytes'] += bytes
-            submissions[month]['num_files'] += num_files
-            submissions[month]['submissions'].add(submission)
-        else:
-            submissions[month] = {'bytes': bytes, 'num_files': num_files, 'submissions': {submission}}
+        submissions[month]['bytes'] += bytes
+        submissions[month]['num_files'] += num_files
+        submissions[month]['submissions'].add(submission)
 
     submission_bytes = []
     submission_num_files = []
@@ -3702,6 +3701,22 @@ def stats():
     template_dict['submission_num_files'] = submission_num_files
     template_dict['submission_submissions'] = submission_submissions
     template_dict['download_numbers'] = getDownloadsForDatasets(start_date, end_date)
+
+    query = cur.mogrify('''SELECT * from project WHERE date_created BETWEEN '%s' AND '%s';''' % (start_date, end_date)) 
+    cur.execute(query)
+    data = cur.fetchall()
+    projects = {m:0 for m in months}
+    for row in data:
+        date = row['date_created']
+        month = "%s-%02d-01" % (date.year, date.month)
+        projects[month] += 1
+
+    projects_created = []
+    months_list = projects.keys()
+    months_list.sort()
+    for month in months_list:
+        projects_created.append([month, projects[month]])
+    template_dict['projects_created'] = projects_created
 
     return render_template('statistics.html', **template_dict)
 

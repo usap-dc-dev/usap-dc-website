@@ -5,6 +5,7 @@
 <div id="download_numfiles_bytes" hidden>{{download_numfiles_bytes|tojson}}</div>
 <div id="download_users_downloads" hidden>{{download_users_downloads|tojson}}</div>
 <div id="submission_submissions" hidden>{{submission_submissions|tojson}}</div>
+<div id="projects_created" hidden>{{projects_created|tojson}}</div>
 
 <div class="content">
 
@@ -17,6 +18,8 @@
   </form>
 
   <div id="sm_submissions_chart_div"></div>
+
+  <div id="sm_projects_chart_div"></div>
 
   <div id="dl_users_downloads_chart_div"></div>
   <div class="stats-limits-div" id="dl_users">
@@ -222,18 +225,26 @@
     row[0] = makeDate(row[0]);
   }
 
-  //submissions: number of submissions
+  //submissions: number of dataset submissions
   var sm_submissions_array= JSON.parse($("#submission_submissions").text());
   for (i in sm_submissions_array) {
     row = sm_submissions_array[i];
     row[0] = makeDate(row[0]);
   }  
 
+  //submissions: number of project submissions
+  var sm_projects_array= JSON.parse($("#projects_created").text());
+  for (i in sm_projects_array) {
+    row = sm_projects_array[i];
+    row[0] = makeDate(row[0]);
+  }  
+
   google.setOnLoadCallback(function() {
     drawChart(sm_submissions_array, 'USAP-DC Monthly Submissions', 'Month', 'Number of submissions', 'sm_submissions_chart_div');
 
-    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests*', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div', $("#dl_users"));
+    drawChart(sm_projects_array, 'USAP-DC Monthly Projects Created', 'Month', 'Number of projects', 'sm_projects_chart_div');
 
+    drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests*', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div', $("#dl_users"));
 
     drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div', $("#dl_files"));
    
