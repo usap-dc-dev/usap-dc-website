@@ -3681,7 +3681,7 @@ def stats():
            datetime.strptime(date, date_fmt) > end_date):
             continue
         month = "%s-01" % date[:7]
-        bytes = row['file_size']
+        bytes = row['file_size_uncompressed'] if row.get('file_size_uncompressed') else row['file_size_on_disk']
         num_files = row['file_count']
         submission = row['dataset_id']
         submissions[month]['bytes'] += bytes
