@@ -195,7 +195,7 @@ class ProjectsCollection(Resource):
                 if res.get('datasets'):
                     res['datasets'] = json.loads(res['datasets'])
                     for ds in res.get('datasets'):
-                        ds['landing_page'] = "%sview/dataset/%s" % (config['USAP_DOMAIN'], ds['dataset_uid'])
+                        ds['landing_page'] = ds['url']
                     print(ds['landing_page'])
                 if res.get('deployments'):
                     res['deployments'] = json.loads(res['deployments'])
@@ -230,7 +230,7 @@ class ProjectItem(Resource):
             if res.get('datasets'):
                 res['datasets'] = json.loads(res['datasets'])
                 for ds in res.get('datasets'):
-                    ds['landing_page'] = "%sview/dataset/%s" % (config['USAP_DOMAIN'], ds['dataset_uid'])
+                    ds['landing_page'] = ds['url']
             if res.get('deployments'):
                 res['deployments'] = json.loads(res['deployments'])
         except Exception as e:
