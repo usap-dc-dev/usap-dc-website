@@ -753,9 +753,17 @@ def projectJson2sql(data, uid):
 
         for pub in data['publications']:
             # see if they are already in the references table
-            query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
-            cur.execute(query)
-            res = cur.fetchall()
+            res = []
+            if pub.get('doi'):
+                query = "SELECT * FROM reference WHERE doi='%s';" % (pub.get('doi'))
+                cur.execute(query)
+                res = cur.fetchall()
+            elif (not pub.get('doi') or pub['doi'] == '') and pub.get('name'):
+                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (pub.get('name'))
+                print(query)
+                cur.execute(query)
+                res = cur.fetchall()
+
             if len(res) == 0:
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
                 ref_uid = generate_ref_uid()
@@ -1293,9 +1301,17 @@ def editProjectJson2sql(data, uid):
 
                 for pub in data['publications']:
                     # see if they are already in the references table
-                    query = "SELECT * FROM reference WHERE doi='%s' AND ref_text = '%s';" % (pub.get('doi'), pub.get('name'))
-                    cur.execute(query)
-                    res = cur.fetchall()
+                    res = []
+                    if pub.get('doi'):
+                        query = "SELECT * FROM reference WHERE doi='%s';" % (pub.get('doi'))
+                        cur.execute(query)
+                        res = cur.fetchall()
+                    elif (not pub.get('doi') or pub['doi'] == '') and pub.get('name'):
+                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (pub.get('name'))
+                        print(query)
+                        cur.execute(query)
+                        res = cur.fetchall()
+
                     if len(res) == 0:
                         sql_out += "\n--NOTE: adding %s to reference table\n" % pub['name']
                         ref_uid = generate_ref_uid()
