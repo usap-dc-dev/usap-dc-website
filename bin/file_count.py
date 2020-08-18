@@ -115,6 +115,8 @@ def get_dir_info(topdir):
     # print("-> subdirs = ", subdir_count)
     # print("-> files = ", file_count)
     # print("-> total size = ", file_size)
+    # print("u_file_size: ", u_file_size)
+    # print(mime_types)
     mime_types.discard(None)    
     return file_count, file_size, u_file_size, list(mime_types)
 
@@ -156,9 +158,9 @@ def update_db(data_list):
         # check if dataset_id already exist in table
         sql_line = "Select * "\
                     "From dataset_file_info "\
-                    "WHERE dataset_id = '{0}';".format(row[0])
+                    "WHERE dataset_id = %s AND dir_name = %s;"
         # print(sql_line)
-        cur.execute(sql_line)
+        cur.execute(sql_line, (row[0], row[1]))
         data = cur.fetchall()
         # print(data)
         # if no data returned use insert otherwise update
