@@ -1163,6 +1163,7 @@ def dataset2(dataset_id=None):
             else:
                 message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
+            message += "\nSubmitter: %s\n" % msg_data['submitter_name']
             msg = MIMEText(message)
             if msg_data.get('submitter_email'):
                 sender = msg_data.get('submitter_email')
@@ -1368,6 +1369,7 @@ def project(project_id=None):
             else:
                 message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
+            message += "\nSubmitter: %s\n" % msg_data['submitter_name']
             msg = MIMEText(message)
 
             # use submitter's email if available, otherwise the email given in the form
