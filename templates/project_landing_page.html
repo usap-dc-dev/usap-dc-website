@@ -73,11 +73,11 @@
        {% if data.initiatives %}
         <div class="lprow">
             <div class="field">
-              Program:
+              Program{{"s" if data.initiatives|length > 1}}:
             </div>
             <div class="value-inline">
               {% for i in data.initiatives %}
-                {{i.id}}
+                {{i.id}}{{ "," if not loop.last }}
               {% endfor %}
             </div>
           </div>
