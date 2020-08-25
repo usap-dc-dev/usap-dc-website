@@ -4175,9 +4175,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
-        conds.append(cur.mogrify('dpv.science_programs = %s ', (sci_program,)))
+        conds.append(cur.mogrify('dpv.science_programs ~* %s ', (sci_program,)))
     if nsf_program:
-        conds.append(cur.mogrify('dpv.nsf_funding_programs = %s ', (nsf_program,)))
+        conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (nsf_program,)))
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     # if location:
