@@ -33,6 +33,8 @@ from services.api_v1 import blueprint as api_v1
 import services.settings as rp_settings
 import traceback
 import pandas as pd
+from github import Github
+from pprint import pprint
 
 
 app = Flask(__name__)
@@ -3258,6 +3260,84 @@ def curator_help():
     template_dict['watch_dir'] = os.path.join(current_app.root_path, "watch/isoxml")
 
     return render_template('curator_help.html', **template_dict)
+
+
+
+@app.route('/issues', methods=['GET', 'POST'])
+def issues():
+    template_dict = {}
+
+    # login
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+    else:
+        template_dict['need_login'] = False
+    
+    
+    token = config['GITHUB_TOKEN']
+    g = Github(token)
+    repo = g.get_repo("nevilleshane/hello-world")
+
+    # submit a new issue
+    if request.form.get('submit') == "submit_issue":
+        repo.create_issue(
+            title=request.form.get('new_title'),
+            body=request.form.get('new_comment')
+        )
+
+    # if New Issue button pressed
+    if request.args.get('fnc') is not None:
+        return render_template('issues.html', type=request.args['fnc'])
+
+    # display an issue
+    if request.args.get('issue_num'):
+        issue = repo.get_issue(int(request.args['issue_num']))
+        start_sender = issue.body.find('*Sent by')
+        end_sender = issue.body.find('. Created by [fire]')
+        if start_sender >=0:
+            template_dict['sender'] = issue.body[start_sender+9:end_sender]
+
+        template_dict['issue'] = issue
+        comments = issue.get_comments()
+        commenters = {}
+        for comment in comments:
+            start_commenter = comment.body.find('*Comment by')
+            end_commenter = comment.body.find(').*')
+            if start_commenter >=0:
+                commenter = comment.body[start_sender+12:end_commenter+1]
+            else:
+                commenter = comment.user.login
+            commenters[comment.id] = commenter
+        template_dict['comments'] = comments
+        template_dict['commenters'] = commenters
+
+        if request.form.get('submit') == "comment":
+            new_comment = request.form.get('new_comment')
+            if new_comment :
+                comment_meta = "*Comment by USAP-DC Curator (%s).*\n\n---\n" % session.get('user_info').get('name')
+                issue.create_comment(comment_meta+new_comment)
+        elif request.form.get('submit') == "close_issue":
+            new_comment = request.form.get('new_comment')
+            if new_comment:
+                issue.create_comment(new_comment)
+            issue.edit(state='closed')   
+        elif request.form.get('submit') == "reopen_issue":
+            print('reopen')
+            issue.edit(state='open')   
+
+    # display list of all issues
+    else:
+        issues = repo.get_issues(state="all")
+        template_dict['issues'] = issues
+
+        
+    return render_template('issues.html', **template_dict)
+
+
+
+
+
 
 
 def getFromDifTable(col, all_selected):
