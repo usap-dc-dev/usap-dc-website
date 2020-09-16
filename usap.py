@@ -1527,7 +1527,7 @@ def project(project_id=None):
 def send_autoreply(recipient, subject):
     sender = app.config['USAP-DC_GMAIL_ACCT']
     subject = "AutoReply: " + subject
-    message_text = """This is an automated confirmation that we have received your submission or edit.  We will respond shortly.  Thank you."""
+    message_text = """This is an automated confirmation that we have received your submission, edit, or message.  We will respond shortly.  Thank you."""
 
     msg_raw = create_gmail_message(sender, [recipient], subject, message_text)
 
@@ -2138,8 +2138,10 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = form['email']
-            recipients = ['info@usap-dc.org']
-            msg = MIMEText(form['msg'])
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']] #['info@usap-dc.org']
+            message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['name'], form['msg'])
+
+            msg = MIMEText(message)
             msg['Subject'] = form['subj']
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
@@ -2154,6 +2156,10 @@ def contact():
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
+            
+            # Send autoreply to user
+            send_autoreply(sender, msg['Subject'])
+
             return redirect('/thank_you/message')
         else:
             msg = "<br/>You failed to pass the captcha<br/>"
