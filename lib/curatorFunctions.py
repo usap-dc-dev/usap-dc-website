@@ -8,6 +8,7 @@ from flask import session, url_for, current_app, request
 from subprocess import Popen, PIPE
 import base64
 from datetime import datetime
+from dateutil.parser import parse
 import usap
 
 
@@ -1925,4 +1926,47 @@ def getWeeklyReportOptions(uid):
     cur.execute(query)
     res = cur.fetchone()
     return res
+
+
+def checkThreadInDb(id, opened_date):
+    conn, cur = usap.connect_to_db(curator=True)
+    query = "SELECT * FROM email_threads WHERE id = '%s';" %id
+    cur.execute(query)
+    res = cur.fetchone()
+    if res:
+        return res['state'], res['closed_date']
+    else:
+        query = "INSERT INTO email_threads(id, state, opened_date) VALUES ('%s','open', '%s');" %(id, parse(opened_date))
+        cur.execute(query)
+        cur.execute("COMMIT;")
+        return "open", None
+
+
+def updateThreadState(id, state):
+    conn, cur = usap.connect_to_db(curator=True)
+    if state == 'closed':
+        query = "UPDATE email_threads SET (state, closed_date)=('%s', '%s') WHERE id='%s';" %(state, datetime.now().date(), id)
+    else: 
+        query = "UPDATE email_threads SET (state, closed_date) =('%s', null) WHERE id='%s';" %(state, id)
+    cur.execute(query)
+    cur.execute("COMMIT;")    
+
+
+def getThreadNumbers(start_date='2020-09-01', end_date=datetime.now().date()):    
+    conn, cur = usap.connect_to_db(curator=True)
+    query = """SELECT COUNT(id), state FROM email_threads
+                WHERE opened_date >= '%s' AND opened_date <= '%s'
+                GROUP BY state""" % (start_date, end_date)
+    cur.execute(query)
+    res = cur.fetchall()
+    counts={'open':0, 'closed':0, 'all':0}
+    for row in res:
+        if row['state'] == 'open':
+            counts['open'] = row['count']
+        elif row['state'] == 'closed':
+            counts['closed'] = row['count']
+        counts['all'] += row['count']
+    return counts
+
+
 

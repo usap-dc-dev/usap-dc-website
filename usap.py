@@ -34,7 +34,16 @@ import services.settings as rp_settings
 import traceback
 import pandas as pd
 from github import Github
-from pprint import pprint
+import pickle
+from apiclient.discovery import build
+from google.auth.transport.requests import Request
+# from httplib2 import Http
+# from oauth2client import file, client, tools
+import base64
+import email
+from email.header import decode_header
+
+
 
 
 app = Flask(__name__)
@@ -56,6 +65,7 @@ app.config.update(
     OLD_CROSSREF_FILE="inc/old_crossref_sql.txt",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
+    GMAIL_PICKLE="inc/token.pickle",
     DEBUG=True
 )
 
@@ -1171,7 +1181,7 @@ def dataset2(dataset_id=None):
                 sender = msg_data.get('submitter_email')
             else:
                 sender = msg_data.get('email')
-            recipients = ['info@usap-dc.org']
+            recipients = ['help.usapdc@gmail.com']#['info@usap-dc.org']
 
             if edit:
                 msg['Subject'] = 'USAP-DC Dataset Edit'
@@ -3337,6 +3347,219 @@ def issues():
 
 
 
+
+
+@app.route('/emails', methods=['GET', 'POST'])
+def emails():
+    template_dict = {}
+    template_dict['counts'] = []
+
+    # login
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+        return render_template('emails.html', **template_dict)
+    else:
+        template_dict['need_login'] = False
+
+
+    creds = None
+    if os.path.exists(app.config['GMAIL_PICKLE']):
+        with open(app.config['GMAIL_PICKLE'], 'rb') as token:
+            creds = pickle.load(token)
+    else:
+        # if the pickle doesn't exist, need to run the bin/gmail_quickstart.py on local system to
+        # log in and create token.pickle. Then copy it to inc/token.pickle
+        template_dict['error'] = "Unable to authorise connection to account"
+        return render_template('emails.html', **template_dict)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            template_dict['error'] = "Gmail credentials are not valid"
+            return render_template('emails.html', **template_dict)
+
+    service = build('gmail', 'v1', credentials=creds)
+
+    # display one thread
+    if request.args.get('thread_id'):
+
+        if request.form.get('submit') == "close_thread":
+            cf.updateThreadState(request.args.get('thread_id'), 'closed')
+        elif request.form.get('submit') == "reopen_thread":
+            cf.updateThreadState(request.args.get('thread_id'), 'open')    
+
+        thread = service.users().threads().get(userId='me', id=request.args['thread_id']).execute()
+
+        if not thread.get('messages'):
+            return
+        message_0 = thread['messages'][0]
+        message_last = thread['messages'][-1]
+        thread['snippet'] = message_0['snippet']
+        thread['num_messages'] = len(thread['messages'])
+        for message in thread['messages']:
+            raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
+            msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
+            mime_msg = email.message_from_string(msg_str)
+            subject = decode_header(mime_msg["Subject"])[0][0]
+            if isinstance(subject, bytes):
+                # if it's a bytes, decode to str
+                subject = subject.decode()
+            message['subject'] = subject
+            message['sender'] = mime_msg.get("From")
+            message['date'] = mime_msg.get("Date")
+            message['attachments'] = []
+         
+
+            # if the email message is multipart
+            if mime_msg.is_multipart():
+                # iterate over email parts
+                for part in mime_msg.walk():
+                    # extract content type of email
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get("Content-Disposition"))
+                    try:
+                        # get the email body
+                        body = part.get_payload(decode=True).decode()
+                    except:
+                        pass
+                    if content_type == "text/plain" and "attachment" not in content_disposition:
+                        # print text/plain emails and skip attachments
+                        message['text'] = body
+                    elif "attachment" in content_disposition:
+                        # get attachment
+                        filename = part.get_filename()
+                        message['attachments'].append(filename)
+                        ### If we want to download attachments, use this code.  
+                        ### Not sure that we do, might be unsafe.
+                        # if filename:
+                        #     if not os.path.isdir(subject):
+                        #         # make a folder for this email (named after the subject)
+                        #         os.mkdir(subject)
+                        #     filepath = os.path.join(subject, filename)
+                        #     # download attachment and save it
+                        #     open(filepath, "wb").write(part.get_payload(decode=True))
+            else:
+                # extract content type of email
+                content_type = mime_msg.get_content_type()
+                # get the email body
+                body = mime_msg.get_payload(decode=True).decode()
+                if content_type == "text/plain":
+                    # print only text email parts
+                    message['text'] = body
+
+
+            if message == message_0:
+                thread['subject'] = message['subject']
+                thread['created_date'] = message['date'] 
+                thread['originator'] = message['sender']
+                thread['state'], thread['date_closed'] = cf.checkThreadInDb(thread['id'], thread['created_date'])
+            elif message == message_last:
+                thread['last_date'] = message['date']
+                thread['last_sender'] = message['sender']
+                thread['last_id'] = message['id']
+
+        template_dict['thread'] = thread
+
+        template_dict['email_recipients'] = "%s\n%s <%s>" % (thread['originator'], session['user_info'].get('name'), session['user_info'].get('email'))    
+
+        if request.form.get('submit') == "send_email":
+            try:
+                sender = app.config['USAP-DC_GMAIL_ACCT']#'info@usap-dc.org'
+                recipients_text = request.form.get('email_recipients').encode('utf-8')
+                recipients = recipients_text.splitlines()
+                recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
+                msg_raw = create_gmail_message(sender, recipients, thread.get('subject'), request.form.get('email_text'))
+                msg_raw['threadId'] = thread['id']
+ 
+                success, error = send_gmail(service, 'me', msg_raw)
+                template_dict['message'] = success
+                template_dict['error'] = error
+
+            except Exception as err:
+                template_dict['error'] = "Error sending email: " + str(err)
+                print(err)
+        
+
+    # display list of all threads
+    else:
+        # Call the Gmail API
+        results = service.users().threads().list(userId='me').execute()
+        threads = results.get('threads', [])
+        template_dict['threads'] = []
+        if not threads:
+            print('No threads found.')
+        else:
+            for t in threads:
+                thread = service.users().threads().get(userId='me', id=t['id']).execute()
+                
+                if not thread.get('messages'):
+                    continue
+                message = thread['messages'][0]
+                thread['snippet'] = message['snippet']
+                thread['num_messages'] = len(thread['messages'])
+                for header in message['payload']['headers']:
+                    if header['name'] == 'From': 
+                        thread['sender'] = header['value']
+                    if header['name'] == 'Subject':
+                        thread['subject'] = header['value']
+                    if header['name'] == 'Date':
+                        thread['date'] = header['value']
+                if thread['sender'].find('<'+app.config['USAP-DC_GMAIL_ACCT']+'>') == -1:
+                    thread['state'], thread['date_closed'] = cf.checkThreadInDb(t['id'], thread['date'])
+                    template_dict['threads'].append(thread)
+
+        template_dict['counts'] = cf.getThreadNumbers()
+
+        
+    return render_template('emails.html', **template_dict)
+
+
+def create_gmail_message(sender, recipients, subject, message_text):
+  """Create a message for an email.
+
+  Args:
+    sender: Email address of the sender.
+    to: Email address of the receiver.
+    subject: The subject of the email message.
+    message_text: The text of the email message.
+
+  Returns:
+    An object containing a base64url encoded email object.
+  """
+  message = MIMEText(message_text)
+  message['To'] = ', '.join(recipients)
+  message['From'] = sender
+  message['Subject'] = subject
+  print(message['To'])
+  return {'raw': base64.urlsafe_b64encode(message.as_string())}
+
+
+def send_gmail(service, user_id, message):
+  """Send an email message.
+
+  Args:
+    service: Authorized Gmail API service instance.
+    user_id: User's email address. The special value "me"
+    can be used to indicate the authenticated user.
+    message: Message to be sent.
+
+  Returns:
+    success and error messages.
+  """
+  success = None
+  error = None
+  try:
+    message = (service.users().messages().send(userId=user_id, body=message)
+               .execute())
+    print('Message Id: %s' % message['id'])
+    success = "Email sent"
+    return success, error
+  except Exception as error:
+    print('An error occurred: %s' % error)
+    err = "Error sending email: " + str(error)
+    return success, err
 
 
 
