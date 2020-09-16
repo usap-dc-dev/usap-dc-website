@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% set cur = "issues" %}
+{% set cur = "emails" %}
 {% block body %}
 
 <div class="border">
@@ -39,6 +39,26 @@
                         <h4>{{error}}</h4>
                     </div>
                 {% endif %}
+
+                
+                <form  style="margin:10px;">
+                    Start Date:
+                    <input type="date" name="start_date" id="start_date" value={{start_date}} max={{end_date}}>
+                    End Date:
+                    <input type="date" name="end_date" id="end_date" value={{end_date}} min={{start_date}}>
+                    
+                    
+                    <input type="radio" id="open" name="state" value="open" style="margin-left:30px" {{checked_states.open}}>
+                    <label for="open">Open</label>
+                    <input type="radio" id="closed" name="state" value="closed" {{checked_states.closed}}>
+                    <label for="closed">Closed</label>
+                    <input type="radio" id="all" name="state" value="all" {{checked_states.all}}>
+                    <label for="all">All</label>
+                    
+                    <button type="submit" style="margin-left:30px" onclick="waitCursor()">Submit</button>
+                </form>
+                <br>
+
                 <span style="margin:10px;"><b>Number of email threads: </b>{{counts.all}}</span>
                 <span style="margin:10px;"><b>Number of open threads: </b>{{counts.open}}</span>
                 <span style="margin:10px;"><b>Number of closed threads: </b>{{counts.closed}}</span>
@@ -124,4 +144,10 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+    function waitCursor() {
+        $("html").addClass("wait");
+    }
+</script>
 {% endblock body %}

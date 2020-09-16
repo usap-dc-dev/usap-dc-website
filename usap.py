@@ -19,7 +19,7 @@ import psycopg2.extras
 import requests
 import re
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 from collections import namedtuple
 import humanize
@@ -3383,6 +3383,34 @@ def connect_to_gmail():
 def emails():
     template_dict = {}
     template_dict['counts'] = []
+    args = request.args.to_dict()
+   
+    date_fmt = "%Y-%m-%d"
+    if args.get('start_date'):
+        start_date = args['start_date']
+    else:
+        start_date = '2020-09-01'
+    if args.get('end_date'):
+        end_date = args['end_date']
+    else:
+        end_date = datetime.now().strftime(date_fmt)
+    #need the day after the end date for gmail search
+    end_date_gmail = datetime.strptime(end_date, date_fmt).date() + timedelta(days=1)    
+    
+    template_dict['start_date'] = start_date
+    template_dict['end_date'] = end_date
+
+    states = ['open', 'closed', 'all']
+    if args.get('state'):
+        state = args['state']
+    else: 
+        state ='all'
+    template_dict['checked_states'] = {}
+    for s in states:
+        if s == state:
+            template_dict['checked_states'][s] = 'checked'
+        else:
+           template_dict['checked_states'][s] = '' 
 
     # login
     if (not cf.isCurator()):
@@ -3500,7 +3528,8 @@ def emails():
     # display list of all threads
     else:
         # Call the Gmail API
-        results = service.users().threads().list(userId='me').execute()
+        q = "after:%s before:%s" % (start_date, end_date_gmail)
+        results = service.users().threads().list(userId='me', q=q).execute()
         threads = results.get('threads', [])
         template_dict['threads'] = []
         if not threads:
@@ -3523,9 +3552,10 @@ def emails():
                         thread['date'] = header['value']
                 if thread['sender'].find(app.config['USAP-DC_GMAIL_ACCT']) == -1:
                     thread['state'], thread['date_closed'] = cf.checkThreadInDb(t['id'], thread['date'])
-                    template_dict['threads'].append(thread)
+                    if thread['state'] == state or state == 'all':
+                        template_dict['threads'].append(thread)
 
-        template_dict['counts'] = cf.getThreadNumbers()
+        template_dict['counts'] = cf.getThreadNumbers(start_date, end_date)
 
         
     return render_template('emails.html', **template_dict)
