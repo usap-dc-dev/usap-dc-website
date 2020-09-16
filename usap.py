@@ -1181,12 +1181,12 @@ def dataset2(dataset_id=None):
                 sender = msg_data.get('submitter_email')
             else:
                 sender = msg_data.get('email')
-            recipients = ['help.usapdc@gmail.com']#['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']]#['info@usap-dc.org']
 
             if edit:
-                msg['Subject'] = 'USAP-DC Dataset Edit'
+                msg['Subject'] = 'USAP-DC Dataset Edit [uid:%s]' % dataset_id
             else: 
-                msg['Subject'] = 'USAP-DC Dataset Submission'
+                msg['Subject'] = 'USAP-DC Dataset Submission [uid:%s]' % next_id
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
 
@@ -1201,6 +1201,10 @@ def dataset2(dataset_id=None):
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()      
+            
+            
+            # Send autoreply to user
+            send_autoreply(sender, msg['Subject'])
 
             # add to submission table
             conn, cur = connect_to_db()
@@ -1389,12 +1393,12 @@ def project(project_id=None):
             if not sender: 
                 sender = msg_data.get('email')
 
-            recipients = ['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']]#['info@usap-dc.org']
 
             if edit:
-                msg['Subject'] = 'USAP-DC Project Edit'
+                msg['Subject'] = 'USAP-DC Project Edit [uid:%s]' % project_id
             else: 
-                msg['Subject'] = 'USAP-DC Project Submission'
+                msg['Subject'] = 'USAP-DC Project Submission [uid:%s]' % next_id
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
 
@@ -1410,6 +1414,10 @@ def project(project_id=None):
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
+
+            # Send autoreply to user
+            send_autoreply(sender, msg['Subject'])
+
 
             # add to submission table
             conn, cur = connect_to_db()
@@ -1514,6 +1522,20 @@ def project(project_id=None):
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
                                locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                project_metadata=session.get('project_metadata'), edit=edit)
+
+
+def send_autoreply(recipient, subject):
+    sender = app.config['USAP-DC_GMAIL_ACCT']
+    subject = "AutoReply: " + subject
+    message_text = """This is an automated confirmation that we have received your submission or edit.  We will respond shortly.  Thank you."""
+
+    msg_raw = create_gmail_message(sender, [recipient], subject, message_text)
+
+    service, error = connect_to_gmail()
+    if error:
+        print('ERROR sending autoreply' + error)
+    else:
+        send_gmail(service, 'me', msg_raw)
 
 
 def save_project(project_metadata):
@@ -2999,29 +3021,21 @@ def curator():
                 elif request.form.get('submit') == "send_email":
                     template_dict['tab'] = 'email'
                     try:
-                        msg = MIMEText(request.form.get('email_text'))
-                        sender = 'info@usap-dc.org'
+                        sender = app.config['USAP-DC_GMAIL_ACCT']#'info@usap-dc.org'
                         recipients_text = request.form.get('email_recipients').encode('utf-8')
                         recipients = recipients_text.splitlines()
-
-                        msg['Subject'] = request.form.get('email_subject')
-
-                        msg['From'] = sender
-                        msg['To'] = ', '.join(recipients)
-
-                        smtp_details = config['SMTP']
-                        s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
-                        # identify ourselves to smtp client
-                        s.ehlo()
-                        # secure our email with tls encryption
-                        s.starttls()
-                        # re-identify ourselves as an encrypted connection
-                        s.ehlo()
-                        s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-
-                        s.sendmail(sender, recipients, msg.as_string())
-                        template_dict['message'].append("Email sent")
-                        s.quit()  
+                        recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
+                        msg_raw = create_gmail_message(sender, recipients, request.form.get('email_subject'), request.form.get('email_text'))
+                        msg_raw['threadId'] = get_threadid(uid)
+ 
+                        service, error = connect_to_gmail()
+                        if error:
+                            template_dict['error'] = error
+                        else:
+                            success, error = send_gmail(service, 'me', msg_raw)
+                            template_dict['message'].append(success)
+                            template_dict['error'] = error
+ 
                     except Exception as err:
                         template_dict['error'] = "Error sending email: " + str(err)
 
@@ -3345,8 +3359,24 @@ def issues():
     return render_template('issues.html', **template_dict)
 
 
+def connect_to_gmail():
+    creds = None
+    if os.path.exists(app.config['GMAIL_PICKLE']):
+        with open(app.config['GMAIL_PICKLE'], 'rb') as token:
+            creds = pickle.load(token)
+    else:
+        # if the pickle doesn't exist, need to run the bin/gmail_quickstart.py on local system to
+        # log in and create token.pickle. Then copy it to inc/token.pickle
+        return None, "Unable to authorise connection to account"
 
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            return None, "Gmail credentials are not valid"
 
+    service = build('gmail', 'v1', credentials=creds)
+    return service, None
 
 
 @app.route('/emails', methods=['GET', 'POST'])
@@ -3362,25 +3392,10 @@ def emails():
     else:
         template_dict['need_login'] = False
 
-
-    creds = None
-    if os.path.exists(app.config['GMAIL_PICKLE']):
-        with open(app.config['GMAIL_PICKLE'], 'rb') as token:
-            creds = pickle.load(token)
-    else:
-        # if the pickle doesn't exist, need to run the bin/gmail_quickstart.py on local system to
-        # log in and create token.pickle. Then copy it to inc/token.pickle
-        template_dict['error'] = "Unable to authorise connection to account"
+    service, error = connect_to_gmail()
+    if error:
+        template_dict['error'] = error
         return render_template('emails.html', **template_dict)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            template_dict['error'] = "Gmail credentials are not valid"
-            return render_template('emails.html', **template_dict)
-
-    service = build('gmail', 'v1', credentials=creds)
 
     # display one thread
     if request.args.get('thread_id'):
@@ -3506,7 +3521,7 @@ def emails():
                         thread['subject'] = header['value']
                     if header['name'] == 'Date':
                         thread['date'] = header['value']
-                if thread['sender'].find('<'+app.config['USAP-DC_GMAIL_ACCT']+'>') == -1:
+                if thread['sender'].find(app.config['USAP-DC_GMAIL_ACCT']) == -1:
                     thread['state'], thread['date_closed'] = cf.checkThreadInDb(t['id'], thread['date'])
                     template_dict['threads'].append(thread)
 
@@ -3561,6 +3576,28 @@ def send_gmail(service, user_id, message):
     err = "Error sending email: " + str(error)
     return success, err
 
+
+def get_threadid(uid):
+    print('get_threadid')
+    service, error = connect_to_gmail()
+    if error:
+        print(error)
+        return None
+    results = service.users().threads().list(userId='me').execute()
+    threads = results.get('threads', [])
+
+    for t in threads:
+        thread = service.users().threads().get(userId='me', id=t['id']).execute()
+        message = thread['messages'][0]
+        raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
+        msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
+        mime_msg = email.message_from_string(msg_str)
+        subject = decode_header(mime_msg["Subject"])[0][0]
+        substr = '[uid:%s]' % uid
+        if subject.find(substr) >=0:
+            return t['id']
+    
+    return None
 
 
 def getFromDifTable(col, all_selected):
