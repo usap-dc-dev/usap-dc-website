@@ -1945,7 +1945,7 @@ def checkThreadInDb(id, opened_date):
 def updateThreadState(id, state):
     conn, cur = usap.connect_to_db(curator=True)
     if state == 'closed':
-        query = "UPDATE email_threads SET (state, closed_date)=('%s', '%s') WHERE id='%s';" %(state, datetime.now().date(), id)
+        query = "UPDATE email_threads SET (state, closed_date)=('%s', '%s') WHERE id='%s';" %(state, datetime.now(), id)
     else: 
         query = "UPDATE email_threads SET (state, closed_date) =('%s', null) WHERE id='%s';" %(state, id)
     cur.execute(query)

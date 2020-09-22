@@ -320,7 +320,12 @@
         {% if session.user_info %}
           <li><a class="top_link" href="{{url_for('dashboard')}}">Dashboard</a></li>
           {% if session.user_info.is_curator %}
-            <li><a class="top_link" href="{{url_for('curator')}}">Curator</a></li>
+            <li><a class="top_link" href="{{url_for('curator')}}">Curator</a>
+              <ul>
+                <li><a class="top_link" href="{{url_for('curator')}}">Curator Page</a></li>
+                <li><a class="top_link" href="{{url_for('emails')}}">Email Tracking</a></li>
+              </ul>
+            </li>
           {% endif %}
           <li><a class="top_link" href="{{url_for('logout')}}">Logout</a></li>
         {% else %}

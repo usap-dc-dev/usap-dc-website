@@ -37,13 +37,10 @@ from github import Github
 import pickle
 from apiclient.discovery import build
 from google.auth.transport.requests import Request
-# from httplib2 import Http
-# from oauth2client import file, client, tools
 import base64
 import email
 from email.header import decode_header
-
-
+from dateutil.parser import parse
 
 
 app = Flask(__name__)
@@ -3556,8 +3553,18 @@ def emails():
                         thread['subject'] = header['value']
                     if header['name'] == 'Date':
                         thread['date'] = header['value']
+                
                 if thread['sender'].find(app.config['USAP-DC_GMAIL_ACCT']) == -1:
                     thread['state'], thread['date_closed'] = cf.checkThreadInDb(t['id'], thread['date'])
+                    # check date of most recent message - if after closed date, need to re-open thread
+                    message_last = thread['messages'][-1]
+                    for header in message_last['payload']['headers']:
+                        if header['name'] == 'Date':
+                            last_date = parse(header['value'])
+                    if last_date and thread['date_closed'] and thread['date_closed'] < last_date:
+                        cf.updateThreadState(t['id'], 'open')
+                        thread['state'] = 'open'
+
                     if thread['state'] == state or state == 'all':
                         template_dict['threads'].append(thread)
 
