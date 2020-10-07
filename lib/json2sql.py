@@ -158,7 +158,7 @@ def make_sql(data, id):
                     '/doc/' + id + '/README_' + id + '.txt',
                     date_created,
                     date_created,
-                    data["license"])
+                    data.get("license",'CC_BY_4.0'))
 
     sql_out += sql_line
 
