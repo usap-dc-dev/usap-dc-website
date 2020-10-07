@@ -7,6 +7,7 @@
 <div id="pubs_list" hidden>{% if dataset_metadata['publications']|length > 0 %}{{dataset_metadata['publications']|tojson}}{% endif %}</div>
 <div id="persons" hidden>{{persons|tojson}}</div>
 <div id="locations_list" hidden>{% if dataset_metadata['locations']|length > 0 %}{{dataset_metadata['locations']|tojson}}{% endif %}</div>
+<div id="licenses_list" hidden>{{licenses|tojson}}</div>
 
 <script type="text/javascript">
 
@@ -35,6 +36,8 @@
   if ($("#locations_list").text().length > 0) {
     locations = JSON.parse($("#locations_list").text());
   }
+
+  var licenses = JSON.parse($("#licenses_list").text());;
 
   $(document).ready(function() {
     var author_wrapper = $('#more_authors');
@@ -92,6 +95,11 @@
       });
       $("#crossref_body").empty();
       $("#crossref").hide();
+    });
+
+    updateLicenseDescription();
+    $("#license_select").on("change", function() { 
+      updateLicenseDescription();
     });
 
   // if reloading, populate any added author fields
@@ -298,6 +306,19 @@
     }
   });
 
+  function updateLicenseDescription() {
+      // get selected license id
+      var license_id = $("#license_select").val();
+      // find license record
+      for (var l of licenses) {
+        if (l.id == license_id) {
+          // update license description and url
+          $("#license_description").text(l.description);
+          $("#license_url").attr("href",l.url );
+        }
+      }
+  };
+
 </script>
 
 
@@ -400,6 +421,18 @@
             </div>
             <div id="more_awards"></div>
             <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add another award</span></a>
+          </div>
+
+          <!-- Licenses -->
+          <div class="form-group">
+            <label for="license">License for Reuse</label><br/>
+            <select class="form-control selectpicker" name="license" data-width="500px" id='license_select'>
+              {% for license in licenses %}
+              <option value="{{license['id']}}" {% if license['id'] == dataset_metadata.get('license','') %} selected="selected" {% endif %}>{{license.label}}</option>
+              {% endfor %}
+            </select>
+            <span class="help-block" id="license_description"></span>
+            <a id="license_url" targe="_blank">View License Deed</a>
           </div>
 
           <!-- Publications -->

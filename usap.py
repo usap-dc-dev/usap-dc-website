@@ -242,7 +242,8 @@ def get_datasets(dataset_ids):
                              CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
                              CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END,
                              CASE WHEN dif.dif_records IS NULL THEN '[]'::json ELSE dif.dif_records END,
-                             CASE WHEN rel_proj.rel_projects IS NULL THEN '[]'::json ELSE rel_proj.rel_projects END
+                             CASE WHEN rel_proj.rel_projects IS NULL THEN '[]'::json ELSE rel_proj.rel_projects END,
+                             license.url AS license_url, license.label AS license_label
                        FROM
                         dataset d
                         LEFT JOIN (
@@ -322,6 +323,7 @@ def get_datasets(dataset_ids):
                             FROM project_dataset_map pdm JOIN project proj ON (proj.proj_uid=pdm.proj_uid)
                             GROUP BY pdm.dataset_id
                         ) rel_proj ON (d.id = rel_proj.dataset_id)
+                        LEFT JOIN license ON (d.license = license.id)
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)
@@ -470,6 +472,14 @@ def get_projects(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM initiative ORDER BY ID'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_licenses(conn=None, cur=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM license ORDER BY ID'
     cur.execute(query)
     return cur.fetchall()
 
@@ -640,7 +650,7 @@ def dataset(dataset_id=None):
         if request.form.get('action') == "Previous Page":
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(),)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses())
 
         elif request.form.get('action') == "save":
             # save to file
@@ -659,7 +669,7 @@ def dataset(dataset_id=None):
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -682,7 +692,7 @@ def dataset(dataset_id=None):
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses(), edit=edit)
 
         if edit:
             return redirect('/edit/dataset2/' + dataset_id)
@@ -714,6 +724,7 @@ def dataset(dataset_id=None):
             if form_data.get('dataset_id'):
                 del(form_data['dataset_id'])
         else:
+            session['dataset_metadata']['license'] = 'CC_BY_4.0' #default value
             email = ""
             if user_info.get('email'):
                 email = user_info.get('email')
@@ -728,7 +739,7 @@ def dataset(dataset_id=None):
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), 
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
-                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
+                               persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses(), edit=edit, template=template)
 
 
 # get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
@@ -827,6 +838,7 @@ def dataset_db2form(uid):
         else:
             form_data['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
+    form_data['license'] = db_data['license']
     return form_data
 
 

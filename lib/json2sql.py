@@ -142,8 +142,8 @@ def make_sql(data, id):
     sql_out += '--NOTE: creator = JSON "author"\n'
     sql_out += '--NOTE: url suffix = JSON "timestamp"\n'
     sql_line = """INSERT INTO dataset (id,title,submitter_id,creator,release_date,abstract,version,url,superset,language_id,
-    status_id,url_extra,review_status,date_created,date_modified)
-    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}');\n""" \
+    status_id,url_extra,review_status,date_created,date_modified,license)
+    VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}','{}');\n""" \
             .format(id,
                     data["title"], 
                     data["submitter_name"], 
@@ -157,7 +157,8 @@ def make_sql(data, id):
                     'Complete', 
                     '/doc/' + id + '/README_' + id + '.txt',
                     date_created,
-                    date_created)
+                    date_created,
+                    data["license"])
 
     sql_out += sql_line
 
@@ -573,6 +574,10 @@ def editDatasetJson2sql(data, uid):
         if k == 'issues':
             sql_out += "\n--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"
 
+        if k == 'license':
+            sql_out += "\n--NOTE: UPDATING LICENSE\n"
+            sql_out += "UPDATE dataset SET license = '%s' WHERE id = '%s';\n" % (data['license'], uid)
+        
         if k == 'locations':
             sql_out += "\n--NOTE: UPDATING LOCATIONS\n"
 
