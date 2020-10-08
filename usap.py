@@ -650,7 +650,7 @@ def dataset(dataset_id=None):
         if request.form.get('action') == "Previous Page":
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses())
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations())
 
         elif request.form.get('action') == "save":
             # save to file
@@ -669,7 +669,7 @@ def dataset(dataset_id=None):
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -692,7 +692,7 @@ def dataset(dataset_id=None):
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
 
         if edit:
             return redirect('/edit/dataset2/' + dataset_id)
@@ -739,7 +739,7 @@ def dataset(dataset_id=None):
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=session.get('dataset_metadata', dict()), 
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
-                               persons=get_persons(), locations=get_usap_locations(), licenses=get_licenses(), edit=edit, template=template)
+                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
 
 
 # get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
@@ -1257,7 +1257,8 @@ def dataset2(dataset_id=None):
                     success = "Saved dataset form"
                 except Exception as e:
                     error = "Unable to save dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, 
+                                    dataset_metadata=session.get('dataset_metadata', dict()), licenses=get_licenses(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -1277,7 +1278,8 @@ def dataset2(dataset_id=None):
                     error = "Unable to restore dataset."
             else:
                 error = "Unable to restore dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, 
+                                    dataset_metadata=session.get('dataset_metadata', dict()), licenses=get_licenses(), edit=edit)
 
     else:
         email = ""
@@ -1286,7 +1288,8 @@ def dataset2(dataset_id=None):
         name = ""
         if user_info.get('name'):
             name = user_info.get('name')
-        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
+        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()), 
+                               licenses=get_licenses(), edit=edit)
 
 
 # Read the next doi reference number from the file
