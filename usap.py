@@ -4567,29 +4567,31 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if uid:
         conds.append(cur.mogrify('dpv.uid = %s', (uid,)))
     if dp_title:
+        dp_title = escapeChars(dp_title)
         conds.append("dpv.title ~* '%s' OR dpv.%s ~* '%s'" % (dp_title, titles, dp_title))
     if award:
-        conds.append(cur.mogrify('dpv.awards ~* %s', (award,)))
+        conds.append(cur.mogrify('dpv.awards ~* %s', (escapeChars(award),)))
     if person:
-        conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
+        conds.append(cur.mogrify('dpv.persons ~* %s', (escapeChars(person),)))
     if spatial_bounds_interpolated:
         conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
         conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
-        conds.append(cur.mogrify('dpv.science_programs ~* %s ', (sci_program,)))
+        conds.append(cur.mogrify('dpv.science_programs ~* %s ', (escapeChars(sci_program),)))
     if nsf_program:
-        conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (nsf_program,)))
+        conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (escapeChars(nsf_program),)))
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     # if location:
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
+        free_text = escapeChars(free_text) 
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
-        conds.append(cur.mogrify('repositories = %s ', (repo,)))
+        conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
@@ -4597,6 +4599,13 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
     cur.execute(query_string)
     return cur.fetchall()
+
+
+def escapeChars(string) :
+    chars = [".","^","$", "*", "+", "?", "{", "}", "[", "]", "\\", "|", "(", ")"]
+    for c in chars:
+        string = string.replace(c, "\\"+c)
+    return string 
 
 
 def initcap(s):
