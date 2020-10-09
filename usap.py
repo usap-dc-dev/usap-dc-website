@@ -2322,7 +2322,7 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata)
+    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
 
 
 def getCMRUrls(dif_records):
@@ -4119,7 +4119,7 @@ def project_landing_page(project_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('project_landing_page.html', data=metadata)
+    return render_template('project_landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
 
 
 @app.route('/data_management_plan', methods=['POST'])
