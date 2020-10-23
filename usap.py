@@ -1184,7 +1184,7 @@ def dataset2(dataset_id=None):
                 message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message)
+            msg = MIMEText(message.encode('utf-8'))
             if msg_data.get('submitter_email'):
                 sender = msg_data.get('submitter_email')
             else:
@@ -1397,7 +1397,7 @@ def project(project_id=None):
                 message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message)
+            msg = MIMEText(message.encode('utf-8'))
 
             # use submitter's email if available, otherwise the email given in the form
             sender = msg_data.get('submitter_email')
@@ -2152,7 +2152,7 @@ def contact():
             recipients = [app.config['USAP-DC_GMAIL_ACCT']] #['info@usap-dc.org']
             message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['name'], form['msg'])
 
-            msg = MIMEText(message)
+            msg = MIMEText(message.encode('utf-8'))
             msg['Subject'] = form['subj']
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
@@ -3527,12 +3527,11 @@ def create_gmail_message(sender, recipients, subject, message_text):
   Returns:
     An object containing a base64url encoded email object.
   """
-  message = MIMEText(message_text)
-  message['To'] = ', '.join(recipients)
-  message['From'] = sender
-  message['Subject'] = subject
-  print(message['To'])
-  return {'raw': base64.urlsafe_b64encode(message.as_string())}
+  message = MIMEText(message_text.encode('utf-8'))
+  message['To'] = ', '.join(recipients).encode('utf-8')
+  message['From'] = sender.encode('utf-8')
+  message['Subject'] = subject.encode('utf-8')
+  return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
 
 
 def send_gmail(service, user_id, message):
