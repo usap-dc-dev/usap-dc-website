@@ -1958,6 +1958,11 @@ def faq():
     return render_template('faq.html')
 
 
+@app.route('/services')
+def services():
+    return render_template('services.html')
+
+
 @app.route('/links')
 def links():
     return render_template('links.html')
