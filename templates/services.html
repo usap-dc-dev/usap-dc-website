@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% set cur = "services" %}
+{% block body %}
+
+<div class="container"> 
+    <h1 class="title">Web Services</h1>
+    <hr>
+    <div class="my-5">
+
+    	<p class="card">
+          <img  class="icon" src="{{url_for('static',filename='imgs/swagger.png')}}">  USAP-DC API Services</p>
+
+    	<h4>Explore the API services available to access data from the USAP-DC database:&nbsp;
+           <a href="{{url_for('api')}}" class="SSP-20 grey-underline">Swagger API Documentation</a>
+        </h4>
+        <br/><br/>
+
+        <p class="card">
+            <img class="icon" src="{{url_for('static',filename='imgs/mapserv-logo.png')}}">OGC MapServ Features</p>
+        <h4>Get overview of USAP-DC WFS (Web Feature Service) capabilities:<br/>&emsp;&emsp;
+           <a href="https://api.usap-dc.org:8443/wfs?service=WFS&request=GetCapabilities&version=1.1.0">https://api.usap-dc.org:8443/wfs?service=WFS&request=GetCapabilities&version=1.1.0</a>
+        </h4>
+       <h4>Get overview of USAP-DC WMS (Web Map Service) capabilities:<br/>&emsp;&emsp;
+           <a href="https://api.usap-dc.org:8443/wfs?service=WMS&request=GetCapabilities&version=1.1.0">https://api.usap-dc.org:8443/wfs?service=WMS&request=GetCapabilities&version=1.1.0</a>
+       </h4>
+       <br/><br/>
+
+    </div>
+</div>
+{% endblock body %}

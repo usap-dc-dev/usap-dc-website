@@ -817,3 +817,17 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
 .stats-limits-div input[type=number] {
   width:80px;
 }
+
+.card {
+  width: 350px;
+  color: white;
+  background-color:  #337ab7;
+  font-size: 22px;
+  padding: 15px;
+}
+
+.icon {
+  height: 40px;
+  margin-right:5px;
+  margin-bottom: 5px;
+}
