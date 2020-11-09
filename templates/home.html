@@ -12,25 +12,40 @@
 {% endif %}
 
 <div class="usap-dc-banner">
-   <div class="split">
-    <div class="banner-left">
-      <div style="float:right" class="shadow-container" onclick="location.href='{{url_for('submit')}}';">
-        <div class="container">
-          <a href="{{url_for('submit')}}" class="image"><img src="{{url_for('static',filename='imgs/upload-icon.png')}}" alt="Contribute"/></a>
-          <br/><br/><p>Contribute Data</p>
-        </div>
-      </div>
-    </div>
 
-    <div class="banner-right">
-      <div style="float:left" class="shadow-container"  onclick="location.href='{{url_for('search')}}';">
-        <div class="container">
-          <a href="{{url_for('search')}}" class="image"><img src="{{url_for('static',filename='imgs/search-icon.png')}}" alt="Search"/></a>
-          <br/><br/><p>Search Data</p>
+  <table style="width:80%; margin:auto">
+    <tr>
+
+      <td style="width:30%">
+        <div class="shadow-container"  onclick="location.href='{{url_for('search')}}';">
+          <div class="container">
+            <a href="{{url_for('search')}}" class="image"><img src="{{url_for('static',filename='imgs/search-icon.png')}}" alt="Search"/></a>
+            <br/><br/><p>Search Data</p>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
+      </td>
+
+      <td style="width:30%">
+        <div class="shadow-container"  onclick="location.href='{{url_for('project')}}';">
+          <div class="container">
+            <a href="{{url_for('project')}}" class="image"><img src="{{url_for('static',filename='imgs/register-icon.png')}}" alt="Register"/></a>
+            <br/><br/><p>Register Project</p>
+          </div>
+        </div>
+      </td>
+
+      <td style="width:30%">
+        <div class="shadow-container" onclick="location.href='{{url_for('dataset')}}';">
+          <div class="container">
+            <a href="{{url_for('dataset')}}" class="image"><img src="{{url_for('static',filename='imgs/upload-icon.png')}}" alt="Contribute"/></a>
+            <br/><br/><p>Deposit Dataset</p>
+          </div>
+        </div>
+      </td>
+
+    </tr>
+  </table>
+
 </div>
 
 
