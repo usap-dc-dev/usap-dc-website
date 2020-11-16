@@ -1,0 +1,153 @@
+{% extends "layout.html" %}
+{% set cur = "emails" %}
+{% block body %}
+
+<div class="border">
+	<div class="content">
+        {% if need_login %}
+    
+            <div class="container">
+                
+                <h4>Curator Login </h4>
+            
+                <div id="container">
+                    <h5>
+                        Sign in using an authorized curator account
+                    </h5>
+                    <div id="buttons">
+                        <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+                            Google
+                        </a>
+                        <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+                            <span style="color:gray; font-weight:bolder">ORC</span>iD
+                        </a>
+                    </div>
+                </div>
+            </div>
+              
+        {% else %}
+            {% if not thread %}
+                <a href="{{url_for('logout', type='curator')}}" style="float:right">Log out</a>
+                <h1>Email Tracking Page</h1>
+                {% if message %}
+                    <div class="alert alert-success" style="width:800;">
+                        <h4>{{message}}</h4>
+                    </div>
+                {% endif %}
+                {% if error %}
+                    <div class="alert alert-danger" style="width:800;">
+                        <h4>{{error}}</h4>
+                    </div>
+                {% endif %}
+
+                
+                <form  style="margin:10px;">
+                    Start Date:
+                    <input type="date" name="start_date" id="start_date" value={{start_date}} max={{end_date}}>
+                    End Date:
+                    <input type="date" name="end_date" id="end_date" value={{end_date}} min={{start_date}}>
+                    
+                    
+                    <input type="radio" id="open" name="state" value="open" style="margin-left:30px" {{checked_states.open}}>
+                    <label for="open">Open</label>
+                    <input type="radio" id="closed" name="state" value="closed" {{checked_states.closed}}>
+                    <label for="closed">Closed</label>
+                    <input type="radio" id="all" name="state" value="all" {{checked_states.all}}>
+                    <label for="all">All</label>
+                    
+                    <button type="submit" style="margin-left:30px" onclick="waitCursor()">Submit</button>
+                </form>
+                <br>
+
+                <span style="margin:10px;"><b>Number of email threads: </b>{{counts.all}}</span>
+                <span style="margin:10px;"><b>Number of open threads: </b>{{counts.open}}</span>
+                <span style="margin:10px;"><b>Number of closed threads: </b>{{counts.closed}}</span>
+
+                <div id='dif-browser-table'>
+                    <table class='sortable' >
+                        <thead class="w3-striped w3-bordered w3-hoverable">
+                            <tr>
+                                <th>Title</th>
+                                <th>From</th>
+                                <th>Created Date</th>
+                                <th>No. of messages in thread</th>
+                                <!-- <th>Snippet</th> -->
+                                <th>State</th>
+                            </tr>
+                        </thead>
+                        {% for thread in threads %}
+                            <tr {% if thread.state == 'open' %} style="font-weight: bold" {% endif %}>
+                                <td><a onclick="waitCursor()" href="{{url_for('emails',thread_id=thread.id)}}">{{thread.subject}}</a></td>
+                                <td>{{thread.sender}}</td>
+                                <td>{{thread.date}}</td>
+                                <td>{{thread.num_messages}}</td>
+                                <!-- <td>{{thread.snippet}}</td> -->
+                                <td>{{thread.state}}</td>
+                            </tr>
+                    {% endfor %}
+                    </table>
+                </div>
+            {% else %}
+
+                <a onclick="waitCursor()" href="{{url_for('emails')}}">Back to list</a>
+                {% if message %}
+                    <div class="alert alert-success" style="width:800;">
+                        <h4>{{message}}</h4>
+                    </div>
+                {% endif %}
+                {% if error %}
+                    <div class="alert alert-danger" style="width:800;">
+                        <h4>{{error}}</h4>
+                    </div>
+                {% endif %}
+
+                <h1><b>{{thread.subject}}</b> ({{thread.state}})</h1><br>
+                <b>Original message sent by: </b>{{thread.originator}} <b> on: </b>{{thread.created_date}}<br>
+                {% if thread.last_sender %}<b>Last message sent by: </b>{{thread.last_sender}} <b> on: </b>{{thread.last_date}}<br>{% endif %}
+                {% if thread.date_closed %}<b>Date closed: </b>{{thread.date_closed}}<br>{% endif %}
+                <h3>Messages</h3>
+                {% for message in thread.messages %}
+                    <b>sent by: </b>{{message.sender}}<br>
+                    <b>sent on: </b>{{message.date}}<br>
+                    {% if message.attachments %} <b>attachments <i>(look in email to view attached files)</i>: </b>{{message.attachments}}</br> {% endif %}
+                    <textarea readonly cols="130" rows="5">{{message.text}}</textarea><br>
+                    <hr>
+                {% endfor %}
+
+                {% if thread.state == 'open' %}
+                    <div id="email_form" hidden>
+                        <form method="post" enctype="multipart/form-data">
+                            <b>Recipients</b><br/>
+                            <textarea id="email_recipients" name="email_recipients" cols="100" rows="2">{{email_recipients}}</textarea>
+                            <br>
+                            <b>Text</b><br/>
+                            <textarea id="email_text" name="email_text" cols="100" rows="10">{{email_text}}</textarea>
+                            <br>
+                            <button type="submit" name="submit" value="send_email" onclick="waitCursor()">Send</button>
+                            <button type="button" onclick="$('#email_form').hide(); $('#reply_btn').show();">Cancel</button>
+                        </form>
+                    </div>
+                    <div style="padding:10px;">
+                        <button id="reply_btn" class="btn btn-primary" onclick="$('#email_form').show(); $(this).hide();" style="margin-right:10px;">Reply</a>
+                        <form method="post" enctype="multipart/form-data">
+                            <button type="submit" name="submit" class="btn btn-primary" value="close_thread" onclick="waitCursor()">Close Thread</button>
+                        </form>
+                    </div>
+                    
+
+                {% else %}
+                    <form method="post" enctype="multipart/form-data">
+                        <button type="submit" name="submit" class="btn btn-primary" value="reopen_thread" onclick="waitCursor()">Reopen Thread</button>
+                    </form>  
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function waitCursor() {
+        $("html").addClass("wait");
+    }
+</script>
+{% endblock body %}

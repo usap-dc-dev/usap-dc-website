@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 {% set cur = "dataset" %}
 {% block body %}
+<div id="licenses_list" hidden>{{licenses|tojson}}</div>
 
 <div class="content fixed-width">
-
   <div class="container-fluid">
 	  <div class="row">
 	  {% include 'sidebar.html' %}
@@ -112,6 +112,19 @@
             <br/>
           </div>
 
+
+          <!-- Licenses -->
+          <div class="form-group">
+            <label for="license">License for Reuse</label><br/>
+            <select class="form-control selectpicker" name="license" data-width="500px" id='license_select'>
+              {% for license in licenses %}
+              <option value="{{license['id']}}" {% if license['id'] == dataset_metadata.get('license','') %} selected="selected" {% endif %}>{{license.label}}</option>
+              {% endfor %}
+            </select>
+            <span class="help-block" id="license_description"></span>
+            <a id="license_url" targe="_blank">View License Deed</a>
+          </div>
+
           <div class="input-daterange input-group" id="datepicker">
             <b>Release Date</b>
             <p>Change this date to put a proprietary hold on your data.</p>
@@ -135,6 +148,8 @@
 </div>
 
 <script type="text/javascript">
+  var licenses = JSON.parse($("#licenses_list").text());
+
   $(document).ready(function() {
 
     $('#datepicker').datepicker({
@@ -143,7 +158,7 @@
     });
 
     $('button.prev-button').click(function() {
-      window.history.back();
+      window.location=document.referrer;
     });
 
     $(".removeFile").on("click", function(e){ //user click on remove field
@@ -151,7 +166,25 @@
       $(this).parent('div').remove();
       $("#file_deleted").val("true");
     });
+
+    updateLicenseDescription();
+    $("#license_select").on("change", function() { 
+      updateLicenseDescription();
+    });
   });
+
+  function updateLicenseDescription() {
+    // get selected license id
+    var license_id = $("#license_select").val();
+    // find license record
+    for (var l of licenses) {
+      if (l.id == license_id) {
+        // update license description and url
+        $("#license_description").text(l.description);
+        $("#license_url").attr("href",l.url );
+      }
+    }
+  };
 </script>
 
 {% endblock body %}

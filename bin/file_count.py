@@ -95,7 +95,8 @@ def get_dir_info(topdir):
                 file_count += 1
                 mime_types.add(mimetypes.guess_type(name)[0])
             
-            file_size += os.path.getsize(os.path.join(root, name))
+            this_file_size = os.path.getsize(os.path.join(root, name))
+            file_size += this_file_size
 
             # if file is zipped, get  the uncompressed file size too
             if '.gz' in name :
@@ -104,7 +105,7 @@ def get_dir_info(topdir):
                 zp = zipfile.ZipFile(path_name)
                 u_file_size += sum(zinfo.file_size for zinfo in  zp.filelist)
             else:
-                u_file_size += file_size    
+                u_file_size += this_file_size    
             
             
         # for name in dirs:

@@ -31,7 +31,7 @@
   <div class="header">
     Dataset Information
     <div style="float:right">
-      <button class="download" onclick="location.href='mailto: info@usap-dc.org?subject=Reporting Issue with dataset {{data.id}}'">Report Issue</button>
+      <button class="download" onclick="location.href='mailto: {{contact_email}}?subject=Reporting Issue with dataset {{data.id}}'">Report Issue</button>
       <button class="download" data-url="/edit/dataset/{{data.id}}">Edit</button>
     </div>
   </div>
@@ -146,6 +146,17 @@
           </div>
         </div>
 
+        {% if data.get('license') %}
+        <div class="lprow">
+          <div class="field">
+            License:
+          </div>
+          <div class="value-inline">
+            <a target=_new href="{{data.license_url}}">{{data.license_label}}</a>
+          </div>
+        </div>
+        {% endif %}
+
         {% if data.get('spatial_extents') %}
         <div class="lprow">
           <div class="field">
@@ -197,7 +208,6 @@
           </div>
         </div>
         {% endif %}
-
 
         {% if len(data['rel_projects']) > 0 %}
         <div class="lprow">

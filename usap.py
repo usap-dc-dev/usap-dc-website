@@ -19,7 +19,7 @@ import psycopg2.extras
 import requests
 import re
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 from collections import namedtuple
 import humanize
@@ -33,6 +33,13 @@ from services.api_v1 import blueprint as api_v1
 import services.settings as rp_settings
 import traceback
 import pandas as pd
+import pickle
+from apiclient.discovery import build
+from google.auth.transport.requests import Request
+import base64
+import email
+from email.header import decode_header
+from dateutil.parser import parse
 
 
 app = Flask(__name__)
@@ -54,6 +61,7 @@ app.config.update(
     OLD_CROSSREF_FILE="inc/old_crossref_sql.txt",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
+    GMAIL_PICKLE="inc/token.pickle",
     DEBUG=True
 )
 
@@ -233,7 +241,8 @@ def get_datasets(dataset_ids):
                              CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
                              CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END,
                              CASE WHEN dif.dif_records IS NULL THEN '[]'::json ELSE dif.dif_records END,
-                             CASE WHEN rel_proj.rel_projects IS NULL THEN '[]'::json ELSE rel_proj.rel_projects END
+                             CASE WHEN rel_proj.rel_projects IS NULL THEN '[]'::json ELSE rel_proj.rel_projects END,
+                             license.url AS license_url, license.label AS license_label
                        FROM
                         dataset d
                         LEFT JOIN (
@@ -313,6 +322,7 @@ def get_datasets(dataset_ids):
                             FROM project_dataset_map pdm JOIN project proj ON (proj.proj_uid=pdm.proj_uid)
                             GROUP BY pdm.dataset_id
                         ) rel_proj ON (d.id = rel_proj.dataset_id)
+                        LEFT JOIN license ON (d.license = license.id)
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)
@@ -461,6 +471,14 @@ def get_projects(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM initiative ORDER BY ID'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_licenses(conn=None, cur=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM license ORDER BY ID'
     cur.execute(query)
     return cur.fetchall()
 
@@ -631,7 +649,7 @@ def dataset(dataset_id=None):
         if request.form.get('action') == "Previous Page":
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(),)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations())
 
         elif request.form.get('action') == "save":
             # save to file
@@ -705,6 +723,7 @@ def dataset(dataset_id=None):
             if form_data.get('dataset_id'):
                 del(form_data['dataset_id'])
         else:
+            session['dataset_metadata']['license'] = 'CC_BY_4.0' #default value
             email = ""
             if user_info.get('email'):
                 email = user_info.get('email')
@@ -818,6 +837,7 @@ def dataset_db2form(uid):
         else:
             form_data['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
+    form_data['license'] = db_data['license']
     return form_data
 
 
@@ -1164,17 +1184,17 @@ def dataset2(dataset_id=None):
                 message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message)
+            msg = MIMEText(message.encode('utf-8'))
             if msg_data.get('submitter_email'):
                 sender = msg_data.get('submitter_email')
             else:
                 sender = msg_data.get('email')
-            recipients = ['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']]#['info@usap-dc.org']
 
             if edit:
-                msg['Subject'] = 'USAP-DC Dataset Edit'
+                msg['Subject'] = 'USAP-DC Dataset Edit [uid:%s]' % dataset_id
             else: 
-                msg['Subject'] = 'USAP-DC Dataset Submission'
+                msg['Subject'] = 'USAP-DC Dataset Submission [uid:%s]' % next_id
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
 
@@ -1189,6 +1209,10 @@ def dataset2(dataset_id=None):
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()      
+            
+            
+            # Send autoreply to user
+            send_autoreply(sender, msg['Subject'])
 
             # add to submission table
             conn, cur = connect_to_db()
@@ -1232,7 +1256,8 @@ def dataset2(dataset_id=None):
                     success = "Saved dataset form"
                 except Exception as e:
                     error = "Unable to save dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, 
+                                    dataset_metadata=session.get('dataset_metadata', dict()), licenses=get_licenses(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -1252,7 +1277,8 @@ def dataset2(dataset_id=None):
                     error = "Unable to restore dataset."
             else:
                 error = "Unable to restore dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
+            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, 
+                                    dataset_metadata=session.get('dataset_metadata', dict()), licenses=get_licenses(), edit=edit)
 
     else:
         email = ""
@@ -1261,7 +1287,8 @@ def dataset2(dataset_id=None):
         name = ""
         if user_info.get('name'):
             name = user_info.get('name')
-        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()), edit=edit)
+        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()), 
+                               licenses=get_licenses(), edit=edit)
 
 
 # Read the next doi reference number from the file
@@ -1370,19 +1397,19 @@ def project(project_id=None):
                 message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message)
+            msg = MIMEText(message.encode('utf-8'))
 
             # use submitter's email if available, otherwise the email given in the form
             sender = msg_data.get('submitter_email')
             if not sender: 
                 sender = msg_data.get('email')
 
-            recipients = ['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']]#['info@usap-dc.org']
 
             if edit:
-                msg['Subject'] = 'USAP-DC Project Edit'
+                msg['Subject'] = 'USAP-DC Project Edit [uid:%s]' % project_id
             else: 
-                msg['Subject'] = 'USAP-DC Project Submission'
+                msg['Subject'] = 'USAP-DC Project Submission [uid:%s]' % next_id
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
 
@@ -1398,6 +1425,10 @@ def project(project_id=None):
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
+
+            # Send autoreply to user
+            send_autoreply(sender, msg['Subject'])
+
 
             # add to submission table
             conn, cur = connect_to_db()
@@ -1502,6 +1533,20 @@ def project(project_id=None):
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
                                locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
                                project_metadata=session.get('project_metadata'), edit=edit)
+
+
+def send_autoreply(recipient, subject):
+    sender = app.config['USAP-DC_GMAIL_ACCT']
+    subject = "AutoReply: " + subject
+    message_text = """This is an automated confirmation that we have received your submission, edit, or message.  We will respond shortly.  Thank you."""
+
+    msg_raw = create_gmail_message(sender, [recipient], subject, message_text)
+
+    service, error = connect_to_gmail()
+    if error:
+        print('ERROR sending autoreply' + error)
+    else:
+        send_gmail(service, 'me', msg_raw)
 
 
 def save_project(project_metadata):
@@ -2104,8 +2149,10 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = form['email']
-            recipients = ['info@usap-dc.org']
-            msg = MIMEText(form['msg'])
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']] #['info@usap-dc.org']
+            message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['name'], form['msg'])
+
+            msg = MIMEText(message.encode('utf-8'))
             msg['Subject'] = form['subj']
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
@@ -2120,6 +2167,10 @@ def contact():
             s.login(smtp_details["USER"], smtp_details["PASSWORD"])
             s.sendmail(sender, recipients, msg.as_string())
             s.quit()
+            
+            # Send autoreply to user
+            send_autoreply(sender, msg['Subject'])
+
             return redirect('/thank_you/message')
         else:
             msg = "<br/>You failed to pass the captcha<br/>"
@@ -2271,7 +2322,7 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata)
+    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
 
 
 def getCMRUrls(dif_records):
@@ -2987,29 +3038,21 @@ def curator():
                 elif request.form.get('submit') == "send_email":
                     template_dict['tab'] = 'email'
                     try:
-                        msg = MIMEText(request.form.get('email_text'))
-                        sender = 'info@usap-dc.org'
+                        sender = app.config['USAP-DC_GMAIL_ACCT']#'info@usap-dc.org'
                         recipients_text = request.form.get('email_recipients').encode('utf-8')
                         recipients = recipients_text.splitlines()
-
-                        msg['Subject'] = request.form.get('email_subject')
-
-                        msg['From'] = sender
-                        msg['To'] = ', '.join(recipients)
-
-                        smtp_details = config['SMTP']
-                        s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
-                        # identify ourselves to smtp client
-                        s.ehlo()
-                        # secure our email with tls encryption
-                        s.starttls()
-                        # re-identify ourselves as an encrypted connection
-                        s.ehlo()
-                        s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-
-                        s.sendmail(sender, recipients, msg.as_string())
-                        template_dict['message'].append("Email sent")
-                        s.quit()  
+                        recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
+                        msg_raw = create_gmail_message(sender, recipients, request.form.get('email_subject'), request.form.get('email_text'))
+                        msg_raw['threadId'] = get_threadid(uid)
+ 
+                        service, error = connect_to_gmail()
+                        if error:
+                            template_dict['error'] = error
+                        else:
+                            success, error = send_gmail(service, 'me', msg_raw)
+                            template_dict['message'].append(success)
+                            template_dict['error'] = error
+ 
                     except Exception as err:
                         template_dict['error'] = "Error sending email: " + str(err)
 
@@ -3258,6 +3301,286 @@ def curator_help():
     template_dict['watch_dir'] = os.path.join(current_app.root_path, "watch/isoxml")
 
     return render_template('curator_help.html', **template_dict)
+
+
+def connect_to_gmail():
+    creds = None
+    if os.path.exists(app.config['GMAIL_PICKLE']):
+        with open(app.config['GMAIL_PICKLE'], 'rb') as token:
+            creds = pickle.load(token)
+    else:
+        # if the pickle doesn't exist, need to run the bin/gmail_quickstart.py on local system to
+        # log in and create token.pickle. Then copy it to inc/token.pickle
+        return None, "Unable to authorise connection to account"
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            return None, "Gmail credentials are not valid"
+
+    service = build('gmail', 'v1', credentials=creds)
+    return service, None
+
+
+@app.route('/emails', methods=['GET', 'POST'])
+def emails():
+    template_dict = {}
+    template_dict['counts'] = []
+    args = request.args.to_dict()
+   
+    date_fmt = "%Y-%m-%d"
+    if args.get('start_date'):
+        start_date = args['start_date']
+    else:
+        start_date = '2020-09-01'
+    if args.get('end_date'):
+        end_date = args['end_date']
+    else:
+        end_date = datetime.now().strftime(date_fmt)
+    #need the day after the end date for gmail search
+    end_date_gmail = datetime.strptime(end_date, date_fmt).date() + timedelta(days=1)    
+    
+    template_dict['start_date'] = start_date
+    template_dict['end_date'] = end_date
+
+    states = ['open', 'closed', 'all']
+    if args.get('state'):
+        state = args['state']
+    else: 
+        state ='all'
+    template_dict['checked_states'] = {}
+    for s in states:
+        if s == state:
+            template_dict['checked_states'][s] = 'checked'
+        else:
+           template_dict['checked_states'][s] = '' 
+
+    # login
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+        return render_template('emails.html', **template_dict)
+    else:
+        template_dict['need_login'] = False
+
+    service, error = connect_to_gmail()
+    if error:
+        template_dict['error'] = error
+        return render_template('emails.html', **template_dict)
+
+    # display one thread
+    if request.args.get('thread_id'):
+
+        if request.form.get('submit') == "close_thread":
+            cf.updateThreadState(request.args.get('thread_id'), 'closed')
+        elif request.form.get('submit') == "reopen_thread":
+            cf.updateThreadState(request.args.get('thread_id'), 'open')    
+
+        thread = service.users().threads().get(userId='me', id=request.args['thread_id']).execute()
+
+        if not thread.get('messages'):
+            return
+        message_0 = thread['messages'][0]
+        message_last = thread['messages'][-1]
+        thread['snippet'] = message_0['snippet']
+        thread['num_messages'] = len(thread['messages'])
+        for message in thread['messages']:
+            raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
+            msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
+            mime_msg = email.message_from_string(msg_str)
+            subject = decode_header(mime_msg["Subject"])[0][0]
+            if isinstance(subject, bytes):
+                # if it's a bytes, decode to str
+                subject = subject.decode()
+            message['subject'] = subject
+            message['sender'] = mime_msg.get("From")
+            message['date'] = mime_msg.get("Date")
+            message['attachments'] = []
+         
+
+            # if the email message is multipart
+            if mime_msg.is_multipart():
+                # iterate over email parts
+                for part in mime_msg.walk():
+                    # extract content type of email
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get("Content-Disposition"))
+                    try:
+                        # get the email body
+                        body = part.get_payload(decode=True).decode()
+                    except:
+                        pass
+                    if content_type == "text/plain" and "attachment" not in content_disposition:
+                        # print text/plain emails and skip attachments
+                        message['text'] = body
+                    elif "attachment" in content_disposition:
+                        # get attachment
+                        filename = part.get_filename()
+                        message['attachments'].append(filename)
+                        ### If we want to download attachments, use this code.  
+                        ### Not sure that we do, might be unsafe.
+                        # if filename:
+                        #     if not os.path.isdir(subject):
+                        #         # make a folder for this email (named after the subject)
+                        #         os.mkdir(subject)
+                        #     filepath = os.path.join(subject, filename)
+                        #     # download attachment and save it
+                        #     open(filepath, "wb").write(part.get_payload(decode=True))
+            else:
+                # extract content type of email
+                content_type = mime_msg.get_content_type()
+                # get the email body
+                body = mime_msg.get_payload(decode=True).decode()
+                if content_type == "text/plain":
+                    # print only text email parts
+                    message['text'] = body
+
+
+            if message == message_0:
+                thread['subject'] = message['subject']
+                thread['created_date'] = message['date'] 
+                thread['originator'] = message['sender']
+                thread['state'], thread['date_closed'] = cf.checkThreadInDb(thread['id'], thread['created_date'])
+            elif message == message_last:
+                thread['last_date'] = message['date']
+                thread['last_sender'] = message['sender']
+                thread['last_id'] = message['id']
+
+        template_dict['thread'] = thread
+
+        template_dict['email_recipients'] = "%s\n%s <%s>" % (thread['originator'], session['user_info'].get('name'), session['user_info'].get('email'))    
+
+        if request.form.get('submit') == "send_email":
+            try:
+                sender = app.config['USAP-DC_GMAIL_ACCT']#'info@usap-dc.org'
+                recipients_text = request.form.get('email_recipients').encode('utf-8')
+                recipients = recipients_text.splitlines()
+                recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
+                msg_raw = create_gmail_message(sender, recipients, thread.get('subject'), request.form.get('email_text'))
+                msg_raw['threadId'] = thread['id']
+ 
+                success, error = send_gmail(service, 'me', msg_raw)
+                template_dict['message'] = success
+                template_dict['error'] = error
+
+            except Exception as err:
+                template_dict['error'] = "Error sending email: " + str(err)
+                print(err)
+        
+
+    # display list of all threads
+    else:
+        # Call the Gmail API
+        q = "after:%s before:%s" % (start_date, end_date_gmail)
+        results = service.users().threads().list(userId='me', q=q).execute()
+        threads = results.get('threads', [])
+        template_dict['threads'] = []
+        if not threads:
+            print('No threads found.')
+        else:
+            for t in threads:
+                thread = service.users().threads().get(userId='me', id=t['id']).execute()
+                
+                if not thread.get('messages'):
+                    continue
+                message = thread['messages'][0]
+                thread['snippet'] = message['snippet']
+                thread['num_messages'] = len(thread['messages'])
+                for header in message['payload']['headers']:
+                    if header['name'] == 'From': 
+                        thread['sender'] = header['value']
+                    if header['name'] == 'Subject':
+                        thread['subject'] = header['value']
+                    if header['name'] == 'Date':
+                        thread['date'] = header['value']
+                
+                if thread['sender'].find(app.config['USAP-DC_GMAIL_ACCT']) == -1:
+                    thread['state'], thread['date_closed'] = cf.checkThreadInDb(t['id'], thread['date'])
+                    # check date of most recent message - if after closed date, need to re-open thread
+                    message_last = thread['messages'][-1]
+                    for header in message_last['payload']['headers']:
+                        if header['name'] == 'Date':
+                            last_date = parse(header['value'])
+                    if last_date and thread['date_closed'] and thread['date_closed'] < last_date:
+                        cf.updateThreadState(t['id'], 'open')
+                        thread['state'] = 'open'
+
+                    if thread['state'] == state or state == 'all':
+                        template_dict['threads'].append(thread)
+
+        template_dict['counts'] = cf.getThreadNumbers(start_date, end_date)
+
+        
+    return render_template('emails.html', **template_dict)
+
+
+def create_gmail_message(sender, recipients, subject, message_text):
+  """Create a message for an email.
+
+  Args:
+    sender: Email address of the sender.
+    to: Email address of the receiver.
+    subject: The subject of the email message.
+    message_text: The text of the email message.
+
+  Returns:
+    An object containing a base64url encoded email object.
+  """
+  message = MIMEText(message_text.encode('utf-8'))
+  message['To'] = ', '.join(recipients).encode('utf-8')
+  message['From'] = sender.encode('utf-8')
+  message['Subject'] = subject.encode('utf-8')
+  return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
+
+
+def send_gmail(service, user_id, message):
+  """Send an email message.
+
+  Args:
+    service: Authorized Gmail API service instance.
+    user_id: User's email address. The special value "me"
+    can be used to indicate the authenticated user.
+    message: Message to be sent.
+
+  Returns:
+    success and error messages.
+  """
+  success = None
+  error = None
+  try:
+    message = (service.users().messages().send(userId=user_id, body=message)
+               .execute())
+    print('Message Id: %s' % message['id'])
+    success = "Email sent"
+    return success, error
+  except Exception as error:
+    print('An error occurred: %s' % error)
+    err = "Error sending email: " + str(error)
+    return success, err
+
+
+def get_threadid(uid):
+    print('get_threadid')
+    service, error = connect_to_gmail()
+    if error:
+        print(error)
+        return None
+    results = service.users().threads().list(userId='me').execute()
+    threads = results.get('threads', [])
+
+    for t in threads:
+        thread = service.users().threads().get(userId='me', id=t['id']).execute()
+        message = thread['messages'][0]
+        raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
+        msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
+        mime_msg = email.message_from_string(msg_str)
+        subject = decode_header(mime_msg["Subject"])[0][0]
+        substr = '[uid:%s]' % uid
+        if subject.find(substr) >=0:
+            return t['id']
+    
+    return None
 
 
 def getFromDifTable(col, all_selected):
@@ -3795,7 +4118,7 @@ def project_landing_page(project_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('project_landing_page.html', data=metadata)
+    return render_template('project_landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
 
 
 @app.route('/data_management_plan', methods=['POST'])
@@ -4169,29 +4492,31 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if uid:
         conds.append(cur.mogrify('dpv.uid = %s', (uid,)))
     if dp_title:
+        dp_title = escapeChars(dp_title)
         conds.append("dpv.title ~* '%s' OR dpv.%s ~* '%s'" % (dp_title, titles, dp_title))
     if award:
-        conds.append(cur.mogrify('dpv.awards ~* %s', (award,)))
+        conds.append(cur.mogrify('dpv.awards ~* %s', (escapeChars(award),)))
     if person:
-        conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
+        conds.append(cur.mogrify('dpv.persons ~* %s', (escapeChars(person),)))
     if spatial_bounds_interpolated:
         conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
         conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
-        conds.append(cur.mogrify('dpv.science_programs ~* %s ', (sci_program,)))
+        conds.append(cur.mogrify('dpv.science_programs ~* %s ', (escapeChars(sci_program),)))
     if nsf_program:
-        conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (nsf_program,)))
+        conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (escapeChars(nsf_program),)))
     # if dp_type and dp_type != 'Both':
     #     conds.append(cur.mogrify('dpv.type=%s ', (dp_type,)))
     # if location:
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
+        free_text = escapeChars(free_text) 
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
-        conds.append(cur.mogrify('repositories = %s ', (repo,)))
+        conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
@@ -4199,6 +4524,13 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
     cur.execute(query_string)
     return cur.fetchall()
+
+
+def escapeChars(string) :
+    chars = [".","^","$", "*", "+", "?", "{", "}", "[", "]", "\\", "|", "(", ")"]
+    for c in chars:
+        string = string.replace(c, "\\"+c)
+    return string 
 
 
 def initcap(s):
