@@ -1189,7 +1189,7 @@ def dataset2(dataset_id=None):
                 sender = msg_data.get('submitter_email')
             else:
                 sender = msg_data.get('email')
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']]#['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']]
 
             if edit:
                 msg['Subject'] = 'USAP-DC Dataset Edit [uid:%s]' % dataset_id
@@ -1404,7 +1404,7 @@ def project(project_id=None):
             if not sender: 
                 sender = msg_data.get('email')
 
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']]#['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']]
 
             if edit:
                 msg['Subject'] = 'USAP-DC Project Edit [uid:%s]' % project_id
@@ -2149,7 +2149,7 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = form['email']
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']] #['info@usap-dc.org']
+            recipients = [app.config['USAP-DC_GMAIL_ACCT']] 
             message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['name'], form['msg'])
 
             msg = MIMEText(message.encode('utf-8'))
@@ -3038,7 +3038,7 @@ def curator():
                 elif request.form.get('submit') == "send_email":
                     template_dict['tab'] = 'email'
                     try:
-                        sender = app.config['USAP-DC_GMAIL_ACCT']#'info@usap-dc.org'
+                        sender = app.config['USAP-DC_GMAIL_ACCT']
                         recipients_text = request.form.get('email_recipients').encode('utf-8')
                         recipients = recipients_text.splitlines()
                         recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
@@ -3453,7 +3453,7 @@ def emails():
 
         if request.form.get('submit') == "send_email":
             try:
-                sender = app.config['USAP-DC_GMAIL_ACCT']#'info@usap-dc.org'
+                sender = app.config['USAP-DC_GMAIL_ACCT']
                 recipients_text = request.form.get('email_recipients').encode('utf-8')
                 recipients = recipients_text.splitlines()
                 recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
