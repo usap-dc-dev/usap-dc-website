@@ -29,6 +29,27 @@ def connect_to_db():
     return (conn, cur)
 
 
+def valueInHoneyPot(request_url):
+    # hidden fields that will only be populated by bots
+    search = parseSearch(request_url)
+    in_honey_pot = (search.get('email') and search['email'] != '') or (search.get('name') and search['name'] != '')
+    print(in_honey_pot)
+    return in_honey_pot
+
+
+def parseSearch(resource):
+    resource = resource.split('?')[1]
+    filters = resource.split('&')
+    search = {}
+    for f in filters:
+        try:
+            filter, value = f.split('=', 1)
+            search[filter] = value
+        except:
+            continue
+    return search
+
+
 if __name__ == '__main__':
 
     if len(sys.argv) == 3:
@@ -56,7 +77,7 @@ if __name__ == '__main__':
             request_url = log_line_data['request_url']
             # DOWNLOADS
             if "/dataset/usap-dc/" in request_url:
-                if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
+                if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) and not valueInHoneyPot(request_url)):
                     sql = '''INSERT INTO access_logs_downloads (remote_host, time, resource_requested, resource_size, referer, user_agent) 
                              VALUES ('%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
                                 log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
@@ -72,7 +93,7 @@ if __name__ == '__main__':
             # SEARCHES
             elif "search?" in request_url:
                 dataset_search = "dataset_search?" in request_url
-                if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
+                if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) and not valueInHoneyPot(request_url)):
                     sql = '''INSERT INTO access_logs_searches (remote_host, time, resource_requested, resource_size, referer, user_agent, dataset_search) 
                              VALUES ('%s', '%s', '%s', '%s', '%s', '%s', %s);''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
                                 log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],

@@ -928,7 +928,7 @@ def invalid_dataset(e):
 @app.errorhandler(psycopg2.OperationalError)
 def db_error(e):
     print(traceback.format_exc())
-    msg = "Error connecting to database. Please contact info@usap-dc.org"
+    msg = "Error connecting to database. Please <a href='mailto:%s'>contact us</a>." % app.config['USAP-DC_GMAIL_ACCT']
     return render_template('error.html', error_message=msg)
 
 
@@ -940,7 +940,7 @@ def oauth_error(e):
 @app.errorhandler(Exception)
 def general_error(e):
     print(traceback.format_exc())
-    msg = "Oops, there is an error on this page.  Please contact info@usap-dc.org"
+    msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>." % app.config['USAP-DC_GMAIL_ACCT']
     return render_template('error.html', error_message=msg)
 
 
@@ -2144,13 +2144,16 @@ def contact():
         return render_template('contact.html',secret=app.config['RECAPTCHA_DATA_SITE_KEY'])
     elif request.method == 'POST':
         form = request.form.to_dict()
+        # check honeypot trap - these fields are only visible to bots, not humans
+        checkHoneypot(form, "<br/>There was a problem with your submission. Please try again. <br/>", url_for('contact'))
+
         g_recaptcha_response = form.get('g-recaptcha-response')
         remoteip = request.remote_addr
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
-            sender = form['email']
+            sender = form['contactemail']
             recipients = [app.config['USAP-DC_GMAIL_ACCT']] 
-            message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['name'], form['msg'])
+            message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['contactname'], form['msg'])
 
             msg = MIMEText(message.encode('utf-8'))
             msg['Subject'] = form['subj']
@@ -2175,6 +2178,13 @@ def contact():
         else:
             msg = "<br/>You failed to pass the captcha<br/>"
             raise CaptchaException(msg, url_for('contact'))
+
+
+def checkHoneypot(form, msg, redirect):
+    # check honeypot trap - these fields are only visible to bots, not humans
+    if form.get('email') or form.get('name'):
+        raise BadSubmission(msg, redirect)
+
 
 
 @app.route('/submit', methods=['GET'])
@@ -4341,6 +4351,12 @@ def search():
 
     params = request.args.to_dict()
     params['dp_type'] = 'Project'
+
+    # block searches made by bots
+    checkHoneypot(params, 'There was an issue with your search, please try again.', url_for('search'))
+    params.pop('email', None)
+    params.pop('name', None)
+
     rows = filter_datasets_projects(**params)
     session['search_params'] = params
 
@@ -4372,6 +4388,12 @@ def dataset_search():
     cur.execute(query)
 
     params = request.args.to_dict()
+
+    # block searches made by bots
+    checkHoneypot(params, 'There was an issue with your search, please try again.', url_for('search'))
+    params.pop('email', None)
+    params.pop('name', None)
+
     params['dp_type'] = 'Dataset'
     rows = filter_datasets_projects(**params)
     session['search_params'] = params
