@@ -10,6 +10,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import crossref
+import url_test
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
@@ -39,7 +40,7 @@ def querySubmissionTable(cur, submission_type, status):
 
 
 def sendEmail(message, subject):
-    sender = 'info@usap-dc.org'
+    sender = config['USAP-DC_GMAIL_ACCT']
     recipients = config['RECIPIENTS']
 
     msg = MIMEMultipart('alternative')
@@ -139,6 +140,10 @@ if __name__ == '__main__':
 
     msg += """<h3>New publications found using Crossref:</h3><ul>"""
     msg += crossref.get_crossref_pubs()
+    msg += """</ul>"""
+
+    msg += """<h3>Broken URLs:</h3><ul>"""
+    msg += url_test.testAllUrls(False)
     msg += """</ul>"""
 
 
