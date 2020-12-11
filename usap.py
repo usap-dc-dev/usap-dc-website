@@ -3482,7 +3482,7 @@ def emails():
     # display list of all threads
     else:
         # Call the Gmail API
-        q = "after:%s before:%s" % (start_date, end_date_gmail)
+        q = "after:%s before:%s to:%s" % (start_date, end_date_gmail, app.config['USAP-DC_GMAIL_ACCT'] )
         results = service.users().threads().list(userId='me', q=q).execute()
         threads = results.get('threads', [])
         template_dict['threads'] = []
