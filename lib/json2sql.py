@@ -81,12 +81,13 @@ def make_sql(data, id):
 
     person_ids = []
     for author in data["authors"]:
-        first_name = author.get("first_name")
-        last_name = author.get("last_name")
+        first_name = usap.escapeChars(author.get("first_name")) # Handle names like O'Brien
+        last_name = usap.escapeChars(author.get("last_name"))
         person_id = "%s, %s" % (last_name, first_name)
         person_ids.append(person_id)
 
         query = "SELECT  * FROM person WHERE id = '%s'" % person_id
+        print(query)
         cur.execute(query)
         res = cur.fetchone()
   

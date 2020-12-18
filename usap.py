@@ -4552,6 +4552,7 @@ def escapeChars(string) :
     chars = [".","^","$", "*", "+", "?", "{", "}", "[", "]", "\\", "|", "(", ")"]
     for c in chars:
         string = string.replace(c, "\\"+c)
+    string = string.replace("'","''")
     return string 
 
 

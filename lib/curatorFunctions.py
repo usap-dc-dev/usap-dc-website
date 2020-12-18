@@ -577,9 +577,11 @@ def projectJson2sql(data, uid):
     if data.get('submitter_name'):
         names = data['submitter_name'].rsplit(' ',1)
         if len(names) > 1:
-            subm_id = names[-1] + ', ' + names[0]
+            subm_id = usap.escapeChars(names[-1]) + ', ' + usap.escapeChars(names[0])
 
     # Add PI to person table, if necessary, and project_person_map
+    data['pi_name_last'] = usap.escapeChars(data['pi_name_last']) # handle names like O'Brien
+    data['pi_name_first'] = usap.escapeChars(data['pi_name_first'])
     pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
     pi_id = pi_id.replace(',  ', ', ')
     query = "SELECT * FROM person WHERE id = '%s'" % pi_id
@@ -1836,7 +1838,7 @@ def getCreatorEmails(uid):
         res = cur.fetchone()
         if res:
             creators = res['creator'].split('; ')
-            query = "SELECT id, email FROM person WHERE id IN (%s) AND email <> ''" % (', '.join("'" + item + "'" for item in creators))
+            query = "SELECT id, email FROM person WHERE id IN (%s) AND email <> ''" % (', '.join("'" + usap.escapeChars(item) + "'" for item in creators))
             cur.execute(query)
             res = cur.fetchall()
         else:
