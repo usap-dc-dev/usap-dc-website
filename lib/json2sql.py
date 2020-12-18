@@ -81,13 +81,12 @@ def make_sql(data, id):
 
     person_ids = []
     for author in data["authors"]:
-        first_name = usap.escapeChars(author.get("first_name")) # Handle names like O'Brien
-        last_name = usap.escapeChars(author.get("last_name"))
+        first_name = author.get("first_name") 
+        last_name = author.get("last_name")
         person_id = "%s, %s" % (last_name, first_name)
         person_ids.append(person_id)
 
-        query = "SELECT  * FROM person WHERE id = '%s'" % person_id
-        print(query)
+        query = "SELECT  * FROM person WHERE id = '%s'" % usap.escapeChars(person_id)
         cur.execute(query)
         res = cur.fetchone()
   
@@ -96,39 +95,39 @@ def make_sql(data, id):
             sql_out += checkAltIds(person_id, first_name, last_name, 'AUTHOR')
  
             if author == data["authors"][0]:
-                line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"])
+                line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(usap.escapeChars(person_id), usap.escapeChars(first_name), usap.escapeChars(last_name), data["email"])
             else:
-                line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
+                line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(usap.escapeChars(person_id), usap.escapeChars(first_name), usap.escapeChars(last_name))
 
             sql_out += line
 
             if person_id == data.get('submitter_name') and data.get('submitter_orcid'):
-                line = "UPDATE person SET id_orcid = '{}' WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                line = "UPDATE person SET id_orcid = '{}' WHERE id = '{}';\n".format(data['submitter_orcid'], usap.escapeChars(person_id))
                 sql_out += line
         else:
             if person_id == data.get('submitter_name') and data.get('submitter_orcid') and data['submitter_orcid'] != res['id_orcid'] and data['submitter_orcid'] != '':
-                line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], usap.escapeChars(person_id))
                 sql_out += line  
             if person_id == data.get('submitter_name') and data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
-                line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], person_id)
+                line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], usap.escapeChars(person_id))
                 sql_out += line  
 
     if data["submitter_name"] not in person_ids and data["submitter_name"] != '':
-        query = "SELECT * FROM person WHERE id = '%s'" % data["submitter_name"]
+        query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeChars(data["submitter_name"])
         cur.execute(query)
         res = cur.fetchone()
         if not res:
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
             sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'], data.get('submitter_email'))           
 
-            line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], data["submitter_first"], data["submitter_last"], data.get("submitter_email", ''), data.get("submitter_orcid", ''))
+            line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(usap.escapeChars(data["submitter_name"]), usap.escapeChars(data["submitter_first"]), usap.escapeChars(data["submitter_last"]), data.get("submitter_email", ''), data.get("submitter_orcid", ''))
             sql_out += line
         else:
             if data.get('submitter_orcid') and data['submitter_orcid'] != res['id_orcid'] and data['submitter_orcid'] != '':
-                line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], data['submitter_name'])
+                line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], usap.escapeChars(data['submitter_name']))
                 sql_out += line 
             if data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
-                line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], data['submitter_name'])
+                line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], usap.escapeChars(data['submitter_name']))
                 sql_out += line   
     
     # if this is a replacement dataset, increment the version number from the previous dataset
@@ -148,7 +147,7 @@ def make_sql(data, id):
             .format(id,
                     data["title"], 
                     data["submitter_name"], 
-                    '; '.join(person_ids), 
+                    usap.escapeChars('; '.join(person_ids)), 
                     release_date, 
                     data["abstract"], 
                     version, 
@@ -169,11 +168,11 @@ def make_sql(data, id):
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
-            line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, person_id)
+            line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, usap.escapeChars(person_id))
             sql_out += line
 
     if data["submitter_name"] not in person_ids and data["submitter_name"] != '':
-        line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, data["submitter_name"])
+        line = "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (id, usap.escapeChars(data["submitter_name"]))
         sql_out += line
   
     sql_out += '\n--NOTE: AWARDS functions:\n'
@@ -393,8 +392,8 @@ def editDatasetJson2sql(data, uid):
     orig = usap.dataset_db2form(uid)
 
     # construct pi_id for first author
-    first_name = data['authors'][0].get("first_name")
-    last_name = data['authors'][0].get("last_name")
+    first_name = usap.escapeChars(data['authors'][0].get("first_name"))
+    last_name = usap.escapeChars(data['authors'][0].get("last_name"))
     pi_id = "%s, %s" % (last_name, first_name)
 
     # submitter
@@ -416,7 +415,7 @@ def editDatasetJson2sql(data, uid):
                 updates.add(k)    
 
     # check for orcid update
-    query = "SELECT id_orcid FROM person WHERE id = '%s'" % data['submitter_name']
+    query = "SELECT id_orcid FROM person WHERE id = '%s'" % usap.escapeChars(data['submitter_name'])
     cur.execute(query)
     res = cur.fetchone()
     if res and res['id_orcid'] != data.get('submitter_orcid'):
@@ -441,7 +440,7 @@ def editDatasetJson2sql(data, uid):
 
             # remove existing co-pis from project_person_map
             sql_out += "\n--NOTE: First remove all existing authors from dataset_person_map\n"
-            sql_out += "DELETE FROM dataset_person_map WHERE dataset_id = '%s' and person_id != '%s';\n" % (uid, data['submitter_name'])
+            sql_out += "DELETE FROM dataset_person_map WHERE dataset_id = '%s' and person_id != '%s';\n" % (uid, usap.escapeChars(data['submitter_name']))
             # make sure authors are in person table
             person_ids = []
             for author in data["authors"]:
@@ -454,7 +453,7 @@ def editDatasetJson2sql(data, uid):
                 if 'submitter_name' in updates and person_id == data['submitter_name']:
                     continue
 
-                query = "SELECT * FROM person WHERE id = '%s'" % person_id
+                query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeChars(person_id)
                 cur.execute(query)
                 res = cur.fetchone()
           
@@ -463,32 +462,32 @@ def editDatasetJson2sql(data, uid):
                     sql_out += checkAltIds(person_id, first_name, last_name, 'AUTHOR')
 
                     if author == data["authors"][0]:
-                        line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(person_id, first_name, last_name, data["email"])
+                        line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(usap.escapeChars(person_id), usap.escapeChars(first_name), usap.escapeChars(last_name), data["email"])
                     else:
-                        line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(person_id, first_name, last_name)
+                        line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(usap.escapeChars(person_id), usap.escapeChars(first_name), usap.escapeChars(last_name))
 
                     sql_out += line
 
                     if person_id == data.get('submitter_name') and data.get('submitter_orcid'):
-                        line = "UPDATE person SET id_orcid = '{}' WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                        line = "UPDATE person SET id_orcid = '{}' WHERE id = '{}';\n".format(data['submitter_orcid'], usap.escapeChars(person_id))
                         sql_out += line
                 else:
                     if person_id == data.get('submitter_name') and data.get('submitter_orcid') and data['submitter_orcid'] != res['id_orcid'] and data['submitter_orcid'] != '':
-                        line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], person_id)
+                        line = "UPDATE person SET id_orcid = '{}'  WHERE id = '{}';\n".format(data['submitter_orcid'], usap.escapeChars(person_id))
                         sql_out += line  
                     if person_id == data.get('submitter_name') and data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
-                        line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], person_id)
+                        line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], usap.escapeChars(person_id))
                         sql_out += line  
 
             # add people back in to project_person_map
             for person_id in person_ids:
                 if person_id != data['submitter_name']:
                     sql_out += "\n--NOTE: adding %s to dataset_person_map\n" % person_id
-                    sql_out += "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (uid, person_id)
+                    sql_out += "INSERT INTO dataset_person_map(dataset_id,person_id) VALUES ('%s','%s');\n" % (uid, usap.escapeChars(person_id))
 
             # update creator field in dataset table
             sql_out += "\n--NOTE: updating creator field in dataset table\n"
-            sql_out += "UPDATE dataset SET creator = '%s' WHERE id = '%s';\n" % ('; '.join(person_ids), uid)
+            sql_out += "UPDATE dataset SET creator = '%s' WHERE id = '%s';\n" % (usap.escapeChars('; '.join(person_ids)), uid)
 
         if k == 'awards':
             sql_out += "\n--NOTE: UPDATING AWARDS\n"
@@ -560,12 +559,12 @@ def editDatasetJson2sql(data, uid):
 
         if k == 'email':
             # first check if first author is already in person DB table - if not, email will get added when authors are updated elsewhere in the code
-            query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % pi_id
+            query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % usap.escapeChars(pi_id)
             cur.execute(query)
             res = cur.fetchone()
             if res['count'] > 0:
                 sql_out += "\n--NOTE: UPDATING EMAIL ADDRESS\n"
-                sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], pi_id)
+                sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], usap.escapeChars(pi_id))
         
         if k == 'feature_name':
             # feature name not currently stored in DB or Readme file, so this will do nothing.
@@ -622,7 +621,7 @@ def editDatasetJson2sql(data, uid):
 
         if k == 'orcid':
             sql_out += "\n--NOTE: UPDATING ORCID FOR SUBMITTER\n"
-            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], data['submitter_name'])
+            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], usap.escapeChars(data['submitter_name']))
 
         if k == 'procedures':
             sql_out += "\n--NOTE: UPDATING ACQUISITION PROCEDURES DESCRIPTION IN README FILE\n"
@@ -703,7 +702,7 @@ def editDatasetJson2sql(data, uid):
             if data["submitter_name"] != '':
                 sql_out += "\n--NOTE: UPDATING SUBMITTER\n"
 
-                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % data["submitter_name"]
+                query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % usap.escapeChars(data["submitter_name"])
                 cur.execute(query)
                 res = cur.fetchone()
                 if res['count'] == 0:
@@ -712,13 +711,13 @@ def editDatasetJson2sql(data, uid):
                     sql_out += checkAltIds(data['submitter_name'], first_name, last_name, 'SUBMITTER_NAME', data['submitter_orcid'], data.get('submitter_email'))          
 
 
-                    line = "INSERT INTO person(id,first_name,last_name,email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(data["submitter_name"], first_name, last_name, data.get("submitter_email", ''), data.get("submitter_orcid", ''))
+                    line = "INSERT INTO person(id,first_name,last_name,email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(usap.escapeChars(data["submitter_name"]), usap.escapeChars(first_name), usap.escapeChars(last_name), data.get("submitter_email", ''), data.get("submitter_orcid", ''))
                     sql_out += line
-                query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, data["submitter_name"])
+                query = "SELECT COUNT(*) FROM dataset_person_map WHERE dataset_id = '%s' AND person_id = '%s'" % (uid, usap.escapeChars(data["submitter_name"]))
                 cur.execute(query)
                 res = cur.fetchone()
                 if res['count'] == 0:
-                    line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, data["submitter_name"])
+                    line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, usap.escapeChars(data["submitter_name"]))
                     sql_out += line
 
                 sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (data['submitter_name'], uid)
