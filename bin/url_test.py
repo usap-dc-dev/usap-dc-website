@@ -33,8 +33,8 @@ def connect_to_db():
     conn = psycopg2.connect(host=info['HOST'],
                             port=info['PORT'],
                             database=info['DATABASE'],
-                            user=info['USER'],
-                            password=info['PASSWORD'])
+                            user=info['USER_CURATOR'],
+                            password=info['PASSWORD_CURATOR'])
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn, cur)
 
@@ -57,34 +57,66 @@ def testUrl(url, verbose):
 
 
 # check urls using requests module.  Disable ssl verification as some sites have SSL issues
-def testUrlFromTable(url, table, verbose):
+def testUrlFromTable(url, bad_url_col, bad_url_count, uid_col, uid, table, cur, verbose):
     if not url or url[:3]=='ftp':
         return("")
     try:
-        # check url in url_status service I wrote for R2R as having some problems with
-        # just using python requests
         r = requests.get(url, verify=False, timeout=30)
         if r.status_code != 404:
             if verbose: print('%s: OK' % url)
+
+            # if a previously broken url starts working again, update status in table
+            if bad_url_col and bad_url_count >=1:
+                query = "UPDATE %s SET status='exist', %s=0 WHERE %s='%s';" % (table, bad_url_col, uid_col, uid)
+                cur.execute(query)
+
             return("")
         else:
             if verbose: print('%s: ERROR in table %s - status_code: %s' % (url, table, r.status_code))
-            return('<li><a href="%s">%s</a>: ERROR in table %s - status_code: %s</li>' % (url, url, table, r.status_code))
+            # if keeping count of how many times a URL is reported as broken, then update the database now
+            if bad_url_col:
+                return(incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid))
+            else:
+                return('<li><a href="%s">%s</a>: ERROR in table %s - broken link: %s</li>' % (url, url, table))
     except Exception as e:
         if verbose: print('%s: ERROR in table %s- %s') % (url, table, str(e))
-        return('<li><a href="%s">%s</a>: ERROR in table %s - : %s</li>' % (url, url, table, 'Connection Error'))
+        # if keeping count of how many times a URL is reported as broken, then update the database now
+        if bad_url_col:
+            return(incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid))
+        else:
+            return('<li><a href="%s">%s</a>: ERROR in table %s - : broken link</li>' % (url, url, table))
 
 
-def getUrlsFromTable(table, url_col, verbose):
+def incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid):
+    if bad_url_count >= 3:
+        return("")
+    if not bad_url_count:
+        bad_url_count = 1
+    else:
+        bad_url_count += 1
+    # after 3 failed tests, set status to bad_url and don't report in output
+    if bad_url_count == 3:
+        query = "UPDATE %s SET status='bad_url', %s=%s WHERE %s='%s';" % (table, bad_url_col, bad_url_count, uid_col, uid)
+        cur.execute(query)
+        return("")
+    else:
+        query = "UPDATE %s SET %s=%s WHERE %s='%s';" % (table, bad_url_col, bad_url_count, uid_col, uid)
+        cur.execute(query)
+        return('<li><a href="%s">%s</a>: ERROR in table %s - broken link (warning No.%s)</li>' % (url, url, table, bad_url_count))
+
+
+
+def getUrlsFromTable(table, url_col, bad_url_col, uid_col, cur, verbose):
     msg = ""
 
-    conn, cur = connect_to_db()
-
-    query = 'SELECT "%s" from %s;' % (url_col, table)
+    query = 'SELECT * from %s;' % (table)
     cur.execute(query)
     res = cur.fetchall()
     for line in res:
-        msg += testUrlFromTable(line[url_col], table, verbose)
+        msg += testUrlFromTable(line[url_col], bad_url_col, line.get(bad_url_col), uid_col, line.get(uid_col), table, cur, verbose)
+    
+    # commit any updates to bad_url_counts, or statuses
+    cur.execute('COMMIT;')
 
     return(msg)
 
@@ -93,7 +125,7 @@ def testAllUrls(verbose=False):
     conn, cur = connect_to_db()
     output = ""
 
-    #first test landing pages
+    first test landing pages
     query = "SELECT id from dataset;"
     cur.execute(query)
     res = cur.fetchall()
@@ -117,9 +149,8 @@ def testAllUrls(verbose=False):
     #now test URLs in database
     urls_to_test = [
         {'table': 'dataset', 'url_col': 'url'},
-        {'table': 'dif_data_url_map', 'url_col': 'url'},
         {'table': 'license', 'url_col': 'url'},
-        {'table': 'project_dataset', 'url_col': 'url'},
+        {'table': 'project_dataset', 'url_col': 'url', 'bad_url_col': 'bad_url_count', 'uid_col':'dataset_id'},
         {'table': 'project_deployment', 'url_col': 'url'},
         {'table': 'project_website', 'url_col': 'url'},
         {'table': 'repository', 'url_col': 'repository_URL'},
@@ -127,7 +158,7 @@ def testAllUrls(verbose=False):
 
     for entry in urls_to_test:
         if verbose: print('\n******** TABLE: %s\n' %entry['table'])
-        output += getUrlsFromTable(entry['table'], entry['url_col'], verbose)
+        output += getUrlsFromTable(entry['table'], entry['url_col'], entry.get('bad_url_col'), entry.get('uid_col'), cur, verbose)
 
     # print(output)
     return(output)
