@@ -4557,8 +4557,14 @@ def escapeChars(string) :
 
 
 def initcap(s):
-    parts = re.split('( |_|-|>)+', s)
-    return ' '.join([p.lower().capitalize() for p in parts])
+    parts = re.split("( |_|-|>)+", s)
+    print(parts)
+    name = ' '.join([p.lower().capitalize() for p in parts])
+    # handle names with apostrophes
+    if "'" in name:
+        parts = name.split("'")
+        name = "'".join([p.lower().capitalize() for p in parts])
+    return name
 
 
 @app.route('/dashboard', methods=['GET'])

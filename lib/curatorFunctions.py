@@ -569,7 +569,7 @@ def projectJson2sql(data, uid):
     # project table
     sql_out += "--NOTE: populate project table\n"
     sql_out += "INSERT INTO project (proj_uid, title, short_name, description, start_date, end_date, date_created, date_modified) " \
-               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], data['sum'].replace("'", "''"),  
+               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], usap.escapeChars(data['sum']),  
                                                                                  data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10])
 
     # generate the submitter's person id if we have their name
@@ -762,7 +762,7 @@ def projectJson2sql(data, uid):
                 cur.execute(query)
                 res = cur.fetchall()
             elif (not pub.get('doi') or pub['doi'] == '') and pub.get('name'):
-                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (pub.get('name'))
+                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeChars(pub.get('name')))
                 print(query)
                 cur.execute(query)
                 res = cur.fetchall()
@@ -771,7 +771,7 @@ def projectJson2sql(data, uid):
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
                 ref_uid = generate_ref_uid()
                 sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                    (ref_uid, pub.get('name'), pub.get('doi'))
+                    (ref_uid, usap.escapeChars(pub.get('name')), pub.get('doi'))
             else:
                 ref_uid = res[0]['ref_uid']
             # sql_out += "--NOTE: adding reference %s to project_ref_map\n" % ref_uid
@@ -1310,7 +1310,7 @@ def editProjectJson2sql(data, uid):
                         cur.execute(query)
                         res = cur.fetchall()
                     elif (not pub.get('doi') or pub['doi'] == '') and pub.get('name'):
-                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (pub.get('name'))
+                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeChars(pub.get('name')))
                         print(query)
                         cur.execute(query)
                         res = cur.fetchall()
@@ -1319,7 +1319,7 @@ def editProjectJson2sql(data, uid):
                         sql_out += "\n--NOTE: adding %s to reference table\n" % pub['name']
                         ref_uid = generate_ref_uid()
                         sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                            (ref_uid, pub.get('name'), pub.get('doi'))
+                            (ref_uid, usap.escapeChars(pub.get('name')), pub.get('doi'))
                     else:
                         ref_uid = res[0]['ref_uid']
                     sql_out += "\n--NOTE: adding reference %s to project_ref_map\n" % ref_uid
@@ -1342,7 +1342,7 @@ def editProjectJson2sql(data, uid):
 
         elif k == 'sum':
             sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
-            sql_out += "UPDATE project SET description = '%s' WHERE proj_uid = '%s';\n" % (data['sum'], uid)
+            sql_out += "UPDATE project SET description = '%s' WHERE proj_uid = '%s';\n" % (usap.escapeChars(data['sum']), uid)
 
         elif k == 'title':
             sql_out += "\n--NOTE: UPDATING TITLE\n"

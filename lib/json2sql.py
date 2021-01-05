@@ -146,10 +146,10 @@ def make_sql(data, id):
     VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','In Work','{}','{}','{}');\n""" \
             .format(id,
                     data["title"], 
-                    data["submitter_name"], 
+                    usap.escapeChars(data["submitter_name"]), 
                     usap.escapeChars('; '.join(person_ids)), 
                     release_date, 
-                    data["abstract"], 
+                    usap.escapeChars(data["abstract"]), 
                     version, 
                     url, 
                     'usap-dc', 
@@ -286,7 +286,7 @@ def make_sql(data, id):
                 cur.execute(query)
                 res = cur.fetchall()
             elif (not pub.get('doi') or pub['doi'] == '') and pub.get('text'):
-                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (pub.get('text'))
+                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeChars(pub.get('text')))
                 print(query)
                 cur.execute(query)
                 res = cur.fetchall()
@@ -295,7 +295,7 @@ def make_sql(data, id):
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
                 ref_uid = generate_ref_uid()
                 sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                    (ref_uid, pub.get('text'), pub.get('doi'))
+                    (ref_uid, usap.escapeChars(pub.get('text')), pub.get('doi'))
             else:
                 ref_uid = res[0]['ref_uid']
             # sql_out += "--NOTE: adding reference %s to dataset_reference_map\n" % ref_uid
@@ -433,7 +433,7 @@ def editDatasetJson2sql(data, uid):
     for k in updates:
         if k == 'abstract':
             sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
-            sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (data['abstract'], uid)
+            sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (usap.escapeChars(data['abstract']), uid)
         
         if k == 'authors':
             sql_out += "\n--NOTE: UPDATING AUTHORS\n"
@@ -659,7 +659,7 @@ def editDatasetJson2sql(data, uid):
                         cur.execute(query)
                         res = cur.fetchall()
                     elif (not pub.get('doi') or pub['doi'] == '') and pub.get('text'):
-                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (pub.get('text'))
+                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeChars(pub.get('text')))
                         print(query)
                         cur.execute(query)
                         res = cur.fetchall()
@@ -668,7 +668,7 @@ def editDatasetJson2sql(data, uid):
                         # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
                         ref_uid = generate_ref_uid
                         sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                            (ref_uid, pub.get('text'), pub.get('doi'))
+                            (ref_uid, usap.escapeChars(pub.get('text')), pub.get('doi'))
                     else:
                         ref_uid = res[0]['ref_uid']
                     # sql_out += "--NOTE: adding reference %s to dataset_reference_map\n" % ref_uid
@@ -720,7 +720,7 @@ def editDatasetJson2sql(data, uid):
                     line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, usap.escapeChars(data["submitter_name"]))
                     sql_out += line
 
-                sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (data['submitter_name'], uid)
+                sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (usap.escapeChars(data['submitter_name']), uid)
 
         if k == 'title':      
             sql_out += "\n--NOTE: UPDATING TITLE\n"
