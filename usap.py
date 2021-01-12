@@ -35,7 +35,7 @@ import traceback
 import pandas as pd
 import pickle
 from apiclient.discovery import build
-from google.auth.transport.requests import Request
+from google.auth.transport.requests import Request as gRequest
 import base64
 import email
 from email.header import decode_header
@@ -3319,7 +3319,7 @@ def connect_to_gmail():
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            creds.refresh(gRequest())
         else:
             return None, "Gmail credentials are not valid"
 
