@@ -886,7 +886,7 @@ def dataset_oldform2form(uid):
     except:
             submitted_data = {}
 
-    form_data = {'related_fields': submitted_data.get('related_fields'), 'feature_name': submitted_data.get('feature_name')}
+    form_data = {'related_fields': submitted_data.get('related_fields')}
     return form_data
 
 
@@ -1813,12 +1813,6 @@ def project_db2form(uid):
     if db_data.get('locations'):
         for l in db_data.get('locations'):
             form_data['locations'].append(l)
-
-    if db_data.get('feature'):
-        features = []
-        for f in db_data.get('feature'):
-            features.append(f.get('feature_name'))
-        form_data['location_free'] = ', '.join(features)
 
     if db_data.get('parameters'):
         for p in db_data.get('parameters'):

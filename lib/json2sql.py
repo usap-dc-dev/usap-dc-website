@@ -565,11 +565,6 @@ def editDatasetJson2sql(data, uid):
             if res['count'] > 0:
                 sql_out += "\n--NOTE: UPDATING EMAIL ADDRESS\n"
                 sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], usap.escapeChars(pi_id))
-        
-        if k == 'feature_name':
-            # feature name not currently stored in DB or Readme file, so this will do nothing.
-            # Update will just be stored in the new json file.
-            pass
 
         if k == 'issues':
             sql_out += "\n--NOTE: UPDATING KNOWN ISSUES/LIMITATIONS IN README FILE\n"

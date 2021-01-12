@@ -447,6 +447,12 @@
             </select>
           </div>
 
+          <div class="form-group">
+            <label for="user_keywords">User Keywords</label>
+            <textarea name="user_keywords" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
+            <span class="help-block">Enter comma separated non-geographic keywords, eg. volitiles, mantle melting, CO2 fluxes.</span>
+          </div>
+
           <!-- Locations -->
           <div class="form-group">
             <label for="location">Location</label>
@@ -474,12 +480,6 @@
             </div>
             <div id="more_locations"></div>
             <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another locations</span></a>
-          </div>
-
-          <div class="form-group">
-            <label for="user_keywords">User Keywords</label>
-            <textarea name="user_keywords" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
-            <span class="help-block">Enter comma separated non-geographic keywords, eg. volitiles, mantle melting, CO2 fluxes.</span>
           </div>
 
           <div>
@@ -524,11 +524,6 @@
             <span class="input-group-addon">to</span>
             <input type="text" class="input-sm form-control" name="stop" placeholder="YYYY-MM-DD" value="{{dataset_metadata.get('stop','')}}"/>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label for="feature_name">Region Feature Name</label>
-          <input name="feature_name" class="form-control" value="{{dataset_metadata.get('feature_name','')}}"></input>
         </div>
 
         <button class="btn btn-default" type="submit" name="action" value="next">Next page</button>
