@@ -125,7 +125,7 @@ def testAllUrls(verbose=False):
     conn, cur = connect_to_db()
     output = ""
 
-    first test landing pages
+    # first test landing pages
     query = "SELECT id from dataset;"
     cur.execute(query)
     res = cur.fetchall()
