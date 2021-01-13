@@ -534,7 +534,7 @@ def getDatasetKeywords(uid):
 
 def checkAltIds(person_id, first_name, last_name, field, id_orcid=None, email=None): 
     conn, cur = usap.connect_to_db(curator=True)
-    query = "SELECT * FROM person WHERE id ~ '%s' AND id ~'%s'" % (usap.escapeChars(first_name.split(' ')[0]), usap.escapeChars(last_name.split(' ')[0]))
+    query = "SELECT * FROM person WHERE id ~ '%s' AND id ~'%s'" % (usap.escapeQuotes(first_name.split(' ')[0]), usap.escapeQuotes(last_name.split(' ')[0]))
     if id_orcid: 
         query += " OR id_orcid = '%s'" % id_orcid
     if email:
@@ -569,7 +569,7 @@ def projectJson2sql(data, uid):
     # project table
     sql_out += "--NOTE: populate project table\n"
     sql_out += "INSERT INTO project (proj_uid, title, short_name, description, start_date, end_date, date_created, date_modified) " \
-               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], usap.escapeChars(data['sum']),  
+               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], usap.escapeQuotes(data['sum']),  
                                                                                  data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10])
 
     # generate the submitter's person id if we have their name
@@ -584,40 +584,40 @@ def projectJson2sql(data, uid):
     data['pi_name_first'] = data['pi_name_first']
     pi_id = data['pi_name_last'] + ', ' + data['pi_name_first'] 
     pi_id = pi_id.replace(',  ', ', ')
-    query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeChars(pi_id)
+    query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeQuotes(pi_id)
     cur.execute(query)
     res = cur.fetchall()
     if len(res) == 0:
         sql_out += "--NOTE: adding PI to person table\n"
         if subm_id and subm_id == pi_id and data.get('submitter_orcid') and data['submitter_orcid'] != '':
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid or email match)
-            sql_out += checkAltIds(usap.escapeChars(pi_id), usap.escapeChars(data.get('pi_name_first')), usap.escapeChars(data.get('pi_name_last')), 'PI_NAME_FIRST AND PI_NAME_LAST', data['submitter_orcid'], data.get('email'))
+            sql_out += checkAltIds(usap.escapeQuotes(pi_id), usap.escapeQuotes(data.get('pi_name_first')), usap.escapeQuotes(data.get('pi_name_last')), 'PI_NAME_FIRST AND PI_NAME_LAST', data['submitter_orcid'], data.get('email'))
 
             sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                        "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
-                (usap.escapeChars(pi_id), usap.escapeChars(data.get('pi_name_first')), usap.escapeChars(data.get('pi_name_last')), data.get('email'), data.get('org'), data['submitter_orcid'])
+                (usap.escapeQuotes(pi_id), usap.escapeQuotes(data.get('pi_name_first')), usap.escapeQuotes(data.get('pi_name_last')), data.get('email'), data.get('org'), data['submitter_orcid'])
         else:
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or email match)
             sql_out += checkAltIds(pi_id, data.get('pi_name_first'), data.get('pi_name_last'), 'PI_NAME_FIRST AND PI_NAME_LAST', email=data.get('email'))
 
             sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                        "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
-                (usap.escapeChars(pi_id), usap.escapeChars(data.get('pi_name_first')), usap.escapeChars(data.get('pi_name_last')), data.get('email'), data.get('org'))
+                (usap.escapeQuotes(pi_id), usap.escapeQuotes(data.get('pi_name_first')), usap.escapeQuotes(data.get('pi_name_last')), data.get('email'), data.get('org'))
 
     else:
         if data.get('email') is not None and res[0]['email'] != data['email']:
             sql_out += "--NOTE: updating email for PI %s to %s\n" % (pi_id, data['email'])
-            sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], usap.escapeChars(pi_id))
+            sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], usap.escapeQuotes(pi_id))
         if data.get('org') is not None and res[0]['organization'] != data['org']:
             sql_out += "--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
-            sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], usap.escapeChars(pi_id))
+            sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], usap.escapeQuotes(pi_id))
         if subm_id and subm_id == pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
             sql_out += "--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['submitter_orcid'])
-            sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], usap.escapeChars(pi_id))
+            sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], usap.escapeQuotes(pi_id))
 
     sql_out += "--NOTE: adding PI %s to project_person_map\n" % pi_id
     sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n\n" % \
-               (uid, usap.escapeChars(pi_id))
+               (uid, usap.escapeQuotes(pi_id))
     
     # add org to Organizations table if necessary
     if data.get('org') is not None:
@@ -643,24 +643,24 @@ def projectJson2sql(data, uid):
 
                 sql_out += "INSERT INTO person (id, first_name, last_name, organization, id_orcid) " \
                            "VALUES ('%s', '%s', '%s' ,'%s', '%s');\n\n" % \
-                           (usap.escapeChars(co_pi_id), usap.escapeChars(co_pi.get('name_first')), usap.escapeChars(co_pi.get('name_last')), co_pi.get('org'), data['submitter_orcid'])
+                           (usap.escapeQuotes(co_pi_id), usap.escapeQuotes(co_pi.get('name_first')), usap.escapeQuotes(co_pi.get('name_last')), co_pi.get('org'), data['submitter_orcid'])
             else:
                 # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
                 sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS')
                 sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
                            "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
-                           (usap.escapeChars(co_pi_id), usap.escapeChars(co_pi.get('name_first')), usap.escapeChars(co_pi.get('name_last')), co_pi.get('org'))
+                           (usap.escapeQuotes(co_pi_id), usap.escapeQuotes(co_pi.get('name_first')), usap.escapeQuotes(co_pi.get('name_last')), co_pi.get('org'))
         else:
             if co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
                 sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
-                sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], usap.escapeChars(co_pi_id))
+                sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], usap.escapeQuotes(co_pi_id))
             if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
                 sql_out += "--NOTE: updating orcid for %s to %s\n" % (co_pi_id, data['submitter_orcid'])
-                sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], usap.escapeChars(co_pi_id))
+                sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], usap.escapeQuotes(co_pi_id))
         
         sql_out += "--NOTE: adding %s to project_person_map\n" % co_pi_id
         sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
-                   (uid, usap.escapeChars(co_pi_id), co_pi.get('role'))
+                   (uid, usap.escapeQuotes(co_pi_id), co_pi.get('role'))
 
         # add org to Organizations table if necessary
         if co_pi.get('org') is not None:
@@ -762,7 +762,7 @@ def projectJson2sql(data, uid):
                 cur.execute(query)
                 res = cur.fetchall()
             elif (not pub.get('doi') or pub['doi'] == '') and pub.get('name'):
-                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeChars(pub.get('name')))
+                query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeQuotes(pub.get('name')))
                 print(query)
                 cur.execute(query)
                 res = cur.fetchall()
@@ -771,7 +771,7 @@ def projectJson2sql(data, uid):
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
                 ref_uid = generate_ref_uid()
                 sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                    (ref_uid, usap.escapeChars(pub.get('name')), pub.get('doi'))
+                    (ref_uid, usap.escapeQuotes(pub.get('name')), pub.get('doi'))
             else:
                 ref_uid = res[0]['ref_uid']
             # sql_out += "--NOTE: adding reference %s to project_ref_map\n" % ref_uid
@@ -947,7 +947,7 @@ def editProjectJson2sql(data, uid):
                 updates.add(k)
 
     # check for orcid update
-    query = "SELECT id_orcid FROM person WHERE id = '%s'" % usap.escapeChars(subm_id)
+    query = "SELECT id_orcid FROM person WHERE id = '%s'" % usap.escapeQuotes(subm_id)
     cur.execute(query)
     res = cur.fetchone()
     if res and res['id_orcid'] != data.get('submitter_orcid'):
@@ -994,13 +994,13 @@ def editProjectJson2sql(data, uid):
 
             # remove existing co-pis from project_person_map
             sql_out += "\n--NOTE: First remove all existing co-pis from project_person_map\n"
-            sql_out += "DELETE FROM project_person_map WHERE proj_uid = '%s' and person_id != '%s';\n" % (uid, usap.escapeChars(pi_id))
+            sql_out += "DELETE FROM project_person_map WHERE proj_uid = '%s' and person_id != '%s';\n" % (uid, usap.escapeQuotes(pi_id))
 
             # Update personnel to the person table, if necessary, and project_person_map
             for co_pi in data['copis']:
                 co_pi_id = co_pi['name_last'] + ', ' + co_pi['name_first']
                 co_pi_id = co_pi_id.replace(',  ', ', ')
-                query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeChars(co_pi_id)
+                query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeQuotes(co_pi_id)
                 cur.execute(query)
                 res = cur.fetchall()
 
@@ -1011,26 +1011,26 @@ def editProjectJson2sql(data, uid):
                         # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
                         sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS', data['submitter_orcid'])
 
-                        sql_out += "INSERT INTO person (id, usap.escapeChars(first_name), usap.escapeChars(last_name), organization, id_orcid) " \
+                        sql_out += "INSERT INTO person (id, usap.escapeQuotes(first_name), usap.escapeQuotes(last_name), organization, id_orcid) " \
                                    "VALUES ('%s', '%s', '%s' ,'%s', '%s');\n\n" % \
-                                   (usap.escapeChars(co_pi_id), usap.escapeChars(co_pi.get('name_first')), usap.escapeChars(co_pi.get('name_last')), co_pi.get('org'), data['submitter_orcid'])
+                                   (usap.escapeQuotes(co_pi_id), usap.escapeQuotes(co_pi.get('name_first')), usap.escapeQuotes(co_pi.get('name_last')), co_pi.get('org'), data['submitter_orcid'])
                     else:
                         # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or orcid match)
                         sql_out += checkAltIds(co_pi_id, co_pi.get('name_first'), co_pi.get('name_last'), 'COPIS')
                         sql_out += "INSERT INTO person (id, first_name, last_name, organization) " \
                                    "VALUES ('%s', '%s', '%s' ,'%s');\n\n" % \
-                                   (usap.escapeChars(co_pi_id), usap.escapeChars(co_pi.get('name_first')), usap.escapeChars(co_pi.get('name_last')), co_pi.get('org'))
+                                   (usap.escapeQuotes(co_pi_id), usap.escapeQuotes(co_pi.get('name_first')), usap.escapeQuotes(co_pi.get('name_last')), co_pi.get('org'))
                 else:
                     if co_pi.get('org') is not None and res[0]['organization'] != co_pi['org']:
                         sql_out += "--NOTE: updating organization for %s to %s\n" % (co_pi_id, co_pi['org'])
                         sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (co_pi['org'], co_pi_id)
                     if subm_id and subm_id == co_pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
                         sql_out += "--NOTE: updating orcid for %s to %s\n" % (co_pi_id, data['submitter_orcid'])
-                        sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], usap.escapeChars(co_pi_id))
+                        sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], usap.escapeQuotes(co_pi_id))
                 
                 sql_out += "\n--NOTE: adding %s to project_person_map\n" % co_pi_id
                 sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
-                           (uid, usap.escapeChars(co_pi_id), co_pi.get('role'))
+                           (uid, usap.escapeQuotes(co_pi_id), co_pi.get('role'))
 
                 # add org to Organizations table if necessary
                 if co_pi.get('org') is not None:
@@ -1114,12 +1114,12 @@ def editProjectJson2sql(data, uid):
 
         elif k == 'email':
             # first check if pi is already in person DB table - if not, email will get added when pi is created later in the code
-            query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % usap.escapeChars(pi_id)
+            query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % usap.escapeQuotes(pi_id)
             cur.execute(query)
             res = cur.fetchone()
             if res['count'] > 0:
                 sql_out += "\n--NOTE: UPDATING EMAIL ADDRESS\n"
-                sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], usap.escapeChars(pi_id))
+                sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], usap.escapeQuotes(pi_id))
  
         elif k == 'end':
             sql_out += "\n--NOTE: UPDATING END DATE\n"
@@ -1180,11 +1180,11 @@ def editProjectJson2sql(data, uid):
                 sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','OCEAN > SOUTHERN OCEAN');\n" % uid   
             elif k == 'orcid':
                 sql_out += "\n--NOTE: UPDATING ORCID\n"
-                sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], usap.escapeChars(subm_id))
+                sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], usap.escapeQuotes(subm_id))
 
         elif k == 'org':
             sql_out += "\n--NOTE: UPDATING ORGANIZATION\n"
-            sql_out += "UPDATE person SET organization = '%s' WHERE id='%s';\n" % (data['org'], usap.escapeChars(pi_id))
+            sql_out += "UPDATE person SET organization = '%s' WHERE id='%s';\n" % (data['org'], usap.escapeQuotes(pi_id))
 
             # add org to Organizations table if necessary
             if data.get('org') is not None:
@@ -1241,7 +1241,7 @@ def editProjectJson2sql(data, uid):
             sql_out += "DELETE FROM project_person_map WHERE proj_uid = '%s' and role = 'Investigator and contact';\n" % uid
 
             # Check if new pi_name already in person table, add if not
-            query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeChars(pi_id)
+            query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeQuotes(pi_id)
             cur.execute(query)
             res = cur.fetchall()
             if len(res) == 0:
@@ -1253,22 +1253,22 @@ def editProjectJson2sql(data, uid):
 
                     sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
-                        (usap.escapeChars(pi_id), usap.escapeChars(data.get('pi_name_first')), usap.escapeChars(data.get('pi_name_last')), data.get('email'), data.get('org'), data['submitter_orcid'])
+                        (usap.escapeQuotes(pi_id), usap.escapeQuotes(data.get('pi_name_first')), usap.escapeQuotes(data.get('pi_name_last')), data.get('email'), data.get('org'), data['submitter_orcid'])
                 else:
                     # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or email match)
                     sql_out += checkAltIds(pi_id, data.get('pi_name_first'), data.get('pi_name_last'), 'PI_NAME_FIRST AND PI_NAME_LAST', email=data.get('email'))
 
                     sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                                "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
-                        (usap.escapeChars(pi_id), usap.escapeChars(data.get('pi_name_first')), usap.escapeChars(data.get('pi_name_last')), data.get('email'), data.get('org'))
+                        (usap.escapeQuotes(pi_id), usap.escapeQuotes(data.get('pi_name_first')), usap.escapeQuotes(data.get('pi_name_last')), data.get('email'), data.get('org'))
 
             else:
                 if data.get('email') is not None and res[0]['email'] != data['email']:
                     sql_out += "\n--NOTE: updating email for PI %s to %s\n" % (pi_id, data['email'])
-                    sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], usap.escapeChars(pi_id))
+                    sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], usap.escapeQuotes(pi_id))
                 if data.get('org') is not None and res[0]['organization'] != data['org']:
                     sql_out += "\n--NOTE: updating organization for PI %s to %s\n" % (pi_id, data['org'])
-                    sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], usap.escapeChars(pi_id))
+                    sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], usap.escapeQuotes(pi_id))
                 # if subm_id and subm_id == pi_id and data.get('submitter_orcid') is not None and res[0]['id_orcid'] != data['submitter_orcid']:
                 #     sql_out += "\n--NOTE: updating orcid for PI %s to %s\n" % (pi_id, data['submitter_orcid'])
                 #     sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['submitter_orcid'], pi_id)
@@ -1276,7 +1276,7 @@ def editProjectJson2sql(data, uid):
             # Insert new PI into project_person_map
             sql_out += "\n--NOTE: adding PI %s to project_person_map\n" % pi_id
             sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n" % \
-                       (uid, usap.escapeChars(pi_id))
+                       (uid, usap.escapeQuotes(pi_id))
 
         elif k == 'program':
             sql_out += "\n--NOTE: UPDATING INITIATIVE\n"
@@ -1310,7 +1310,7 @@ def editProjectJson2sql(data, uid):
                         cur.execute(query)
                         res = cur.fetchall()
                     elif (not pub.get('doi') or pub['doi'] == '') and pub.get('name'):
-                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeChars(pub.get('name')))
+                        query = "SELECT * FROM reference WHERE (doi IS NULL OR doi='') AND ref_text='%s';" % (usap.escapeQuotes(pub.get('name')))
                         print(query)
                         cur.execute(query)
                         res = cur.fetchall()
@@ -1319,7 +1319,7 @@ def editProjectJson2sql(data, uid):
                         sql_out += "\n--NOTE: adding %s to reference table\n" % pub['name']
                         ref_uid = generate_ref_uid()
                         sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                            (ref_uid, usap.escapeChars(pub.get('name')), pub.get('doi'))
+                            (ref_uid, usap.escapeQuotes(pub.get('name')), pub.get('doi'))
                     else:
                         ref_uid = res[0]['ref_uid']
                     sql_out += "\n--NOTE: adding reference %s to project_ref_map\n" % ref_uid
@@ -1342,7 +1342,7 @@ def editProjectJson2sql(data, uid):
 
         elif k == 'sum':
             sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
-            sql_out += "UPDATE project SET description = '%s' WHERE proj_uid = '%s';\n" % (usap.escapeChars(data['sum']), uid)
+            sql_out += "UPDATE project SET description = '%s' WHERE proj_uid = '%s';\n" % (usap.escapeQuotes(data['sum']), uid)
 
         elif k == 'title':
             sql_out += "\n--NOTE: UPDATING TITLE\n"
@@ -1705,7 +1705,7 @@ def addUserToDatasetOrProject(data):
         person_id = person_id.replace(',  ', ', ')
 
         # first check if the user is already in person table
-        query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeChars(person_id)
+        query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeQuotes(person_id)
         cur.execute(query)
         res = cur.fetchall()
         if len(res) == 0:
@@ -1713,29 +1713,29 @@ def addUserToDatasetOrProject(data):
             if data.get('orcid') and data['orcid'] != '':
                 sql_out += "INSERT INTO person (id, first_name, last_name, email, organization, id_orcid) " \
                            "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
-                    (usap.escapeChars(person_id), usap.escapeChars(data.get('name_first')), usap.escapeChars(data.get('name_last')), data.get('email'), data.get('org'), data['orcid'])
+                    (usap.escapeQuotes(person_id), usap.escapeQuotes(data.get('name_first')), usap.escapeQuotes(data.get('name_last')), data.get('email'), data.get('org'), data['orcid'])
             else:
                 sql_out += "INSERT INTO person (id, first_name, last_name, email, organization) " \
                            "VALUES ('%s', '%s', '%s', '%s', '%s');\n\n" % \
-                    (usap.escapeChars(person_id), usap.escapeChars(data.get('name_first')), usap.escapeChars(data.get('name_last')), data.get('email'), data.get('org'))
+                    (usap.escapeQuotes(person_id), usap.escapeQuotes(data.get('name_first')), usap.escapeQuotes(data.get('name_last')), data.get('email'), data.get('org'))
 
         else:
             if data.get('email') and data['email'] != '' and res[0]['email'] != data['email']:
-                sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], usap.escapeChars(person_id))
+                sql_out += "UPDATE person SET email='%s' WHERE id='%s';\n\n" % (data['email'], usap.escapeQuotes(person_id))
             if data.get('org') and data['org'] != '' and res[0]['organization'] != data['org']:
-                sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], usap.escapeChars(person_id))
+                sql_out += "UPDATE person SET organization='%s' WHERE id='%s';\n\n" % (data['org'], usap.escapeQuotes(person_id))
             if data.get('orcid') and data['orcid'] != '' and res[0]['id_orcid'] != data['orcid']:
-                sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], usap.escapeChars(person_id))
+                sql_out += "UPDATE person SET id_orcid='%s' WHERE id='%s';\n\n" % (data['orcid'], usap.escapeQuotes(person_id))
 
         uid, title = data.get('dataset_or_project').split(': ', 1)
         if uid[0] == 'p':
             # PROJECT
             sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', '%s');\n\n" % \
-                (uid, usap.escapeChars(person_id), data.get('role'))
+                (uid, usap.escapeQuotes(person_id), data.get('role'))
         else:
             # DATASET
             sql_out += "INSERT INTO dataset_person_map (dataset_id, person_id, role_id) VALUES ('%s', '%s', '%s');\n\n" % \
-                (uid, usap.escapeChars(person_id), data.get('role'))
+                (uid, usap.escapeQuotes(person_id), data.get('role'))
 
         sql_out += "COMMIT;"
         cur.execute(sql_out)
@@ -1838,7 +1838,7 @@ def getCreatorEmails(uid):
         res = cur.fetchone()
         if res:
             creators = res['creator'].split('; ')
-            query = "SELECT id, email FROM person WHERE id IN (%s) AND email <> ''" % (', '.join("'" + usap.escapeChars(item) + "'" for item in creators))
+            query = "SELECT id, email FROM person WHERE id IN (%s) AND email <> ''" % (', '.join("'" + usap.escapeQuotes(item) + "'" for item in creators))
             cur.execute(query)
             res = cur.fetchall()
         else:
