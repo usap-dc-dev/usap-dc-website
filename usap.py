@@ -478,7 +478,7 @@ def get_projects(conn=None, cur=None):
 def get_licenses(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT * FROM license ORDER BY ID'
+    query = 'SELECT * FROM license WHERE valid_option = true ORDER BY ID'
     cur.execute(query)
     return cur.fetchall()
 
@@ -4549,6 +4549,9 @@ def escapeChars(string) :
     string = string.replace("'","''")
     return string 
 
+
+def escapeQuotes(string):
+    return string.replace("'","''")
 
 def initcap(s):
     parts = re.split("( |_|-|>)+", s)
