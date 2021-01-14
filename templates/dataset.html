@@ -311,18 +311,19 @@
       <div id="main-content" class="col-xs-9" >
         {% if success|length > 0 %}
         <div class="alert alert-success" style="width:800;">
-          <h4>{{success}}</h4>
+          <h4>{{success|safe}}</h4>
         </div>
         {% endif %}
         {% if error|length > 0 %}
         <div class="alert alert-danger" style="width:800;">
-          <h4>{{error}}</h4>
+          <h4>{{error|safe}}</h4>
         </div>
         {% endif %}
 
         <form method="POST" enctype="multipart/form-data" name="entry" id="entry" autocomplete="off">
           <input class="form-control" type="hidden" name="edit" value="{{edit}}"/>
           <input class="form-control" type="hidden" name="dataset_id" value="{{dataset_metadata.dataset_id}}"/>
+          <input class="form-control" type="hidden" name="page2" value="{{page2}}"/>
           <h2 class="title" style="float:left;">{% if edit %}Edit{% else %}Deposit{% endif %} Your Dataset</h2>
 
           <div style="float:right; margin-top: 1.44em;">

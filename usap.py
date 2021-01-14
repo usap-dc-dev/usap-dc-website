@@ -567,89 +567,25 @@ def dataset(dataset_id=None):
             return redirect(url_for('invalid_user', dataset_id=dataset_id))
 
     if request.method == 'POST':
-        if 'dataset_metadata' not in session:
-            session['dataset_metadata'] = dict()   
-        session['dataset_metadata'].update(request.form.to_dict())
+        if request.form.get('action') == "Previous Page":
+            # coming from page 2
+            page1 = {}
+            page2 = request.form.to_dict()
+            if 'page1' in page2 and page2['page1'] != "":
+                page1 = eval(page2.pop('page1'))
+        else:
+            page1 = request.form.to_dict()
+            page2 = {}
+            if 'page2' in page1 and page1['page2'] != "":
+                page2 = eval(page1.pop('page2'))
 
-        publications_keys = [s for s in request.form.keys() if "publication" in s]
-        remove_pub_keys = []
-        if len(publications_keys) > 0:
-            session['dataset_metadata']['publications'] = []
-            publications_keys.sort(key=partial(sortNumerically, replace_str='publication'))
-            #remove any empty values
-            for key in publications_keys:
-                if session['dataset_metadata'][key] == "":
-                    remove_pub_keys.append(key)
-                del session['dataset_metadata'][key]
-                del session['dataset_metadata'][key.replace('publication', 'pub_doi')]
-            for k in remove_pub_keys: 
-                publications_keys.remove(k)
-            for key in publications_keys:
-                pub_text = request.form.get(key)
-                pub_doi = request.form.get(key.replace('publication', 'pub_doi'))
-                publication = {'text': pub_text, 'doi': pub_doi}
-                session['dataset_metadata']['publications'].append(publication)
-
-        awards_keys = [s for s in request.form.keys() if "award" in s and "user" not in s]
-        awards = []
-        if len(awards_keys) > 0:
-            awards_keys.sort(key=partial(sortNumerically, replace_str='award'))
-            for key in awards_keys:
-                if session['dataset_metadata'][key] != "" and session['dataset_metadata'][key] != "None":
-                    if session['dataset_metadata'][key] == 'Not In This List':
-                        user_award_fld = 'user_' + key
-                        award_name = "Not_In_This_List:" + session['dataset_metadata'].get(user_award_fld)
-                        del session['dataset_metadata'][user_award_fld]
-                    else:
-                        award_name = session['dataset_metadata'].get(key)
-                    awards.append(award_name)
-                del session['dataset_metadata'][key]
-            session['dataset_metadata']['awards'] = awards
-
-        locations_keys = [s for s in request.form.keys() if "location" in s and "user" not in s]
-        locations = []
-        if len(locations_keys) > 0:
-            locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
-            for key in locations_keys:
-                if session['dataset_metadata'][key] != "" and session['dataset_metadata'][key] != "None":
-                    if session['dataset_metadata'][key] == 'Not In This List':
-                        user_loc_fld = 'user_' + key
-                        location_name = "Not_In_This_List:" + session['dataset_metadata'].get(user_loc_fld)
-                        del session['dataset_metadata'][user_loc_fld]
-                    else:
-                        location_name = session['dataset_metadata'].get(key)
-                    locations.append(location_name)
-                del session['dataset_metadata'][key]
-            session['dataset_metadata']['locations'] = locations
-
-        author_keys = [s for s in request.form.keys() if "author_name_last" in s]
-        remove_author_keys = []
-        if len(author_keys) > 0:
-            session['dataset_metadata']['authors'] = []
-            author_keys.sort(key=partial(sortNumerically, replace_str='author_name_last'))
-            #remove any empty values
-            for key in author_keys:
-                if session['dataset_metadata'][key] == "":
-                    remove_author_keys.append(key)
-                del session['dataset_metadata'][key]
-                del session['dataset_metadata'][key.replace('last', 'first')]
-            for k in remove_author_keys: 
-                author_keys.remove(k)
- 
-            for key in author_keys:
-                last_name = request.form.get(key)
-                first_name = request.form.get(key.replace('last', 'first'))
-                author = {'first_name': first_name, 'last_name': last_name}
-                session['dataset_metadata']['authors'].append(author) 
-            
-        session['dataset_metadata']['agree'] = 'agree' in request.form
-        # for some reason, the flash command makes sure that the session variable remains in tact when saving or restoring
-        flash('test message')
+        page1 = groupPage1Fields(page1)
 
         if request.form.get('action') == "Previous Page":
+            # arriving back from Page 2
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
-                                   dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations())
+                                   dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), 
+                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
 
         elif request.form.get('action') == "save":
             # save to file
@@ -661,14 +597,15 @@ def dataset(dataset_id=None):
                 error = "Unable to save dataset."
             if save_file:
                 try:
+                    save_metadata = {'page1': page1, 'page2': page2}
                     with open(save_file, 'w') as file:
-                        file.write(json.dumps(session.get('dataset_metadata', dict()), indent=4, sort_keys=True))
+                        file.write(json.dumps(save_metadata, indent=4, sort_keys=True))
                     success = "Saved dataset form"
                 except Exception as e:
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
-                                   dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), 
+                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -678,39 +615,43 @@ def dataset(dataset_id=None):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
             else:
                 error = "Unable to restore dataset"
+
             if saved_file:
                 try:
                     with open(saved_file, 'r') as file:
                         data = json.load(file)
-                        del data['dataset_id']
-                    session['dataset_metadata'].update(data)
+                        page1 = data.get('page1',{})
+                        page2 = data.get('page2',{})
+                        if page1.get('dataset_id'):
+                             del page1['dataset_id']
                     success = "Restored dataset form"
                 except Exception as e:
                     error = "Unable to restore dataset."
             else:
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
-                                   dataset_metadata=session.get('dataset_metadata', dict()), nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
+                                   dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
                                    only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
-
+ 
+     
         if edit:
-            return redirect('/edit/dataset2/' + dataset_id)
-        return redirect('/submit/dataset2')
+            return redirect('/edit/dataset2/' + dataset_id, code=307)
+       
+        return redirect(url_for('dataset2'), code=307)
 
     else:
-        session['dataset_metadata'] = {}
+        page1 = {}
+        page2 = {}
         # EDIT dataset
         # get the dataset ID from the URL
         if edit:
-            form_data = dataset_db2form(dataset_id)
-            session['dataset_metadata'] = form_data
-            email = form_data.get('email')
+            page1, page2 = dataset_db2form(dataset_id)
+            email = page1.get('email')
             name = ""
 
         # Create new dataset using existing dataset as template
         elif template:
-            form_data = dataset_db2form(template_id)
-            session['dataset_metadata'] = form_data
+            page1, page2 = dataset_db2form(template_id)
 
             email = ""
             if user_info.get('email'):
@@ -720,10 +661,12 @@ def dataset(dataset_id=None):
                 name = user_info.get('name')
 
             # remove dataset_id when creating new submission
-            if form_data.get('dataset_id'):
-                del(form_data['dataset_id'])
+            if page1.get('dataset_id'):
+                del(page1['dataset_id'])
+            if page2.get('dataset_id'):
+                del(page2['dataset_id'])
         else:
-            session['dataset_metadata']['license'] = 'CC_BY_4.0' #default value
+            page2['license'] = 'CC_BY_4.0' #default value
             email = ""
             if user_info.get('email'):
                 email = user_info.get('email')
@@ -731,14 +674,80 @@ def dataset(dataset_id=None):
             if user_info.get('name'):
                 name = user_info.get('name')
                 names = name.split(' ')
-                if 'dataset_metadata' not in session:
-                    session['dataset_metadata'] = dict()
-                session['dataset_metadata']['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
-                session['dataset_metadata']['release_date'] = datetime.now().strftime('%Y-%m-%d')
+                page1['authors'] = [{'first_name': names[0], 'last_name': names[-1]}]
+                page2['release_date'] = datetime.now().strftime('%Y-%m-%d')
+
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
-                               dataset_metadata=session.get('dataset_metadata', dict()), 
+                               dataset_metadata=page1, page2=page2,
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
                                persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
+
+
+
+def groupPage1Fields(page1):
+    # collect publications, awards, authors, etc, and save as lists
+
+    publications_keys = [s for s in page1.keys() if "publication" in s and s != "publications"]
+    if len(publications_keys) > 0:
+        page1['publications'] = []
+        publications_keys.sort(key=partial(sortNumerically, replace_str='publication'))
+        for key in publications_keys:
+            if page1[key] != "":
+                pub_text = page1.get(key)
+                pub_doi = page1.get(key.replace('publication', 'pub_doi'))
+                publication = {'text': pub_text, 'doi': pub_doi}
+                page1['publications'].append(publication)
+            del page1[key]
+            del page1[key.replace('publication', 'pub_doi')]
+
+
+    awards_keys = [s for s in page1.keys() if "award" in s and "user" not in s and s != "awards"]
+    awards = []
+    if len(awards_keys) > 0:
+        awards_keys.sort(key=partial(sortNumerically, replace_str='award'))
+        for key in awards_keys:
+            if page1[key] != "" and page1[key] != "None":
+                if page1[key] == 'Not In This List':
+                    user_award_fld = 'user_' + key
+                    award_name = "Not_In_This_List:" + page1.get(user_award_fld)
+                    del page1[user_award_fld]
+                else:
+                    award_name = page1.get(key)
+                awards.append(award_name)
+            del page1[key]
+        page1['awards'] = awards
+
+    locations_keys = [s for s in page1.keys() if "location" in s and "user" not in s and s != "locations"]
+    locations = []
+    if len(locations_keys) > 0:
+        locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
+        for key in locations_keys:
+            if page1[key] != "" and page1[key] != "None":
+                if page1[key] == 'Not In This List':
+                    user_loc_fld = 'user_' + key
+                    location_name = "Not_In_This_List:" + page1.get(user_loc_fld)
+                    del page1[user_loc_fld]
+                else:
+                    location_name = page1.get(key)
+                locations.append(location_name)
+            del page1[key]
+        page1['locations'] = locations
+
+
+    author_keys = [s for s in page1.keys() if "author_name_last" in s and s != "authors"]
+    if len(author_keys) > 0:
+        page1['authors'] = []
+        author_keys.sort(key=partial(sortNumerically, replace_str='author_name_last'))
+        for key in author_keys:
+            if page1[key] != "":
+                last_name = page1.get(key)
+                first_name = page1.get(key.replace('last', 'first'))
+                author = {'first_name': first_name, 'last_name': last_name}
+                page1['authors'].append(author) 
+            del page1[key]
+            del page1[key.replace('last', 'first')]
+    
+    return page1
 
 
 # get dataset data from DB and convert to json that can be displayed in the Deposit/Edit Dataset page
@@ -746,18 +755,21 @@ def dataset_db2form(uid):
     db_data = get_datasets([uid])[0]
     if not db_data: 
         return {}
-    form_data = {
+    page1 = {
         'dataset_id': uid,
         'abstract': db_data.get('abstract'),
         'name': db_data.get('submitter_id'),
         'title': db_data.get('title'),
-        'filenames': [],
-        'release_date': db_data.get('release_date'),
         'submitter_name': db_data.get('submitter_id'),
         'locations': db_data.get('locations')
     }
+    page2 = {
+        'dataset_id': uid,
+        'filenames': [],
+        'release_date': db_data.get('release_date')
+    }
 
-    form_data['authors'] = []
+    page1['authors'] = []
     main_author = None
     if db_data.get('creator'):
         for author in db_data.get('creator').split('; '):
@@ -770,54 +782,54 @@ def dataset_db2form(uid):
                 first_name = ' '
             if not main_author:
                 main_author = author
-            form_data['authors'].append({'first_name': first_name, 'last_name': last_name})
+            page1['authors'].append({'first_name': first_name, 'last_name': last_name})
 
-    form_data['awards'] = []
+    page1['awards'] = []
     for award in db_data.get('awards'):
-        form_data['awards'].append(award.get('award') + ' ' + award.get('name'))
+        page1['awards'].append(award.get('award') + ' ' + award.get('name'))
 
     if db_data.get('spatial_extents'):
         se = db_data.get('spatial_extents')[0]
-        form_data['cross_dateline'] = se.get('cross_dateline')
-        form_data['geo_e'] = str(se.get('east'))
-        form_data['geo_n'] = str(se.get('north'))
-        form_data['geo_s'] = str(se.get('south'))
-        form_data['geo_w'] = str(se.get('west'))
+        page1['cross_dateline'] = se.get('cross_dateline')
+        page1['geo_e'] = str(se.get('east'))
+        page1['geo_n'] = str(se.get('north'))
+        page1['geo_s'] = str(se.get('south'))
+        page1['geo_w'] = str(se.get('west'))
 
     if main_author:
         creator = get_person(main_author)
         if creator:
-            form_data['email'] = creator.get('email')
+            page1['email'] = creator.get('email')
 
-    form_data['publications'] = []
+    page1['publications'] = []
     for ref in db_data.get('references'):
-        form_data['publications'].append({'doi': ref.get('doi'), 'text': ref.get('ref_text')})
+        page1['publications'].append({'doi': ref.get('doi'), 'text': ref.get('ref_text')})
 
-    form_data['project'] = None
+    page1['project'] = None
     if db_data.get('projects') and len(db_data['projects']) > 0:
-        form_data['project'] = db_data['projects'][0].get('id')
+        page1['project'] = db_data['projects'][0].get('id')
     
     if db_data.get('temporal_extents') and len(db_data['temporal_extents']) > 0:
-        form_data['start'] = db_data['temporal_extents'][0].get('start_date')
-        form_data['stop'] = db_data['temporal_extents'][0].get('stop_date')
+        page1['start'] = db_data['temporal_extents'][0].get('start_date')
+        page1['stop'] = db_data['temporal_extents'][0].get('stop_date')
 
     keywords = cf.getDatasetKeywords(uid)
-    form_data['user_keywords'] = ''
+    page1['user_keywords'] = ''
     for kw in keywords:
-        if kw.get('keyword_id')[0:2] == 'uk' and kw.get('keyword_label') not in form_data['locations']:
-            if form_data['user_keywords'] != '':
-                form_data['user_keywords'] += ', '
-            form_data['user_keywords'] += kw.get('keyword_label')
+        if kw.get('keyword_id')[0:2] == 'uk' and kw.get('keyword_label') not in page1['locations']:
+            if page1['user_keywords'] != '':
+                page1['user_keywords'] += ', '
+            page1['user_keywords'] += kw.get('keyword_label')
 
-    # read in more fields from the readme file and add to the form_data
-    form_data.update(dataset_readme2form(uid))
+    # read in more fields from the readme file and add to the page2 form_data
+    page2.update(dataset_readme2form(uid))
 
-    # read in remaining fields from previous submisison form and add to the form_data
-    form_data.update(dataset_oldform2form(uid))
+    # read in remaining fields from previous submisison form and add to the page1 form_data
+    page1.update(dataset_oldform2form(uid))
 
     # get uploaded files
     url = db_data.get('url')
-    form_data['uploaded_files'] = []
+    page2['uploaded_files'] = []
     if url:
         usap_domain = app.config['USAP_DOMAIN']
         if url.startswith(usap_domain):
@@ -831,14 +843,14 @@ def dataset_db2form(uid):
                 f_name = os.path.basename(f_path)
                 f_subpath = f_path[len(directory):]
                 files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
-                form_data['uploaded_files'] = files
-                form_data['filenames'].append(f_name)
+                page2['uploaded_files'] = files
+                page2['filenames'].append(f_name)
             files.sort()
         else:
-            form_data['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
+            page2['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
-    form_data['license'] = db_data['license']
-    return form_data
+    page2['license'] = db_data['license']
+    return page1, page2
 
 
 def dataset_readme2form(uid):
@@ -1023,9 +1035,10 @@ def check_dataset_submission(msg_data):
     msg = ""
     for v in validators:
         if not v.func(msg_data):
-            msg += "<p>" + v.msg
+            msg += "<p>" + v.msg + "</p>"
     if len(msg) > 0:
-        raise BadSubmission(msg, '/submit/dataset')
+        return msg
+    return None
 
 
 @app.route('/repo_list')
@@ -1096,26 +1109,37 @@ def dataset2(dataset_id=None):
             return redirect(url_for('invalid_user', dataset_id=dataset_id))
 
     if request.method == 'POST':
-        if 'dataset_metadata' not in session:
-            session['dataset_metadata'] = dict()
+        if request.form.get('action') == "next":
+            # coming from page 1
+            page2 = {}
+            page1 = request.form.to_dict()
+            if 'page2' in page1 and page1['page2'] != "":
+                page2 = eval(page1.pop('page2'))
+        else:
+            page2 = request.form.to_dict()
+            page1 = {}
+            if 'page1' in page2 and page2['page1'] != "":
+                page1 = eval(page2.pop('page1'))
 
-        session['dataset_metadata'].update(request.form.to_dict())
-        session['dataset_metadata']['properGeoreferences'] = 'properGeoreferences' in request.form
-        session['dataset_metadata']['propertiesExplained'] = 'propertiesExplained' in request.form
-        session['dataset_metadata']['comprehensiveLegends'] = 'comprehensiveLegends' in request.form
-        session['dataset_metadata']['dataUnits'] = 'dataUnits' in request.form
-        # for some reason, the flash command makes sure that the session variable remains in tact when saving or restoring
-        flash('test message2')
+        page1 = groupPage1Fields(page1)
 
         if request.form.get('action') == 'Submit':
-            msg_data = copy.copy(session['dataset_metadata'])
+            msg_data = copy.copy(page1)
+            msg_data.update(page2)
+
             msg_data['submitter_name'] = session['user_info'].get('name')
             del msg_data['action']
 
             cross_dateline = False
-            if session['dataset_metadata'].get('cross_dateline') == 'on':
+            if page1.get('cross_dateline') == 'on':
                 cross_dateline = True
             msg_data['cross_dateline'] = cross_dateline
+
+            msg_data['agree'] = 'agree' in page2 
+            msg_data['properGeoreferences'] = 'properGeoreferences' in page2
+            msg_data['propertiesExplained'] = 'propertiesExplained' in page2
+            msg_data['comprehensiveLegends'] = 'comprehensiveLegends' in page2
+            msg_data['dataUnits'] = 'dataUnits' in page2
 
             if 'orcid' in session['user_info']:
                 msg_data['submitter_orcid'] = session['user_info']['orcid']
@@ -1152,7 +1176,10 @@ def dataset2(dataset_id=None):
 
             timestamp = format_time()
             msg_data['timestamp'] = timestamp
-            check_dataset_submission(msg_data)
+            error = check_dataset_submission(msg_data)
+            if error:
+                return render_template('dataset2.html', error=error, success=success, 
+                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
 
             # nsfid = 'NSF' + msg_data['awards'][0].split(' ')[0]
             upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
@@ -1236,8 +1263,7 @@ def dataset2(dataset_id=None):
 
             return redirect('/thank_you/dataset')
         elif request.form['action'] == 'Previous Page':
-            # post the form back to dataset since the session['dataset_metadata'] 
-            # gets lost if we use a standard GET redirect
+            # post the form back to dataset
             if edit:
                 return redirect('/edit/dataset/' + dataset_id, code=307)
             return redirect('/submit/dataset', code=307)
@@ -1251,13 +1277,14 @@ def dataset2(dataset_id=None):
                 error = "Unable to save dataset."
             if save_file:
                 try:
+                    save_metadata = {'page1': page1, 'page2': page2}
                     with open(save_file, 'w') as file:
-                        file.write(json.dumps(session.get('dataset_metadata', dict()), indent=4, sort_keys=True))
+                        file.write(json.dumps(save_metadata, indent=4, sort_keys=True))
                     success = "Saved dataset form"
                 except Exception as e:
                     error = "Unable to save dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, 
-                                    dataset_metadata=session.get('dataset_metadata', dict()), licenses=get_licenses(), edit=edit)
+            return render_template('dataset2.html', error=error, success=success, 
+                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -1271,23 +1298,25 @@ def dataset2(dataset_id=None):
                 try:
                     with open(saved_file, 'r') as file:
                         data = json.load(file)
-                    session['dataset_metadata'].update(data)
+                        page1 = data.get('page1',{})
+                        page2 = data.get('page2',{})
+                        if page1.get('dataset_id'):
+                             del page1['dataset_id']
+
                     success = "Restored dataset form"
                 except Exception as e:
                     error = "Unable to restore dataset."
             else:
                 error = "Unable to restore dataset."
-            return render_template('dataset2.html', name=user_info['name'], email="", error=error, success=success, 
-                                    dataset_metadata=session.get('dataset_metadata', dict()), licenses=get_licenses(), edit=edit)
+            return render_template('dataset2.html', error=error, success=success, 
+                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
 
+        else:
+            return render_template('dataset2.html', dataset_metadata=page2, page1=page1,
+                                licenses=get_licenses(), edit=edit)       
     else:
-        email = ""
-        if user_info.get('email'):
-            email = user_info.get('email')
-        name = ""
-        if user_info.get('name'):
-            name = user_info.get('name')
-        return render_template('dataset2.html', name=name, email=email, dataset_metadata=session.get('dataset_metadata', dict()), 
+        # if accessing directly through GET - return empty form
+        return render_template('dataset2.html', dataset_metadata={}, page1={}, 
                                licenses=get_licenses(), edit=edit)
 
 
@@ -1319,9 +1348,6 @@ def updateNextProjectRef():
 @app.route('/edit/project/<project_id>', methods=['GET', 'POST'])
 @app.route('/submit/project', methods=['GET', 'POST'])
 def project(project_id=None):
-    # make some space in the session cookie by clearing any dataset_metadata
-    if session.get('dataset_metadata'):
-        del session['dataset_metadata']
     edit = False
     template = False 
     template_id = None
@@ -1923,8 +1949,8 @@ def logout():
         del session['google_access_token']
     if 'orcid_access_token' in session:
         del session['orcid_access_token']
-    if 'dataset_metadata' in session:
-        del session['dataset_metadata']
+    if 'project_metadata' in session:
+        del session['project_metadata']
     if request.args.get('type') == 'curator':
         return redirect(url_for('curator'))
     return redirect(url_for('home'))

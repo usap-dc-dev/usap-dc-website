@@ -9,6 +9,7 @@ Modified for USAP-DC curator page by Neville Shane March 1 2018
 
 import os
 import json
+import copy
 from flask import url_for
 import usap
 from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap, checkAltIds, generate_ref_uid
@@ -389,7 +390,9 @@ def editDatasetJson2sql(data, uid):
     conn, cur = usap.connect_to_db(curator=True)
 
     # get existing values from the database and compare them with the JSON file
-    orig = usap.dataset_db2form(uid)
+    page1, page2 = usap.dataset_db2form(uid)
+    orig = copy.copy(page1)
+    orig.update(page2)
 
     # construct pi_id for first author
     first_name = usap.escapeQuotes(data['authors'][0].get("first_name"))
@@ -726,7 +729,7 @@ def editDatasetJson2sql(data, uid):
 
             # remove existing locations from project_features
             sql_out += "\n--NOTE: First remove all user keywords from dataset_keyword_map\n"
-            sql_out += "DELETE FROM dataset_keyword_map WHERE dataset_id = '%s' AND keyword_id ~ 'uk-';\n" % uid
+            sql_out += "DELETE FROM dataset_keyword_map WHERE dataset_id = '%s' AND keyword_id ~ 'uk-' AND keyword_id NOT IN (SELECT keyword_id FROM vw_location);\n" % uid
 
             if data["user_keywords"] != "":
                 last_id = None
