@@ -25,14 +25,21 @@
   {% if session.next == "/submit/dataset" %}
   <div class="content">
     <h3>Deposit Your Dataset</h3>
-    <p>USAP-DC accepts data submissions for any Antarctic datasets and provides repository services, including data publication in the <a href="http://www.doi.org/">DOI&reg; system</a> and long-term archiving.</p>
+    <p>
+      USAP-DC accepts data submissions for any NSF funded Antarctic datasets and provides repository services, including data publication 
+      in the <a href="http://www.doi.org/">DOI&reg; system</a> and long-term archiving 
+      [<a target="_blank" href="{{url_for('submit_dataset_help')}}">more info</a>].
+    </p>
   </div>
   
   {% elif session.next == "/submit/project" %}
   <div class="content">
     <h3>Register Your Project</h3>
     <p style="text-align:left">
-      Register your project in the Antarctic Master Directory (AMD). Sign in below with your ORCID or Google account and fill out a brief Web form.  We will create the AMD record required for your NSF final report.
+      Register your project with USAP-DC and submit project information metadata record for an NSF award or a series of collaborative awards. 
+      Sign in below with your ORCID or Google account and fill out a brief web form. 
+      USAP-DC will create a project page within the USAP-DC Project Catalog and will create the AMD record required for your NSF final report 
+      [<a target="_blank" href="{{url_for('submit_project_help')}}">more info</a>].
     </p>
   </div>
   {% endif %}

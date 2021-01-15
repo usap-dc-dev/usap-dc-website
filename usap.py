@@ -907,6 +907,16 @@ def submit_help():
     return render_template('submission_help.html')
 
 
+@app.route('/submit/dataset/help', methods=['GET', 'POST'])
+def submit_dataset_help():
+    return render_template('submission_dataset_help.html')
+
+
+@app.route('/submit/project/help', methods=['GET', 'POST'])
+def submit_project_help():
+    return render_template('submission_project_help.html')
+
+
 class ExceptionWithRedirect(Exception):
     def __init__(self, message, redirect):
         self.redirect = redirect

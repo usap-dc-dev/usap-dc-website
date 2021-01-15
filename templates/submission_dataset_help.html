@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% set cur = "help" %}
+{% block body %}
+
+<div class="container"> 
+	<h1 class="title">Advice depositing research data</h1>
+    <i>For frequently asked questions see also <a href="{{url_for('faq')}}">FAQ page</a></i>
+    <br><br>
+    
+    <p>
+        <a target="_blank" href="https://www.nsf.gov/pubs/2016/nsf16055/nsf16055.jsp">NSF Antarctic Research Program</a> 
+        require that metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly 
+        accessible archive.
+    </p>
+
+    <p>
+        USAP-DC accepts data submissions of research data resulting from NSF-funded Antarctic projects and provides repository 
+        services for these data including data publication in the DOI<span>&#174;</span> system and long-term archiving. 
+        Before submitting to USAP-DC we encourage you to consider whether there is an appropriate disciplinary repositor for 
+        your data types; best practice is to use disciplinary data repositories if available. If you submit your data elsewhere 
+        you will be asked to register the dataset links or DOI’s from this repository in your USAP-DC Project Catalog entry. 
+    </p>
+
+    <p>
+        To submit data to USAP-DC, please use our <a target="_blank" href="{{url_for('dataset')}}">“Deposit Dataset”</a> webform.   
+    </p>
+
+    <p>
+        After logging in, the submitter is asked to provide key information (metadata) about the dataset which will support 
+        the curation and long-term archiving of the data, search and discovery by others, as well as the context and background 
+        information necessary for future researchers to make use of your data. 
+    </p>
+
+    <p>
+        You can upload one or many data files as part of your submission. The data should be submitted using a common, open 
+        format to maximize later reuse, and descriptive filenames. 
+        See the <a target="_blank" href="{{url_for('faq', _anchor='qd6')}}">FAQ for information on data formats</a>.
+        If you have a very large dataset, e.g. many Giga or TeraBytes in size, please 
+        <a target="_blank" href="{{url_for('contact')}}">contact us</a> directly to arrange for separate data transfer.
+    </p>
+
+    <p>
+        Data submissions will be registered and a data DOI provided for each dataset. This DOI can be used to reference the 
+        dataset in publications.
+    </p>
+    <p>
+        A dataset title and abstract are required with each data submission and are used to help others find data of interest 
+        in searches and browsers. A good dataset title is short but with enough specific details to help others understand 
+        and uniquely identify the nature of the dataset such as data type, location, temporal range, and field program. 
+        The dataset title will be used for the DOI record. 
+    </p>
+
+    <p>
+        The dataset will be linked to an NSF award, if one exists. We will also use the award number to link the dataset to 
+        the USAP-DC Project catalog existing project page for the award.
+    </p>
+
+    <p>
+        If there are relevant publications (e.g. that describe details of the dataset) information about them should be 
+        included. If available, please provide the publication DOI, so we can link directly to the publication. 
+    </p>
+
+    <p>
+        The submission form includes free-text fields for providing details regarding instruments, acquisition and 
+        processing procedures that will allow future users to understand and use the data. In preparing your descriptions, 
+        please consider what detailed information you like to see, if you would be reusing the data.
+    </p>
+
+    <p>
+        Submitted datasets will be reviewed by USAP-DC curators to check for data integrity and that the necessary metadata 
+        information is submitted.
+    </p>
+
+    <p>
+        Using the “edit” function, users associated with the dataset will be able to update dataset information, including 
+        adding a publication or publication DOI linked to the dataset. If a new version of the actual dataset is being 
+        submitted, it will be stored as a new dataset with a link to the previous version.
+    </p>
+
+    <p>
+        In case there are issues or questions, please  <a href="{{url_for('contact')}}">contact us.</a>
+    </p>
+</div>
+{% endblock body %}

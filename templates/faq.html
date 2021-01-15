@@ -60,15 +60,70 @@
 		</li>
 		<li>
 			<p class='question' id='qd4'>Can I have proprietary hold on the dataset?</p>
-			<p class='answer' id='ad4' hidden>By default, we make a dataset publicly accessible once it is ingested. However, we can place a proprietary hold on the data, for example if you need to demonstrate that dataset exists for a publication, but don’t wont the data to be accessible before publication, or if you need to deposit your data at the end of the project, but a Ph.D. student is still working on the data. You can change the release data in the submission form. Other users will be able to see the dataset and its metadata, but won’t be able to download the data until the specified release data.</p>
+			<p class='answer' id='ad4' hidden>
+				By default, we make a dataset publicly accessible once it is ingested. However, we can place a proprietary hold on the data, 
+				for example if you need to demonstrate that dataset exists for a publication, but don’t wont the data to be accessible before 
+				publication, or if you need to deposit your data at the end of the project, but a Ph.D. student is still working on the data. 
+				You can update the release date until which the dataset should be kept proprietary by changing the release data in the 
+				submission form. Other users will be able to see the dataset and its metadata, but won’t be able to download the data until the 
+				specified release data.
+			</p>
+		</li>
+		<li>
+			<p class='question' id='qd5'>Is there a size limit for datasets? I have a large (>1TByte) dataset.</p>
+			<p class='answer' id='ad5' hidden>
+				We have no fixed size limit for datasets that we are hosting. We currently host datasets of several Terabytes in size. 
+				There is however a limit of ~250Mbyte for direct uploading data through the web form.
+				For a larger dataset, please contact us (<a href="mailto: info@usap-dc.org">info@usap-dc.org</a>) to discuss details and arrange the data transfer. 
+				We also ask that you  contact us well ahead of submission  if you have very large datasets for archiving. This will allow 
+				us to plan accordingly for storage needs and confirm that the dataset will be appropriate for us to handle.  
+			</p>
+		</li>
+		<li>
+			<p class='question' id='qd7'>In what format should I submit my data?</p>
+			<p class='answer' id='ad7' hidden>
+				Data  should optimally be submitted in an open, well-documented format that will be  readable in many years and that follow community standards.<br>
+				ASCII  text is prefered, when appropriate with CSV (comma-separated values) or Tab separated files for tables.<br>
+				Since it is used widely, Excel is acceptable, but the newer xlmx versions are preferred (since it is basically xml).<br> 
+				For raster and grid data NetCDF is optimal; tif or Geotiff for spatial rasters is also acceptable. Matlab format files are accepted (but not encouraged) 
+				and should have details on how to read the data.<br> 
+				For images we suggest jpg, tif, png.<br>
+				Avoid proprietary formats that require special software to read and might not be supported in the long future.<br>
+				Check with us when in doubt.
+			</p>
 		</li>
 	</ul>
 
 	<h3 id="amd">AMD</h3>
 	<ul>
 		<li>
-			<p class='question' id='qa1'>Is the Antarctic Master Directory (AMD) part of USAP-DC?</p>
-			<p class='answer' id='aa1' hidden>No. The Antarctic Master Directory (AMD) is a metadata catalog that is run and maintained by NASA as subset of the Global Change Master Directory (GCMD). USAP-DC prepares and submits metadata to the GCMD/AMD as a service for its users and to ensure that submissions follows the AMD standard.</p>
+			<p class='question' id='qa1'>What is the AMD?</p>
+			<p class='answer' id='aa1' hidden>
+				The Antarctic Master Directory (AMD) is a portal of the Global Change Master Directory (GCMD). It is a metadata catalog that is run and maintained by NASA. 
+				It was chosen by SCAR as the platform to share information about existing Antarctic data from its member countries.<br>
+				The AMD is a catalog and not a repository, it contains metadata about datasets and links to the data, but not the data itself.<br>
+				The metadata format used by the GCMD/AMD is known as the Directory Interchange Format (DIF). It has evolved over the years and serves the user community in 
+				the discovery of Earth science data.<br>
+				There are currently over 9300 records in the AMD of which ~3000 are from the USA.
+			</p>
+		</li>
+		<li>
+			<p class='question' id='qa2'>Is the Antarctic Master Directory (AMD) part of USAP-DC?</p>
+			<p class='answer' id='aa2' hidden>
+				No. The Antarctic Master Directory (AMD) is a metadata catalog that is run and maintained by NASA as subset of the Global Change Master Directory (GCMD). 
+				USAP-DC prepares and submits metadata to the GCMD/AMD based on the information provided in the project pages as a service for its users and to ensure 
+				that submissions follows the AMD standard.
+			</p>
+		</li>
+		<li>
+			<p class='question' id='qa3'>How do I get or create my AMD catalog entry that is required by NSF?</p>
+			<p class='answer' id='aa3' hidden>
+				If you register your NSF funded project award with USAP-DC, we will create and submit the AMD catalog entry for you, based on the information you provide 
+				for the project.<br>
+				We usually create the AMD entry when the project has at least one submitted dataset registered with the project or at the end of the project 
+				(whichever comes earlier), since the AMD prefers entries with direct links to datasets. If you need/want an AMD entry before this, please contact us
+				(<a href="mailto: info@usap-dc.org">info@usap-dc.org</a>).	
+			</p>
 		</li>
 	</ul>
 
@@ -76,7 +131,11 @@
 	<ul>
 		<li>
 			<p class='question' id='qs1'>Why are some data only available on request?</p>
-			<p class='answer' id='as1' hidden>A few, very large dataset (10s of GByte or TByte) are stored at an offline archive. It is not practical to download these datasets using the standard web interface. We work with interested users to make the full or a selected subset of these data available and transfer those using the most adequate way.</p>
+			<p class='answer' id='as1' hidden>
+				A few, very large dataset (10s of GByte or TByte) are stored at an offline archive. It is not practical to download these 
+				datasets using the standard web interface. We work with interested users to make the full or a selected subset of these data available and to 
+				arrange the data transfer.
+			</p>
 		</li>
 	</ul>
 
