@@ -2033,6 +2033,11 @@ def faq():
     return render_template('faq.html')
 
 
+@app.route('/webinars')
+def webinars():
+    return render_template('webinars.html')
+
+
 @app.route('/services')
 def services():
     return render_template('services.html')
