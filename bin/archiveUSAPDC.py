@@ -5,7 +5,7 @@ Author: Neville Shane
 Institution: LDEO, Columbia University
 Email: nshane@ldeo.columbia.edu
 
-Usage: bin/python archiveUSAPDC.py -r <root_dir> -p <file_path_relative_to_root_path> -o <out_dir_relative_to_root_path> -i <id of dataset>
+Usage: python bin/archiveUSAPDC.py -r <root_dir> -p <file_path_relative_to_root_path> -o <out_dir_relative_to_root_path> -i <id of dataset>
 Inputs:
    
     root_dir: the root directory.  The locations of the dataset file directory and the output directory
@@ -33,11 +33,11 @@ import xml.dom.minidom as minidom
 
 config = json.loads(open('config.json', 'r').read())
 
-# try:
-#     import boto3
-# except:
-#     print("ERROR: Unable to import boto3.  Check that ~/.aws/configuration is present and correct.")
-#     sys.exit(0)
+try:
+    import boto3
+except:
+    print("ERROR: Unable to import boto3.  Check that ~/.aws/configuration is present and correct.")
+    sys.exit(0)
 
 # get the base_dir, JSON file, the path to the submission files,
 # and the output directory from the input arguments
@@ -96,11 +96,15 @@ conn, cur = connect_to_db()
 query = "SELECT ds.title, ds.doi FROM dataset ds WHERE id = '%s'" % ds_id
 cur.execute(query)
 res = cur.fetchone()
-ds_title = res['title']
-ds_doi = res['doi']
+if res and res.get('title') and res.get('doi'):
+    ds_title = res['title']
+    ds_doi = res['doi']
 
-print("title:" + res['title'])
-print("doi:" + res['doi'])
+    print("title:" + res['title'])
+    print("doi:" + res['doi'])
+else:
+    print("ERROR: Unable to find Title and/or DOI for dataset_id = %s" % ds_id)
+    sys.exit(0)
 
 
 # Create Bagit package
@@ -211,26 +215,16 @@ if not archive:
         checksum_md5 = hasher_md5.hexdigest()
         # print("INFO: checksum generated for file %s: %s" % (tar_name, checksum))
 
-    # Update Bagit information in database
-    bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-    conn, cur = connect_to_db()
-    query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum) VALUES ('%s', '%s', '%s', '%s',' %s');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
-    cur.execute(query)
-    cur.execute("COMMIT;")
-     
+  
     # upload to AWS S3
-    """
+    s3_name = os.path.basename(tar_name)
     try:
         s3 = boto3.client('s3')
-        s3_name = os.path.basename(tar_name)
-        s3.upload_file(tar_name, BUCKET_NAME, s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'})
+        s3.upload_file(tar_name, config['AWS_BUCKET'], s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'})
 
         # check MD5
-        s3_md5sum = s3.head_object(Bucket=BUCKET_NAME, Key=s3_name)['ETag'][1:-1]
-        # print("File MD5: %s\nS3 MD5: %s\n"
-        #             % (checksum_md5, s3_md5sum))
-        data['awsSubmissionStatus'] = 'S3'
-        data['archiveAccessionDate'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        s3_md5sum = s3.head_object(Bucket=config['AWS_BUCKET'], Key=s3_name)['ETag'][1:-1]
+        # print("File MD5: %s\nS3 MD5: %s\n" % (checksum_md5, s3_md5sum))
         if (s3_md5sum != checksum_md5):
             print("ERROR: AWS S3 MD5 checksum does not match for %s.\nFile MD5: %s\nS3 MD5: %s\n"
                   % (tar_name, checksum_md5, s3_md5sum))
@@ -240,6 +234,13 @@ if not archive:
         print("ERROR: unable to upload file %s to AWS S3" % s3_name)
         print(sys.exc_info()[1])
         sys.exit(0)
-    """
+    
+
+    # Update Bagit information in database
+    bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    conn, cur = connect_to_db()
+    query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum) VALUES ('%s', '%s', '%s', '%s',' %s');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+    cur.execute(query)
+    cur.execute("COMMIT;")
 
 print("SUCCESS: %s successfully archived.\n" % ds_id)
