@@ -963,6 +963,7 @@ def oauth_error(e):
 def general_error(e):
     print(traceback.format_exc())
     msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>." % app.config['USAP-DC_GMAIL_ACCT']
+    # msg += traceback.format_exc()
     return render_template('error.html', error_message=msg)
 
 
@@ -2794,6 +2795,7 @@ def curator():
             template_dict['dcxml'] = cf.getDataCiteXMLFromFile(uid)
             # for each keyword_type, get all keywords from database 
             template_dict['keywords'] = cf.getKeywordsFromDatabase()
+            template_dict['archive_status'] = cf.getArchiveStatus(uid)
 
             if request.method == 'POST':
                 template_dict.update(request.form.to_dict())
@@ -3078,6 +3080,16 @@ def curator():
                         template_dict['error'] = "Error: Unable to generate ISO XML."
                     template_dict['isoxml'] = isoxml
                     template_dict['dc_uid'] = old_uid
+
+                # archive dataset
+                elif request.form.get('submit') == "archive":
+                    template_dict['tab'] = "archive"
+                    success, error = cf.markReadyToArchive(uid)
+                    if error:
+                        template_dict['error'] = error
+                    else:
+                        template_dict['message'].append(success)
+                        template_dict['archive_status'] = cf.getArchiveStatus(uid)
 
                 # Send email to creator and editor - for both datasets and projects
                 elif request.form.get('submit') == "send_email":

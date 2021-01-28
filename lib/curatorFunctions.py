@@ -1971,4 +1971,27 @@ def getThreadNumbers(start_date='2020-09-01', end_date=datetime.now().date()):
     return counts
 
 
+def getArchiveStatus(uid):
+    conn, cur = usap.connect_to_db(curator=True)
+    query = "SELECT * FROM dataset_archive WHERE dataset_id = '%s';" %uid
+    cur.execute(query)
+    res = cur.fetchone()
+    return res
+
+
+def markReadyToArchive(uid):
+    try:
+        status = getArchiveStatus(uid)
+        if status:
+            query = "UPDATE dataset_archive SET status = 'Ready To Be Archived' WHERE dataset_id = '%s';" %uid
+        else:
+            query = "INSERT INTO dataset_archive (dataset_id, status) VALUES (%s, 'Ready To Be Archived');" %uid
+        conn, cur = usap.connect_to_db(curator=True)
+        cur.execute(query)
+        cur.execute('COMMIT;')
+        return ('Dataset marked Ready To Be Archived', None)
+    except:
+        out_text = "Error Achiving database. \n%s" % sys.exc_info()[1][0]
+        return (None, out_text)
+
 

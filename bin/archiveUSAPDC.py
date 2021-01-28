@@ -5,7 +5,7 @@ Author: Neville Shane
 Institution: LDEO, Columbia University
 Email: nshane@ldeo.columbia.edu
 
-Usage: python bin/archiveUSAPDC.py -r <root_dir> -p <file_path_relative_to_root_path> -o <out_dir_relative_to_root_path> -i <id of dataset>
+Usage: python archiveUSAPDC.py -r <root_dir> -p <file_path_relative_to_root_path> -o <out_dir_relative_to_root_path> -i <id of dataset> -e <email>
 Inputs:
    
     root_dir: the root directory.  The locations of the dataset file directory and the output directory
@@ -13,8 +13,9 @@ Inputs:
     file_path: the file path for the directory containing the submission files. 
     out_dir: path of the output directory, relative to the root dir. The bagit packages will go here.
     id: uid of dataset
+    email: if True, will send the output in an email
 e.g.:
-    python bin/archiveUSAPDC.py -r /web/usap-dc/htdocs -p dataset -o archive -i 700078
+    python archiveUSAPDC.py -r /web/usap-dc/htdocs -p dataset -o archive -i 700078 false
 
 """
 import sys
@@ -30,11 +31,17 @@ import subprocess
 import psycopg2
 import psycopg2.extras
 import xml.dom.minidom as minidom
+from subprocess import Popen, PIPE
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-config = json.loads(open('config.json', 'r').read())
+
+config = json.loads(open('../config.json', 'r').read())
 
 try:
     import boto3
+    from boto3.s3.transfer import TransferConfig
 except:
     print("ERROR: Unable to import boto3.  Check that ~/.aws/configuration is present and correct.")
     sys.exit(0)
@@ -44,16 +51,13 @@ except:
 out_dir = None
 root_dir = None
 file_path = None
+email = False
+text = ''
 
-usage = "python archiveUSAPDC.py -r <root_dir> -p <file_path_relative_to_root_path> -o <out_dir_relative_to_root_path> -i <id of dataset>"
-
-""" 
-AWS Bucket name
-BUCKET_NAME = "XXX"
-"""
+usage = "python archiveUSAPDC.py -r <root_dir> -p <file_path_relative_to_root_path> -o <out_dir_relative_to_root_path> -i <id of dataset> -e <email>"
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "h:r:p:o:i:", ["root_dir=", "file_path=", "out_dir=", "id="])
+    opts, args = getopt.getopt(sys.argv[1:], "h:r:p:o:i:e:", ["root_dir=", "file_path=", "out_dir=", "id=", "email="])
     if len(opts) == 0:
         print(usage)
         sys.exit(0)
@@ -72,7 +76,9 @@ for opt, arg in opts:
         out_dir = arg
     elif opt in ('-i', '--id'):
         ds_id = arg
-if root_dir is None or file_path is None or out_dir is None or ds_id is None:
+    elif opt in ('-e', '--email'):
+        email = arg == 'True'
+if root_dir is None or file_path is None or out_dir is None or ds_id is None or email not in [True, False]:
         print(usage)
         sys.exit(0)
 
@@ -91,21 +97,38 @@ def connect_to_db():
     return (conn, cur)
 
 
+def sendEmail(message, subject):
+    sender = config['USAP-DC_GMAIL_ACCT']
+    recipients = [config['USAP-DC_GMAIL_ACCT']]
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = ', '.join(recipients)
+
+    content = MIMEText(message, 'html', 'utf-8')
+    msg.attach(content)
+
+    smtp_details = config['SMTP']
+    s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
+    # identify ourselves to smtp client
+    s.ehlo()
+    # secure our email with tls encryption
+    s.starttls()
+    # re-identify ourselves as an encrypted connection
+    s.ehlo()
+    s.login(smtp_details["USER"], smtp_details["PASSWORD"])
+    s.sendmail(sender, recipients, msg.as_string())
+    s.quit()  
+
+
 # Get dataset information from database
 conn, cur = connect_to_db()
 query = "SELECT ds.title, ds.doi FROM dataset ds WHERE id = '%s'" % ds_id
 cur.execute(query)
 res = cur.fetchone()
-if res and res.get('title') and res.get('doi'):
-    ds_title = res['title']
-    ds_doi = res['doi']
-
-    print("title:" + res['title'])
-    print("doi:" + res['doi'])
-else:
-    print("ERROR: Unable to find Title and/or DOI for dataset_id = %s" % ds_id)
-    sys.exit(0)
-
+ds_title = res['title'] if res.get('title') else 'Not Available'
+ds_doi = res['doi'] if res.get('doi') else 'Not Available'
 
 # Create Bagit package
 bag_name = ds_id
@@ -120,12 +143,13 @@ os.makedirs(bag_dir)
 query = "select dir_name from dataset_file_info where dataset_id ='%s';" % ds_id
 cur.execute(query)
 res = cur.fetchall()
-# res = [{'dir_name': 'usap-dc/700078/2018-07-02T16:53:16.3Z/'}]
+
 # check if dataset contains files in the archive on seafloor
 archive = False
 for row in res:
     if row['dir_name'][0:7] == "archive":
-        print("WARNING: %s contains archived files and needs to be bagged seperately" % ds_id)
+        text += "WARNING: %s contains archived files and needs to be bagged seperately\n" % ds_id
+        print(text)
         archive = True
 
 for row in res:
@@ -136,16 +160,22 @@ for row in res:
         try:
             subprocess.check_output(['ls', ds_dir])
         except:
-            print("ERROR: data dir %s not found " % (ds_dir))
+            text += "ERROR: data dir %s not found " % (ds_dir)
+            print(text)
             shutil.rmtree(bag_dir)
+            if email: 
+                sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
             sys.exit(0)
         
         try:
             shutil.copytree(ds_dir, os.path.join(bag_dir, row['dir_name']))
         except:
-            print("ERROR: Unable to copy directory %s to Bagit directory %s." % (ds_dir, bag_dir))
-            print(sys.exc_info()[1])
+            text += "ERROR: Unable to copy directory %s to Bagit directory %s.\n" % (ds_dir, bag_dir)
+            test += sys.exc_info()[1]
+            print(text)
             shutil.rmtree(bag_dir)
+            if email: 
+                sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
             sys.exit(0)
 
 # copy readme files from doc directory to bagit directory
@@ -157,8 +187,11 @@ if os.path.exists(doc_dir):
             try:
                 shutil.copy(full_file_name, bag_dir)
             except:
-                print("ERROR: Unable to copy readme file %s to Bagit directory %s." % (full_file_name, bag_dir))
-                print(sys.exc_info()[1])
+                text += "ERROR: Unable to copy readme file %s to Bagit directory %s.\n" % (full_file_name, bag_dir)
+                text += sys.exc_info()[1]
+                print(text)
+                if email: 
+                    sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
                 shutil.rmtree(bag_dir)
                 sys.exit(0)
 
@@ -174,6 +207,7 @@ try:
     out_text = xml.toprettyxml().encode('utf-8').strip()
 except:
     out_text = "Error running database query. \n%s" % sys.exc_info()[1][0]
+    text += out_text
     print(out_text)
 
 # write the xml to a file
@@ -202,45 +236,109 @@ with tarfile.open(tar_name, "w:gz") as tar:
     tar.add(bag_dir, arcname=os.path.basename(bag_dir))
 shutil.rmtree(bag_dir)
 
-
 # calculate checksums
 if not archive:
-    hasher = hashlib.sha256()
-    hasher_md5 = hashlib.md5()
-    with open(tar_name, 'rb') as afile:
-        buf = afile.read()
-        hasher.update(buf)
-        hasher_md5.update(buf)
-        checksum = hasher.hexdigest()
-        checksum_md5 = hasher_md5.hexdigest()
-        # print("INFO: checksum generated for file %s: %s" % (tar_name, checksum))
+    # calculate checksums (hashlib library won't work on large files, so need to use openssl in unix)
+    process = Popen(['openssl', 'sha256', tar_name], stdout=PIPE)
+    (output, err) = process.communicate()
+    if err:
+        text += "Error calculating SHA256 checksum.  %s" % err
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+        sys.exit(0)
+    checksum = output.split(")= ")[1].replace("\n", "")
+
+    process = Popen(['openssl', 'md5', tar_name], stdout=PIPE)
+    (output, err) = process.communicate()
+    if err:
+        text += "Error calculating MD5 checksum.  %s" % err
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+        sys.exit(0)
+    checksum_md5 = output.split(")= ")[1].replace("\n", "")
 
   
     # upload to AWS S3
-    s3_name = os.path.basename(tar_name)
+    s3_name = config['AWS_FOLDER'] + os.path.basename(tar_name)
     try:
         s3 = boto3.client('s3')
+                        #   aws_access_key_id=config['AWS_KEY'],
+                        #   aws_secret_access_key=config['AWS_SECRET_KEY'])
+
+        # Ensure multipart uploading is used for files larger than 5TB (which is the max allowed single part
+        # transfer size)
+        GB = 1024 ** 3
+        tc = TransferConfig(multipart_threshold=5*GB)
         s3.upload_file(tar_name, config['AWS_BUCKET'], s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'})
 
         # check MD5
         s3_md5sum = s3.head_object(Bucket=config['AWS_BUCKET'], Key=s3_name)['ETag'][1:-1]
-        # print("File MD5: %s\nS3 MD5: %s\n" % (checksum_md5, s3_md5sum))
-        if (s3_md5sum != checksum_md5):
-            print("ERROR: AWS S3 MD5 checksum does not match for %s.\nFile MD5: %s\nS3 MD5: %s\n"
-                  % (tar_name, checksum_md5, s3_md5sum))
-            sys.exit(0)
+
+        # If S3 uses multipart uploading, the 'ETag' in the S3 file header will no longer
+        # be the MD5 checksum. Use the s3etag.sh script to find what the ETag value should be.
+        if os.path.getsize(tar_name) > 5*GB:
+            process = Popen(['bin/s3etag.sh', tar_name, '8'], stdout=PIPE)
+            (output, err) = process.communicate()
+            if err:
+                text += "Error calculating predicted ETag value.  %s" % err
+                print(text)
+                if email: 
+                    sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+                sys.exit(0)
+            etag = output.split()[1]
+            if (s3_md5sum != etag):
+                text += "ERROR: AWS S3 ETag does not match for %s.\nFile ETag: %s\nS3 ETag: %s\n" % (tar_name, etag, s3_md5sum)
+                print(text)
+                if email: 
+                    sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+                sys.exit(0)
+        else:
+            # print("File MD5: %s\nS3 MD5: %s\n" % (checksum_md5, s3_md5sum))
+            if (s3_md5sum != checksum_md5):
+                text += "ERROR: AWS S3 MD5 checksum does not match for %s.\nFile MD5: %s\nS3 MD5: %s\n" % (tar_name, checksum_md5, s3_md5sum)
+                print(text)
+                if email: 
+                    sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+                sys.exit(0)
 
     except:
-        print("ERROR: unable to upload file %s to AWS S3" % s3_name)
-        print(sys.exc_info()[1])
+        text += "ERROR: unable to upload file %s to AWS S3\n" % s3_name
+        text += sys.exc_info()[1]
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
         sys.exit(0)
     
 
     # Update Bagit information in database
     bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-    conn, cur = connect_to_db()
-    query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum) VALUES ('%s', '%s', '%s', '%s',' %s');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
-    cur.execute(query)
-    cur.execute("COMMIT;")
+    try:
+        conn, cur = connect_to_db()
+        query = "SELECT * FROM dataset_archive where dataset_id = '%s';" % ds_id
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) > 0:
+            query = """UPDATE dataset_archive SET (archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) = ('%s', '%s', '%s', '%s', 'Archived')
+                    WHERE dataset_id = '%s';""" % (bagitDate, os.path.basename(tar_name), checksum, checksum_md5, ds_id)
+        else:
+            query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) 
+                    VALUES ('%s', '%s', '%s', '%s',' %s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+        cur.execute(query)
+        cur.execute("COMMIT;")
+    except:
+        text += "Error connecting to database. \n%s" % sys.exc_info()[1][0]
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+        sys.exit(0)
 
-print("SUCCESS: %s successfully archived.\n" % ds_id)
+    # Delete bag file
+    os.remove(tar_name)
+text += "SUCCESS: %s successfully archived.\n" % ds_id
+print(text)
+if email: 
+    sendEmail(text, 'Successful Dataset Archive: %s' % ds_id)
+
+
