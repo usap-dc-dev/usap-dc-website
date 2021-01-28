@@ -170,8 +170,7 @@ for row in res:
         try:
             shutil.copytree(ds_dir, os.path.join(bag_dir, row['dir_name']))
         except:
-            text += "ERROR: Unable to copy directory %s to Bagit directory %s.\n" % (ds_dir, bag_dir)
-            test += sys.exc_info()[1]
+            text += "ERROR: Unable to copy directory %s to Bagit directory %s.\n%s" % (ds_dir, bag_dir, sys.exc_info()[1])
             print(text)
             shutil.rmtree(bag_dir)
             if email: 
@@ -187,8 +186,7 @@ if os.path.exists(doc_dir):
             try:
                 shutil.copy(full_file_name, bag_dir)
             except:
-                text += "ERROR: Unable to copy readme file %s to Bagit directory %s.\n" % (full_file_name, bag_dir)
-                text += sys.exc_info()[1]
+                text += "ERROR: Unable to copy readme file %s to Bagit directory %s.\n%s" % (full_file_name, bag_dir, sys.exc_info()[1])
                 print(text)
                 if email: 
                     sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
@@ -236,6 +234,9 @@ with tarfile.open(tar_name, "w:gz") as tar:
     tar.add(bag_dir, arcname=os.path.basename(bag_dir))
 shutil.rmtree(bag_dir)
 
+# archive=False
+# tar_name = "%s_bag.tar.gz" % bag_dir
+
 # calculate checksums
 if not archive:
     # calculate checksums (hashlib library won't work on large files, so need to use openssl in unix)
@@ -271,7 +272,7 @@ if not archive:
         # transfer size)
         GB = 1024 ** 3
         tc = TransferConfig(multipart_threshold=5*GB)
-        s3.upload_file(tar_name, config['AWS_BUCKET'], s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'})
+        s3.upload_file(tar_name, config['AWS_BUCKET'], s3_name, ExtraArgs={'StorageClass': 'STANDARD_IA'}, Config=tc)
 
         # check MD5
         s3_md5sum = s3.head_object(Bucket=config['AWS_BUCKET'], Key=s3_name)['ETag'][1:-1]
@@ -279,7 +280,7 @@ if not archive:
         # If S3 uses multipart uploading, the 'ETag' in the S3 file header will no longer
         # be the MD5 checksum. Use the s3etag.sh script to find what the ETag value should be.
         if os.path.getsize(tar_name) > 5*GB:
-            process = Popen(['bin/s3etag.sh', tar_name, '8'], stdout=PIPE)
+            process = Popen(['./s3etag.sh', tar_name, '8'], stdout=PIPE)
             (output, err) = process.communicate()
             if err:
                 text += "Error calculating predicted ETag value.  %s" % err
@@ -304,8 +305,7 @@ if not archive:
                 sys.exit(0)
 
     except:
-        text += "ERROR: unable to upload file %s to AWS S3\n" % s3_name
-        text += sys.exc_info()[1]
+        text += "ERROR: unable to upload file %s to AWS S3\n%s" % (tar_name, sys.exc_info()[1])
         print(text)
         if email: 
             sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
