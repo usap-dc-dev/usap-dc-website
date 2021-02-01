@@ -216,13 +216,13 @@ with open(xml_file, "w") as myfile:
 # add some submission meta for the bagit
 if not archive:
     sub_meta = {
-        "Source-Organization": "Interdisciplinary Earth Data Alliance (IEDA)",
+        "Source-Organization": "United States Antarctic Program Data Center (USAP-DC)",
         "Organization-Address": "Lamont-Doherty Earth Observatory, 61 Route 9W, Palisades, New York 10964 USA",
-        "Contact-Email": "info@iedadata.org",
+        "Contact-Email": "info@usap-dc.org",
         "Contact-Name": "Data Manager",
         "External-Description": ds_title,  # encode handles special characters
         "External-Identifier": "doi:%s" % ds_doi,
-        "Internal-Sender_Description": "United States Antarctic Program Data Center (USAP-DC)"
+        "Internal-Sender_Description": "see dataCite Record in payload"
     }
     bagit.make_bag(bag_dir, sub_meta, checksum=["sha256", "md5"])
     tar_name = "%s_bag.tar.gz" % bag_dir
@@ -243,22 +243,22 @@ if not archive:
     process = Popen(['openssl', 'sha256', tar_name], stdout=PIPE)
     (output, err) = process.communicate()
     if err:
-        text += "Error calculating SHA256 checksum.  %s" % err
+        text += "Error calculating SHA256 checksum.  %s" % err.decode('ascii')
         print(text)
         if email: 
             sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
         sys.exit(0)
-    checksum = output.split(")= ")[1].replace("\n", "")
+    checksum = output.decode('ascii').split(")= ")[1].replace("\n", "")
 
     process = Popen(['openssl', 'md5', tar_name], stdout=PIPE)
     (output, err) = process.communicate()
     if err:
-        text += "Error calculating MD5 checksum.  %s" % err
+        text += "Error calculating MD5 checksum.  %s" % err.decode('ascii')
         print(text)
         if email: 
             sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
         sys.exit(0)
-    checksum_md5 = output.split(")= ")[1].replace("\n", "")
+    checksum_md5 = output.decode('ascii').split(")= ")[1].replace("\n", "")
 
   
     # upload to AWS S3
@@ -283,12 +283,12 @@ if not archive:
             process = Popen(['./s3etag.sh', tar_name, '8'], stdout=PIPE)
             (output, err) = process.communicate()
             if err:
-                text += "Error calculating predicted ETag value.  %s" % err
+                text += "Error calculating predicted ETag value.  %s" % err.decode('ascii')
                 print(text)
                 if email: 
                     sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
                 sys.exit(0)
-            etag = output.split()[1]
+            etag = output.decode('ascii').split()[1]
             if (s3_md5sum != etag):
                 text += "ERROR: AWS S3 ETag does not match for %s.\nFile ETag: %s\nS3 ETag: %s\n" % (tar_name, etag, s3_md5sum)
                 print(text)
@@ -324,7 +324,7 @@ if not archive:
                     WHERE dataset_id = '%s';""" % (bagitDate, os.path.basename(tar_name), checksum, checksum_md5, ds_id)
         else:
             query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) 
-                    VALUES ('%s', '%s', '%s', '%s',' %s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+                    VALUES ('%s', '%s', '%s', '%s', '%s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
         cur.execute(query)
         cur.execute("COMMIT;")
     except:
