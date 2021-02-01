@@ -180,7 +180,11 @@ if __name__ == '__main__':
         msg += """</ul>"""
 
     # datasets that are not yet archived in glacier
-    query = "SELECT id, title, archived_date FROM dataset d LEFT JOIN dataset_archive da ON da.dataset_id = d.id WHERE archived_date is NULL ORDER BY id"
+    query = """SELECT id, title, status FROM dataset d 
+               LEFT JOIN dataset_archive da ON da.dataset_id = d.id 
+               WHERE status is NULL 
+               OR status != 'Archived' 
+               ORDER BY id"""
     cur.execute(query)
     res = cur.fetchall()
     if res:
