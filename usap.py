@@ -951,6 +951,7 @@ def invalid_dataset(e):
 def db_error(e):
     print(traceback.format_exc())
     msg = "Error connecting to database. Please <a href='mailto:%s'>contact us</a>." % app.config['USAP-DC_GMAIL_ACCT']
+    # msg += traceback.format_exc()
     return render_template('error.html', error_message=msg)
 
 
@@ -4564,9 +4565,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         dp_title = escapeChars(dp_title)
         conds.append("dpv.title ~* '%s' OR dpv.%s ~* '%s'" % (dp_title, titles, dp_title))
     if award:
-        conds.append(cur.mogrify('dpv.awards ~* %s', (escapeChars(award),)))
+        conds.append(cur.mogrify('dpv.awards ~* %s', (award,)))
     if person:
-        conds.append(cur.mogrify('dpv.persons ~* %s', (escapeChars(person),)))
+        conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
     if spatial_bounds_interpolated:
         conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
         conds.append("b is not null and b!= 'null'")
@@ -4596,7 +4597,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
 
 def escapeChars(string) :
-    chars = [".","^","$", "*", "+", "?", "{", "}", "[", "]", "\\", "|", "(", ")"]
+    chars = ["{", "}", "[", "]", "\\", "|", "(", ")"]
     for c in chars:
         string = string.replace(c, "\\"+c)
     string = string.replace("'","''")
