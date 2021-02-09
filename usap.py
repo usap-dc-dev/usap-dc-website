@@ -917,6 +917,11 @@ def submit_project_help():
     return render_template('submission_project_help.html')
 
 
+@app.route('/amd')
+def amd():
+    return render_template('amd_help.html')
+
+
 class ExceptionWithRedirect(Exception):
     def __init__(self, message, redirect):
         self.redirect = redirect

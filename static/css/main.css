@@ -841,3 +841,7 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
   width: 0;
   z-index: -1;
 }
+
+.justify {
+  text-align:justify;
+}
