@@ -235,10 +235,11 @@ with tarfile.open(tar_name, "w:gz") as tar:
 shutil.rmtree(bag_dir)
 
 # archive=False
-# tar_name = "%s_bag.tar.gz" % bag_dir
+#tar_name = "%s_bag.tar.gz" % bag_dir
 
 # calculate checksums
 if not archive:
+    
     # calculate checksums (hashlib library won't work on large files, so need to use openssl in unix)
     process = Popen(['openssl', 'sha256', tar_name], stdout=PIPE)
     (output, err) = process.communicate()
@@ -265,8 +266,6 @@ if not archive:
     s3_name = config['AWS_FOLDER'] + os.path.basename(tar_name)
     try:
         s3 = boto3.client('s3')
-                        #   aws_access_key_id=config['AWS_KEY'],
-                        #   aws_secret_access_key=config['AWS_SECRET_KEY'])
 
         # Ensure multipart uploading is used for files larger than 5TB (which is the max allowed single part
         # transfer size)
@@ -320,11 +319,64 @@ if not archive:
         cur.execute(query)
         res = cur.fetchall()
         if len(res) > 0:
-            query = """UPDATE dataset_archive SET (archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) = ('%s', '%s', '%s', '%s', 'Archived')
+            query = """UPDATE dataset_archive SET (archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) = ('%s', 'small_datasets/%s', '%s', '%s', 'Archived')
                     WHERE dataset_id = '%s';""" % (bagitDate, os.path.basename(tar_name), checksum, checksum_md5, ds_id)
         else:
             query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) 
-                    VALUES ('%s', '%s', '%s', '%s', '%s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+                    VALUES ('%s', '%s', 'small_datasets/%s', '%s', '%s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+        cur.execute(query)
+        cur.execute("COMMIT;")
+    except:
+        text += "Error connecting to database. \n%s" % sys.exc_info()[1][0]
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+        sys.exit(0)
+
+    
+    # Copy bag file to /archive/usap-dc/small_datasets
+    try:
+        remotedir = os.path.join(config['LOCAL_ARCHIVE_DIR'],'small_datasets')
+        remotefile = os.path.join(remotedir, os.path.basename(tar_name)) 
+        os.system('rsync "%s" "%s:%s"' % (tar_name, config['LOCAL_ARCHIVE_SERVER'], remotefile))
+    except:
+        text += "Error transferring bagged dataset to local server. \n%s" % sys.exc_info()[1][0]
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+        sys.exit(0)
+
+    # Delete bag file
+    os.remove(tar_name)
+
+
+    text += "SUCCESS: %s successfully archived.\n" % ds_id
+    print(text)
+    if email: 
+        sendEmail(text, 'Successful Dataset Archive: %s' % ds_id)
+
+else:
+    # Copy bag file to /archive/usap-dc
+    try:
+        remotefile = os.path.join(config['LOCAL_ARCHIVE_DIR'], os.path.basename(tar_name)) 
+        os.system('rsync "%s" "%s:%s"' % (tar_name, config['LOCAL_ARCHIVE_SERVER'], remotefile))
+    except:
+        text += "Error transferring bagged dataset to local server. \n%s" % sys.exc_info()[1][0]
+        print(text)
+        if email: 
+            sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+        sys.exit(0)
+
+    # Update database
+    try:
+        conn, cur = connect_to_db()
+        query = "SELECT * FROM dataset_archive where dataset_id = '%s';" % ds_id
+        cur.execute(query)
+        res = cur.fetchall()
+        if len(res) > 0:
+            query = """UPDATE dataset_archive SET status = 'Large Dataset Awaiting Completion' WHERE dataset_id = '%s';""" % (ds_id)
+        else:
+            query = """INSERT INTO dataset_archive (dataset_id, status) VALUES ('%s', 'Large Dataset Awaiting Completion');""" % (ds_id)
         cur.execute(query)
         cur.execute("COMMIT;")
     except:
@@ -336,9 +388,12 @@ if not archive:
 
     # Delete bag file
     os.remove(tar_name)
-text += "SUCCESS: %s successfully archived.\n" % ds_id
-print(text)
-if email: 
-    sendEmail(text, 'Successful Dataset Archive: %s' % ds_id)
+
+    text = "%s is a large dataset.  Please go to the local archive server and run 'scripts/prepare_for_upload.sh %s true' to complete the archiving process." %(ds_id, ds_id)
+    print(text)
+    if email: 
+        sendEmail(text, 'Large Dataset Archive Needs To Be Completed: %s' % ds_id)
+
+
 
 

@@ -28,9 +28,12 @@ import psycopg2.extras
 
 ROOT_DIR = "/archive/usap-dc/dataset"
 
-config = json.loads(open('config.json', 'r').read())
+
+config = json.loads(open('scripts/config.json', 'r').read())
 
 ds_id = sys.argv[1]
+upload = sys.argv[2] in ['True', 'true', 'TRUE', 't', 'T']
+
 print("STARTING PYTHON SCRIPT")
 
 
@@ -84,6 +87,7 @@ process = Popen(['openssl', 'sha256', tar_name], stdout=PIPE)
 (output, err) = process.communicate()
 if err:
     print("Error calculating SHA256 checksum.  %s" % err.decode('ascii'))
+    sys.exit(0)
 with open(tar_name + ".sha256", "w") as myfile:
     checksum = output.decode('ascii').split(")= ")[1].replace("\n", "")
     myfile.write(checksum)
@@ -93,25 +97,57 @@ process = Popen(['openssl', 'md5', tar_name], stdout=PIPE)
 (output, err) = process.communicate()
 if err:
     print("Error calculating MD5 checksum.  %s" % err.decode('ascii'))
+    sys.exit(0)
 with open(tar_name + ".md5", "w") as myfile:
     checksum_md5 = output.decode('ascii').split(")= ")[1].replace("\n", "")
     myfile.write(checksum_md5)
 
+print("MOVING TO ready_for_upload")
+os.system('mv %s_bag.tar.gz* ready_for_upload/' % ds_id)
+
+
 # Print psql query
-# bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-print("UPDATING DATABASE")
+print("UPDATING DATABASE - READY FOR UPLOAD")
 conn, cur = connect_to_db()
 query = "SELECT * FROM dataset_archive where dataset_id = '%s';" % ds_id
 cur.execute(query)
 res = cur.fetchall()
 if len(res) > 0:
-    query = """UPDATE dataset_archive SET (bagit_file_name, sha256_checksum, md5_checksum, status) = ('%s', '%s', '%s', 'Ready For Upload')
+    query = """UPDATE dataset_archive SET (bagit_file_name, sha256_checksum, md5_checksum, status) = ('large_datasets/%s', '%s', '%s', 'Ready For Upload')
                WHERE dataset_id = '%s';""" % (os.path.basename(tar_name), checksum, checksum_md5, ds_id)
 else:
     query = """INSERT INTO dataset_archive (dataset_id, bagit_file_name, sha256_checksum, md5_checksum, status) 
-               VALUES ('%s', '%s', '%s', '%s', 'Ready For Upload');""" % (ds_id, os.path.basename(tar_name), checksum, checksum_md5)
+               VALUES ('%s', 'large_datasets/%s', '%s', '%s', 'Ready For Upload');""" % (ds_id, os.path.basename(tar_name), checksum, checksum_md5)
 cur.execute(query)
 cur.execute("COMMIT;")
 cur.close()
+
+# if we are using this script to upload to AWS run this section
+if upload:
+    print("UPLOADING TO AMAZON")
+    process = Popen(['scripts/upload_to_s3.sh', ds_id, 'true'], stdout=PIPE)
+    (output, err) = process.communicate()
+    if err:
+        print("Error uploading to Amazon.  %s" % err.decode('ascii'))
+        sys.exit(0)
+    print(output.decode('ascii'))
+
+    print("UPDATING DATABASE - ARCHIVED")
+    bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    conn, cur = connect_to_db()
+    query = "SELECT * FROM dataset_archive where dataset_id = '%s';" % ds_id
+    cur.execute(query)
+    res = cur.fetchall()
+    if len(res) > 0:
+        query = """UPDATE dataset_archive SET (archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) = ('%s', 'large_datasets/%s', '%s', '%s', 'Archived')
+                WHERE dataset_id = '%s';""" % (bagitDate, os.path.basename(tar_name), checksum, checksum_md5, ds_id)
+    else:
+        query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) 
+                VALUES ('%s', '%s', 'large_datasets/%s', '%s', '%s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)
+    cur.execute(query)
+    cur.execute("COMMIT;")
+    cur.close()
+
+
 
 print("PYTHON SCRIPT DONE")

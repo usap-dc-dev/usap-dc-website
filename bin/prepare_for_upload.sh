@@ -11,21 +11,21 @@
 # data stored in the archive directory, then run the archiveUSAPDC_largeDatasets.py python script
 # which will create the bag files and calculate checksums.  It will update the database_archive table
 # setting a status of Ready For Upload.  The bagged datasets will be moved to the ready_for_upload directory.
+# If upload is 'true', the python script will also upload to Amazon, check the ETag, and mark the dataset as
+# Archived in the database.
 
-# To run: >./prepare_for_upload.sh <dataset_id>
+# To run: >scripts/prepare_for_upload.sh <dataset_id> <upload>
 
 set -euo pipefail
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 dataset_id";
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 dataset_id upload";
     exit 0;
 fi
 
 dsid=$1
+upload=$2
 
-echo "TRANSFERRING DATA FROM USAP-DC Server"
-scp nshane@www.usap-dc.org:/web/usap-dc/htdocs/archive/"$dsid"_need_archived_data.tar.gz .
-
-echo "UNZIPPING"
+echo "UNZIPPING DATA FROM WEBSERVER"
 gunzip "$dsid"_need_archived_data.tar.gz
 
 echo "UNTARRING"
@@ -33,13 +33,16 @@ tar xvf "$dsid"_need_archived_data.tar
 rm "$dsid"_need_archived_data.tar
 
 echo "MOVING ARCHIVED DATA"
-mkdir -p "$dsid"/archive/"$dsid"_need_archived_data
+mkdir -p "$dsid"/archive/"$dsid"_archived_data
 rsync -a --itemize-changes "$dsid"_archived_data/ "$dsid"/archive/"$dsid"_archived_data
 
 echo "RUNNING PYTHON SCRIPT"
-python3 archiveUSAPDC_largeDatasets.py "$dsid"
+python3 scripts/archiveUSAPDC_largeDatasets.py "$dsid" "$upload"
 
-echo "MOVING TO ready_for_upload"
-mv "$dsid"_bag.tar.gz* ready_for_upload/
+if [[ $upload == 'true' ]]
+then
+    echo "MOVING TO large_datasets"
+    mv ready_for_upload/"$dsid"* large_datasets/
+fi
 
-echo "DONE"
+echo "$dsid DONE"
