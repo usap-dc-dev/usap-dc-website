@@ -130,6 +130,10 @@ if upload:
     if err:
         print("Error uploading to Amazon.  %s" % err.decode('ascii'))
         sys.exit(0)
+    if 'ETAGS DO NOT MATCH' in output.decode('ascii'):
+        print("Error with Amazon ETag.  %s" % output.decode('ascii'))
+        sys.exit(0)
+
     print(output.decode('ascii'))
 
     print("UPDATING DATABASE - ARCHIVED")
