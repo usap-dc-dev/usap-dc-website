@@ -134,7 +134,7 @@ def update_award(awards):
     for item in awards:
         # check if dataset_id already exist in table
         sql_line = "Select award " \
-                   "From award_test " \
+                   "From award " \
                    "WHERE award = '{0}';".format(item['id'])
         cur.execute(sql_line)
         data = cur.fetchall()
@@ -150,7 +150,7 @@ def update_award(awards):
                 copi = None
             collab = 'Collaborative Research' in item['title']
             try:
-                sql_line = "INSERT INTO award_test " \
+                sql_line = "INSERT INTO award " \
                         "(award, dir, div, title, iscr, isipy, copi, start, "\
                         "expiry, sum, name, email, org, orgaddress, orgcity, "\
                         "orgstate, orgzip) "\
