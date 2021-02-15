@@ -3,20 +3,23 @@
 {% block body %}
 
 
-<div class="container">
+<div class="container justify">
        
 	<h1 class="title">Overview</h1>
 	<p>
-		The USAP-DC is a data repository and project catalog for the NSF funded USAP community. 
+		The USAP-DC provides a research data repository and Project Catalog for the NSF funded USAP community. 
 		USAP-DC offers web interfaces for <a href="{{url_for('search')}}">finding</a> and <a href="{{url_for('dataset')}}">contributing datasets</a> 
 		and <a href="{{url_for('project')}}">registering project</a> information from U.S.-funded research programs in Antarctica and the Southern Ocean. 
 		We assist U.S. investigators in meeting their obligations under 
-		<a class="external" href="https://www.nsf.gov/publications/pub_summ.jsp?ods_key=nsf16055">OPP Data Requirements</a>, which includes both 
-		1) submission of your dataset for long-term archiving and public access and 
-		2) registration of your project with USAP-DC and the Antarctic Master Directory (AMD). 
+		<a class="external" href="https://www.nsf.gov/publications/pub_summ.jsp?ods_key=nsf16055">OPP Data Requirements</a>, which includes both <br>
+		1) submission of your dataset for long-term archiving and public access and <br>
+		2) registration of your project with USAP-DC and the <a href="{{url_for('amd')}}">Antarctic Master Directory (AMD)</a>.<br>
 		Creating a catalog entry with the AMD is handled by USAP-DC using your project information. 
 	</p>
-	<p>USAP-DC serves as a National Antarctic Data Centre (NADC) in the framework of  the Scientific Committee on Antarctic Research (SCAR), and represents the U.S. at annual meetings of the SCAR Standing Committee on Antarctic Data Management.</p>
+	<p>
+		USAP-DC serves as a National Antarctic Data Centre (NADC) in the framework of  the Scientific Committee on Antarctic Research (SCAR), and represents 
+		the U.S. at annual meetings of the SCAR Standing Committee on Antarctic Data Management.
+	</p>
 	<p>An overview of USAP-DC services is also available on our <a href="{{url_for('webinars')}}"">Webinars page.</a></p>
 
 	<!-- <iframe width="560" height="315" src="https://www.youtube.com/embed/I9rwM0PeQlE" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe> -->

@@ -1,18 +1,14 @@
 #!/opt/rh/python27/root/usr/bin/python
 """
- Run achiveUSAPDC for all datasets between a start id and an end id
+ Run achiveUSAPDC for all datasets marked 'Ready To Archive'
  e.g.
- python ./archiveUSAPDC_batch.py 601021 609000
+ python archiveUSAPDC_readyDatasets.py
 """
 
-import sys
 import os
 import json
 import psycopg2
 import psycopg2.extras
-
-start_range = sys.argv[1]
-end_range = sys.argv[2]
 
 config = json.loads(open('../config.json', 'r').read())
 
@@ -33,13 +29,13 @@ def connect_to_db():
 
 
 conn, cur = connect_to_db()
-query = "SELECT id FROM dataset WHERE id::integer BETWEEN %s AND %s ORDER BY id::integer;" % (start_range, end_range)
+query = "SELECT dataset_id FROM dataset_archive WHERE status = 'Ready To Be Archived';"
 cur.execute(query)
 res = cur.fetchall()
 
 for row in res:
-    ds_id = row['id']
+    ds_id = row['dataset_id']
     print("Archiving %s" % ds_id)
-    os.system("./archiveUSAPDC.py -r %s -p %s -o %s -i %s" % (ROOT_DIR, FILE_PATH, OUT_DIR, ds_id))
+    os.system("./archiveUSAPDC.py -r %s -p %s -o %s -i %s -e True" % (ROOT_DIR, FILE_PATH, OUT_DIR, ds_id))
 
 print("DONE")
