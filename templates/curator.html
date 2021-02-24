@@ -71,7 +71,9 @@
           <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
-          <button class="tablinks" onclick="openTab(event, 'archiveTab')"  {% if tab == 'archive' %} id="defaultOpen" {% endif %}>Archive</button>
+          {% if db_imported %}
+            <button class="tablinks" onclick="openTab(event, 'archiveTab')"  {% if tab == 'archive' %} id="defaultOpen" {% endif %}>Archive</button>
+          {% endif %}
         {% elif type == 'project' %}
           <button class="tablinks" onclick="openTab(event, 'projectJsonTab')" {% if tab == 'project_json' %} id="defaultOpen" {% endif %}>JSON</button>
           <button class="tablinks" onclick="openTab(event, 'projectSqlTab')" {% if tab == 'project_sql' %} id="defaultOpen" {% endif %}>SQL</button>
