@@ -229,20 +229,19 @@
   var sm_submissions_array= JSON.parse($("#submission_submissions").text());
   for (i in sm_submissions_array) {
     row = sm_submissions_array[i];
-    row[0] = makeDate(row[0]);
   }  
 
   //submissions: number of project submissions
   var sm_projects_array= JSON.parse($("#projects_created").text());
   for (i in sm_projects_array) {
     row = sm_projects_array[i];
-    row[0] = makeDate(row[0]);
   }  
 
   google.setOnLoadCallback(function() {
-    drawChart(sm_submissions_array, 'USAP-DC Monthly Submissions', 'Month', 'Number of submissions', 'sm_submissions_chart_div');
+    drawChart(sm_submissions_array, 'USAP-DC Quartely Dataset Submissions', 'Quarter', 'Number of submissions', 'sm_submissions_chart_div');
 
-    drawChart(sm_projects_array, 'USAP-DC Monthly Projects Created', 'Month', 'Number of projects', 'sm_projects_chart_div');
+    drawChart2_quarterly(sm_projects_array, 'USAP-DC Quarterly Projects Created', 'Quarter', 'Number of registrations', 'Cumulative registrations',
+                         'Before', 'After USAP-DC Project Catalog launch (May 2019)', 'Cumulative', 'sm_projects_chart_div');
 
     drawChart2(dl_users_downloads_array, 'USAP-DC Monthly Data Download Requests*', 'Month', 'IP addresses', 'Downloads', 'Unique IP addresses', 'Unique data downloads', 'dl_users_downloads_chart_div', $("#dl_users"));
 
@@ -273,12 +272,13 @@
 
   function drawChart(d_array, title, x_title, y_title, target) {
     var d_data = new google.visualization.DataTable();
-    d_data.addColumn('date', 'Month');
+    d_data.addColumn('string', 'Quarter');
     d_data.addColumn('number', y_title);
     d_data.addRows(d_array);
     var d_options = {
       legend: 'none',
       title: title,
+      height: 350,
       hAxis: {title: x_title},
       vAxis: {
         title: y_title,
@@ -289,6 +289,31 @@
     d_chart.draw(d_data,d_options);
   }
 
+  function drawChart2_quarterly(d_array, title, x_title, y_title1, y_title2, legend1, legend2, legend3, target) {
+    var d_data = new google.visualization.DataTable();
+    d_data.addColumn('string', 'Quarter');
+    d_data.addColumn('number', legend1);
+    d_data.addColumn('number', legend2);
+    d_data.addColumn('number', legend3);
+    d_data.addRows(d_array);
+    var d_options = {
+      legend: 'top',
+      title: title,
+      height: 350,
+      hAxis: {
+        title: x_title
+      },
+      vAxes: {0: {title: y_title1},
+              1: {title: y_title2, gridlines: {color:'none'}},
+      },
+      series: {0: {targetAxisIndex: 0},
+               1: {targetAxisIndex: 0},
+               2: {targetAxisIndex: 1}
+      }
+    };
+    var d_chart= new google.visualization.AreaChart(document.getElementById(target));
+    d_chart.draw(d_data,d_options);
+  }
 
   function drawChart2(d_array, title, x_title, y_title1, y_title2, legend1, legend2, target, replotDiv) {
     var d_data = new google.visualization.DataTable();
@@ -299,9 +324,9 @@
     var d_options = {
       title: title,
       hAxis: {title: x_title},
+      height: 350,
       vAxes: {0: {title: y_title1},
               1: {title: y_title2, gridlines: {color:'none'}},
-  
       },
       series: {0: {targetAxisIndex: 0},
                1: {targetAxisIndex: 1}}

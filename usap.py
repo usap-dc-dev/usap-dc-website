@@ -19,7 +19,7 @@ import psycopg2.extras
 import requests
 import re
 import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as dt_date
 import csv
 from collections import namedtuple
 import humanize
@@ -115,6 +115,22 @@ orcid = oauth.remote_app('orcid',
                          consumer_secret=app.config['ORCID_CLIENT_SECRET'])
 
 config = json.loads(open('config.json', 'r').read())
+
+def connect_to_prod_db(curator=False):
+    info = config['PROD_DATABASE']
+    if curator and cf.isCurator():
+        user = info['USER_CURATOR']
+        password = info['PASSWORD_CURATOR']
+    else:
+        user = info['USER']
+        password = info['PASSWORD']
+    conn = psycopg2.connect(host=info['HOST'],
+                            port=info['PORT'],
+                            database=info['DATABASE'],
+                            user=user,
+                            password=password)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    return (conn, cur)
 
 
 def connect_to_db(curator=False):
@@ -3993,6 +4009,7 @@ def stats():
 
     template_dict['start_date'] = start_date
     template_dict['end_date'] = end_date
+    proj_catalog_date = dt_date(2019,5,1)
 
     # get download information from the database
     (conn, cur) = connect_to_db()
@@ -4029,7 +4046,6 @@ def stats():
     # To be used if we start collecting stats on searches
     
     # get search information from the database
-    (conn, cur) = connect_to_db()
     query = "SELECT * FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
     cur.execute(query)
@@ -4049,15 +4065,18 @@ def stats():
             searches = binSearch(search, searches, search_param, searches_param)
 
     template_dict['searches'] = searches
-    # get submission information from the database
 
+    # get submission information from the database
     query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dt.date_created::text AS dif_date FROM dataset_file_info dsf 
             JOIN dataset d ON d.id = dsf.dataset_id
             LEFT JOIN dif_test dt ON d.id_orig = dt.dif_id;''') 
     cur.execute(query)
     data = cur.fetchall()
-    months =  pd.date_range(start_date,end_date,freq='MS').strftime("%Y-%m-01").tolist()
-    submissions = {m: {'bytes': 0, 'num_files': 0, 'submissions': set()} for m in months}
+
+    q_dates = pd.date_range(start_date,end_date,freq='QS')
+    quarters = ['%s-Q%s' % (q.year, q.quarter) for q in q_dates]
+
+    submissions = {q: {'bytes': 0, 'num_files': 0, 'submissions': set()} for q in quarters}
     for row in data:
         if row['dif_date'] is not None:
             date = row['dif_date']
@@ -4073,23 +4092,24 @@ def stats():
         if (datetime.strptime(date, date_fmt) < start_date or
            datetime.strptime(date, date_fmt) > end_date):
             continue
-        month = "%s-01" % date[:7]
+        date = pd.to_datetime(date)
+        qt = "%s-Q%s" % (date.year, pd.Timestamp(date).quarter)
         bytes = row['file_size_uncompressed'] if row.get('file_size_uncompressed') else row['file_size_on_disk']
         num_files = row['file_count']
         submission = row['dataset_id']
-        submissions[month]['bytes'] += bytes
-        submissions[month]['num_files'] += num_files
-        submissions[month]['submissions'].add(submission)
+        submissions[qt]['bytes'] += bytes
+        submissions[qt]['num_files'] += num_files
+        submissions[qt]['submissions'].add(submission)
 
     submission_bytes = []
     submission_num_files = []
     submission_submissions = []
-    months_list = submissions.keys()
-    months_list.sort()
-    for month in months_list:
-        submission_bytes.append([month, submissions[month]['bytes']])
-        submission_num_files.append([month, submissions[month]['num_files']])
-        submission_submissions.append([month, len(submissions[month]['submissions'])])
+    quarters_list = submissions.keys()
+    quarters_list.sort()
+    for qt in quarters_list:
+        submission_bytes.append([qt, submissions[qt]['bytes']])
+        submission_num_files.append([qt, submissions[qt]['num_files']])
+        submission_submissions.append([qt, len(submissions[qt]['submissions'])])
     template_dict['submission_bytes'] = submission_bytes
     template_dict['submission_num_files'] = submission_num_files
     template_dict['submission_submissions'] = submission_submissions
@@ -4098,17 +4118,27 @@ def stats():
     query = cur.mogrify('''SELECT * from project WHERE date_created BETWEEN '%s' AND '%s';''' % (start_date, end_date)) 
     cur.execute(query)
     data = cur.fetchall()
-    projects = {m:0 for m in months}
+
+    projects = {q:{'before':0, 'after':0} for q in quarters}
     for row in data:
         date = row['date_created']
-        month = "%s-%02d-01" % (date.year, date.month)
-        projects[month] += 1
+        qt = "%s-Q%s" % (date.year, pd.Timestamp(date).quarter)
+        if date < proj_catalog_date:
+            projects[qt]['before'] += 1
+        else: 
+            projects[qt]['after'] += 1
 
     projects_created = []
-    months_list = projects.keys()
-    months_list.sort()
-    for month in months_list:
-        projects_created.append([month, projects[month]])
+    quarters_list = projects.keys()
+    quarters_list.sort()
+    cumulative = 0
+    for qt in quarters_list:
+        cumulative += projects[qt]['before'] + projects[qt]['after']
+        projects_created.append([qt, 
+                                 projects[qt]['before'] if projects[qt]['before'] != 0 else None, 
+                                 projects[qt]['after'] if projects[qt]['after'] != 0 else None,
+                                 cumulative
+                                ])
     template_dict['projects_created'] = projects_created
 
     return render_template('statistics.html', **template_dict)
