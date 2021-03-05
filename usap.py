@@ -4530,6 +4530,10 @@ def filter_joint_menus():
         if d['science_programs']:
             for p in d['science_programs'].split(';'):
                 sci_programs.add(p.strip())
+        # include dataset science programs
+        if d['datasets'] and d['uid']:
+            for ds in json.loads(d['datasets']):
+                if ds.get('science_program'): sci_programs.add(ds['science_program'])
 
     dp_nsf_programs = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'nsf_program'})
     nsf_programs = set()
@@ -4609,7 +4613,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
-        conds.append(cur.mogrify('dpv.science_programs ~* %s ', (escapeChars(sci_program),)))
+        conds.append(cur.mogrify('dpv.science_programs ~* %s OR dpv.datasets ~* %s ', (escapeChars(sci_program), '"science_program" : "%s"' %escapeChars(sci_program))))
     if nsf_program:
         conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (escapeChars(nsf_program),)))
     # if dp_type and dp_type != 'Both':
