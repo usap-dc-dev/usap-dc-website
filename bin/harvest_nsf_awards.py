@@ -9,7 +9,9 @@ import sys
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import csv
 
+nsf_file = "../inc/nsf_table.txt"
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
@@ -34,6 +36,12 @@ ant_program_dict = {'ANTARCTIC GLACIOLOGY':'Antarctic Glaciology',
                           'Antarctic Science and Technolo':'Antarctic Science and Technology',
                           'Polar Special Initiatives': 'Polar Special Initiatives',
                           'ANT Coordination & Information':'Antarctic Coordination and Information'}
+
+# read in tsv version of NSF spreadsheet
+with open(nsf_file) as csvfile:
+    reader = csv.DictReader(csvfile, delimiter='\t')
+    nsf_dict = {row['Proposal ID']:row for row in reader}
+
 
 def connect_to_db():
     info = config['DATABASE']
@@ -89,7 +97,9 @@ def getAwardsFromNSF(start_date):
         'awardeeStateCode',
         'awardeeZipCode',
         'abstractText',
-        'cfdaNumber'
+        'cfdaNumber',
+        'poName',
+        'poEmail'
     ]   
 
     awards = []
@@ -122,6 +132,14 @@ def escapeQuotes(string):
     return string.replace("'","''")
 
 
+def isLead(award_id):
+    if nsf_dict.get(award_id):
+        lead = nsf_dict[award_id]['Collaborative Proposal Description']
+        lead_id = nsf_dict[award_id]['Lead Proposal Id']
+        return lead, lead_id
+    return 'Standard', ''
+
+
 def update_award(awards):
     '''
     check if award is in database,
@@ -130,10 +148,20 @@ def update_award(awards):
     (conn, cur) = connect_to_db()
     out_text = ''
     new_awards = 0
+    updated_awards = 0
 
     for item in awards:
+
+        pi = escapeQuotes(item['piLastName'] + ', ' + item['piFirstName'])
+        if item.get('coPDPI'):
+            copi = '; '.join(item['coPDPI'])
+            copi = ' '.join(copi.split())
+            copi = escapeQuotes(copi)
+        else:
+            copi ='None'
+
         # check if dataset_id already exist in table
-        sql_line = "Select award " \
+        sql_line = "Select * " \
                    "From award " \
                    "WHERE award = '{0}';".format(item['id'])
         cur.execute(sql_line)
@@ -141,26 +169,25 @@ def update_award(awards):
         # if no data returned use insert otherwise update
         if not data:
             new_awards += 1
-            pi = escapeQuotes(item['piLastName'] + ', ' + item['piFirstName'])
-            if item.get('coPDPI'):
-                copi = '; '.join(item['coPDPI'])
-                copi = ' '.join(copi.split())
-                copi = escapeQuotes(copi)
-            else:
-                copi = None
+
             collab = 'Collaborative Research' in item['title']
+            lead, lead_id = isLead(item['id'])
+
             try:
-                sql_line = "INSERT INTO award " \
-                        "(award, dir, div, title, iscr, isipy, copi, start, "\
-                        "expiry, sum, name, email, org, orgaddress, orgcity, "\
-                        "orgstate, orgzip) "\
-                        "VALUES ('{0}','GEO','OPP','{1}','{2}','False',"\
-                        "'{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}');" \
+                sql_line = """INSERT INTO award 
+                        (award, dir, div, title, iscr, isipy, copi, start,
+                        expiry, sum, name, email, org, orgaddress, orgcity,
+                        orgstate, orgzip, po_name, po_email,
+                        is_lead_award, lead_award_id, project_needed, letter_welcome, letter_year1, letter_final_year) 
+                        VALUES ('{0}','GEO','OPP','{1}','{2}','False',
+                        '{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}', '{14}', '{15}', 
+                        '{16}', '{17}', True, False, False, False);""" \
                         .format(item['id'], escapeQuotes(item.get('title','')), 
                                 collab, copi, item.get('startDate',''), item.get('expDate',''),
                                 escapeQuotes(item.get('abstractText','')).encode('utf-8'), pi, item.get('piEmail',''),
                                 escapeQuotes(item.get('awardeeName','')), item.get('awardeeAddress',''),
-                                item.get('awardeeCity',''),item.get('awardeeState',''),item.get('awardeeZip',''))
+                                item.get('awardeeCity',''),item.get('awardeeState',''),item.get('awardeeZip',''),
+                                escapeQuotes(item.get('poName', '')), item.get('poEmail',''), lead, lead_id)
          
                 cur.execute(sql_line)
                 out_text += """<b>Award added.</b>
@@ -171,13 +198,70 @@ def update_award(awards):
                                <b>Program:</b> %s<br><br>""" \
                                % (item['id'], item['title'], pi, item['startDate'], item['fundProgramName'])
             except Exception as e:
-                text += "Database Error. %s<br>" % sys.exc_info()[1][0]
+                text = "Database Error. %s<br>" % sys.exc_info()[1][0]
                 print(text)
                 sendEmail(text,'Unsuccessul Awards Harvest')
                 sys.exit(1)
 
         else:
-            pass
+            a = data[0]
+            start_date = datetime.datetime.strptime(item['startDate'], '%m/%d/%Y').date()
+            expiry_date= datetime.datetime.strptime(item['expDate'], '%m/%d/%Y').date()
+            lead, lead_id = isLead(item['id'])
+            update = False
+            update_text = ""
+            if a['start'] != start_date:
+                update_text += "<b>Start Date: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['start'], start_date)
+                update = True
+            
+            if a['expiry'] != expiry_date:
+                update_text += "<b>Expiry Date: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['expiry'], expiry_date)
+                update = True
+            
+            if escapeQuotes(a['name']) != pi:
+                update_text += "<b>PI: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['name'], pi)
+                update = True
+
+            if a['email'] != item['piEmail']:
+                update_text += "<b>PI Email: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['email'], item['piEmail'])
+                update = True
+
+            if escapeQuotes(a['copi']) != copi:
+                update_text += "<b>COPI: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['copi'], copi)
+                update = True
+   
+            if a['po_name'] != item.get('poName',''):
+                update_text += "<b>PO Name: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['po_name'], item.get('poName',''))
+                update = True
+        
+            if a['po_email'] != item.get('poEmail',''):
+                update_text += "<b>PO Email: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['po_email'], item.get('poEmail',''))
+                update = True
+
+            if a['is_lead_award'] != lead:
+                update_text += "<b>Is Lead Award: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['is_lead_award'], lead)
+                update = True
+
+            if a['lead_award_id'] != lead_id:
+                update_text += "<b>Lead Proposal ID: </b> OLD: <i>%s</i> NEW: <i>%s</i><br>" % (a['lead_award_id'], lead_id)
+                update = True
+
+            if update:
+                updated_awards += 1
+                try:
+                    sql_line = """UPDATE award SET (start, expiry, name, email, copi, po_name, po_email, is_lead_award, lead_award_id) 
+                            = ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+                            WHERE award = '%s';""" % (start_date, expiry_date, pi, item['piEmail'], copi, escapeQuotes(item.get('poName','')), item.get('poEmail',''), 
+                             lead, lead_id, item['id'])
+                    cur.execute(sql_line)
+
+                    out_text += "<b>Award %s Updated</b><br>" % a['award']
+                    out_text += update_text + "<br>"
+                except Exception as e:
+                    text = "Database Error. %s<br>" % sys.exc_info()[1][0]
+                    print(text)
+                    sendEmail(text,'Unsuccessul Awards Harvest')
+                    sys.exit(1)
 
     # Make the changes to the database persistent
     conn.commit()
@@ -186,6 +270,8 @@ def update_award(awards):
     # print(out_text) 
     print("New awards added to DB: %s" % new_awards)  
     out_text +=  "New awards added to DB: %s<br>" % new_awards
+    print("Awards updated in DB: %s" % updated_awards)  
+    out_text +=  "Awards updated in DB: %s" % updated_awards
 
     return out_text
 
@@ -215,7 +301,7 @@ def update_award_program(award_list, out_text):
                 try:
                     cur.execute(sql_line)
                 except:
-                    text += "Database Error. %s<br>" % sys.exc_info()[1][0]
+                    text = "Database Error. %s<br>" % sys.exc_info()[1][0]
                     print(text)
                     sendEmail(text,'Unsuccessul Awards Harvest')
                     sys.exit(1)
