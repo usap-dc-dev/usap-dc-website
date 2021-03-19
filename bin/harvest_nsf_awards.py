@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import csv
 
-nsf_file = "../inc/nsf_table.txt"
+nsf_file = "/web/usap-dc/htdocs/inc/nsf_table.tsv" # This is a tsv export of Proposals By Proposal Status-6.xlsx
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
@@ -40,7 +40,7 @@ ant_program_dict = {'ANTARCTIC GLACIOLOGY':'Antarctic Glaciology',
 # read in tsv version of NSF spreadsheet
 with open(nsf_file) as csvfile:
     reader = csv.DictReader(csvfile, delimiter='\t')
-    nsf_dict = {row['Proposal ID']:row for row in reader}
+    nsf_dict = {row['prop_id']:row for row in reader}
 
 
 def connect_to_db():
@@ -114,7 +114,7 @@ def getAwardsFromNSF(start_date):
                     'fundProgramName': 'ANT',
                     'dateStart': start_date,
                     'printFields':','.join(fields)} 
-    
+
         r = requests.get(api, params=parameter)
         if r.status_code == 200:
             data = r.json()
@@ -133,9 +133,11 @@ def escapeQuotes(string):
 
 
 def isLead(award_id):
+    iln_dict = {'I':'Standard', 'L':'Lead', 'N':'Non-Lead'}
     if nsf_dict.get(award_id):
-        lead = nsf_dict[award_id]['Collaborative Proposal Description']
-        lead_id = nsf_dict[award_id]['Lead Proposal Id']
+        iln = nsf_dict[award_id]['ILN']
+        lead = iln_dict.get(iln, 'Standard')
+        lead_id = nsf_dict[award_id]['lead']
         return lead, lead_id
     return 'Standard', ''
 
