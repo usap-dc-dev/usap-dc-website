@@ -8,19 +8,17 @@ import time
 import psycopg2
 import psycopg2.extras
 import json
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
 import os
+import sys
 import shutil
+from gmail_functions import send_gmail_message
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 TMP_DIR = 'tmp'
 
 def connect_to_db():
-    #info = config['PROD_DATABASE'] - when running on dev server, so we can access prouction DB
+    # info = config['PROD_DATABASE'] # when running on dev server, so we can access prouction DB
     info = config['DATABASE']
     conn = psycopg2.connect(host=info['HOST'],
                             port=info['PORT'],
@@ -43,40 +41,14 @@ def querySubmissionTable(cur, submission_type, status):
     return msg
 
 
-def sendEmail(message, subject, file=None):
+def sendEmail(message_text, subject, file=None):
     print(subject)
     sender = config['USAP-DC_GMAIL_ACCT']
     recipients = config['RECIPIENTS']
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = sender
-    msg['To'] = ', '.join(recipients)
-
-    content = MIMEText(message, 'html', 'utf-8')
-    msg.attach(content)
-
-    if file: 
-        with open(file, "rb") as f:
-            part = MIMEApplication(
-                f.read(),
-                Name=os.path.basename(file)
-            )
-        # After the file is closed
-        part['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(file)
-        msg.attach(part)
-
-    smtp_details = config['SMTP']
-    s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
-    # identify ourselves to smtp client
-    s.ehlo()
-    # secure our email with tls encryption
-    s.starttls()
-    # re-identify ourselves as an encrypted connection
-    s.ehlo()
-    s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-    s.sendmail(sender, recipients, msg.as_string())
-    s.quit()  
+    success, error = send_gmail_message(sender, recipients, subject, message_text, file)
+    if error:
+        print(error)
+        sys.exit()
 
 
 if __name__ == '__main__':
@@ -332,8 +304,6 @@ if __name__ == '__main__':
         tsv_file.close()
 
         msg += """</body></html>"""
-
-      
 
         if send_report: sendEmail(msg, title, file=filepath)
         # need to slow process down so email function doesn't get overwhelmed
