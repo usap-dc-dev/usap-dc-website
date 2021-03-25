@@ -1995,3 +1995,10 @@ def markReadyToArchive(uid):
         return (None, out_text)
 
 
+def updateMatViews():
+    conn, cur = usap.connect_to_db(curator=True)
+    query = """REFRESH MATERIALIZED VIEW project_view; 
+               REFRESH MATERIALIZED VIEW dataset_view;
+               COMMIT;"""
+    cur.execute(query)
+

@@ -2856,6 +2856,7 @@ def curator():
                         # run sql to import data into the database
                         cur.execute(sql_str)
                         cf.updateEditFile(uid)
+                        cf.updateMatViews()
 
                         template_dict['message'].append("Successfully imported to database")
                         if edit:
@@ -3187,6 +3188,8 @@ def curator():
                         # run sql to import data into the database
                         cur.execute(sql_str)
                         cf.updateEditFile(uid)
+                        cf.updateMatViews()
+                        
                         template_dict['message'].append("Successfully imported to database")
                         data = json.loads(request.form.get('proj_json'))
                         
@@ -4427,11 +4430,6 @@ def project_browser():
 def search():
     template_dict = {}
 
-    # refresh the project view to make sure it is up to date
-    (conn, cur) = connect_to_db()
-    query = "REFRESH MATERIALIZED VIEW project_view; COMMIT;"
-    cur.execute(query)
-
     params = request.args.to_dict()
     params['dp_type'] = 'Project'
 
@@ -4464,11 +4462,6 @@ def search():
 @app.route('/dataset_search', methods=['GET'])
 def dataset_search():
     template_dict = {}
-
-    # refresh the project view to make sure it is up to date
-    (conn, cur) = connect_to_db()
-    query = "REFRESH MATERIALIZED VIEW dataset_view; COMMIT;"
-    cur.execute(query)
 
     params = request.args.to_dict()
 
@@ -4530,8 +4523,8 @@ def filter_joint_menus():
         if d['science_programs']:
             for p in d['science_programs'].split(';'):
                 sci_programs.add(p.strip())
-        # include dataset science programs
-        if d['datasets'] and d['uid']:
+        # include dataset science programs in project search
+        if d.get('datasets') and d['uid']:
             for ds in json.loads(d['datasets']):
                 if ds.get('science_program'): sci_programs.add(ds['science_program'])
 
