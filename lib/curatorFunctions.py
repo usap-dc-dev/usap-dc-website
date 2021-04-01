@@ -947,11 +947,12 @@ def editProjectJson2sql(data, uid):
                 updates.add(k)
 
     # check for orcid update
-    query = "SELECT id_orcid FROM person WHERE id = '%s'" % usap.escapeQuotes(subm_id)
-    cur.execute(query)
-    res = cur.fetchone()
-    if res and res['id_orcid'] != data.get('submitter_orcid'):
-        updates.add('orcid')
+    if subm_id:
+        query = "SELECT id_orcid FROM person WHERE id = '%s'" % usap.escapeQuotes(subm_id)
+        cur.execute(query)
+        res = cur.fetchone()
+        if res and res['id_orcid'] != data.get('submitter_orcid'):
+            updates.add('orcid')
 
     # --- fix award fields (throw out PI name)
     data["award_num"] = data["award"]
