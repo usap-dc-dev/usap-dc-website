@@ -56,13 +56,13 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     today = today - relativedelta(days=10)
-    three_months_ago = today - relativedelta(months=3)
+    six_months_ago = today - relativedelta(months=6)
     (conn, cur) = connect_to_db()
 
     # make tmp dir for csv files
     os.mkdir(TMP_DIR)
 
-    query = "SELECT * FROM program"
+    query = "SELECT * FROM program ~* 'Antarctic;"
     cur.execute(query)
     res = cur.fetchall()
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         # if program != "Antarctic Organisms and Ecosystems": continue
         send_report = False
 
-        title = "USAP-DC QUARTERLY REPORT FOR %s: %s TO %s" % (program.upper(), three_months_ago, today)
+        title = "USAP-DC QUARTERLY REPORT FOR %s: %s TO %s" % (program.upper(), six_months_ago, today)
 
         msg = """<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
                 <title>%s</title>""" % title
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                     AND a.program_id='%s'
                     GROUP BY project.proj_uid,d.num_datasets,d.datasets::text
                     ORDER BY project.date_created
-                    ;""" % (three_months_ago, program)
+                    ;""" % (six_months_ago, program)
         cur.execute(query)
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
@@ -135,7 +135,7 @@ if __name__ == '__main__':
                     JOIN award_program_map apm ON apm.award_id = award.award
                     JOIN program ON program.id = apm.program_id
                     WHERE dataset.date_created > '%s'
-                    AND apm.program_id='%s';""" % (three_months_ago, program)
+                    AND apm.program_id='%s';""" % (six_months_ago, program)
         cur.execute(query)
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
@@ -179,7 +179,7 @@ if __name__ == '__main__':
                     AND ppm."role" IN ('Investigator and contact', 'Investigator')
                     AND a.program_id='%s'
                     GROUP BY project.proj_uid, d.datasets::text, pubs.pubs::text, ppm.person_id
-                    ORDER BY project.proj_uid;""" % (three_months_ago, program)
+                    ORDER BY project.proj_uid;""" % (six_months_ago, program)
         cur.execute(query)
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
@@ -218,7 +218,7 @@ if __name__ == '__main__':
         #             JOIN award_program_map apm ON apm.award_id = award.award
         #             JOIN program ON program.id = apm.program_id
         #             WHERE dataset.date_modified > '%s' AND date_modified != date_created
-        #             AND apm.program_id='%s';""" % (three_months_ago, program)
+        #             AND apm.program_id='%s';""" % (six_months_ago, program)
         # cur.execute(query)
         # res2 = cur.fetchall()
         # if len(res2) > 0: send_report = True
@@ -262,7 +262,7 @@ if __name__ == '__main__':
         if len(res2) > 0: send_report = True
 
         # make csv file
-        filename = "%s_Active_Awards_%s_to_%s.tsv" % (program.replace(' ','_'), three_months_ago, today) 
+        filename = "%s_Active_Awards_%s_to_%s.tsv" % (program.replace(' ','_'), six_months_ago, today) 
         filepath = os.path.join('tmp', filename)
         tsv_file = open(filepath, 'w')
         tsv_file.write("Award ID\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\n")
