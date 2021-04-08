@@ -6,6 +6,8 @@ makes sure they all return a status_code of 200 and do not redirect to the not_f
 
 NSS 12/11/20: update to test all URLS in the database and to be callable by weeklyReport
 
+NSS 04/08/21: update to test urls in template html pages
+
 To run:
 Need to comment out login and authentication code in usap.py first. (only if testing edit pages)
 For datasets ~500-506
@@ -18,6 +20,9 @@ import psycopg2
 import psycopg2.extras
 import requests
 import urllib3
+import glob
+import re
+import os
 
 # disable warnings about sites with SSL certificate issues
 urllib3.disable_warnings()
@@ -26,6 +31,7 @@ config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 ROOT = config['USAP_DOMAIN']
 NOTFOUND = ROOT + "not_found"
 LOGIN = ROOT + "login"
+TEMPLATES_DIR = '/web/usap-dc/htdocs/templates/*html'
 
 
 def connect_to_db():
@@ -84,7 +90,7 @@ def testUrlFromTable(url, bad_url_col, bad_url_count, uid_col, uid, table, cur, 
         if bad_url_col:
             return(incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid))
         else:
-            return('<li><a href="%s">%s</a>: ERROR in table %s - : broken link</li>' % (url, url, table))
+            return('<li><a href="%s">%s</a>: ERROR in table %s - broken link</li>' % (url, url, table))
 
 
 def incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid):
@@ -121,6 +127,29 @@ def getUrlsFromTable(table, url_col, bad_url_col, uid_col, cur, verbose):
     return(msg)
 
 
+def testUrlsInFile(file, verbose):
+    output = ''
+    with open(file) as f:
+        text = f.read()
+        urls = re.findall('"((http)s?://.*?)"', text)
+
+    for u in urls:
+        url = u[0]
+        try:
+            r = requests.get(url, verify=False, timeout=30)
+            if r.status_code != 404:
+                if verbose: print('%s: OK' % url)
+            else:
+                if '{{r.doi}}' in url: continue
+                if verbose: print('%s: ERROR in file %s - status_code: %s' % (url, file, r.status_code))
+                output += '<li><a href="%s">%s</a>: ERROR in file %s - broken link: %s</li>' % (url, url, os.path.basename(file))
+        except Exception as e:
+            if verbose: print('%s: ERROR in file %s- %s') % (url, file, str(e))
+            output += '<li><a href="%s">%s</a>: ERROR in file %s - broken link</li>' % (url, url, os.path.basename(file))
+    return output
+
+
+
 def testAllUrls(verbose=False):
     conn, cur = connect_to_db()
     output = ""
@@ -146,7 +175,7 @@ def testAllUrls(verbose=False):
         # url = ROOT + 'edit/project/%s' % uid
         # testUrl(url, verbose)
 
-    #now test URLs in database
+    # now test URLs in database
     urls_to_test = [
         {'table': 'dataset', 'url_col': 'url'},
         {'table': 'license', 'url_col': 'url'},
@@ -159,6 +188,12 @@ def testAllUrls(verbose=False):
     for entry in urls_to_test:
         if verbose: print('\n******** TABLE: %s\n' %entry['table'])
         output += getUrlsFromTable(entry['table'], entry['url_col'], entry.get('bad_url_col'), entry.get('uid_col'), cur, verbose)
+
+    
+    # test urls in template html pages 
+    html_files = glob.glob(TEMPLATES_DIR)
+    for f in html_files:
+        output += testUrlsInFile(f, verbose)
 
     # print(output)
     return(output)

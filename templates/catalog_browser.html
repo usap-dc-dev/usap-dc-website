@@ -114,7 +114,7 @@
             <td><a target='_blank' href='{{dif_url}}'>{{val['dif_id']}}</a></td>
 
             {% if val['award'] != "" %}
-              {% set award_url = "http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + val['award_7d'] %}
+              {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + val['award_7d'] %}
               <td><a target='_blank' href='{{award_url}}'>{{val['award']}}</a></td>
             {% else %}
               <td></td>
