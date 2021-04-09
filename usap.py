@@ -4009,9 +4009,14 @@ def stats():
         end_date = datetime.strptime(args['end_date'], date_fmt)
     else:
         end_date = datetime.now()
+    if args.get('exclude'):
+        exclude = args.get('exclude')
+    else:
+        exclude = False
 
     template_dict['start_date'] = start_date
     template_dict['end_date'] = end_date
+    template_dict['exclude'] = exclude
     proj_catalog_date = dt_date(2019,5,1)
 
     # get download information from the database
@@ -4035,6 +4040,26 @@ def stats():
             downloads[month]['user_files'].add(user_file)
         else:
             downloads[month] = {'bytes': bytes, 'num_files': 1, 'users': {user}, 'user_files': {user_file}}
+
+    # ftp downloads of large datasets
+    if not exclude :
+        query = "SELECT * FROM access_ftp_downloads WHERE date >= '%s' AND date <= '%s';" % (start_date, end_date)
+        cur.execute(query)
+        data = cur.fetchall()
+        for row in data:
+            date = row['date'].split('-')
+            month = "%s-%s-01" % (date[0], date[1])
+            bytes = row['resource_size']
+            user = row['request_email']
+            resource = row['dataset_id']
+            user_file = "%s-%s" % (user, resource) 
+            if downloads.get(month):
+                downloads[month]['bytes'] += bytes
+                downloads[month]['num_files'] += row['file_count']
+                downloads[month]['users'].add(user)
+                downloads[month]['user_files'].add(user_file)
+            else:
+                downloads[month] = {'bytes': bytes, 'num_files': row['file_count'], 'users': {user}, 'user_files': {user_file}}
 
     download_numfiles_bytes = []
     download_users_downloads = []

@@ -15,40 +15,44 @@
     End Date:
     <input type="date" name="end_date" id="end_date" value={{end_date}} min={{start_date}}>
     <button type="submit">Submit</button>
+
+    <div id="sm_submissions_chart_div"></div>
+
+    <div id="sm_projects_chart_div"></div>
+
+    <div id="dl_users_downloads_chart_div"></div>
+    <div class="stats-limits-div" id="dl_users">
+      <input type="hidden" class="options">
+      <input type="hidden" class="data">
+      <input type="hidden" class="target">
+      <b>IP addresses </b> 
+      Min: <input type="number" class="ymin1">
+      Max: <input type="number" class="ymax1">
+      <b>Downloads </b> 
+      Min: <input type="number" class="ymin2">
+      Max: <input type="number" class="ymax2">
+      <button type="button" onclick="replot(this)">Replot</button>
+    </div>
+
+    <div id="dl_numfiles_bytes_chart_div"></div>
+    <div class="stats-limits-div" id="dl_files">
+      <input type="hidden" class="options">
+      <input type="hidden" class="data">
+      <input type="hidden" class="target">
+      <b>Number of files </b> 
+      Min: <input type="number" class="ymin1">
+      Max: <input type="number" class="ymax1">
+      <b>MB </b> 
+      Min: <input type="number" class="ymin2">
+      Max: <input type="number" class="ymax2">
+      <button type="button" onclick="replot(this)">Replot</button>
+      <br><br>
+      
+      <input type="checkbox" id="exclude" name="exclude" {% if exclude %}checked{% endif %}>
+      <label for="exclude"><b>Exclude large dataset (FTP) downloads</b></label>
+      <button type="submit">Replot</button>
+    </div>
   </form>
-
-  <div id="sm_submissions_chart_div"></div>
-
-  <div id="sm_projects_chart_div"></div>
-
-  <div id="dl_users_downloads_chart_div"></div>
-  <div class="stats-limits-div" id="dl_users">
-    <input type="hidden" class="options">
-    <input type="hidden" class="data">
-    <input type="hidden" class="target">
-    <b>IP addresses </b> 
-    Min: <input type="number" class="ymin1">
-    Max: <input type="number" class="ymax1">
-    <b>Downloads </b> 
-    Min: <input type="number" class="ymin2">
-    Max: <input type="number" class="ymax2">
-    <button type="button" onclick="replot(this)">Replot</button>
-  </div>
-
-  <div id="dl_numfiles_bytes_chart_div"></div>
-  <div class="stats-limits-div" id="dl_files">
-    <input type="hidden" class="options">
-    <input type="hidden" class="data">
-    <input type="hidden" class="target">
-    <b>Number of files </b> 
-    Min: <input type="number" class="ymin1">
-    Max: <input type="number" class="ymax1">
-    <b>MB </b> 
-    Min: <input type="number" class="ymin2">
-    Max: <input type="number" class="ymax2">
-    <button type="button" onclick="replot(this)">Replot</button>
-  </div>
- 
   <!-- only curators can see stats below -->
   {% if session.user_info and session.user_info.is_curator %}
     <p class="stats-text"> Number of downloads for each dataset (based on unique date-IP combinations)*</p>
