@@ -7,13 +7,31 @@ var awards = [];
 var repos = [];
 // var locations = [];
 var map;
+var search_table_dt;
+var date_col, vis_col, sel_col;
 
 $(document).ready(function() {
     $(document).ajaxStart(function () { $("html").addClass("wait"); });
     $(document).ajaxStop(function () { $("html").removeClass("wait"); });
     $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
 
+    // set up search table
+    var header = $('#search_table').find('th');
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "Date Created") date_col = i;
+      else if (label == "Selected") sel_col = i;
+      else if (label == "Visible") vis_col = i;
+    }
+    search_table_dt = $('#search_table').DataTable( {
+        "searching": false,
+        "paging": false,
+        "order": [[date_col, "desc"]]
+    });
+
     var search_params = JSON.parse($("#search_params").text());
+    search_results = JSON.parse($("#search_results").text());
 
     $('#dp_title').typeahead({autoSelect: false});
     $('#sci_program-input').typeahead({autoSelect: false});
@@ -146,18 +164,44 @@ $(document).ready(function() {
         });
     }
 
-  $('.close_abstract_btn').click(function() {
+  $('.close_abstract_btn').on('click', (function() {
     $("#abstract").hide();
-  });
+  }));
 
+  popup = new ol.Overlay.Popup({"panMapIfOutOfView":true});
   map = new MapClient2();
+  results_map = null;
+
+  $('#geom_btn').on('click', (function() {
+    $("#results_map_div").toggle();
+    $(this).text(function(i, text) { 
+        if (results_map) {
+            text === "View results on map" ? highlightVisibleRows(results_map, true) : unsetVisibleRows();
+        }    
+        return text === "View results on map" ? "Hide map" : "View results on map";
+    })
+    if (!results_map) {
+        results_map = new MapClient2('results_map');
+
+        //results_map move event handler
+        results_map.on('moveend', moveResultsMap);
+        
+        //results_map click event handler
+        results_map.on('click', clickResultsMap);
+           
+        showResultsOnMap();
+    }
+  }));
 
 
-  $('.close_geom_btn').click(function() {
+  $('.close_geom_btn').on('click', (function() {
     $("#geometry").hide();
-  });
+  }));
   
 
+
+
+  
   //Make the DIV element draggagle:
   dragElement(document.getElementById(("abstract")));
   dragElement(document.getElementById(("geometry")));
@@ -199,7 +243,21 @@ var styles = [
   }),
   new ol.style.Style({
     image: new ol.style.Circle({
-      radius: 4,
+      radius: 5,
+      stroke: new ol.style.Stroke({
+        color: 'rgba(0, 0, 0, 1)',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 255, 0, 1)'
+      })
+    })
+  })
+];
+
+
+var results_styles = [
+    new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: 'rgba(255, 0, 0, 0.8)',
         width: 2
@@ -207,86 +265,320 @@ var styles = [
       fill: new ol.style.Fill({
         color: 'rgba(255, 0, 0, 0.3)'
       })
+    }),
+    new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 4,
+        stroke: new ol.style.Stroke({
+          color: 'rgba(0, 0, 0, 1)',
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 0, 0, 1)'
+        })
+      })
     })
-  })
-];
+  ];
 
 function showOnMap(el) {
-  var header = $(el).closest('table').find('th');
-  var geometry_ind, type_ind = 999;
-  for (var i in header) {
-    if (header[i].tagName != "TH") continue;
-    var label = header[i].innerText;
-    if (label == "Geometry") geometry_ind = i;
-    if (label == "Type") type_ind = i;
-  }
-  var row = $(el).closest('tr');
-  var geometry = row.children('td').eq(geometry_ind).text();
-  if (geometry[0] == '[') {
-      geometry = JSON.parse(geometry);
-  } else {
-      geometry = [geometry];
-  }   
-  plotGeometry(map, geometry, styles);
+    var header = $(el).closest('table').find('th');
+    var bounds_ind, geometry_ind, type_ind = 999;
+    for (var i in header) {
+        if (header[i].tagName != "TH") continue;
+        var label = header[i].innerText;
+        if (label == "Bounds Geometry") bounds_ind = i;
+        if (label == "Type") type_ind = i;
+        if (label == "Geometry") geometry_ind = i;
+    }
+    var row = $(el).closest('tr');
+    var geometry = row.children('td').eq(bounds_ind).text();
+    if (geometry[0] == '[') {
+        geometry = JSON.parse(geometry);
+    } else {
+        geometry = [geometry];
+    }   
+    plotGeometry(map, geometry, styles);
 
-  var x = event.pageX;
-  var y = event.pageY;
+    var x = event.pageX;
+    var y = event.pageY;
 
-  var type = row.find('td').eq(type_ind).text();
-  $("#geometry_title").text(type +' Spatial Bounds');
-  $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
+    var type = row.find('td').eq(type_ind).text();
+    $("#geometry_title").text(type +' Spatial Bounds');
+    $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
 
+    // show on results map
+    removeLayerByName(results_map, 'Selected');
+    unsetSelectedRows();
+    popup.hide();
+
+    var centroid = row.children('td').eq(geometry_ind).text();
+    if (centroid[0] == '[') {
+        centroid = JSON.parse(centroid);
+    } else {
+        centroid = [centroid];
+    }   
+    setSelectedSymbol(results_map, centroid, geometry);
+    // highlight row in table
+    row.removeClass('visible-row').addClass('selected-row'); 
 }
 
-function MapClient2() {
-  proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
-  var projection = ol.proj.get('EPSG:3031');
-  projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
-  projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
-  var map = new ol.Map({ // set to GMRT SP bounds
-  target: 'show_on_map',
-    view: new ol.View({
-        center: [0,0],
-        zoom: 2,
-        projection: projection,
-        minZoom: 1,
-        maxZoom: 10
-    }),  
-  });
-
-  var api_url = 'https://api.usap-dc.org:8443/wfs?';
-  var gmrt = new ol.layer.Tile({
-    type: 'base',
-    title: "GMRT Synthesis",
-    source: new ol.source.TileWMS({
-        url: "https://www.gmrt.org/services/mapserver/wms_SP?request=GetCapabilities&service=WMS&version=1.3.0",
-        params: {
-        layers: 'South_Polar_Bathymetry'
+function showResultsOnMap() {
+    var results = [];
+    for (var res of search_results) {
+        if (res.geometry) {
+            let geom = {geometry: res.geometry, properties: {uid: res.uid, title: res.title, persons: res.persons, bounds_geometry: res.bounds_geometry, centroid_geometry:res.geometry}};
+            results.push(geom);
         }
-    })
-  });
-  map.addLayer(gmrt);
+    }
+    plotResults(results_map, results, results_styles, 'Results', true);
+}
 
-  var lima = new ol.layer.Tile({
-    title: "LIMA 240m",
-    visible: true,
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: "LIMA 240m",
-        transparent: true
+function showBoundaries() {
+    if($('#boundaries_cb').is(':checked')){
+        var geometry = [];
+        for (var res of search_results) {
+            if (res.bounds_geometry) geometry.push(res.bounds_geometry);
         }
-    })
-  });
-  map.addLayer(lima);
 
-  return map;
+        plotResults(results_map, geometry, results_styles, 'Boundaries', false);
+        $("#results_map").show();
+    } else {
+        removeLayerByName(results_map, 'Boundaries');
+    }
+}
+
+
+function MapClient2(target='show_on_map') {
+    proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
+    var projection = ol.proj.get('EPSG:3031');
+    projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
+    projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
+    var map = new ol.Map({ // set to GMRT SP bounds
+        target: target,
+        interactions: ol.interaction.defaults({mouseWheelZoom:false}),
+        view: new ol.View({
+            center: [0,0],
+            zoom: 2.1,
+            projection: projection,
+            minZoom: 1,
+            maxZoom: 10
+        }),  
+    });
+
+    var api_url = 'https://api.usap-dc.org:8443/wfs?';
+    var gmrt = new ol.layer.Tile({
+        // type: 'base',
+        title: "GMRT Synthesis",
+        source: new ol.source.TileWMS({
+            url: "https://www.gmrt.org/services/mapserver/wms_SP?request=GetCapabilities&service=WMS&version=1.3.0",
+            params: {
+            layers: 'South_Polar_Bathymetry'
+            }
+        })
+    });
+    map.addLayer(gmrt);
+
+    var lima = new ol.layer.Tile({
+        title: "LIMA 240m",
+        visible: true,
+        source: new ol.source.TileWMS({
+            url: api_url,
+            params: {
+            layers: "LIMA 240m",
+            transparent: true
+            }
+        })
+    });
+    map.addLayer(lima);
+
+    map.addOverlay(popup);
+
+    var layerSwitcher = new ol.control.LayerSwitcher({
+        tipLabel: 'Légende'
+    });
+    map.addControl(layerSwitcher);
+
+    var mousePosition = new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(2),
+        projection: 'EPSG:4326',
+        target: document.getElementById('mouseposition'),
+        undefinedHTML: '&nbsp;'
+    });
+    map.addControl(mousePosition);
+
+    return map;
+}
+
+// change highlighted rows when map is moved or zoomed
+var moveResultsMap = function() {
+    $('html').addClass('wait');
+    // need timeout so that wait cursor is displayed
+    setTimeout(function() {
+        if ($('#results_map_div').is(":visible")) {
+            highlightVisibleRows(results_map, true);
+        }
+        $('html').removeClass('wait');
+    }, 1);
+}
+
+// select a feature on the map by clicking on it
+var clickResultsMap = function(evt) {
+    $('html').addClass('wait');
+    // need timeout so that wait cursor is displayed
+    setTimeout(function() {
+        unsetSelectedRows();
+        removeLayerByName(results_map, 'Selected');
+        popup.hide();
+        var features = [];
+
+        if (evt.pixel) {
+            results_map.forEachFeatureAtPixel(evt.pixel, 
+                function(feature, layer) {
+                    if (layer.getProperties().title === 'Results'){
+                        features.push(feature);
+                    }   
+                }, {"hitTolerance":1});
+        }
+  
+        if (features.length > 0) {
+            var msg = "<h6>Number of data sets: " + features.length + "</h6>";
+
+            for (let feature of features) {
+                var props = feature.getProperties();
+
+                // landing page
+                let lp_url = '';
+                if (props.uid.charAt(0) == 'p'){
+                    lp_url = Flask.url_for('project_landing_page', {project_id:props.uid});
+                }
+                else {
+                    lp_url = Flask.url_for('landing_page', {dataset_id:props.uid});
+                }
+
+                // highlight bounds geometry on map
+                setSelectedSymbol(results_map, props.centroid_geometry, props.bounds_geometry);
+
+                // select row in table
+                $('#row_'+props.uid).removeClass('visible-row').addClass('selected-row'); 
+
+                // make pop up
+                msg += '<p style="font-size:0.8em;max-height:500px;"><b>Title:</b> ' + props.title;
+                msg += '<br><b>Creator:</b> ' + props.persons;
+                msg += '<br><a href="' + lp_url + '"><b>More info</b></a>';
+                msg += '<br>===========<br> </p>';
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+    
+            // set the value of the selected column to 'true'.  Faster to do it this way than at the same time as
+            // setting the class above.
+            for (var row of search_table_dt.rows('.selected-row')[0]) {
+                search_table_dt.cell(row,sel_col).data('true');
+            }        
+        } 
+
+        // reorder the table with selected rows at the top, then visible rows
+        reorderTable();
+
+        $('html').removeClass('wait');
+    }, 1);
+}
+
+function getLayerByName(map, name) {
+    var layer;
+    map.getLayers().forEach(function(lyr) {
+        if (lyr.getProperties().title == name) {
+            layer = lyr;
+        }
+    });
+    return layer;
+}
+
+function highlightVisibleRows(map, reorder) {
+    // first unset the current visible rows, but don't reorder the table
+    unsetVisibleRows(false);
+
+    var extent = map.getView().calculateExtent(map.getSize());
+    var rl = getLayerByName(map, 'Results');
+    if (rl) {
+        // set class of row to visible-row, unless it has already been selected
+        rl.getSource().forEachFeatureInExtent(extent, function(feature){
+            var uid = feature.getProperties().uid;
+            if (!$('#row_'+uid).hasClass('selected-row')){
+                $('#row_'+uid).addClass('visible-row');
+            }
+        }); 
+
+        // set the value of the visible column to 'true'.  Faster to do it this way than at the same time as
+        // setting the class above.
+        for (var row of search_table_dt.rows('.visible-row')[0]) {
+            search_table_dt.cell(row,vis_col).data('true');
+        }
+        // reorder the table with selected rows at the top, then visible rows
+        if (reorder) reorderTable();
+    }
+}
+
+function unsetVisibleRows(reorder=true){
+    for (var row of search_table_dt.rows('.visible-row')[0]) {
+        search_table_dt.cell(row,vis_col).data('false');
+    }
+    $('tr').removeClass('visible-row'); 
+    // reorder the table by date
+    if (reorder) reorderTable();
+}
+
+function unsetSelectedRows(){
+    for (var row of search_table_dt.rows('.selected-row')[0]) {
+        $(search_table_dt.row(row).node()).removeClass('selected-row').addClass('visible-row');
+        search_table_dt.cell(row,sel_col).data('false');
+    }
+}
+
+function reorderTable(){
+    //re-order the table by selected, visible, date
+    search_table_dt.order([sel_col,'desc'], [vis_col,'desc'], [date_col,'desc']).draw();
+}
+
+// Add a feature to highlight selected Spot
+function setSelectedSymbol(map, centroid, bounds) {
+    if (!map) return;
+
+    if (!Array.isArray(bounds)) {
+        bounds = [bounds];
+    }
+    if (!Array.isArray(centroid)) {
+        centroid = [centroid];
+    }
+
+    geom = centroid.concat(bounds);
+
+    var format = new ol.format.WKT();
+    var selected = [];
+    for (let g of geom) {  
+        var feature = format.readFeature(g, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3031'
+        });
+        var geometry = feature.getGeometry();
+        selected.push(new ol.Feature({ geometry: geometry }));
+    }
+
+    var selectedHighlightSource = new ol.source.Vector({
+        features: selected
+    });
+
+    selectedHighlightLayer = new ol.layer.Vector({
+        title: 'Selected',
+        source: selectedHighlightSource,
+        style: styles
+    });
+    map.addLayer(selectedHighlightLayer);
 }
 
 function plotGeometry(map, geometry, styles) {
-
   //first remove previous geometries
-  removeLayerByName(map, "geometry");
+  removeLayerByName(map, "Geometry");
 
   var format = new ol.format.WKT();
 
@@ -303,9 +595,8 @@ function plotGeometry(map, geometry, styles) {
     var layer = new ol.layer.Vector({
         source: source,
         style: styles,
-        title: "geometry"
+        title: "Geometry"
     });
-
     map.addLayer(layer);
 
     var extent = map.getView().getProjection().getExtent();
@@ -318,21 +609,72 @@ function plotGeometry(map, geometry, styles) {
   }
 }
 
+function plotResults(map, results, styles, layer_name, remove_layers) {
+    //first remove previous geometries
+    if (remove_layers) {
+        removeLayerByName(map, 'Boundaries');
+        removeLayerByName(map, 'Results');
+    }
+  
+    var format = new ol.format.WKT();
+    var features = []
+
+    for (let result of results) {
+        let properties = {};
+        if (result.geometry && result.properties) {
+            properties = result.properties;
+            geom = result.geometry;
+        } else {
+            geom = result;
+        }
+        
+        if (!Array.isArray(geom)) {
+            geom = [geom]
+        }
+
+        for (let g of geom) {
+            // prevent NaNs
+            g = g.replaceAll('180 90', '180.0 89.999');
+    
+            var feature = format.readFeature(g, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3031'
+            });
+
+            feature.setProperties(properties);
+            features.push(feature);
+        }
+    }
+
+    var source = new ol.source.Vector({
+        features: features
+    });
+
+    var layer = new ol.layer.Vector({
+        source: source,
+        style: styles,
+        title: layer_name
+    });
+    map.addLayer(layer);
+  }
+
+
 /*
   A function to remove a layer using its name/title
 */
 function removeLayerByName(map, name) {
-  var layersToRemove = [];
-  map.getLayers().forEach(function (layer) {
-    if (layer.get('title') !== undefined && layer.get('title') === name) {
-        layersToRemove.push(layer);
-    }
-  });
+    if (!map) return;
+    var layersToRemove = [];
+    map.getLayers().forEach(function (layer) {
+        if (layer.get('title') !== undefined && layer.get('title') === name) {
+            layersToRemove.push(layer);
+        }
+    });
 
-  var len = layersToRemove.length;
-  for(var i = 0; i < len; i++) {
-      map.removeLayer(layersToRemove[i]);
-  }
+    var len = layersToRemove.length;
+    for(var i = 0; i < len; i++) {
+        map.removeLayer(layersToRemove[i]);
+    }
 }
 
 
@@ -729,6 +1071,7 @@ function MapClient() {
       self.vectorSrc.clear();
     });
 
+    return map;
 }
 
 

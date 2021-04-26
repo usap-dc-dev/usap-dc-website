@@ -5,6 +5,7 @@
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 
 <div id="search_params" hidden>{{search_params|tojson}}</div>
+<div id="search_results" hidden>{{records|tojson}}</div>
 
 <div id="abstract" hidden>
   <div id="abstract_header" class="window-header">
@@ -214,74 +215,94 @@
 
   {% if records|length > 0 %}
 
+  <button type="button" class="btn btn-default" id="geom_btn">View results on map</button>
+
+  <div id="results_map_div" hidden>
+    <div id="results_map">
+      <div id="boundaries">
+        <input type="checkbox" id="boundaries_cb" onclick="showBoundaries();">
+        <label for="boundaries_cb"><b>Show boundaries</b></label>
+      </div>
+    </div>
+  </div>
+
+
+
   <div>
     <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
   </div>
 
   <div id='dif-browser-table'>
-    <table class='sortable' preserve_style='row'>
-
-      <tr>
-        <th style="width:30em;">Dataset Title/Abstract/Map</th>
-        <th style="width:7em;">NSF Award(s)</th>
-        <th style="width:8em;">Date Created</th>
-        <th style="width:10em;">PIs / Scientists</th>
-        <th style="width:30em;">Project Links</th>
-        <th hidden>Abstract</th>
-        <th hidden>Geometry</th>
-      </tr>
-
-      {% for val in records %}
-      <tr class='w3-border'>
-        <td>
-          {% if val.title %}
-          <a href="{{url_for('landing_page', dataset_id=val.uid)}}">{{val.title}}</a>
-          {% else %}
-          None
-          {% endif %}
-          <br />
-          {% if val.description %}
-          <button type="button" class="in-table-button abstract-button" id="abstract_btn" onclick="showAbstract(this);"><b>Abstract</b></button>
-          <br />
-          {% endif %}
-          {% if val.bounds_geometry %}
-          <button type="button" class="in-table-button geometry-button" id="geom_btn" onclick="showOnMap(this);"><b>Show on Map</b></button>
-          {% endif %}</td>
-        {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
-        <td>
-          {% for a in val.awards.split('; ') %}
-          {% set award = a.split(' ')[0] %}
-          {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
-          <a target='_blank' href='{{award_url}}'>{{award}}</a><br />
-          {% endfor %}
-        </td>
-        {% else %}
-        <td>None</td>
-        {% endif %}
-        <td>{{val.date_created}}</td>
-        <td>{{val.persons}}</td>
-
-        <td>
-            {% if not val.projects or val.projects|length == 0 %}
-            No project link provided
+    <table id="search_table">
+      <thead>
+        <tr>
+          <th style="width:30em;">Dataset Title/Abstract/Map</th>
+          <th style="width:7em;">NSF Award(s)</th>
+          <th style="width:8em;">Date Created</th>
+          <th style="width:10em;">PIs / Scientists</th>
+          <th style="width:30em;">Project Links</th>
+          <th hidden>Abstract</th>
+          <th hidden>Bounds Geometry</th>
+          <th hidden>Geometry</th>
+          <th hidden>Selected</th>
+          <th hidden>Visible</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for val in records %}
+        <tr class='w3-border' id='row_{{val.uid}}'>
+          <td>
+            {% if val.title %}
+            <a href="{{url_for('landing_page', dataset_id=val.uid)}}">{{val.title}}</a>
             {% else %}
-              {% for p in val['projects'] %}
-                {% if p['url'] == '' %}
-                  No project link provided
-                {% elif p['title'] == '' %}
-                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Access to project</a><br />
-                {% else %}
-                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br />
-                {% endif %}
-              {% endfor %}
+            None
             {% endif %}
-        </td>
+            <br />
+            {% if val.description %}
+            <button type="button" class="in-table-button abstract-button" id="abstract_btn" onclick="showAbstract(this);"><b>Abstract</b></button>
+            <br />
+            {% endif %}
+            {% if val.bounds_geometry %}
+            <button type="button" class="in-table-button geometry-button" id="geom_btn" onclick="showOnMap(this);"><b>Show on Map</b></button>
+            {% endif %}</td>
+          {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
+          <td>
+            {% for a in val.awards.split('; ') %}
+            {% set award = a.split(' ')[0] %}
+            {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
+            <a target='_blank' href='{{award_url}}'>{{award}}</a><br />
+            {% endfor %}
+          </td>
+          {% else %}
+          <td>None</td>
+          {% endif %}
+          <td>{{val.date_created}}</td>
+          <td>{{val.persons}}</td>
 
-        <td hidden>{{val['description']}}</td>
-        <td hidden>{{val['bounds_geometry'] |map('string')|list|tojson}}</td>
-      </tr>
-      {% endfor %}
-
+          <td>
+              {% if not val.projects or val.projects|length == 0 %}
+              No project link provided
+              {% else %}
+                {% for p in val['projects'] %}
+                  {% if p['url'] == '' %}
+                    No project link provided
+                  {% elif p['title'] == '' %}
+                    <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Access to project</a><br />
+                  {% else %}
+                    <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br />
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+          </td>
+          
+          <td hidden>{{val['description']}}</td>
+          <td hidden>{{val['bounds_geometry'] |map('string')|list|tojson}}</td>
+          <td hidden>{{val['geometry'] |map('string')|list|tojson}}</td>
+          <td hidden>false</td>
+          <td hidden>false</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
   {% else %}

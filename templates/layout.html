@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet"/>
   <link rel="stylesheet" href="https://www.w3schools.com/lib/w3.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
-
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.css"/>  
 
   {% if cur=='home' or cur=='search' or cur=='map' or cur == 'landing_page' or cur == 'catalog_browser' 
      or cur == 'project_landing_page' or cur == 'project_browser' or cur == "search_old" or cur == "dataset" or cur == "project" %}
@@ -33,6 +33,9 @@
   <script type="text/javascript" src="/static/js/oauth.js"></script>
   <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script type="text/javascript" src="{{url_for ('static', filename='js/sorttable.js')}}"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.js"></script>
+  
+  {{ JSGlue.include() }}
 
   <script type="application/ld+json">
     {

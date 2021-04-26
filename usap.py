@@ -6,6 +6,7 @@ sys.setdefaultencoding("utf-8")
 import math
 import flask
 from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app, Blueprint
+from flask_jsglue import JSGlue
 from random import randint
 import os
 from flask_oauth import OAuth
@@ -43,6 +44,7 @@ from dateutil.parser import parse
 
 
 app = Flask(__name__)
+jsglue = JSGlue(app)
 
 ############
 # Load configuration
@@ -984,8 +986,9 @@ def oauth_error(e):
 @app.errorhandler(Exception)
 def general_error(e):
     print(traceback.format_exc())
-    msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>." % app.config['USAP-DC_GMAIL_ACCT']
-    # msg += traceback.format_exc()
+    msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>.<br>" % app.config['USAP-DC_GMAIL_ACCT']
+    if curator:
+        msg += traceback.format_exc()
     return render_template('error.html', error_message=msg)
 
 
@@ -4604,11 +4607,11 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
     if dp_type == 'Project':
         d_or_p = 'datasets'
-        query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry FROM project_view dpv''' 
+        query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry,  ST_AsText(geometry) AS geometry FROM project_view dpv''' 
         titles = 'dataset_titles'
     elif dp_type == 'Dataset':
         d_or_p = 'projects'
-        query_string = '''SELECT *,  bounds_geometry AS bounds_geometry FROM dataset_view dpv'''
+        query_string = '''SELECT * FROM dataset_view dpv'''
         if spatial_bounds_interpolated:
             query_string += ''', text(JSON_ARRAY_ELEMENTS(dpv.bounds_geometry)) AS b'''
         titles = 'project_titles'
@@ -4631,7 +4634,10 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
     if sci_program:
-        conds.append(cur.mogrify('dpv.science_programs ~* %s OR dpv.datasets ~* %s ', (escapeChars(sci_program), '"science_program" : "%s"' %escapeChars(sci_program))))
+        if dp_type == 'Project':
+            conds.append(cur.mogrify('dpv.science_programs ~* %s OR dpv.datasets ~* %s ', (escapeChars(sci_program), '"science_program" : "%s"' %escapeChars(sci_program))))
+        else:
+            conds.append(cur.mogrify('dpv.science_programs ~* %s ', (escapeChars(sci_program),)))
     if nsf_program:
         conds.append(cur.mogrify('dpv.nsf_funding_programs ~* %s ', (escapeChars(nsf_program),)))
     # if dp_type and dp_type != 'Both':

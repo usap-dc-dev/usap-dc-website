@@ -465,12 +465,15 @@ div.autocomplete ul li.selected { background-color: #ffb;}
  border-collapse: collapse !important;
 }
 
+.nested_table tr {
+  background-color: transparent !important;
+}
 .nested_table tr:nth-child(even) {
   background-color: inherit !important;
 }
 
 .nested_table td{
-  border:1px solid lightgrey !important;
+  border:1px solid rgb(163, 161, 161) !important;
 }
 
 .nested_table th{
@@ -483,4 +486,41 @@ div.autocomplete ul li.selected { background-color: #ffb;}
   width: 1.2em;
   background-color: red;
   display: inline-block;
+}
+
+#results_map_div {
+  margin: auto;
+  width: 80%;
+  border: 3px solid black;
+  border-radius: 2px;
+}
+
+#boundaries {
+  position: absolute;
+  color: black;
+  background: rgba(200,200,200,0.8);
+  border-radius: 10px;
+  left: 46%;
+  z-index: 99;
+  padding:5px 10px;
+}
+
+#geom_btn {
+  margin: 10px 0;
+}
+
+.selected-row:nth-child(odd) {
+  background-color: rgba(255, 0, 0, .15) !important;;
+}
+
+.selected-row:nth-child(even) {
+  background-color: rgba(150, 10, 10, 0.15) !important;;
+}
+
+.visible-row:nth-child(odd) {
+  background-color: rgba(0, 0, 255, .15) !important;
+}
+
+.visible-row:nth-child(even) {
+  background-color: rgba(10, 10, 150, 0.15) !important;
 }
