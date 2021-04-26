@@ -23,10 +23,6 @@ def makeGeom(record):
     south = record['south']
     cross_dateline = record['cross_dateline']
 
-    mid_point_lat = (south - north) / 2 + north
-    mid_point_long = (east - west) / 2 + west
-    geometry = "POINT(%s %s)" % (mid_point_long, mid_point_lat)
-
     # point
     if (west == east and north == south):
         geom = "POINT(%s %s)" % (west, north)
@@ -101,7 +97,38 @@ def makeGeom(record):
             geom += "%s %s," % (-180, north)
 
         geom = geom[:-1] + "))"
-    return geometry, geom
+    return geom
+
+
+def makeCentroidGeom(record):
+
+    north = record['north']
+    east = record['east']
+    west = record['west']
+    south = record['south']
+    cross_dateline = record['cross_dateline']
+
+    mid_point_lat = (south - north) / 2 + north
+
+    if cross_dateline:
+        mid_point_long = west - (west - east + 360)/2
+    else:
+        mid_point_long = (east - west) / 2 + west
+        if (west > east):
+            mid_point_long += 180
+
+    if mid_point_long < -180:
+        mid_point_long += 360
+    elif mid_point_long > 180:
+        mid_point_long -= 360
+
+    # if geometric bound describe a circle or a ring, set the centroid at the south pole
+    if (north != south) and ((round(west, 2) == -180 and round(east, 2) == 180) or (east == west)):
+        mid_point_lat = -89.999
+        mid_point_long = 0
+
+    geom = "POINT(%s %s)" % (mid_point_long, mid_point_lat)
+    return geom
 
 
 if __name__ == '__main__':
@@ -111,7 +138,8 @@ if __name__ == '__main__':
     records = cur.fetchall()
     for record in records:
 
-        geometry, bounds_geometry = makeGeom(record)
+        geometry = makeCentroidGeom(record) 
+        bounds_geometry = makeGeom(record)
         update = "UPDATE dif_spatial_map SET (geometry, bounds_geometry) = (ST_GeomFromText('%s',4326), ST_GeomFromText('%s',4326)) WHERE dif_id='%s' AND gid=%s AND north='%s' AND south='%s' AND east='%s' AND west='%s';" \
             % (geometry, bounds_geometry, record['dif_id'], record['gid'], record['north'], record['south'], record['east'], record['west'])
         print(update)

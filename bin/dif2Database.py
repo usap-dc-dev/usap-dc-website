@@ -153,6 +153,30 @@ def makeBoundsGeom(north, south, east, west, cross_dateline):
     return geom
 
 
+def makeCentroidGeom(north, south, east, west, cross_dateline):
+    mid_point_lat = (south - north) / 2 + north
+
+    if cross_dateline:
+        mid_point_long = west - (west - east + 360)/2
+    else:
+        mid_point_long = (east - west) / 2 + west
+        if (west > east):
+            mid_point_long += 180
+
+    if mid_point_long < -180:
+        mid_point_long += 360
+    elif mid_point_long > 180:
+        mid_point_long -= 360
+
+    # if geometric bound describe a circle or a ring, set the centroid at the south pole
+    if (north != south) and ((round(west, 2) == -180 and round(east, 2) == 180) or (east == west)):
+        mid_point_lat = -89.999
+        mid_point_long = 0
+
+    geom = "POINT(%s %s)" % (mid_point_long, mid_point_lat)
+    return geom
+
+
 def parse_xml(xml_file_name):
     conn, cur = connect_to_db()
 
@@ -317,9 +341,7 @@ def parse_xml(xml_file_name):
 
             # add to dif_spatial_map
             if (north and south and east and west):
-                mid_point_lat = (south - north) / 2 + north
-                mid_point_long = (east - west) / 2 + west
-                geometry = "ST_GeomFromText('POINT(%s %s)', 4326)" % (mid_point_long, mid_point_lat)
+                geometry = "ST_GeomFromText('%s', 4326)" % makeCentroidGeom(north, south, east, west, cross_dateline)
                 bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, cross_dateline)
 
                 this_dif_id = name if alreadyInDB(name) else dif_id
