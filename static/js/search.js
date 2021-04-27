@@ -40,6 +40,8 @@ $(document).ready(function() {
     $('#award-input').typeahead({autoSelect: false});
     $('#repo-input').typeahead({autoSelect: false});
     // $('#location-input').typeahead({autoSelect: false});
+
+    $('#spatial_bounds_interpolated').val(search_params.spatial_bounds_interpolated);
     
     $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo, #location').change(function() {
         $('[data-toggle="tooltip"]').tooltip('hide');
@@ -142,26 +144,23 @@ $(document).ready(function() {
             updateMenusWithSelected(selected, false);   
         }, 300);
     });
+    results_map = null;
+    
+    $('#data_link').on('submit', (function(){
+        getSpatialBoundsInterpolated();
+    }));
 
-
-    if ($(location).attr('pathname') == '/dataset_search') {
-        var mc = new MapClient();
-
-        $('#data_link').submit(function() {
-        var features = mc.vectorSrc.getFeatures();
+    function getSpatialBoundsInterpolated() {
+        var polygon_layer = getLayerByName(results_map, 'Polygon');
+        var features = polygon_layer.getSource().getFeatures();
         if (features.length > 0) {
-            var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
+            var geom = features[0].getGeometry();
             var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
             var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
-            $('input[name="spatial_bounds_interpolated"]').val(wkt);
+            $('#spatial_bounds_interpolated').val(wkt);
         } else {
-            $('input[name="spatial_bounds_interpolated"]').val('');
+            $('#spatial_bounds_interpolated').val('');
         }
-        });
-
-        $('#map-modal').on('shown.bs.modal', function() {
-        mc.map.updateSize();
-        });
     }
 
   $('.close_abstract_btn').on('click', (function() {
@@ -170,7 +169,6 @@ $(document).ready(function() {
 
   popup = new ol.Overlay.Popup({"panMapIfOutOfView":true});
   map = new MapClient2();
-  results_map = null;
 
   $('#geom_btn').on('click', (function() {
     $("#results_map_div").toggle();
@@ -181,11 +179,9 @@ $(document).ready(function() {
         return text === "View results on map" ? "Hide map" : "View results on map";
     })
     if (!results_map) {
-        results_map = new MapClient2('results_map');
-
+        results_map = new MapClient('results_map');
         //results_map move event handler
         results_map.on('moveend', moveResultsMap);
-        
         //results_map click event handler
         results_map.on('click', clickResultsMap);
            
@@ -423,6 +419,9 @@ var moveResultsMap = function() {
 
 // select a feature on the map by clicking on it
 var clickResultsMap = function(evt) {
+    // check we are not drawing
+    if ($('#rect-icon').hasClass('draw-active') || $('#polygon-icon').hasClass('draw-active')) return;
+
     $('html').addClass('wait');
     // need timeout so that wait cursor is displayed
     setTimeout(function() {
@@ -434,7 +433,7 @@ var clickResultsMap = function(evt) {
         if (evt.pixel) {
             results_map.forEachFeatureAtPixel(evt.pixel, 
                 function(feature, layer) {
-                    if (layer.getProperties().title === 'Results'){
+                    if (layer && layer.getProperties() && layer.getProperties().title === 'Results'){
                         features.push(feature);
                     }   
                 }, {"hitTolerance":1});
@@ -609,11 +608,11 @@ function plotGeometry(map, geometry, styles) {
   }
 }
 
-function plotResults(map, results, styles, layer_name, remove_layers) {
+function plotResults(this_map, results, styles, layer_name, remove_layers) {
     //first remove previous geometries
     if (remove_layers) {
-        removeLayerByName(map, 'Boundaries');
-        removeLayerByName(map, 'Results');
+        removeLayerByName(this_map, 'Boundaries');
+        removeLayerByName(this_map, 'Results');
     }
   
     var format = new ol.format.WKT();
@@ -655,17 +654,17 @@ function plotResults(map, results, styles, layer_name, remove_layers) {
         style: styles,
         title: layer_name
     });
-    map.addLayer(layer);
+    this_map.addLayer(layer);
   }
 
 
 /*
   A function to remove a layer using its name/title
 */
-function removeLayerByName(map, name) {
-    if (!map) return;
+function removeLayerByName(this_map, name) {
+    if (!this_map) return;
     var layersToRemove = [];
-    map.getLayers().forEach(function (layer) {
+    this_map.getLayers().forEach(function (layer) {
         if (layer.get('title') !== undefined && layer.get('title') === name) {
             layersToRemove.push(layer);
         }
@@ -673,7 +672,7 @@ function removeLayerByName(map, name) {
 
     var len = layersToRemove.length;
     for(var i = 0; i < len; i++) {
-        map.removeLayer(layersToRemove[i]);
+        this_map.removeLayer(layersToRemove[i]);
     }
 }
 
@@ -741,6 +740,7 @@ function resetForm() {
     $("#free_text").val("");
     $("#dp_title").val("");
     $("#spatial_bounds").text("");
+    $("#spatial_bounds_interpolated").val("");
     $('#clear-polygon').click();
     $("#exclude").prop('checked', false);
     $("#search_btn").click();
@@ -830,16 +830,18 @@ function dragElement(elmnt) {
 
 
 
-function MapClient() {
+function MapClient(target='map') {
+
     proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
     var projection = ol.proj.get('EPSG:3031');
     projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
     projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
     this.map = new ol.Map({ // set to GMRT SP bounds
-    target: 'map',
+    target: target,
+    interactions: ol.interaction.defaults({mouseWheelZoom:false}),
     view: new ol.View({
         center: [0,0],
-        zoom: 2,
+        zoom: 2.1,
         projection: projection,
         minZoom: 1,
         maxZoom: 10
@@ -874,79 +876,7 @@ function MapClient() {
     });
     this.map.addLayer(lima);
 
-    var difAeronomyAndAstrophysics = new ol.layer.Tile({
-    title: "Antarctic Astrophysics and Geospace Sciences",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Astro-Geo',
-        transparent: true
-        }
-    })
-    });
-    this.map.addLayer(difAeronomyAndAstrophysics);
-    
-    var difEarthSciences = new ol.layer.Tile({
-    title: "Antarctic Earth Sciences",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Earth',
-        transparent: true
-        }
-    })
-    });
-    this.map.addLayer(difEarthSciences);
-    
-    var difGlaciology = new ol.layer.Tile({
-    title: "Antarctic Glaciology",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Glacier',
-        transparent: true
-        }
-    })
-    });           
-    this.map.addLayer(difGlaciology);
-    
-    var difOceanAndAtmosphericSciences = new ol.layer.Tile({
-    title: "Antarctic Ocean and Atmospheric Sciences",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Ocean-Atmosphere',
-        transparent: true
-        }
-    })
-    });                            
-    this.map.addLayer(difOceanAndAtmosphericSciences);
-    
-    var difOrganismsAndEcosystems = new ol.layer.Tile({
-    title: "Antarctic Organisms and Ecosystems",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Bio',
-        transparent: true
-        }
-    })
-    });
-    this.map.addLayer(difOrganismsAndEcosystems);
-    
-    var difINT = new ol.layer.Tile({
-    title: "Antarctic Integrated System Science",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Integrated',
-        transparent: true
-        }
-    })
-    });
-
     var mousePosition = new ol.control.MousePosition({
-        //coordinateFormat: ol.coordinate.createStringXY(2),
         projection: 'EPSG:4326',
         target: document.getElementById('mouse-position'),
         undefinedHTML: '&nbsp;',
@@ -959,82 +889,15 @@ function MapClient() {
     });
     this.map.addControl(mousePosition);
 
-    var popup = new ol.Overlay.Popup({"panMapIfOutOfView":false});
-    this.map.addOverlay(popup);
-    this.map.on('click', function(evt) {
-        var tolerance = [7, 7];
-        var x = evt.pixel[0];
-        var y = evt.pixel[1];
-        var min_px = [x - tolerance[0], y + tolerance[1]];
-        var max_px = [x + tolerance[0], y - tolerance[1]];
-        var min_coord = this.getCoordinateFromPixel(min_px);
-        var max_coord = this.getCoordinateFromPixel(max_px);
-        var bbox = min_coord[0]+','+min_coord[1]+','+max_coord[0]+','+max_coord[1];
-        
-        var layers = '';
-        if (difAeronomyAndAstrophysics.getVisible())
-            layers += 'Astro-Geo';
-        if (difEarthSciences.getVisible())
-            layers += ',Earth';
-        if (difGlaciology.getVisible())
-            layers += ',Glacier';
-        if (difOceanAndAtmosphericSciences.getVisible())
-            layers += ',Ocean-Atmosphere';
-        if (difOrganismsAndEcosystems.getVisible())
-            layers += ',Bio';
-        if (difINT.getVisible())
-            layers += ',Integrated';
-        if (layers.charAt(0) == ',') 
-            layers = layers.substring(1);
-        if (layers.length > 0) {
-            $.ajax({
-                type: "GET",
-                url: window.location.protocol + '//' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
-                data: {
-                "query_layers" : layers,
-                "layers": layers,
-                "bbox" : bbox,
-                "request": "GetFeatureInfo",
-                "info_format" : "text/html",
-                "service": "WMS",
-                "version": "1.1.0",
-                "width": 6,
-                "height": 6,
-                "X": 3,
-                "Y": 3,
-                "FEATURE_COUNT": 50,
-                "SRS": "EPSG:3031"
-                },
-                success: function(msg){
-                if (msg) {
-                    // count how many datasets were returned
-                    var count = (msg.match(/===========/g) || []).length;
-                    msg = "<h6>Number of data sets: " + count + "</h6>" + msg;
-                    var $msg = $('<div style="font-size:0.8em;max-height:100px;">'+msg+'</div>');
-                    $msg.find('img').each(function() {
-                    if (/arrow_show/.test($(this).attr('src'))) {
-                        $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_show.gif');
-                    } else if (/arrow_hide/.test($(this).attr('src'))) {
-                        $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_hide.gif');
-                    }
-                    });
-                    popup.show(evt.coordinate, $msg.prop('outerHTML'));
-                    $('.turndown').click(function(){
-                    var isrc = 'http://www.marine-geo.org/imgs/arrow_hide.gif';
-                    if ($(this).find('img').attr('src')=='http://www.marine-geo.org/imgs/arrow_hide.gif')
-                        isrc = 'http://www.marine-geo.org/imgs/arrow_show.gif';
-                    $(this).find('img').attr('src',isrc);
-                    $(this).parent().find('.tcontent').toggle();
-                    //map.popups[0].updateSize();
-                    });
-                }
-            }
-        });
-    }
+    var layerSwitcher = new ol.control.LayerSwitcher({
+        tipLabel: 'Légende'
     });
+    this.map.addControl(layerSwitcher);
+
+    this.map.addOverlay(popup);
 
     this.vectorSrc = new ol.source.Vector();
-    var vectorLayer = new ol.layer.Vector({ source: this.vectorSrc });
+    var vectorLayer = new ol.layer.Vector({ source: this.vectorSrc, title: 'Polygon' });
     this.map.addLayer(vectorLayer);
     var self = this;
 
@@ -1057,7 +920,7 @@ function MapClient() {
 
     $('#spatial_bounds').on('change', function() {
       try {
-          var geom = (new ol.format.WKT()).readGeometry($('spatial_bounds').val());
+          var geom = (new ol.format.WKT()).readGeometry($('#spatial_bounds').val());
           geom.transform('EPSG:4326', 'EPSG:3031');
           self.vectorSrc.clear();
           self.vectorSrc.addFeature(new ol.Feature(geom));
@@ -1071,7 +934,7 @@ function MapClient() {
       self.vectorSrc.clear();
     });
 
-    return map;
+    return this.map;
 }
 
 
@@ -1149,7 +1012,7 @@ MapClient.prototype.setDrawingTool = function() {
         var coords = geom.getCoordinates();
         coords = coords.map(function(ring) { return ring.map(function(xy) { return [Number(xy[0]).toFixed(3), Number(xy[1]).toFixed(3)]; }); });
         geom.setCoordinates(coords);
-        $('[name="spatial_bounds"]').val((new ol.format.WKT()).writeGeometry(geom));
+        $('#spatial_bounds').val((new ol.format.WKT()).writeGeometry(geom));
     });
     }
 };

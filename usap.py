@@ -987,7 +987,7 @@ def oauth_error(e):
 def general_error(e):
     print(traceback.format_exc())
     msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>.<br>" % app.config['USAP-DC_GMAIL_ACCT']
-    if curator:
+    if cf.isCurator():
         msg += traceback.format_exc()
     return render_template('error.html', error_message=msg)
 
@@ -4607,7 +4607,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
 
     if dp_type == 'Project':
         d_or_p = 'datasets'
-        query_string = '''SELECT *,  ST_AsText(bounds_geometry) AS bounds_geometry,  ST_AsText(geometry) AS geometry FROM project_view dpv''' 
+        query_string = '''SELECT * FROM project_view dpv''' 
+        if spatial_bounds_interpolated:
+            query_string += ''', text(dpv.bounds_geometry) AS b''' 
         titles = 'dataset_titles'
     elif dp_type == 'Dataset':
         d_or_p = 'projects'

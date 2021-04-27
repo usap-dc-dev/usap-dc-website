@@ -401,8 +401,8 @@ div.autocomplete ul li.selected { background-color: #ffb;}
     height: 2.3em;
     background: white;
     position:absolute;
-    top: 1em;
-    left: 40%;
+    right: 25%;
+    margin: 10px;
     z-index: 99;
 }
 
@@ -503,6 +503,7 @@ div.autocomplete ul li.selected { background-color: #ffb;}
   left: 46%;
   z-index: 99;
   padding:5px 10px;
+  margin: 10px;
 }
 
 #geom_btn {
@@ -523,4 +524,21 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 
 .visible-row:nth-child(even) {
   background-color: rgba(10, 10, 150, 0.15) !important;
+}
+
+#clear-search-buttons {
+  position: absolute;
+  /* top: 1em; */
+  right: 14%;
+  z-index: 99;
+  margin:10px;
+}
+
+.ol-mouse-position {
+  position: absolute;
+  left: 3.6em;
+}
+
+.ol-popup {
+  z-index: 100;
 }
