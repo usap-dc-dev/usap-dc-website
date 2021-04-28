@@ -876,16 +876,155 @@ function MapClient(target='map') {
     });
     this.map.addLayer(lima);
 
+    var gma_modis = new ol.layer.Tile({
+        title: "MODIS Mosaic",
+        visible: false,
+        source: new ol.source.TileWMS({
+            url: "https://nsidc.org/cgi-bin/atlas_south?",
+            params: {
+            layers: 'antarctica_satellite_image',
+            format:'image/png',
+            srs: 'epsg:3031',
+            transparent: true
+            }
+        })
+        });
+   // this.map.addLayer(gma_modis);
+
+
+    var gmrtmask = new ol.layer.Tile({
+        visible: false,
+        title: "GMRT Synthesis-Mask",
+        source: new ol.source.TileWMS({
+            url: "https://www.gmrt.org/services/mapserver/wms_SP_mask?request=GetCapabilities&service=WMS&version=1.3.0",
+            params: {
+            layers: 'South_Polar_Bathymetry'
+            }
+        })
+        });
+    this.map.addLayer(gmrtmask);
+    
+    var scar = new ol.layer.Tile({
+        title: "SCAR Coastlines",
+        visible: false,
+        source: new ol.source.TileWMS({
+            url: "https://nsidc.org/cgi-bin/mapserv?",
+            params: {
+            map: '/WEB/INTERNET/MMS/atlas/epsg3031_grids.map',
+            layers: 'land',
+            srs: 'epsg:3031',
+            bgcolor: '0x00ffff',
+            format: 'image/jpeg'
+            }
+        })
+        });
+    this.map.addLayer(scar);
+
+    var tracks = new ol.layer.Tile({
+        title: "USAP R/V Cruises",
+        visible: false,
+        source: new ol.source.TileWMS({
+            url: "https://www.marine-geo.org/services/mapserver/wmscontrolpointsSP?",
+            params: {
+            layers: 'Tracks-Lines',
+            transparent: true
+            }
+        })
+        });
+    this.map.addLayer(tracks);
+
+
+    var arffsu_core = new ol.layer.Tile({
+        title: 'ARFFSU Core Map',
+        visible: false,
+        source: new ol.source.TileWMS({
+          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+        //   crossOrigin: 'anonymous',
+          projection: 'EPSG:3031',
+          params: {
+              layers: "ARFFSU"
+          }
+        })
+    });
+    this.map.addLayer(arffsu_core);
+
+
+    var bpcrr_core = new ol.layer.Tile({
+        title: 'BPCRR Core Map',
+        visible: false,
+        source: new ol.source.TileWMS({
+          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+        //   crossOrigin: 'anonymous',
+          projection: 'EPSG:3031',
+          params: {
+              layers: "BPCRR"
+          }
+        })
+    });
+    this.map.addLayer(bpcrr_core);
+
+
+    var asdl = new ol.layer.Tile({
+        title: 'ASDL - AllNavigations20201127',
+        visible: false,
+        source: new ol.source.TileWMS({
+          url: 'https://sdls.ogs.trieste.it/geoserver/ows?version=1.1.0',
+          crossOrigin: 'anonymous',
+          params: {
+              layers: "AllNavigations20201127"
+          }
+        })
+    });
+    this.map.addLayer(asdl);
+
+    var ice_vel = {
+        "source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIceVelocity_320",
+        "numLevels":4,
+        "mapProjection":1,
+        "title":"Antarctic Ice Sheet Velocity"
+    };
+    displayXBMap(this.map, ice_vel);
+
+    var bedrock = {
+        "source":"https://www.thwaites-explorer.org/data/BeneathAntarcticIcesheet/Bedmachine_bed_ETOPO1_clipped_600m_zoom8",
+        "mapMaxZoom":8,
+        "mapMaxResolution":150.00535457,
+        "tileWidth":256,
+        "tileHeight":256,
+        "extent":[-2719812.53530000, -2372227.21632370, 2939589.48209285, 2465145.45800000],
+        "title":"Bedrock Elevation Under the Antarctic Ice Sheet"
+    };
+    displayTiled(this.map, bedrock);
+ 
+    var vectorSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function(){
+            $.get({
+                url: 'https://www.thwaites-explorer.org/data/antarctic_coastS10RS/Antarctic_coastS10polyRS.geojson' ,
+                dataType: 'json'
+            }).done(function(data) {
+                vectorSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+            });
+        }
+    });
+    var coastline =  new ol.layer.Vector({
+        visible: true,
+        source: vectorSource,
+        style: styleFunctionOutline,
+        title: 'Antarctic Coast',
+    });  
+    this.map.addLayer(coastline)
+
     var mousePosition = new ol.control.MousePosition({
         projection: 'EPSG:4326',
         target: document.getElementById('mouse-position'),
         undefinedHTML: '&nbsp;',
-    coordinateFormat: function(pos) {
-        var [lon,lat] = pos;
-        lat = Number(lat).toFixed(2);
-        lon = Number(lon).toFixed(2);
-        return (lat + '&deg;, ') + (lon + '&deg; ');
-    }
+        coordinateFormat: function(pos) {
+            var [lon,lat] = pos;
+            lat = Number(lat).toFixed(2);
+            lon = Number(lon).toFixed(2);
+            return (lat + '&deg;, ') + (lon + '&deg; ');
+        }
     });
     this.map.addControl(mousePosition);
 
@@ -1026,3 +1165,171 @@ MapClient.prototype.setDrawMode = function(str) {
     $('#drawing-buttons .drawing-button[data-mode="' + str + '"]').addClass('draw-active');
 };
 
+function displayXBMap(thismap, overlay) {
+    //calculate the resolutions for each zoom level
+    var projExtent = thismap.getView().getProjection().getExtent();
+    if (overlay.extent) projExtent = overlay.extent;
+    var startResolution = ol.extent.getWidth(projExtent) / 320;
+    var resolutions = new Array(overlay.numLevels+1);
+    for (var i = 0, ii = resolutions.length; i < ii; ++i) {
+      resolutions[i] = startResolution / Math.pow(2, i);
+    } 
+  
+    //set up a tile grid
+    tileGrid = new ol.tilegrid.TileGrid({
+      minZoom: 1,
+      maxZoom: overlay.numLevels,
+      extent: projExtent,
+      resolutions: resolutions,
+      tileSize: [320,320]
+    });
+  
+    var source_url = overlay.source;
+    //make sure there is not a / and the end of the source URL
+    if (source_url.slice(-1) == "/") {
+      source_url = source_url.slice(0, -1);
+    }
+    //make sure there is not a / and the end of the source URL
+    if (source_url.slice(-1) == "/") {
+      source_url = source_url.slice(0, -1);
+    }
+    var xbMapUrlTemplate =  source_url + '/i_{res}/{name}.png'; 
+    var xbMapLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        projection: map.getView().getProjection(),
+        tileSize: 320,
+        minZoom:1,
+        maxZoom:overlay.numLevels,
+        tileGrid: tileGrid,
+        tileUrlFunction: function(tileCoord) {
+          var url = xbMapUrlTemplate.replace('{res}', (Math.pow(2,tileCoord[0]-1)).toString())
+              .replace('{name}', getNameWithTileX(tileCoord));
+          return(url);
+        },
+        wrapX: false
+      }),
+      title: overlay.title,
+      visible: false
+    });
+
+    thismap.addLayer(xbMapLayer);
+
+    //use the tileCoords to geerate the URL name
+    function getNameWithTileX(tileCoord) {
+      var x = tileCoord[1];
+      var y = tileCoord[2];
+      var res = Math.pow(2,tileCoord[0]-1);
+  
+      var first;
+      var second;
+      if (res - x > 0)
+        first = "W" + (res-x).toString();
+      else
+        first = "E" + (x-res).toString();
+  
+      if (res + y >= 0 )
+        second = "S" + (res + 1 + y).toString();
+      else
+        second = "N" + (-1 * (res + 1 + y)).toString();
+  
+      var name = first + second + "_320";
+      return name;
+    }
+}
+
+function displayTiled(thismap, overlay) {
+    var mapResolutions = [];
+    for (var z = 0; z <= overlay.mapMaxZoom; z++) {
+      mapResolutions.push(Math.pow(2, overlay.mapMaxZoom - z) * overlay.mapMaxResolution);
+    }
+  
+    var mapTileGrid = new ol.tilegrid.TileGrid({
+      tileSize: [overlay.tileWidth, overlay.tileHeight],
+      extent: overlay.extent,
+      minZoom: 1,
+      resolutions: mapResolutions
+    });
+  
+    var layer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        projection: 'EPSG:3031',
+        tileGrid: mapTileGrid,
+        tilePixelRatio: 1.00000000,
+        url: overlay.source + "/{z}/{x}/{y}.png",
+      }),
+      title: overlay.title,
+      visible: false
+    });
+
+    thismap.addLayer(layer);
+}
+
+var styleFunctionOutline = function(feature, resolution){
+    var context = {
+        feature: feature,
+        variables: {}
+    };
+    var value = "";
+    var labelText = "";
+    size = 0;
+    var labelFont = "10px, sans-serif";
+    var labelFill = "rgba(0, 0, 0, 1)";
+    var bufferColor = "";
+    var bufferWidth = 0;
+    var textAlign = "left";
+    var textBaseline = "top";
+    var offsetX = 8;
+    var offsetY = 3;
+    var placement = 'point';
+    var color = 'rgba(35,35,35,1.0)';
+    if (feature.get('stroke_color')) color = feature.get('stroke_color');
+    var width = 0;
+    if (feature.get('stroke_width')) width = feature.get('stroke_width');
+    if ("" !== null) {
+        labelText = String("");
+    }
+    var style = [ new ol.style.Style({
+        stroke: new ol.style.Stroke({color: color, lineDash: null, lineCap: 'square', lineJoin: 'bevel', width: width}),
+        text: createTextStyle(feature, resolution, labelText, labelFont,
+                              labelFill, placement, bufferColor, offsetX, offsetY, textBaseline,
+                              bufferWidth, textAlign)
+    })];
+
+    return style;
+};
+
+// text style function for geojson layers
+var createTextStyle = function(feature, resolution, labelText, labelFont,
+    labelFill, placement, bufferColor, offsetX, offsetY, textBaseline,
+    bufferWidth, textAlign) {
+
+        if (feature.hide || !labelText) {
+            return; 
+        } 
+        var bufferStyle = null;
+        if (bufferWidth == 0) {
+            bufferStyle = null;
+        } else {
+        bufferStyle = new ol.style.Stroke({
+            color: bufferColor,
+            width: bufferWidth
+        });
+    }
+
+    var textStyle = new ol.style.Text({
+        font: labelFont,
+        text: labelText,
+        textBaseline: textBaseline,
+        textAlign: textAlign,
+        offsetX: offsetX,
+        offsetY: offsetY,
+        placement: placement,
+        maxAngle: 1,
+        fill: new ol.style.Fill({
+            color: labelFill
+        }),
+        stroke: bufferStyle
+    });
+
+    return textStyle;
+};
