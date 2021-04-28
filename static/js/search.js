@@ -77,6 +77,7 @@ $(document).ready(function() {
         // need to put in a delay so that some browsers (eg Firefox) can catch up with the focus
       
         window.setTimeout(function() {
+            $('.dropdown-menu').hide();
             var el = $(':focus');
             var newVal = el.val();
             switch (el.attr('id')) {
