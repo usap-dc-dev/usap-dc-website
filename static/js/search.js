@@ -449,7 +449,7 @@ var clickResultsMap = function(evt) {
                         if (layer.getProperties().title === 'Results') {
                             features.push(feature);
                         }  
-                        else if (layer.getProperties().title === 'Ice Cores') {
+                        else if (layer.getProperties().title === 'Ice Cores - (NSF ice core facility)') {
                             icecore_features.push(feature);
                         }
                     }
@@ -461,8 +461,11 @@ var clickResultsMap = function(evt) {
             for (let feature of icecore_features) {
                 var props = feature.getProperties();
                 console.log(props)
+                var fs_url = "https://icecores.org/inventory/"+props['Field Site'].replaceAll(' ', '-').toLowerCase();
                 // make pop up
                 msg += '<p style="font-size:0.8em;max-height:500px;"><b>Core Name:</b> ' + props['Core Name'];
+                msg += '<br><b>Field Site:</b><a href="' + fs_url + '" target="_blank"> ' + props['Field Site'] + '</b></a>';
+                msg += '<br><b>Years Drilled:</b> ' + props['Years Drilled'];
                 msg += '<br><b>Original PI:</b> ' + props['Original PI'];
                 msg += '<br><b>De-accessed</b> ' + props['De-accessed'];
                 msg += '<br>===========<br> </p>';
@@ -1049,7 +1052,7 @@ function MapClient(target='map') {
         visible: false,
         source: iceCoreSource,
         // style: styleFunction,
-        title: 'Ice Cores',
+        title: 'Ice Cores - (NSF ice core facility)',
     });  
     this.map.addLayer(ice_cores);
 
