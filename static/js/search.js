@@ -196,12 +196,15 @@ $(document).ready(function() {
   }));
   
 
-
+  $('.close_map_help_btn').on('click', (function() {
+    $("#map_help").hide();
+  }));
 
   
   //Make the DIV element draggagle:
   dragElement(document.getElementById(("abstract")));
   dragElement(document.getElementById(("geometry")));
+  dragElement(document.getElementById(("map_help")));
 
   updateMenusWithSelected(search_params, false);
 
@@ -225,8 +228,14 @@ function showAbstract(el) {
     var type = row.children('td').eq(type_ind).text();
     $("#abstract_title").text(type +' Abstract');
     $("#abstract").css({top:y-400+"px", left:x+"px"}).show();   
-  }
+}
 
+
+function showMapHelp(el) {
+    var x = event.pageX;
+    var y = event.pageY;
+    $("#map_help").css({top:y-200+"px", left:x+"px"}).show();   
+}
 
 var styles = [
   new ol.style.Style({
@@ -430,17 +439,41 @@ var clickResultsMap = function(evt) {
         removeLayerByName(results_map, 'Selected');
         popup.hide();
         var features = [];
+        var icecore_features = [];
 
         if (evt.pixel) {
             results_map.forEachFeatureAtPixel(evt.pixel, 
                 function(feature, layer) {
-                    if (layer && layer.getProperties() && layer.getProperties().title === 'Results'){
-                        features.push(feature);
-                    }   
+                    if (layer && layer.getProperties()){
+
+                        if (layer.getProperties().title === 'Results') {
+                            features.push(feature);
+                        }  
+                        else if (layer.getProperties().title === 'Ice Cores') {
+                            icecore_features.push(feature);
+                        }
+                    }
                 }, {"hitTolerance":1});
         }
   
+        if (icecore_features.length > 0) {
+            var msg = "<h6>Number of ice cores: " + icecore_features.length + "</h6>";
+            for (let feature of icecore_features) {
+                var props = feature.getProperties();
+                console.log(props)
+                // make pop up
+                msg += '<p style="font-size:0.8em;max-height:500px;"><b>Core Name:</b> ' + props['Core Name'];
+                msg += '<br><b>Original PI:</b> ' + props['Original PI'];
+                msg += '<br><b>De-accessed</b> ' + props['De-accessed'];
+                msg += '<br>===========<br> </p>';
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+
+        }
+
         if (features.length > 0) {
+
             var msg = "<h6>Number of data sets: " + features.length + "</h6>";
 
             for (let feature of features) {
@@ -862,36 +895,47 @@ function MapClient(target='map') {
     })
     });
     this.map.addLayer(gmrt);
+    
+    var ibcso = new ol.layer.Tile({
+        type: 'base',
+        title: "IBCSO",
+        visible: false,
+        source: new ol.source.TileArcGISRest({
+            url:"https://gis.ngdc.noaa.gov/arcgis/rest/services/antarctic/antarctic_basemap/MapServer",
+            crossOrigin: 'anonymous',
+            params: {
+                transparent: true
+            }
+        })
+      });
+    this.map.addLayer(ibcso);
+
 
     var lima = new ol.layer.Tile({
-    // type: 'base',
     title: "LIMA 240m",
     visible: true,
     source: new ol.source.TileWMS({
         url: api_url,
         params: {
-        layers: "LIMA 240m",
-        transparent: true
+            layers: "LIMA 240m",
+            transparent: true
         }
     })
     });
     this.map.addLayer(lima);
 
-    var gma_modis = new ol.layer.Tile({
-        title: "MODIS Mosaic",
+    
+    var rema = new ol.layer.Tile({
+        title: "REMA 8m",
         visible: false,
-        source: new ol.source.TileWMS({
-            url: "https://nsidc.org/cgi-bin/atlas_south?",
+        source: new ol.source.TileArcGISRest({
+            url: 'https://elevation2.arcgis.com/arcgis/rest/services/Polar/AntarcticDEM/ImageServer',
             params: {
-            layers: 'antarctica_satellite_image',
-            format:'image/png',
-            srs: 'epsg:3031',
-            transparent: true
+                transparent: true
             }
         })
-        });
-   // this.map.addLayer(gma_modis);
-
+    });
+    this.map.addLayer(rema);
 
     var gmrtmask = new ol.layer.Tile({
         visible: false,
@@ -904,22 +948,6 @@ function MapClient(target='map') {
         })
         });
     this.map.addLayer(gmrtmask);
-    
-    var scar = new ol.layer.Tile({
-        title: "SCAR Coastlines",
-        visible: false,
-        source: new ol.source.TileWMS({
-            url: "https://nsidc.org/cgi-bin/mapserv?",
-            params: {
-            map: '/WEB/INTERNET/MMS/atlas/epsg3031_grids.map',
-            layers: 'land',
-            srs: 'epsg:3031',
-            bgcolor: '0x00ffff',
-            format: 'image/jpeg'
-            }
-        })
-        });
-    this.map.addLayer(scar);
 
     var tracks = new ol.layer.Tile({
         title: "USAP R/V Cruises",
@@ -936,7 +964,7 @@ function MapClient(target='map') {
 
 
     var arffsu_core = new ol.layer.Tile({
-        title: 'ARFFSU Core Map',
+        title: 'former FSU sediment core map',
         visible: false,
         source: new ol.source.TileWMS({
           url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
@@ -949,9 +977,8 @@ function MapClient(target='map') {
     });
     this.map.addLayer(arffsu_core);
 
-
     var bpcrr_core = new ol.layer.Tile({
-        title: 'BPCRR Core Map',
+        title: 'BPC Rock Repository - samples',
         visible: false,
         source: new ol.source.TileWMS({
           url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
@@ -964,9 +991,8 @@ function MapClient(target='map') {
     });
     this.map.addLayer(bpcrr_core);
 
-
     var asdl = new ol.layer.Tile({
-        title: 'ASDL - AllNavigations20201127',
+        title: 'SDLS - seismic track lines',
         visible: false,
         source: new ol.source.TileWMS({
           url: 'https://sdls.ogs.trieste.it/geoserver/ows?version=1.1.0',
@@ -978,11 +1004,17 @@ function MapClient(target='map') {
     });
     this.map.addLayer(asdl);
 
+    var ice_thickness = {
+        "source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIcesheetThickness_320",
+        "numLevels":2,
+        "title":"Antarctic Ice Sheet Thickness (British Antarctic Survey)"
+    };
+    displayXBMap(this.map, ice_thickness);
+
     var ice_vel = {
         "source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIceVelocity_320",
         "numLevels":4,
-        "mapProjection":1,
-        "title":"Antarctic Ice Sheet Velocity"
+        "title":"Antarctic Ice Sheet Velocity (Rignot et al, 2014)"
     };
     displayXBMap(this.map, ice_vel);
 
@@ -993,10 +1025,34 @@ function MapClient(target='map') {
         "tileWidth":256,
         "tileHeight":256,
         "extent":[-2719812.53530000, -2372227.21632370, 2939589.48209285, 2465145.45800000],
-        "title":"Bedrock Elevation Under the Antarctic Ice Sheet"
+        "title":"Bedrock Elevation Under the Antarctic Ice Sheet (Morlighem, M. 2019)"
     };
     displayTiled(this.map, bedrock);
  
+
+
+    var iceCoreSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function(){
+            $.get({
+                url: '/static/data/ice_cores.csv' ,
+                dataType: 'text'
+            }).done(function(response) {
+                var csvString = response;
+                csv2geojson.csv2geojson(csvString, function(err, data) {
+                    iceCoreSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+                });
+            });
+        }
+    });
+    var ice_cores =  new ol.layer.Vector({
+        visible: false,
+        source: iceCoreSource,
+        // style: styleFunction,
+        title: 'Ice Cores',
+    });  
+    this.map.addLayer(ice_cores);
+
     var vectorSource = new ol.source.Vector({
         format: new ol.format.GeoJSON(),
         loader: function(){
@@ -1015,6 +1071,19 @@ function MapClient(target='map') {
         title: 'Antarctic Coast',
     });  
     this.map.addLayer(coastline)
+
+
+    var names = new ol.layer.Tile({
+        title: "Place Names",
+        visible: true,
+        source: new ol.source.TileArcGISRest({
+            url:"https://gis.ngdc.noaa.gov/arcgis/rest/services/antarctic/reference/MapServer",
+            params: {
+                transparent: true
+          }
+        })
+      });
+    this.map.addLayer(names);
 
     var mousePosition = new ol.control.MousePosition({
         projection: 'EPSG:4326',

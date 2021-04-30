@@ -1,0 +1,66 @@
+Location,Field Site,Core Name,Core ID,Years Drilled,Lat,Long,Core Top (m),Core Bottom (m),Core Diameter (cm),Site Elevation,Drilling Method,Drillers,Drilling Fluid,Original PI,PI Affiliation,De-accessed
+Antarctica,Bentley Shot Holes,BENTLEY SHOT HOLE 2,BEN2,1995,-82.3669444,-119.2830556,0.00,93.55,10.00,920,Electromechanical,PICO,Dry,Charles Bentley,Univ. of Wisconsin,Yes
+Antarctica,Bentley Shot Holes,BENTLEY SHOT HOLE 3,BEN3,1995,-81.78,-111.325,0.00,50.24,10.00,1690,Electromechanical,PICO,Dry,Charles Bentley,Univ. of Wisconsin,Yes
+Antarctica,Bentley Shot Holes,BENTLEY SHOT HOLE 4,BEN4,1994,-81.3730556,-107.2730556,0.00,50.56,10.00,1935,Electromechanical,PICO,Dry,Charles Bentley,Univ. of Wisconsin,Yes
+Antarctica,Bentley Shot Holes,BENTLEY SHOT HOLE 5,BEN5,1994,-82.0938889,-115.2280556,0.00,90.12,10.00,1315,Electromechanical,PICO,Dry,Charles Bentley,Univ. of Wisconsin,Yes
+Antarctica,Byrd,BYRD STATION '68,BYRD 68,1968,-80.0167,-119.5167,88.45,2191.26,10.80,1530,Electromechanical,USACRREL,diesel/ trichloroethylene,Chester Langway,CRREL,No
+Antarctica,Byrd,BYRD STATION '71,BYRD 71,1971,-80.0167,-119.5167,15.55,380.06,11.40,1530,Thermal,Thermal,Dry,Chester Langway,CRREL,Yes
+Antarctica,Dominion Range,DOMINION RANGE,DOMINION,1984,-85.25,166.16667,0.00,159.66,10.00,2700,Electromechanical,PICO,Dry,Paul Mayewski,Univ. of New Hampshire,Yes
+Antarctica,J9,J-9,J-9,1978,-82.3833333,-168.6333333,35.05,416.07,7.60,60,Thermal (Russian),USSR,Ethanol,CRREL,CRREL,Yes
+Antarctica,J9,J-9 BERN,J-9Bern,1976,-82.3666667,-168.6833333,0.00,104.26,6.00,60,Wireline,J. Rand / CRREL,Dry,Chester Langway / SUNY Buffalo / CRREL,USA CRREL,Yes
+Antarctica,Little America,LITTLE AMERICA V,LA 5,1958,-78.1666667,-162.2166667,6.70,254.74,9.80,43,Failing rotary well-drilling rig,SIPRE,Dry drilled to 249 m. Diesel fuel to 255 m.,Tony Gow,SIPRE/CRREL,No
+Antarctica,Mount Moulton,Moulton Blue Ice 2,MBI2,2003/04,-76.0666667,-134.7,0.00,34.34,,2820,,,,Todd Sowers,Penn State University,No
+Antarctica,Newall Glacier,NEWALL GLACIER,NEWALL,1988,-77.61667,162.5,0.00,175.00,10.00,1700,Electromechanical,PICO/Fairbanks,Dry,Paul Mayewski,Univ. of New Hampshire,Yes
+Antarctica,RIDS,RIDS-95A,RIDS95A,1995,-77.7333333,-116.3333333,0.00,150.00,10.00,1740,Electromechanical,PICO-UNL,PICO-UNL,Paul Mayewski,Univ. of New Hampshire,Yes
+Antarctica,RIDS,RIDS95B,RIDS95B,1995,-79.4608333,-118.0444444,0.00,60.00,10.00,1603,Electromechanical,PICO-UNL,Dry,Paul Mayewski,Univ. of New Hampshire,Yes
+Antarctica,RIDS,RIDS-95C,RIDS-95C,1995,-79.9988889,-79.9988889,0.00,60.00,10.00,1530,Electromechanical,PICO-UNL,Dry,Paul Mayewski,Univ. of New Hampshire,Yes
+Antarctica,RIDS,RIDSBETA,RIDSBETA,1995,-77.7333333,-116.3333333,0.00,19.00,10.00,1750,Electromechanical,PICO-UNL,Dry,Paul Mayewski,Univ. of New Hampshire,Yes
+Antarctica,Siple Dome,SIPLE DOME 94,SDM 94,1994,-81.6425,-148.7725,0.00,150.00,10.00,615,Electromechanical,PICO,Dry,Paul Mayewski,Univ. of New Hampshire,No
+Antarctica,Siple Dome,SIPLE DOME A,SDMA,1996/97 to 1998/99,-81.6588333,-148.812,0.38,1003.81,13.20,621,Electromechanical,PICO,Dry / n-Butyl Acetate,Siple Dome SCO,Univ. of Nevada,Reno,DRI,No
+Antarctica,Siple Dome,SIPLE DOME B,SDMB,12/10/96,-81.6588333,-148.812,0.00,99.98,10.00,615,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,No
+Antarctica,Siple Dome,SIPLE DOME C,SDMC,12/15/96,-81.655,-148.7943333,0.00,91.95,10.00,615,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME D,SDMD,1/11/97,-81.6455,-148.786,0.00,30.87,10.00,615,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME E,SDME,12/27/96,-81.3023333,-148.3023333,0.00,99.99,10.00,400,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME F,SDMF,1/5/97,-81.9085,-149.337,0.00,100.77,10.00,450,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME G,SDMG,1/13/97,-81.5708333,-148.5975,0.00,30.63,10.00,590,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME H,SDMH,1/15/97,-81.7395,-148.9768333,0.00,30.75,10.00,590,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME I,SDMI,1/16/97,-81.6375,-148.7658333,0.00,30.06,10.00,,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME J,SDMJ,97/98,-81.6588333,-148.812,0.00,118.61,10.00,435,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,Yes
+Antarctica,Siple Dome,SIPLE DOME K,SDMK,98/99,,39.56,101.64,10.00,,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,No
+Antarctica,Siple Dome,SIPLE DOME L,SDML,98/99,,0.00,12.00,10.00,,Electromechanical,PICO,Dry,Siple Dome SCO,Univ. of Nevada,Reno,DRI,No
+Antarctica,South Pole,South Pole 01 hole 1,SP01-1,2001,-90,0,0.57,122.91,8.00,2835,Electromechanical,,Dry,Michael Bender,Princeton University,Yes
+Antarctica,South Pole,South Pole 01 hole 2,SP01-2,2001,-90,0,0.47,121.78,8.00,2835,Electromechanical,,Dry,Michael Bender,Princeton University,Yes
+Antarctica,South Pole,South Pole 04 hole 1,SP04-C1,2004,-89.95778,-17.83611,0.00,39.94,10.20,2835,Electromechanical,ICDS,Dry,Jihong Cole-Dai,South Dakota State University,Yes
+Antarctica,South Pole,South Pole 04 hole 2,SP04-C2,2004,-89.95778,-17.80028,0.00,40.78,10.20,2835,Electromechanical,ICDS,Dry,Jihong Cole-Dai,South Dakota State University,Yes
+Antarctica,South Pole,South Pole 04 hole 3,SP04-C3,2004,-89.95,-17.53333,0.00,39.84,10.20,2835,Electromechanical,ICDS,Dry,Jihong Cole-Dai,South Dakota State University,Yes
+Antarctica,South Pole,South Pole 04 hole 4,SP04-C4,2004,-89.95778,-17.66722,0.00,39.84,10.20,2835,Electromechanical,ICDS,Dry,Jihong Cole-Dai,South Dakota State University,Yes
+Antarctica,South Pole,South Pole 04 hole 5,SP04-C5,2004,-89.95749,-17.6,0.00,181.59,10.20,2835,Electromechanical,ICDS,Dry,Jihong Cole-Dai,South Dakota State University,Yes
+Antarctica,South Pole,South Pole 04 hole 6,SP04-C6,2004,-89.95,-17.533329,0.00,101.55,10.20,2835,Electromechanical,ICDS,Dry,Jihong Cole-Dai,South Dakota State University,Yes
+Antarctica,South Pole,SOUTH POLE 2,SP 2,1994,-90,0,0.00,123.40,10.00,2835,Electromechanical,PICO-Dave Giles,Dry,Michael Bender,Princeton University,Yes
+Antarctica,South Pole,SPICE,SPC14,2014/15 and 2015/16,-89.98,-98.15,5.15,1751.11,9.80,2835,Electromechcanical / U.S. Intermediate Depth Drill,IDDO,Estisol 140,Murat Aydin,Univ. California Irvine,No
+Antarctica,South Pole,SPRESSO02,SPRESSO02,2002/03,-89.93,-144.39,0.00,291.26,10.20,2860,Electromechanical,ICDS,Dry,Kent Anderson,USGS,No
+Antarctica,Taylor Dome,TAYLOR DOME F3C,F3C,12/93-1/94,-77.6666667,158,0.00,114.11,10.00,2440,Electromechanical,PICO/Fairbanks,Dry,Pieter Grootes,University of Washington,Yes
+Antarctica,Taylor Dome,TAYLOR DOME M3C1,M3C1,12/93-1/94,-77.6666667,158,0.00,554.99,13.00,2440,Electromechanical,PICO/Fairbanks,n-Butyl Acetate,Pieter Grootes,University of Washington,No
+Antarctica,Taylor Dome,TAYLOR DOME MIC2,MIC2,12/91-1/92,-77.6666667,158,0.00,98.81,10.20,2440,Electromechanical,PICO/Fairbanks,Dry,Pieter Grootes,University of Washington,Yes
+Antarctica,Taylor Dome,TAYLOR DOME MIC3,MIC3,12/91-1/92,-77.6666667,158,0.00,127.34,10.20,2440,Electromechanical,PICO/Fairbanks,Dry,Pieter Grootes,University of Washington,Yes
+Antarctica,Upstream C,UPC 96,SDMUPC,11/14/96,-82.45,-135.9833333,0.00,134.59,10.00,,Electromechanical,PICO,Dry,Richard Alley,Penn State University,Yes
+Antarctica,Vostok,VOSTOK 3G,VOST3G,1981-1989,-72.4666667,106.8,192.50,2200.00,12.50,3500,Thermal,Arctic & Antarctic Mining Institute,Kerosene / Freon,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,No
+Antarctica,Vostok,VOSTOK 4G2,VOST4G2,1987-1990,-72.4666667,106.8,183.30,2543.56,11.00,3500,Thermal / Electromechanical,Arctic & Antarctic Mining Institute,Kerosene / Freon,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,No
+Antarctica,Vostok,VOSTOK 5G,VOST5G,1991-1997,-72.4666667,106.8,97.00,3623.00,12.00,3500,Thermal / Electromechanical,Arctic & Antarctic Mining Institute,Kerosene / Freon,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,No
+Antarctica,Vostok,VOSTOK BH-1,VOSTBH-1,1991/1992,-72.4666667,106.8,13.55,175.77,12.50,3500,Thermal,Arctic & Antarctic Mining Institute,Dry,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,No
+Antarctica,Vostok,VOSTOK BH-3,VOSTBH-3,1991/1992,-72.4666667,106.8,58.10,125.41,12.00,3500,Electromechanical,Claude Rado,Grenoble,Dry,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,No
+Antarctica,Vostok,VOSTOK BH-5,VOSTBH-5,1991/1992,-72.4666667,106.8,3.00,179.00,12.00,3500,Electromechanical,Claude Rado,Grenoble,Dry,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,Yes
+Antarctica,Vostok,VOSTOK BH-7,VOSTBH-7,1995-1996,-72.4666667,106.8,31.00,250.45,12.00,3500,Electromechanical,Claude Rado,Grenoble,Dry,Michael Bender and Eric Saltzman,Princeton University,University of Miami RSMAS,No
+Antarctica,WAIS Divide,WAIS Divide Core 2005 A,WDC05A,2005,-79.4666667,-112.0833333,0.00,298.06,10.20,1806,Electromechanical / 4-Inch Drill,IDDO,Dry,Todd Sowers,Penn State University,No
+Antarctica,WAIS Divide,WAIS Divide Core 2005 B,WDC05B,2005,-79.4629167,-112.1237,0.00,75.00,8.10,1706,Electromechanical / Badger-Eclipse Drill,IDDO,Dry,Kendrick Taylor,University of Nevada Reno,No
+Antarctica,WAIS Divide,WAIS Divide Core 2005 C,WDC05C,2005,-79.46295,-112.1227,0.00,80.00,8.10,1806,Electromechanical / Badger-Eclipse Drill,IDDO,Dry,Kendrick Taylor,Desert Research Institute,No
+Antarctica,WAIS Divide,WAIS Divide Core 2005 Q,WDC05Q,2005,-79.4675333,-112.0856167,0.00,129.44,10.20,1806,Electromechanical / 4-Inch Drill,IDDO,Dry,Kendrick Taylor,Desert Research Institute,No
+Antarctica,WAIS Divide,WAIS Divide Core 2006 Borehole A,WDC06A,2006-2012,-79.467,-112.085,0.00,3405.00,12.20,1806,Electromechanical / DISC Drill,IDDO,Isopar K / HCFC 141B,Kendrick Taylor,Desert Research Institute,No
+Antarctica,WAIS Divide,WAIS Divide Core 2006 Borehole B,WDC06B,2006,-79.4674667,-112.086,0.00,130.00,10.20,1806,Electromechanical / 4-Inch Drill,IDDO,Dry,Kendrick Taylor,Desert Research Institute,No
+Antarctica,WAIS Divide,WAIS Divide Replicate Core #1,WDC-R1,2012,-79.467,-112.085,3001.55,3100.26,10.80,1806,Electromechanical / DISC Drill Replicate Coring System,IDDO,Isopar K / HCFC 141B,Jeff Severinghaus,Jihong Cole-Dai,Ed Brook,,No
+Antarctica,WAIS Divide,WAIS Divide Replicate Core #2,WDC-R2,2012,-79.467,-112.085,2416.70,2469.49,10.80,1806,Electromechanical / DISC Drill Replicate Coring System,IDDO,Isopar K / HCFC 141B,Jeff Severinghaus,Jihong Cole-Dai,Ed Brook,,No
+Antarctica,WAIS Divide,WAIS Divide Replicate Core #3,WDC-R3,2012,-79.467,-112.085,2221.00,2290.80,10.80,1806,Electromechanical / DISC Drill Replicate Coring System,IDDO,Isopar K / HCFC 141B,Jeff Severinghaus,Jihong Cole-Dai,Ed Brook,,No
+Antarctica,WAIS Divide,WAIS Divide Replicate Core #4,WDC-R4,2012,-79.467,-112.085,1952.00,2000.20,10.80,1806,Electromechanical / DISC Drill Replicate Coring System,IDDO,Isopar K / HCFC 141B,Jeff Severinghaus,Jihong Cole-Dai,Ed Brook,,No
+Antarctica,WAIS Divide,WAIS Divide Replicate Core #5,WDC-R5,2012,-79.467,-112.085,2414.50,2428.74,10.80,1806,Electromechanical / DISC Drill Replicate Coring System,IDDO,Isopar K / HCFC 141B,Jeff Severinghaus,Jihong Cole-Dai,Ed Brook,,No
+Antarctica,Windless Bight,WINDLESS BIGHT-1,WB1,1996,-77.8321667,167.1472667,0.00,43.18,10.00,37,Electromechanical,PICO,Dry,Gisela Dreschhoff,University of Kansas,Yes
+Antarctica,Windless Bight,WINDLESS BIGHT-2,WB2,1996,-77.732,167.1476667,0.00,80.90,10.00,37,Electromechanical,PICO,Dry,Gisela Dreschhoff,University of Kansas,Yes
