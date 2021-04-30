@@ -115,6 +115,21 @@
   z-index: 1000;
 }
 
+#map_help {
+  background: #fff;
+  border: 2px solid #000;
+  position: absolute;
+  font-family: arial;
+  height: 700px;
+  padding: 10px;
+  width: 1000px;
+  z-index: 1000;
+  overflow: hidden;  
+  resize: both;
+  min-height:24em;
+  min-width:22em;
+}
+
 .close_btn {
     float:right;
     padding:2px 5px;
