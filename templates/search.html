@@ -24,6 +24,43 @@
   <div id="show_on_map"></div>
 </div>
 
+
+<div id="map_help" hidden>
+  <div id="map_help_header" class="window-header">
+    <span><b>Help on the Results Map</b></span><span class='close_map_help_btn close_btn'>X</span>
+  </div>
+  <div>
+    <i>This window can be dragged by its header, and can be resized from the bottom right corner.</i>
+    <h3>The Results Map and the Results Table</h3>
+    <ul>
+      <li>The Results Map displays the centroids of the geographic bounds of all the results returned by the search.</li>
+      <li>Results that are displayed in the current map view will be highlighted in blue and brought to the top of the Results Table.</li>
+      <li>As the map is panned or zoomed, the highlighted rows in the table will update.</li>
+      <li>If you click on a centroid on the map, it will turn yellow and display a popup with details for that project/dataset - including a link to the landing page.
+        The bounds for the project(s)/dataset(s) selected will be displayed in red.
+        The selected result(s) will be highlighted in red and brought to the top of the table.</li>
+      <li>The default table sorting order is: Selected, Visible, Date (descending), but this can be changed by clicking on column headers in the table.</li>
+      <li>Selecting Show on Map for an individual row will both display the geographic bounds for that result on a mini map, and also display the bounds 
+        and highlight the centroid on the Results Map.</li>
+      <li>Clicking the 'Show boundaries' checkbox at the top of the Results Map will display all the bounds for the filtered results.</li>
+    </ul>
+    <h3>Defining a search area on the Results Map</h3>
+    <ul>
+      <li>If you click on the Rectangle or Polygon icons in the top right of the Results Map, you can define a search area which will be added to any other
+        search criteria already selected.</li> 
+      <li>After you have drawn a polygon, you can edit it using the Edit Geometry dropdown in the search form at the top.</li>
+      <li>Clicking Clear in the map will clear any drawn polygon.</li>
+      <li>Clicking Search in the map, or Search on the form will have the same effect.</li>
+      <li>The returned results will be any projects/datasets with bounds that intersect the polygon.</li>
+      <li>Use the Exclude project/datasets checkbox to exclude any projects/datasets that cover the whole Antarctic region.</li>
+    </ul>
+    <h3>Viewing map layers on the Results Map</h3>
+      <li>Clicking the Layers button - the blue square in the top left of the Results Map - will display a list of map layers you can add or remove
+        from the currently displayed map view.</li>
+    </ul>
+  </div>
+</div>
+
 <div>
 
   <div>
@@ -187,6 +224,7 @@
     {% if records|length > 0 %}
 
     <button type="button" class="btn btn-default" id="geom_btn">View results on map</button>
+    <button type="button" class="btn btn-default" id="map_help_btn" onclick="showMapHelp(this);">Help on results map</button>
 
     <div id="results_map_div" hidden>
       <div id="results_map">
@@ -222,7 +260,7 @@
       <table id="search_table">
         <thead>
           <tr>
-            <th style="width:1.8em; padding:0; text-align:center" > <div class="square"></div></th>
+            <th style="width:25px; padding:0; text-align:center" > <div class="square"></div></th>
             <th style="width:30em;">Project Title/Abstract/Map</th>
             <th style="width:7em;">NSF Award(s)</th>
             <th style="width:8em;" >Date Created</th>
