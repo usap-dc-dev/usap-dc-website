@@ -29,21 +29,6 @@ $(document).ready(function() {
 	    });
 
 
-	   var scar = new ol.layer.Tile({
-		type: 'base',
-		title: "SCAR Coastlines",
-		source: new ol.source.TileWMS({
-		    url: "http://nsidc.org/cgi-bin/mapserv?",
-		    params: {
-			map: '/WEB/INTERNET/MMS/atlas/epsg3031_grids.map',
-			layers: 'land',
-			srs: 'epsg:3031',
-			bgcolor: '0x00ffff',
-			format: 'image/jpeg'
-		    }
-		})
-	    });
-	    map.addLayer(scar);
 
 	    var gmrt = new ol.layer.Tile({
 		type: 'base',
@@ -57,76 +42,194 @@ $(document).ready(function() {
 	    });
 	    map.addLayer(gmrt);
 
-
-	    var gmrtmask = new ol.layer.Tile({
-		type: 'base',
-		visible: false,
-		title: "GMRT Synthesis-Mask",
-		source: new ol.source.TileWMS({
-		    url: "https://www.gmrt.org/services/mapserver/wms_SP_mask?request=GetCapabilities&service=WMS&version=1.3.0",
-		    params: {
-			layers: 'South_Polar_Bathymetry'
-		    }
-		})
-	    });
-	    map.addLayer(gmrtmask);
-
-
-	    var gma_modis = new ol.layer.Tile({
-		// type: 'base',
-		title: "MODIS Mosaic",
-		visible: false,
-		source: new ol.source.TileWMS({
-		    url: "http://nsidc.org/cgi-bin/atlas_south?",
-		    params: {
-			layers: 'antarctica_satellite_image',
-			format:'image/png',
-			srs: 'epsg:3031',
-			transparent: true
-		    }
-		})
-	    });
-	    map.addLayer(gma_modis);
-
-	 //    var modis = new ol.layer.Tile({
-		// title: "MODIS Mosaic",
-		// visible: false,
-		// source: new ol.source.TileWMS({
-		//     url: api_url,
-		//     params: {
-		// 	layers: 'MODIS',
-		// 	transparent: true
-		//     }
-		// })
-	 //    });
-	 //    map.addLayer(modis);
-
-	    var lima = new ol.layer.Tile({
-		// type: 'base',
+		var ibcso = new ol.layer.Tile({
+			type: 'base',
+			title: "IBCSO",
+			visible: false,
+			source: new ol.source.TileArcGISRest({
+				url:"https://gis.ngdc.noaa.gov/arcgis/rest/services/antarctic/antarctic_basemap/MapServer",
+				crossOrigin: 'anonymous',
+				params: {
+					transparent: true
+				}
+			})
+		  });
+		map.addLayer(ibcso);
+	
+	
+		var lima = new ol.layer.Tile({
 		title: "LIMA 240m",
 		visible: true,
 		source: new ol.source.TileWMS({
-		    url: api_url,
-		    params: {
-			layers: "LIMA 240m",
-			transparent: true
-		    }
+			url: api_url,
+			params: {
+				layers: "LIMA 240m",
+				transparent: true
+			}
 		})
-	    });
-	    map.addLayer(lima);
-
-	    var tracks = new ol.layer.Tile({
-		title: "USAP R/V Cruises",
-		visible: false,
-		source: new ol.source.TileWMS({
-		    url: "http://www.marine-geo.org/services/mapserver/wmscontrolpointsSP?",
-		    params: {
-			layers: 'Tracks-Lines',
-			transparent: true
-		    }
-		})
-	    });
-	    map.addLayer(tracks);
+		});
+		map.addLayer(lima);
+	
+		
+		var rema = new ol.layer.Tile({
+			title: "REMA 8m",
+			visible: false,
+			source: new ol.source.TileArcGISRest({
+				url: 'https://elevation2.arcgis.com/arcgis/rest/services/Polar/AntarcticDEM/ImageServer',
+				params: {
+					transparent: true
+				}
+			})
+		});
+		map.addLayer(rema);
+	
+		var gmrtmask = new ol.layer.Tile({
+			visible: false,
+			title: "GMRT Synthesis-Mask",
+			source: new ol.source.TileWMS({
+				url: "https://www.gmrt.org/services/mapserver/wms_SP_mask?request=GetCapabilities&service=WMS&version=1.3.0",
+				params: {
+				layers: 'South_Polar_Bathymetry'
+				}
+			})
+			});
+		map.addLayer(gmrtmask);
+	
+		var tracks = new ol.layer.Tile({
+			title: "USAP R/V Cruises",
+			visible: false,
+			source: new ol.source.TileWMS({
+				url: "https://www.marine-geo.org/services/mapserver/wmscontrolpointsSP?",
+				params: {
+				layers: 'Tracks-Lines',
+				transparent: true
+				}
+			})
+			});
+		map.addLayer(tracks);
+	
+	
+		var arffsu_core = new ol.layer.Tile({
+			title: 'Former FSU sediment core map',
+			visible: false,
+			source: new ol.source.TileWMS({
+			  url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+			//   crossOrigin: 'anonymous',
+			  projection: 'EPSG:3031',
+			  params: {
+				  layers: "ARFFSU"
+			  }
+			})
+		});
+		map.addLayer(arffsu_core);
+	
+		var bpcrr_core = new ol.layer.Tile({
+			title: 'BPC Rock Repository - samples',
+			visible: false,
+			source: new ol.source.TileWMS({
+			  url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+			//   crossOrigin: 'anonymous',
+			  projection: 'EPSG:3031',
+			  params: {
+				  layers: "BPCRR"
+			  }
+			})
+		});
+		map.addLayer(bpcrr_core);
+	
+		var asdl = new ol.layer.Tile({
+			title: 'SDLS - seismic track lines',
+			visible: false,
+			source: new ol.source.TileWMS({
+			  url: 'https://sdls.ogs.trieste.it/geoserver/ows?version=1.1.0',
+			  crossOrigin: 'anonymous',
+			  params: {
+				  layers: "AllNavigations20201127"
+			  }
+			})
+		});
+		map.addLayer(asdl);
+	
+		var ice_thickness = {
+			"source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIcesheetThickness_320",
+			"numLevels":2,
+			"title":"Antarctic Ice Sheet Thickness"
+		};
+		displayXBMap(map, ice_thickness);
+	
+		var ice_vel = {
+			"source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIceVelocity_320",
+			"numLevels":4,
+			"title":"Antarctic Ice Sheet Velocity"
+		};
+		displayXBMap(map, ice_vel);
+	
+		var bedrock = {
+			"source":"https://www.thwaites-explorer.org/data/BeneathAntarcticIcesheet/Bedmachine_bed_ETOPO1_clipped_600m_zoom8",
+			"mapMaxZoom":8,
+			"mapMaxResolution":150.00535457,
+			"tileWidth":256,
+			"tileHeight":256,
+			"extent":[-2719812.53530000, -2372227.21632370, 2939589.48209285, 2465145.45800000],
+			"title":"Bedrock Elevation"
+		};
+		displayTiled(map, bedrock);
+	 
+	
+	
+		var iceCoreSource = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			loader: function(){
+				$.get({
+					url: '/static/data/ice_cores.csv' ,
+					dataType: 'text'
+				}).done(function(response) {
+					var csvString = response;
+					csv2geojson.csv2geojson(csvString, function(err, data) {
+						iceCoreSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+					});
+				});
+			}
+		});
+		var ice_cores =  new ol.layer.Vector({
+			visible: false,
+			source: iceCoreSource,
+			// style: styleFunction,
+			title: 'Ice Cores - (NSF ice core facility)',
+		});  
+		map.addLayer(ice_cores);
+	
+		var vectorSource = new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			loader: function(){
+				$.get({
+					url: 'https://www.thwaites-explorer.org/data/antarctic_coastS10RS/Antarctic_coastS10polyRS.geojson' ,
+					dataType: 'json'
+				}).done(function(data) {
+					vectorSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+				});
+			}
+		});
+		var coastline =  new ol.layer.Vector({
+			visible: true,
+			source: vectorSource,
+			style: styleFunctionOutline,
+			title: 'Antarctic Coast',
+		});  
+		map.addLayer(coastline)
+	
+	
+		var names = new ol.layer.Tile({
+			title: "Place Names",
+			visible: true,
+			source: new ol.source.TileArcGISRest({
+				url:"https://gis.ngdc.noaa.gov/arcgis/rest/services/antarctic/reference/MapServer",
+				params: {
+					transparent: true
+			  }
+			})
+		  });
+		map.addLayer(names);
 	    
 	    var difINT = new ol.layer.Tile({
 		title: "Integrated System Science",

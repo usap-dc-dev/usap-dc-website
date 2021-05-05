@@ -34,6 +34,7 @@
   <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script type="text/javascript" src="{{url_for ('static', filename='js/sorttable.js')}}"></script>
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.js"></script>
+  <script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
   
   {{ JSGlue.include() }}
 
@@ -172,12 +173,15 @@
   <script src="https://apis.google.com/js/platform.js" async defer></script>
   {% if cur=='home' or cur=='map' %}
   <script type="text/javascript" src="{{ url_for('static', filename='js/mapInit.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/map_functions.js') }}"></script>
+
   {% endif %}
   {% if cur == 'thank_you' %}
   <script src="{{ url_for('static', filename='js/thank_you.js') }}" type="text/javascript"></script>
   {% endif %}
   {% if cur == 'landing_page' or cur == 'project_landing_page' %}
   <script src="{{ url_for('static', filename='js/landing_page.js') }}" type="text/javascript"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/map_functions.js') }}"></script>
   {% endif %}
   {% if cur=='contact' %}
   <script src='https://www.google.com/recaptcha/api.js'></script>
@@ -186,8 +190,8 @@
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/sprintf/dist/sprintf.min.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/map_functions.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
-  <script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
   {% endif %}
   {% if cur=='catalog_browser' or cur=='project_browser' %}
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/sprintf/dist/sprintf.min.js') }}"></script>
