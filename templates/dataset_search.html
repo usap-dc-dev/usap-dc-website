@@ -5,6 +5,7 @@
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
 
 <div id="search_params" hidden>{{search_params|tojson}}</div>
+<div id="search_results" hidden>{{records|tojson}}</div>
 
 <div id="abstract" hidden>
   <div id="abstract_header" class="window-header">
@@ -21,6 +22,43 @@
     <span id="geometry_title"></span><span class='close_geom_btn close_btn'>X</span>
   </div>
   <div id="show_on_map"></div>
+</div>
+
+
+<div id="map_help" hidden>
+  <div id="map_help_header" class="window-header">
+    <span><b>Help on the Results Map</b></span><span class='close_map_help_btn close_btn'>X</span>
+  </div>
+  <div>
+    <i>This window can be dragged by its header, and can be resized from the bottom right corner.</i>
+    <h3>The Results Map and the Results Table</h3>
+    <ul>
+      <li>The Results Map displays the centroids of the geographic bounds of all the results returned by the search.</li>
+      <li>Results that are displayed in the current map view will be highlighted in blue and brought to the top of the Results Table.</li>
+      <li>As the map is panned or zoomed, the highlighted rows in the table will update.</li>
+      <li>If you click on a centroid on the map, it will turn yellow and display a popup with details for that project/dataset - including a link to the landing page.
+        The bounds for the project(s)/dataset(s) selected will be displayed in red.
+        The selected result(s) will be highlighted in red and brought to the top of the table.</li>
+      <li>The default table sorting order is: Selected, Visible, Date (descending), but this can be changed by clicking on column headers in the table.</li>
+      <li>Selecting Show on Map for an individual row will both display the geographic bounds for that result on a mini map, and also display the bounds 
+        and highlight the centroid on the Results Map.</li>
+      <li>Clicking the 'Show boundaries' checkbox at the top of the Results Map will display all the bounds for the filtered results.</li>
+    </ul>
+    <h3>Defining a search area on the Results Map</h3>
+    <ul>
+      <li>If you click on the Rectangle or Polygon icons in the top right of the Results Map, you can define a search area which will be added to any other
+        search criteria already selected.</li> 
+      <li>After you have drawn a polygon, you can edit it using the Edit Geometry dropdown in the search form at the top.</li>
+      <li>Clicking Clear in the map will clear any drawn polygon.</li>
+      <li>Clicking Search in the map, or Search on the form will have the same effect.</li>
+      <li>The returned results will be any projects/datasets with bounds that intersect the polygon.</li>
+      <li>Use the Exclude project/datasets checkbox to exclude any projects/datasets that cover the whole Antarctic region.</li>
+    </ul>
+    <h3>Viewing map layers on the Results Map</h3>
+      <li>Clicking the Layers button - the blue square in the top left of the Results Map - will display a list of map layers you can add or remove
+        from the currently displayed map view.</li>
+    </ul>
+  </div>
 </div>
 
 <div>
@@ -137,8 +175,8 @@
 
             <div class="form-group">
               <label for="spatial_bounds">Spatial Bounds of Data</label>
-              <button type="button" class="btn btn-default" data-toggle="modal" data-target="#map-modal">Draw on
-                Map</button>
+              Use the Results Map below to draw a polygon over the required search area, or edit the WKT geometry here:
+              <!-- <button type="button" class="btn btn-default" id="draw_on_map_btn">Draw on Map</button> -->
               <br />
               <button class="btn btn-xs btn-link" type="button" data-toggle="collapse" data-target="#edit-geometry-div">
                 <span>Edit Geometry</span><span class="caret"></span>
@@ -158,14 +196,14 @@
               </div>
             </div>
 
-            <input name="spatial_bounds_interpolated" type="hidden" />
-            <div class="modal fade" id="map-modal" role="dialog">
+            <input id="spatial_bounds_interpolated" name="spatial_bounds_interpolated" type="hidden"/>
+            <!-- <div class="modal fade" id="map-modal" role="dialog">
               <div class="modal-dialog" role="document">
                 <div id="modal-contents">
                   <div class="modal-content" id="modal-mapbox">
                     <div class="modal-body">
                       <div id="map">
-                        <div id="drawing-buttons">
+                         <div id="drawing-buttons">
                           <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
                             <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
                           </div>
@@ -174,20 +212,20 @@
                           </div>
                           <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
                             <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
-                          </div>
+                          </div> 
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div class="modal-content" id="modal-buttons">
+                   <div class="modal-content" id="modal-buttons">
                     <button type="button" class="btn btn-primary btn-sm" id="clear-polygon">Clear</button>
                     <button type="button" class="btn btn-primary btn-sm" id="close-modal" class="close"
                       data-dismiss="modal">Save</button>
-                  </div>
+                  </div> 
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
         </div> 
 
@@ -203,90 +241,127 @@
       <input class="ohnohoney" autocomplete="off" type="text" id="name" name="name" placeholder="Your name here">
       <label class="ohnohoney" for="email"></label>
       <input class="ohnohoney" autocomplete="off" type="email" id="email" name="email" placeholder="Your e-mail here">
-      
-    </form>
 
-    <i>
-      <font size=2 color=gray>{{records|length}} record(s) found </font>
-    </i>
-  </div>
+      <i>
+        <font size=2 color=gray>{{records|length}} record(s) found </font>
+      </i>
+    </div>
 
 
-  {% if records|length > 0 %}
+    {% if records|length > 0 %}
 
-  <div>
-    <h5> To sort the table of search results, click the header of the column you wish to search by. </h5>
-  </div>
+    <button type="button" class="btn btn-default" id="geom_btn">View results on map</button>
+    <button type="button" class="btn btn-default" id="map_help_btn" onclick="showMapHelp(this);">Help on results map</button>
 
-  <div id='dif-browser-table'>
-    <table class='sortable' preserve_style='row'>
+    <div id="results_map_div" hidden>
+      <div id="results_map">
+        <div id="boundaries">
+          <input type="checkbox" id="boundaries_cb" onclick="showBoundaries();">
+          <label for="boundaries_cb"><b>Show boundaries</b></label>
+        </div>
+        <div id="drawing-buttons">
+          <div id="drag-icon" data-mode="None" class="drawing-button draw-active">
+            <img src="{{url_for('static', filename='imgs/drag-icon.png')}}">
+          </div>
+          <div id="rect-icon" data-mode="Box" class="drawing-button">
+            <img src="{{url_for('static', filename='imgs/rectangle-icon.png')}}">
+          </div>
+          <div id="polygon-icon" data-mode="Polygon" class="drawing-button">
+            <img src="{{url_for('static', filename='imgs/Maps-Polygon-icon.png')}}">
+          </div>
+        </div>
+        <div id="clear-search-buttons">
+          <button type="submit" class="btn btn-primary btn-sm"  id="search-button">Search</button>
+          <button type="button" class="btn btn-primary btn-sm"  id="clear-polygon">Clear</button>
+        </div> 
+      </div>
+    </div>
 
-      <tr>
-        <th style="width:30em;">Dataset Title/Abstract/Map</th>
-        <th style="width:7em;">NSF Award(s)</th>
-        <th style="width:8em;">Date Created</th>
-        <th style="width:10em;">PIs / Scientists</th>
-        <th style="width:30em;">Project Links</th>
-        <th hidden>Abstract</th>
-        <th hidden>Geometry</th>
-      </tr>
 
-      {% for val in records %}
-      <tr class='w3-border'>
-        <td>
-          {% if val.title %}
-          <a href="{{url_for('landing_page', dataset_id=val.uid)}}">{{val.title}}</a>
-          {% else %}
-          None
-          {% endif %}
-          <br />
-          {% if val.description %}
-          <button type="button" class="in-table-button abstract-button" id="abstract_btn" onclick="showAbstract(this);"><b>Abstract</b></button>
-          <br />
-          {% endif %}
-          {% if val.bounds_geometry %}
-          <button type="button" class="in-table-button geometry-button" id="geom_btn" onclick="showOnMap(this);"><b>Show on Map</b></button>
-          {% endif %}</td>
-        {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
-        <td>
-          {% for a in val.awards.split('; ') %}
-          {% set award = a.split(' ')[0] %}
-          {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
-          <a target='_blank' href='{{award_url}}'>{{award}}</a><br />
-          {% endfor %}
-        </td>
-        {% else %}
-        <td>None</td>
-        {% endif %}
-        <td>{{val.date_created}}</td>
-        <td>{{val.persons}}</td>
 
-        <td>
-            {% if not val.projects or val.projects|length == 0 %}
-            No project link provided
-            {% else %}
-              {% for p in val['projects'] %}
-                {% if p['url'] == '' %}
-                  No project link provided
-                {% elif p['title'] == '' %}
-                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Access to project</a><br />
-                {% else %}
-                  <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br />
-                {% endif %}
+
+    <div>
+      <h5> To sort the table of search results, click the header of the column you wish to search by. To sort by multiple columns, hold down the shift key whilst selecting the sort columns in order.</h5>
+    </div>
+
+    <div id='dif-browser-table'>
+      <table id="search_table">
+        <thead>
+          <tr>
+            <th style="width:30em;">Dataset Title/Abstract/Map</th>
+            <th style="width:7em;">NSF Award(s)</th>
+            <th style="width:8em;">Date Created</th>
+            <th style="width:10em;">PIs / Scientists</th>
+            <th style="width:30em;">Project Links</th>
+            <th hidden>Abstract</th>
+            <th hidden>Bounds Geometry</th>
+            <th hidden>Geometry</th>
+            <th hidden>Selected</th>
+            <th hidden>Visible</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for val in records %}
+          <tr class='w3-border' id='row_{{val.uid}}'>
+            <td>
+              {% if val.title %}
+              <a href="{{url_for('landing_page', dataset_id=val.uid)}}">{{val.title}}</a>
+              {% else %}
+              None
+              {% endif %}
+              <br />
+              {% if val.description %}
+              <button type="button" class="in-table-button abstract-button" id="abstract_btn" onclick="showAbstract(this);"><b>Abstract</b></button>
+              <br />
+              {% endif %}
+              {% if val.bounds_geometry %}
+              <button type="button" class="in-table-button geometry-button" id="geom_btn" onclick="showOnMap(this);"><b>Show on Map</b></button>
+              {% endif %}</td>
+            {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
+            <td>
+              {% for a in val.awards.split('; ') %}
+              {% set award = a.split(' ')[0] %}
+              {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
+              <a target='_blank' href='{{award_url}}'>{{award}}</a><br />
               {% endfor %}
+            </td>
+            {% else %}
+            <td>None</td>
             {% endif %}
-        </td>
+            <td>{{val.date_created}}</td>
+            <td>{{val.persons}}</td>
 
-        <td hidden>{{val['description']}}</td>
-        <td hidden>{{val['bounds_geometry'] |map('string')|list|tojson}}</td>
-      </tr>
-      {% endfor %}
+            <td>
+                {% if not val.projects or val.projects|length == 0 %}
+                No project link provided
+                {% else %}
+                  {% for p in val['projects'] %}
+                    {% if p['url'] == '' %}
+                      No project link provided
+                    {% elif p['title'] == '' %}
+                      <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">Access to project</a><br />
+                    {% else %}
+                      <a target='_blank' href="{{url_for('project_landing_page', project_id=p.proj_uid)}}">{{p.title}}</a><br />
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+            </td>
 
-    </table>
-  </div>
-  {% else %}
-  <td colspan="4"><br /><br /><i>No records found, please try again.</i></td>
-  {% endif %}
+            <td hidden>{{val['description']}}</td>
+            <td hidden>{{val['bounds_geometry'] |map('string')|list|tojson}}</td>
+            <td hidden>{{val['geometry'] |map('string')|list|tojson}}</td>
+            <td hidden>false</td>
+            <td hidden>false</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <td colspan="4"><br /><br /><i>No records found, please try again.</i></td>
+    {% endif %}
+
+  </form>
 </div>
 </div>
 

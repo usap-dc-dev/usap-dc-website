@@ -12,7 +12,7 @@ import json
 import copy
 from flask import url_for
 import usap
-from lib.curatorFunctions import makeBoundsGeom, updateSpatialMap, checkAltIds, generate_ref_uid
+from lib.curatorFunctions import makeBoundsGeom, makeCentroidGeom, updateSpatialMap, checkAltIds, generate_ref_uid
 
 config = json.loads(open('config.json', 'r').read())
 dc_config = json.loads(open('inc/datacite.json', 'r').read())
@@ -253,10 +253,8 @@ def make_sql(data, id):
         east = float(data["geo_e"])
         south = float(data["geo_s"])
         north = float(data["geo_n"])
-        mid_point_lat = (south - north) / 2 + north
-        mid_point_long = (east - west) / 2 + west
 
-        geometry = "ST_GeomFromText('POINT(%s %s)', 4326)" % (mid_point_long, mid_point_lat)
+        geometry = "ST_GeomFromText('%s', 4326)" % makeCentroidGeom(north, south, east, west, data["cross_dateline"])
         bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
 
         sql_out += "\n--NOTE: need to update geometry; need to add mid x and y\n"

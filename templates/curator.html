@@ -188,9 +188,9 @@
               <tbody>
                 <tr>
                   <td align="center">
-                    &nbsp;N: <input type="text" name="geo_n" id="geo_n" size="5" value="{{coords.get('geo_n','')}}"> <br>
-                    W: <input type="text" name="geo_w" id="geo_w" size="6" value="{{coords.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="geo_e" id="geo_e" size="6" value="{{coords.get('geo_e','')}}"> <br>
-                    S: <input type="text" name="geo_s" id="geo_s" size="5" value="{{coords.get('geo_s','')}}">
+                    &nbsp;N: <input type="number" name="geo_n" id="geo_n" class="coord-element" min="-90" max="90" value="{{coords.get('geo_n','')}}"> <br>
+                    W: <input type="number" name="geo_w" id="geo_w" class="coord-element" min="-180" max="180" value="{{coords.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="number" name="geo_e" id="geo_e" class="coord-element" min="-180" max="180" value="{{coords.get('geo_e','')}}"> <br>
+                    S: <input type="number" name="geo_s" id="geo_s" class="coord-element" min="-90" max="90" value="{{coords.get('geo_s','')}}">
                   </td>
                   <td>
                     <span style="margin: 20px">
@@ -350,9 +350,9 @@
               <tbody>
                 <tr>
                   <td align="center">
-                    &nbsp;N: <input type="text" name="proj_geo_n" id="proj_geo_n" size="5" value="{{coords.get('geo_n','')}}"> <br>
-                    W: <input type="text" name="proj_geo_w" id="proj_geo_w" size="6" value="{{coords.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="text" name="proj_geo_e" id="proj_geo_e" size="6" value="{{coords.get('geo_e','')}}"> <br>
-                    S: <input type="text" name="proj_geo_s" id="proj_geo_s" size="5" value="{{coords.get('geo_s','')}}">
+                    &nbsp;N: <input type="number" name="proj_geo_n" id="proj_geo_n" class="coord-element" min="-90" max="90" value="{{coords.get('geo_n','')}}"> <br>
+                    W: <input type="number" name="proj_geo_w" id="proj_geo_w" class="coord-element" min="-180" max="180" value="{{coords.get('geo_w','')}}"> &nbsp; &nbsp; &nbsp;&nbsp; E: <input type="number" name="proj_geo_e" id="proj_geo_e" class="coord-element" min="-180" max="180" value="{{coords.get('geo_e','')}}"> <br>
+                    S: <input type="number" name="proj_geo_s" id="proj_geo_s" class="coord-element" min="-90" max="90" value="{{coords.get('geo_s','')}}">
                   </td>
                   <td>
                     <span style="margin: 20px">

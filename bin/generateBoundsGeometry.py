@@ -2,7 +2,7 @@ import psycopg2
 import psycopg2.extras
 import json
 
-config = json.loads(open('config.json', 'r').read())
+config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 
 
 def connect_to_db():
@@ -102,14 +102,19 @@ def makeGeom(record):
 
 if __name__ == '__main__':
     conn, cur = connect_to_db()
-    query = "SELECT * FROM dataset_spatial_map"
+    query = "SELECT * FROM project_spatial_map where proj_uid = 'p0000386'"
     cur.execute(query)
     records = cur.fetchall()
     for record in records:
         geom = makeGeom(record)
-        update = "UPDATE dataset_spatial_map SET bounds_geometry = ST_GeomFromText('%s',4326) WHERE dataset_id='%s' AND gid=%s AND north='%s' AND south='%s' AND east='%s' AND west='%s';" \
-            % (geom, record['dataset_id'], record['gid'], record['north'], record['south'], record['east'], record['west'])
+        update = "UPDATE project_spatial_map SET bounds_geometry = ST_GeomFromText('%s',4326) WHERE proj_uid='%s' AND gid=%s AND north='%s' AND south='%s' AND east='%s' AND west='%s';" \
+            % (geom, record['proj_uid'], record['gid'], record['north'], record['south'], record['east'], record['west'])
         print(update)
         cur.execute(update)
         cur.execute("COMMIT;")
+
+    query = """REFRESH MATERIALIZED VIEW project_view; 
+        REFRESH MATERIALIZED VIEW dataset_view;
+        COMMIT;"""
+    cur.execute(query)
     print("DONE")

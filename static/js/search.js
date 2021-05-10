@@ -7,13 +7,31 @@ var awards = [];
 var repos = [];
 // var locations = [];
 var map;
+var search_table_dt;
+var date_col, vis_col, sel_col;
 
 $(document).ready(function() {
     $(document).ajaxStart(function () { $("html").addClass("wait"); });
     $(document).ajaxStop(function () { $("html").removeClass("wait"); });
     $('[data-toggle="popover"]').popover({html: true, delay: { "show": 0, "hide": 2000 }, trigger:"hover"});
 
+    // set up search table
+    var header = $('#search_table').find('th');
+    for (var i in header) {
+      if (header[i].tagName != "TH") continue;
+      var label = header[i].innerText;
+      if (label == "Date Created") date_col = i;
+      else if (label == "Selected") sel_col = i;
+      else if (label == "Visible") vis_col = i;
+    }
+    search_table_dt = $('#search_table').DataTable( {
+        "searching": false,
+        "paging": false,
+        "order": [[date_col, "desc"]]
+    });
+
     var search_params = JSON.parse($("#search_params").text());
+    search_results = JSON.parse($("#search_results").text());
 
     $('#dp_title').typeahead({autoSelect: false});
     $('#sci_program-input').typeahead({autoSelect: false});
@@ -22,6 +40,8 @@ $(document).ready(function() {
     $('#award-input').typeahead({autoSelect: false});
     $('#repo-input').typeahead({autoSelect: false});
     // $('#location-input').typeahead({autoSelect: false});
+
+    $('#spatial_bounds_interpolated').val(search_params.spatial_bounds_interpolated);
     
     $('#person, #parameter, #nsf_program, #award, #sci_program, #db_type, #repo, #location').change(function() {
         $('[data-toggle="tooltip"]').tooltip('hide');
@@ -57,6 +77,7 @@ $(document).ready(function() {
         // need to put in a delay so that some browsers (eg Firefox) can catch up with the focus
       
         window.setTimeout(function() {
+            $('.dropdown-menu').hide();
             var el = $(':focus');
             var newVal = el.val();
             switch (el.attr('id')) {
@@ -124,43 +145,66 @@ $(document).ready(function() {
             updateMenusWithSelected(selected, false);   
         }, 300);
     });
+    results_map = null;
+    
+    $('#data_link').on('submit', (function(){
+        getSpatialBoundsInterpolated();
+    }));
 
-
-    if ($(location).attr('pathname') == '/dataset_search') {
-        var mc = new MapClient();
-
-        $('#data_link').submit(function() {
-        var features = mc.vectorSrc.getFeatures();
+    function getSpatialBoundsInterpolated() {
+        var polygon_layer = getLayerByName(results_map, 'Polygon');
+        var features = polygon_layer.getSource().getFeatures();
         if (features.length > 0) {
-            var geom = mc.vectorSrc.getFeatures()[0].getGeometry();
+            var geom = features[0].getGeometry();
             var interpCoords = interpolateLineString(geom.getCoordinates()[0],10);
             var wkt = (new ol.format.WKT()).writeGeometry(new ol.geom.Polygon([interpCoords]));
-            $('input[name="spatial_bounds_interpolated"]').val(wkt);
+            $('#spatial_bounds_interpolated').val(wkt);
         } else {
-            $('input[name="spatial_bounds_interpolated"]').val('');
+            $('#spatial_bounds_interpolated').val('');
         }
-        });
-
-        $('#map-modal').on('shown.bs.modal', function() {
-        mc.map.updateSize();
-        });
     }
 
-  $('.close_abstract_btn').click(function() {
+  $('.close_abstract_btn').on('click', (function() {
     $("#abstract").hide();
-  });
+  }));
 
+  popup = new ol.Overlay.Popup({"panMapIfOutOfView":true});
   map = new MapClient2();
 
+  $('#geom_btn').on('click', (function() {
+    $("#results_map_div").toggle();
+    $(this).text(function(i, text) { 
+        if (results_map) {
+            text === "View results on map" ? highlightVisibleRows(results_map, true) : unsetVisibleRows();
+        }    
+        return text === "View results on map" ? "Hide map" : "View results on map";
+    })
+    if (!results_map) {
+        results_map = new MapClient('results_map');
+        //results_map move event handler
+        results_map.on('moveend', moveResultsMap);
+        //results_map click event handler
+        results_map.on('click', clickResultsMap);
+           
+        showResultsOnMap();
+    }
+  }));
 
-  $('.close_geom_btn').click(function() {
+
+  $('.close_geom_btn').on('click', (function() {
     $("#geometry").hide();
-  });
+  }));
   
 
+  $('.close_map_help_btn').on('click', (function() {
+    $("#map_help").hide();
+  }));
+
+  
   //Make the DIV element draggagle:
   dragElement(document.getElementById(("abstract")));
   dragElement(document.getElementById(("geometry")));
+  dragElement(document.getElementById(("map_help")));
 
   updateMenusWithSelected(search_params, false);
 
@@ -184,8 +228,14 @@ function showAbstract(el) {
     var type = row.children('td').eq(type_ind).text();
     $("#abstract_title").text(type +' Abstract');
     $("#abstract").css({top:y-400+"px", left:x+"px"}).show();   
-  }
+}
 
+
+function showMapHelp(el) {
+    var x = event.pageX;
+    var y = event.pageY;
+    $("#map_help").css({top:y-200+"px", left:x+"px"}).show();   
+}
 
 var styles = [
   new ol.style.Style({
@@ -199,7 +249,21 @@ var styles = [
   }),
   new ol.style.Style({
     image: new ol.style.Circle({
-      radius: 4,
+      radius: 5,
+      stroke: new ol.style.Stroke({
+        color: 'rgba(0, 0, 0, 1)',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 255, 0, 1)'
+      })
+    })
+  })
+];
+
+
+var results_styles = [
+    new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: 'rgba(255, 0, 0, 0.8)',
         width: 2
@@ -207,86 +271,344 @@ var styles = [
       fill: new ol.style.Fill({
         color: 'rgba(255, 0, 0, 0.3)'
       })
+    }),
+    new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 4,
+        stroke: new ol.style.Stroke({
+          color: 'rgba(0, 0, 0, 1)',
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 0, 0, 1)'
+        })
+      })
     })
-  })
-];
+  ];
 
 function showOnMap(el) {
-  var header = $(el).closest('table').find('th');
-  var geometry_ind, type_ind = 999;
-  for (var i in header) {
-    if (header[i].tagName != "TH") continue;
-    var label = header[i].innerText;
-    if (label == "Geometry") geometry_ind = i;
-    if (label == "Type") type_ind = i;
-  }
-  var row = $(el).closest('tr');
-  var geometry = row.children('td').eq(geometry_ind).text();
-  if (geometry[0] == '[') {
-      geometry = JSON.parse(geometry);
-  } else {
-      geometry = [geometry];
-  }   
-  plotGeometry(map, geometry, styles);
+    var header = $(el).closest('table').find('th');
+    var bounds_ind, geometry_ind, type_ind = 999;
+    for (var i in header) {
+        if (header[i].tagName != "TH") continue;
+        var label = header[i].innerText;
+        if (label == "Bounds Geometry") bounds_ind = i;
+        if (label == "Type") type_ind = i;
+        if (label == "Geometry") geometry_ind = i;
+    }
+    var row = $(el).closest('tr');
+    var geometry = row.children('td').eq(bounds_ind).text();
+    if (geometry[0] == '[') {
+        geometry = JSON.parse(geometry);
+    } else {
+        geometry = [geometry];
+    }   
+    plotGeometry(map, geometry, styles);
 
-  var x = event.pageX;
-  var y = event.pageY;
+    var x = event.pageX;
+    var y = event.pageY;
 
-  var type = row.find('td').eq(type_ind).text();
-  $("#geometry_title").text(type +' Spatial Bounds');
-  $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
+    var type = row.find('td').eq(type_ind).text();
+    $("#geometry_title").text(type +' Spatial Bounds');
+    $("#geometry").css({top:y-400+"px", left:x+"px"}).show();
 
+    // show on results map
+    removeLayerByName(results_map, 'Selected');
+    unsetSelectedRows();
+    popup.hide();
+
+    var centroid = row.children('td').eq(geometry_ind).text();
+    if (centroid[0] == '[') {
+        centroid = JSON.parse(centroid);
+    } else {
+        centroid = [centroid];
+    }   
+    setSelectedSymbol(results_map, centroid, geometry);
+    // highlight row in table
+    row.removeClass('visible-row').addClass('selected-row'); 
 }
 
-function MapClient2() {
-  proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
-  var projection = ol.proj.get('EPSG:3031');
-  projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
-  projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
-  var map = new ol.Map({ // set to GMRT SP bounds
-  target: 'show_on_map',
-    view: new ol.View({
-        center: [0,0],
-        zoom: 2,
-        projection: projection,
-        minZoom: 1,
-        maxZoom: 10
-    }),  
-  });
-
-  var api_url = 'https://api.usap-dc.org:8443/wfs?';
-  var gmrt = new ol.layer.Tile({
-    type: 'base',
-    title: "GMRT Synthesis",
-    source: new ol.source.TileWMS({
-        url: "https://www.gmrt.org/services/mapserver/wms_SP?request=GetCapabilities&service=WMS&version=1.3.0",
-        params: {
-        layers: 'South_Polar_Bathymetry'
+function showResultsOnMap() {
+    var results = [];
+    for (var res of search_results) {
+        if (res.geometry) {
+            let geom = {geometry: res.geometry, properties: {uid: res.uid, title: res.title, persons: res.persons, bounds_geometry: res.bounds_geometry, centroid_geometry:res.geometry}};
+            results.push(geom);
         }
-    })
-  });
-  map.addLayer(gmrt);
+    }
+    plotResults(results_map, results, results_styles, 'Results', true);
+}
 
-  var lima = new ol.layer.Tile({
-    title: "LIMA 240m",
-    visible: true,
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: "LIMA 240m",
-        transparent: true
+function showBoundaries() {
+    if($('#boundaries_cb').is(':checked')){
+        var geometry = [];
+        for (var res of search_results) {
+            if (res.bounds_geometry) geometry.push(res.bounds_geometry);
         }
-    })
-  });
-  map.addLayer(lima);
 
-  return map;
+        plotResults(results_map, geometry, results_styles, 'Boundaries', false);
+        $("#results_map").show();
+    } else {
+        removeLayerByName(results_map, 'Boundaries');
+    }
+}
+
+
+function MapClient2(target='show_on_map') {
+    proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
+    var projection = ol.proj.get('EPSG:3031');
+    projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
+    projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
+    var map = new ol.Map({ // set to GMRT SP bounds
+        target: target,
+        interactions: ol.interaction.defaults({mouseWheelZoom:false}),
+        view: new ol.View({
+            center: [0,0],
+            zoom: 2.1,
+            projection: projection,
+            minZoom: 1,
+            maxZoom: 10
+        }),  
+    });
+
+    var api_url = 'https://api.usap-dc.org:8443/wfs?';
+    var gmrt = new ol.layer.Tile({
+        // type: 'base',
+        title: "GMRT Synthesis",
+        source: new ol.source.TileWMS({
+            url: "https://www.gmrt.org/services/mapserver/wms_SP?request=GetCapabilities&service=WMS&version=1.3.0",
+            params: {
+            layers: 'South_Polar_Bathymetry'
+            }
+        })
+    });
+    map.addLayer(gmrt);
+
+    var lima = new ol.layer.Tile({
+        title: "LIMA 240m",
+        visible: true,
+        source: new ol.source.TileWMS({
+            url: api_url,
+            params: {
+            layers: "LIMA 240m",
+            transparent: true
+            }
+        })
+    });
+    map.addLayer(lima);
+
+    map.addOverlay(popup);
+
+    var mousePosition = new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(2),
+        projection: 'EPSG:4326',
+        target: document.getElementById('mouseposition'),
+        undefinedHTML: '&nbsp;'
+    });
+    map.addControl(mousePosition);
+
+    return map;
+}
+
+// change highlighted rows when map is moved or zoomed
+var moveResultsMap = function() {
+    $('html').addClass('wait');
+    // need timeout so that wait cursor is displayed
+    setTimeout(function() {
+        if ($('#results_map_div').is(":visible")) {
+            highlightVisibleRows(results_map, true);
+        }
+        $('html').removeClass('wait');
+    }, 1);
+}
+
+// select a feature on the map by clicking on it
+var clickResultsMap = function(evt) {
+    // check we are not drawing
+    if ($('#rect-icon').hasClass('draw-active') || $('#polygon-icon').hasClass('draw-active')) return;
+
+    $('html').addClass('wait');
+    // need timeout so that wait cursor is displayed
+    setTimeout(function() {
+        unsetSelectedRows();
+        removeLayerByName(results_map, 'Selected');
+        popup.hide();
+        var features = [];
+        var icecore_features = [];
+
+        if (evt.pixel) {
+            results_map.forEachFeatureAtPixel(evt.pixel, 
+                function(feature, layer) {
+                    if (layer && layer.getProperties()){
+
+                        if (layer.getProperties().title === 'Results') {
+                            features.push(feature);
+                        }  
+                        else if (layer.getProperties().title === 'Ice Cores - (NSF ice core facility)') {
+                            icecore_features.push(feature);
+                        }
+                    }
+                }, {"hitTolerance":1});
+        }
+  
+        if (icecore_features.length > 0) {
+            var msg = "<h6>Number of ice cores: " + icecore_features.length + "</h6>";
+            for (let feature of icecore_features) {
+                var props = feature.getProperties();
+                var fs_url = "https://icecores.org/inventory/"+props['Field Site'].replaceAll(' ', '-').toLowerCase();
+                // make pop up
+                msg += '<p style="font-size:0.8em;max-height:500px;"><b>Core Name:</b> ' + props['Core Name'];
+                msg += '<br><b>Field Site:</b><a href="' + fs_url + '" target="_blank"> ' + props['Field Site'] + '</b></a>';
+                msg += '<br><b>Years Drilled:</b> ' + props['Years Drilled'];
+                msg += '<br><b>Original PI:</b> ' + props['Original PI'];
+                msg += '<br><b>De-accessed</b> ' + props['De-accessed'];
+                msg += '<br>===========<br> </p>';
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+
+        }
+
+        if (features.length > 0) {
+
+            var msg = "<h6>Number of data sets: " + features.length + "</h6>";
+
+            for (let feature of features) {
+                var props = feature.getProperties();
+
+                // landing page
+                let lp_url = '';
+                if (props.uid.charAt(0) == 'p'){
+                    lp_url = Flask.url_for('project_landing_page', {project_id:props.uid});
+                }
+                else {
+                    lp_url = Flask.url_for('landing_page', {dataset_id:props.uid});
+                }
+
+                // highlight bounds geometry on map
+                setSelectedSymbol(results_map, props.centroid_geometry, props.bounds_geometry);
+
+                // select row in table
+                $('#row_'+props.uid).removeClass('visible-row').addClass('selected-row'); 
+
+                // make pop up
+                msg += '<p style="font-size:0.8em;max-height:500px;"><b>Title:</b> ' + props.title;
+                msg += '<br><b>Creator:</b> ' + props.persons;
+                msg += '<br><a href="' + lp_url + '"><b>More info</b></a>';
+                msg += '<br>===========<br> </p>';
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+    
+            // set the value of the selected column to 'true'.  Faster to do it this way than at the same time as
+            // setting the class above.
+            for (var row of search_table_dt.rows('.selected-row')[0]) {
+                search_table_dt.cell(row,sel_col).data('true');
+            }        
+        } 
+
+        // reorder the table with selected rows at the top, then visible rows
+        reorderTable();
+
+        $('html').removeClass('wait');
+    }, 1);
+}
+
+function getLayerByName(map, name) {
+    var layer;
+    map.getLayers().forEach(function(lyr) {
+        if (lyr.getProperties().title == name) {
+            layer = lyr;
+        }
+    });
+    return layer;
+}
+
+function highlightVisibleRows(map, reorder) {
+    // first unset the current visible rows, but don't reorder the table
+    unsetVisibleRows(false);
+
+    var extent = map.getView().calculateExtent(map.getSize());
+    var rl = getLayerByName(map, 'Results');
+    if (rl) {
+        // set class of row to visible-row, unless it has already been selected
+        rl.getSource().forEachFeatureInExtent(extent, function(feature){
+            var uid = feature.getProperties().uid;
+            if (!$('#row_'+uid).hasClass('selected-row')){
+                $('#row_'+uid).addClass('visible-row');
+            }
+        }); 
+
+        // set the value of the visible column to 'true'.  Faster to do it this way than at the same time as
+        // setting the class above.
+        for (var row of search_table_dt.rows('.visible-row')[0]) {
+            search_table_dt.cell(row,vis_col).data('true');
+        }
+        // reorder the table with selected rows at the top, then visible rows
+        if (reorder) reorderTable();
+    }
+}
+
+function unsetVisibleRows(reorder=true){
+    for (var row of search_table_dt.rows('.visible-row')[0]) {
+        search_table_dt.cell(row,vis_col).data('false');
+    }
+    $('tr').removeClass('visible-row'); 
+    // reorder the table by date
+    if (reorder) reorderTable();
+}
+
+function unsetSelectedRows(){
+    for (var row of search_table_dt.rows('.selected-row')[0]) {
+        $(search_table_dt.row(row).node()).removeClass('selected-row').addClass('visible-row');
+        search_table_dt.cell(row,sel_col).data('false');
+    }
+}
+
+function reorderTable(){
+    //re-order the table by selected, visible, date
+    search_table_dt.order([sel_col,'desc'], [vis_col,'desc'], [date_col,'desc']).draw();
+}
+
+// Add a feature to highlight selected Spot
+function setSelectedSymbol(map, centroid, bounds) {
+    if (!map) return;
+
+    if (!Array.isArray(bounds)) {
+        bounds = [bounds];
+    }
+    if (!Array.isArray(centroid)) {
+        centroid = [centroid];
+    }
+
+    geom = centroid.concat(bounds);
+
+    var format = new ol.format.WKT();
+    var selected = [];
+    for (let g of geom) {  
+        var feature = format.readFeature(g, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3031'
+        });
+        var geometry = feature.getGeometry();
+        selected.push(new ol.Feature({ geometry: geometry }));
+    }
+
+    var selectedHighlightSource = new ol.source.Vector({
+        features: selected
+    });
+
+    selectedHighlightLayer = new ol.layer.Vector({
+        title: 'Selected',
+        source: selectedHighlightSource,
+        style: styles
+    });
+    map.addLayer(selectedHighlightLayer);
 }
 
 function plotGeometry(map, geometry, styles) {
-
   //first remove previous geometries
-  removeLayerByName(map, "geometry");
+  removeLayerByName(map, "Geometry");
 
   var format = new ol.format.WKT();
 
@@ -303,9 +625,8 @@ function plotGeometry(map, geometry, styles) {
     var layer = new ol.layer.Vector({
         source: source,
         style: styles,
-        title: "geometry"
+        title: "Geometry"
     });
-
     map.addLayer(layer);
 
     var extent = map.getView().getProjection().getExtent();
@@ -318,21 +639,72 @@ function plotGeometry(map, geometry, styles) {
   }
 }
 
+function plotResults(this_map, results, styles, layer_name, remove_layers) {
+    //first remove previous geometries
+    if (remove_layers) {
+        removeLayerByName(this_map, 'Boundaries');
+        removeLayerByName(this_map, 'Results');
+    }
+  
+    var format = new ol.format.WKT();
+    var features = []
+
+    for (let result of results) {
+        let properties = {};
+        if (result.geometry && result.properties) {
+            properties = result.properties;
+            geom = result.geometry;
+        } else {
+            geom = result;
+        }
+        
+        if (!Array.isArray(geom)) {
+            geom = [geom]
+        }
+
+        for (let g of geom) {
+            // prevent NaNs
+            g = g.replaceAll('180 90', '180.0 89.999');
+    
+            var feature = format.readFeature(g, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3031'
+            });
+
+            feature.setProperties(properties);
+            features.push(feature);
+        }
+    }
+
+    var source = new ol.source.Vector({
+        features: features
+    });
+
+    var layer = new ol.layer.Vector({
+        source: source,
+        style: styles,
+        title: layer_name
+    });
+    this_map.addLayer(layer);
+  }
+
+
 /*
   A function to remove a layer using its name/title
 */
-function removeLayerByName(map, name) {
-  var layersToRemove = [];
-  map.getLayers().forEach(function (layer) {
-    if (layer.get('title') !== undefined && layer.get('title') === name) {
-        layersToRemove.push(layer);
-    }
-  });
+function removeLayerByName(this_map, name) {
+    if (!this_map) return;
+    var layersToRemove = [];
+    this_map.getLayers().forEach(function (layer) {
+        if (layer.get('title') !== undefined && layer.get('title') === name) {
+            layersToRemove.push(layer);
+        }
+    });
 
-  var len = layersToRemove.length;
-  for(var i = 0; i < len; i++) {
-      map.removeLayer(layersToRemove[i]);
-  }
+    var len = layersToRemove.length;
+    for(var i = 0; i < len; i++) {
+        this_map.removeLayer(layersToRemove[i]);
+    }
 }
 
 
@@ -399,6 +771,7 @@ function resetForm() {
     $("#free_text").val("");
     $("#dp_title").val("");
     $("#spatial_bounds").text("");
+    $("#spatial_bounds_interpolated").val("");
     $('#clear-polygon').click();
     $("#exclude").prop('checked', false);
     $("#search_btn").click();
@@ -488,16 +861,18 @@ function dragElement(elmnt) {
 
 
 
-function MapClient() {
+function MapClient(target='map') {
+
     proj4.defs('EPSG:3031', '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs');
     var projection = ol.proj.get('EPSG:3031');
     projection.setWorldExtent([-180.0000, -90.0000, 180.0000, -60.0000]);
     projection.setExtent([-8200000, -8200000, 8200000, 8200000]);
     this.map = new ol.Map({ // set to GMRT SP bounds
-    target: 'map',
+    target: target,
+    interactions: ol.interaction.defaults({mouseWheelZoom:false}),
     view: new ol.View({
         center: [0,0],
-        zoom: 2,
+        zoom: 2.1,
         projection: projection,
         minZoom: 1,
         maxZoom: 10
@@ -517,182 +892,218 @@ function MapClient() {
     })
     });
     this.map.addLayer(gmrt);
+    
+    var ibcso = new ol.layer.Tile({
+        type: 'base',
+        title: "IBCSO",
+        visible: false,
+        source: new ol.source.TileArcGISRest({
+            url:"https://gis.ngdc.noaa.gov/arcgis/rest/services/antarctic/antarctic_basemap/MapServer",
+            crossOrigin: 'anonymous',
+            params: {
+                transparent: true
+            }
+        })
+      });
+    this.map.addLayer(ibcso);
+
 
     var lima = new ol.layer.Tile({
-    // type: 'base',
     title: "LIMA 240m",
     visible: true,
     source: new ol.source.TileWMS({
         url: api_url,
         params: {
-        layers: "LIMA 240m",
-        transparent: true
+            layers: "LIMA 240m",
+            transparent: true
         }
     })
     });
     this.map.addLayer(lima);
 
-    var difAeronomyAndAstrophysics = new ol.layer.Tile({
-    title: "Antarctic Astrophysics and Geospace Sciences",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Astro-Geo',
-        transparent: true
-        }
-    })
+    
+    var rema = new ol.layer.Tile({
+        title: "REMA 8m",
+        visible: false,
+        source: new ol.source.TileArcGISRest({
+            url: 'https://elevation2.arcgis.com/arcgis/rest/services/Polar/AntarcticDEM/ImageServer',
+            params: {
+                transparent: true
+            }
+        })
     });
-    this.map.addLayer(difAeronomyAndAstrophysics);
-    
-    var difEarthSciences = new ol.layer.Tile({
-    title: "Antarctic Earth Sciences",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Earth',
-        transparent: true
-        }
-    })
+    this.map.addLayer(rema);
+
+    var gmrtmask = new ol.layer.Tile({
+        visible: false,
+        title: "GMRT Synthesis-Mask",
+        source: new ol.source.TileWMS({
+            url: "https://www.gmrt.org/services/mapserver/wms_SP_mask?request=GetCapabilities&service=WMS&version=1.3.0",
+            params: {
+            layers: 'South_Polar_Bathymetry'
+            }
+        })
+        });
+    this.map.addLayer(gmrtmask);
+
+    var tracks = new ol.layer.Tile({
+        title: "USAP R/V Cruises",
+        visible: false,
+        source: new ol.source.TileWMS({
+            url: "https://www.marine-geo.org/services/mapserver/wmscontrolpointsSP?",
+            params: {
+            layers: 'Tracks-Lines',
+            transparent: true
+            }
+        })
+        });
+    this.map.addLayer(tracks);
+
+
+    var arffsu_core = new ol.layer.Tile({
+        title: 'Former FSU sediment core map',
+        visible: false,
+        source: new ol.source.TileWMS({
+          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+        //   crossOrigin: 'anonymous',
+          projection: 'EPSG:3031',
+          params: {
+              layers: "ARFFSU"
+          }
+        })
     });
-    this.map.addLayer(difEarthSciences);
-    
-    var difGlaciology = new ol.layer.Tile({
-    title: "Antarctic Glaciology",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Glacier',
-        transparent: true
-        }
-    })
-    });           
-    this.map.addLayer(difGlaciology);
-    
-    var difOceanAndAtmosphericSciences = new ol.layer.Tile({
-    title: "Antarctic Ocean and Atmospheric Sciences",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Ocean-Atmosphere',
-        transparent: true
-        }
-    })
-    });                            
-    this.map.addLayer(difOceanAndAtmosphericSciences);
-    
-    var difOrganismsAndEcosystems = new ol.layer.Tile({
-    title: "Antarctic Organisms and Ecosystems",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Bio',
-        transparent: true
-        }
-    })
+    this.map.addLayer(arffsu_core);
+
+    var bpcrr_core = new ol.layer.Tile({
+        title: 'BPC Rock Repository - samples',
+        visible: false,
+        source: new ol.source.TileWMS({
+          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+        //   crossOrigin: 'anonymous',
+          projection: 'EPSG:3031',
+          params: {
+              layers: "BPCRR"
+          }
+        })
     });
-    this.map.addLayer(difOrganismsAndEcosystems);
-    
-    var difINT = new ol.layer.Tile({
-    title: "Antarctic Integrated System Science",
-    source: new ol.source.TileWMS({
-        url: api_url,
-        params: {
-        layers: 'Integrated',
-        transparent: true
-        }
-    })
+    this.map.addLayer(bpcrr_core);
+
+    var asdl = new ol.layer.Tile({
+        title: 'SDLS - seismic track lines',
+        visible: false,
+        source: new ol.source.TileWMS({
+          url: 'https://sdls.ogs.trieste.it/geoserver/ows?version=1.1.0',
+          crossOrigin: 'anonymous',
+          params: {
+              layers: "AllNavigations20201127"
+          }
+        })
     });
+    this.map.addLayer(asdl);
+
+    var ice_thickness = {
+        "source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIcesheetThickness_320",
+        "numLevels":2,
+        "title":"Antarctic Ice Sheet Thickness (British Antarctic Survey)"
+    };
+    displayXBMap(this.map, ice_thickness);
+
+    var ice_vel = {
+        "source":"https://d1ubeg96lo3skd.cloudfront.net/data/basemaps/images/antarctic/AntarcticIceVelocity_320",
+        "numLevels":4,
+        "title":"Antarctic Ice Sheet Velocity (Rignot et al, 2014)"
+    };
+    displayXBMap(this.map, ice_vel);
+
+    var bedrock = {
+        "source":"https://www.thwaites-explorer.org/data/BeneathAntarcticIcesheet/Bedmachine_bed_ETOPO1_clipped_600m_zoom8",
+        "mapMaxZoom":8,
+        "mapMaxResolution":150.00535457,
+        "tileWidth":256,
+        "tileHeight":256,
+        "extent":[-2719812.53530000, -2372227.21632370, 2939589.48209285, 2465145.45800000],
+        "title":"Bedrock Elevation Under the Antarctic Ice Sheet (Morlighem, M. 2019)"
+    };
+    displayTiled(this.map, bedrock);
+ 
+
+
+    var iceCoreSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function(){
+            $.get({
+                url: '/static/data/ice_cores.csv' ,
+                dataType: 'text'
+            }).done(function(response) {
+                var csvString = response;
+                csv2geojson.csv2geojson(csvString, function(err, data) {
+                    iceCoreSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+                });
+            });
+        }
+    });
+    var ice_cores =  new ol.layer.Vector({
+        visible: false,
+        source: iceCoreSource,
+        // style: styleFunction,
+        title: 'Ice Cores - (NSF ice core facility)',
+    });  
+    this.map.addLayer(ice_cores);
+
+    var vectorSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function(){
+            $.get({
+                url: 'https://www.thwaites-explorer.org/data/antarctic_coastS10RS/Antarctic_coastS10polyRS.geojson' ,
+                dataType: 'json'
+            }).done(function(data) {
+                vectorSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+            });
+        }
+    });
+    var coastline =  new ol.layer.Vector({
+        visible: true,
+        source: vectorSource,
+        style: styleFunctionOutline,
+        title: 'Antarctic Coast',
+    });  
+    this.map.addLayer(coastline)
+
+
+    var names = new ol.layer.Tile({
+        title: "Place Names",
+        visible: true,
+        source: new ol.source.TileArcGISRest({
+            url:"https://gis.ngdc.noaa.gov/arcgis/rest/services/antarctic/reference/MapServer",
+            params: {
+                transparent: true
+          }
+        })
+      });
+    this.map.addLayer(names);
 
     var mousePosition = new ol.control.MousePosition({
-        //coordinateFormat: ol.coordinate.createStringXY(2),
         projection: 'EPSG:4326',
         target: document.getElementById('mouse-position'),
         undefinedHTML: '&nbsp;',
-    coordinateFormat: function(pos) {
-        var [lon,lat] = pos;
-        lat = Number(lat).toFixed(2);
-        lon = Number(lon).toFixed(2);
-        return (lat + '&deg;, ') + (lon + '&deg; ');
-    }
+        coordinateFormat: function(pos) {
+            var [lon,lat] = pos;
+            lat = Number(lat).toFixed(2);
+            lon = Number(lon).toFixed(2);
+            return (lat + '&deg;, ') + (lon + '&deg; ');
+        }
     });
     this.map.addControl(mousePosition);
 
-    var popup = new ol.Overlay.Popup({"panMapIfOutOfView":false});
-    this.map.addOverlay(popup);
-    this.map.on('click', function(evt) {
-        var tolerance = [7, 7];
-        var x = evt.pixel[0];
-        var y = evt.pixel[1];
-        var min_px = [x - tolerance[0], y + tolerance[1]];
-        var max_px = [x + tolerance[0], y - tolerance[1]];
-        var min_coord = this.getCoordinateFromPixel(min_px);
-        var max_coord = this.getCoordinateFromPixel(max_px);
-        var bbox = min_coord[0]+','+min_coord[1]+','+max_coord[0]+','+max_coord[1];
-        
-        var layers = '';
-        if (difAeronomyAndAstrophysics.getVisible())
-            layers += 'Astro-Geo';
-        if (difEarthSciences.getVisible())
-            layers += ',Earth';
-        if (difGlaciology.getVisible())
-            layers += ',Glacier';
-        if (difOceanAndAtmosphericSciences.getVisible())
-            layers += ',Ocean-Atmosphere';
-        if (difOrganismsAndEcosystems.getVisible())
-            layers += ',Bio';
-        if (difINT.getVisible())
-            layers += ',Integrated';
-        if (layers.charAt(0) == ',') 
-            layers = layers.substring(1);
-        if (layers.length > 0) {
-            $.ajax({
-                type: "GET",
-                url: window.location.protocol + '//' + window.location.hostname + '/getfeatureinfo?', //"http://www.usap-data.org/usap_layers.php"
-                data: {
-                "query_layers" : layers,
-                "layers": layers,
-                "bbox" : bbox,
-                "request": "GetFeatureInfo",
-                "info_format" : "text/html",
-                "service": "WMS",
-                "version": "1.1.0",
-                "width": 6,
-                "height": 6,
-                "X": 3,
-                "Y": 3,
-                "FEATURE_COUNT": 50,
-                "SRS": "EPSG:3031"
-                },
-                success: function(msg){
-                if (msg) {
-                    // count how many datasets were returned
-                    var count = (msg.match(/===========/g) || []).length;
-                    msg = "<h6>Number of data sets: " + count + "</h6>" + msg;
-                    var $msg = $('<div style="font-size:0.8em;max-height:100px;">'+msg+'</div>');
-                    $msg.find('img').each(function() {
-                    if (/arrow_show/.test($(this).attr('src'))) {
-                        $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_show.gif');
-                    } else if (/arrow_hide/.test($(this).attr('src'))) {
-                        $(this).attr('src', 'http://www.marine-geo.org/imgs/arrow_hide.gif');
-                    }
-                    });
-                    popup.show(evt.coordinate, $msg.prop('outerHTML'));
-                    $('.turndown').click(function(){
-                    var isrc = 'http://www.marine-geo.org/imgs/arrow_hide.gif';
-                    if ($(this).find('img').attr('src')=='http://www.marine-geo.org/imgs/arrow_hide.gif')
-                        isrc = 'http://www.marine-geo.org/imgs/arrow_show.gif';
-                    $(this).find('img').attr('src',isrc);
-                    $(this).parent().find('.tcontent').toggle();
-                    //map.popups[0].updateSize();
-                    });
-                }
-            }
-        });
-    }
+    var layerSwitcher = new ol.control.LayerSwitcher({
+        tipLabel: 'Légende'
     });
+    this.map.addControl(layerSwitcher);
+
+    this.map.addOverlay(popup);
 
     this.vectorSrc = new ol.source.Vector();
-    var vectorLayer = new ol.layer.Vector({ source: this.vectorSrc });
+    var vectorLayer = new ol.layer.Vector({ source: this.vectorSrc, title: 'Polygon' });
     this.map.addLayer(vectorLayer);
     var self = this;
 
@@ -715,7 +1126,7 @@ function MapClient() {
 
     $('#spatial_bounds').on('change', function() {
       try {
-          var geom = (new ol.format.WKT()).readGeometry($('spatial_bounds').val());
+          var geom = (new ol.format.WKT()).readGeometry($('#spatial_bounds').val());
           geom.transform('EPSG:4326', 'EPSG:3031');
           self.vectorSrc.clear();
           self.vectorSrc.addFeature(new ol.Feature(geom));
@@ -729,6 +1140,7 @@ function MapClient() {
       self.vectorSrc.clear();
     });
 
+    return this.map;
 }
 
 
@@ -806,7 +1218,7 @@ MapClient.prototype.setDrawingTool = function() {
         var coords = geom.getCoordinates();
         coords = coords.map(function(ring) { return ring.map(function(xy) { return [Number(xy[0]).toFixed(3), Number(xy[1]).toFixed(3)]; }); });
         geom.setCoordinates(coords);
-        $('[name="spatial_bounds"]').val((new ol.format.WKT()).writeGeometry(geom));
+        $('#spatial_bounds').val((new ol.format.WKT()).writeGeometry(geom));
     });
     }
 };
@@ -819,4 +1231,3 @@ MapClient.prototype.setDrawMode = function(str) {
     $('#drawing-buttons .drawing-button').removeClass('draw-active');
     $('#drawing-buttons .drawing-button[data-mode="' + str + '"]').addClass('draw-active');
 };
-

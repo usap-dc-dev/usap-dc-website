@@ -115,6 +115,21 @@
   z-index: 1000;
 }
 
+#map_help {
+  background: #fff;
+  border: 2px solid #000;
+  position: absolute;
+  font-family: arial;
+  height: 700px;
+  padding: 10px;
+  width: 1000px;
+  z-index: 1000;
+  overflow: hidden;  
+  resize: both;
+  min-height:24em;
+  min-width:22em;
+}
+
 .close_btn {
     float:right;
     padding:2px 5px;
@@ -401,8 +416,8 @@ div.autocomplete ul li.selected { background-color: #ffb;}
     height: 2.3em;
     background: white;
     position:absolute;
-    top: 1em;
-    left: 40%;
+    right: 25%;
+    margin: 10px;
     z-index: 99;
 }
 
@@ -465,12 +480,15 @@ div.autocomplete ul li.selected { background-color: #ffb;}
  border-collapse: collapse !important;
 }
 
+.nested_table tr {
+  background-color: transparent !important;
+}
 .nested_table tr:nth-child(even) {
   background-color: inherit !important;
 }
 
 .nested_table td{
-  border:1px solid lightgrey !important;
+  border:1px solid rgb(163, 161, 161) !important;
 }
 
 .nested_table th{
@@ -481,6 +499,61 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 .square {
   height: 1.2em;
   width: 1.2em;
-  background-color: red;
+  background-color: blue;
   display: inline-block;
+}
+
+#results_map_div {
+  margin: auto;
+  width: 80%;
+  border: 3px solid black;
+  border-radius: 2px;
+}
+
+#boundaries {
+  position: absolute;
+  color: black;
+  background: rgba(200,200,200,0.8);
+  border-radius: 10px;
+  left: 46%;
+  z-index: 99;
+  padding:5px 10px;
+  margin: 10px;
+}
+
+#geom_btn {
+  margin: 10px 0;
+}
+
+.selected-row:nth-child(odd) {
+  background-color: rgba(255, 0, 0, .15) !important;;
+}
+
+.selected-row:nth-child(even) {
+  background-color: rgba(150, 10, 10, 0.15) !important;;
+}
+
+.visible-row:nth-child(odd) {
+  background-color: rgba(0, 0, 255, .15) !important;
+}
+
+.visible-row:nth-child(even) {
+  background-color: rgba(10, 10, 150, 0.15) !important;
+}
+
+#clear-search-buttons {
+  position: absolute;
+  /* top: 1em; */
+  right: 14%;
+  z-index: 99;
+  margin:10px;
+}
+
+.ol-mouse-position {
+  position: absolute;
+  left: 3.6em;
+}
+
+.ol-popup {
+  z-index: 100;
 }
