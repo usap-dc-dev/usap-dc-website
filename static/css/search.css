@@ -499,7 +499,7 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 .square {
   height: 1.2em;
   width: 1.2em;
-  background-color: red;
+  background-color: blue;
   display: inline-block;
 }
 
