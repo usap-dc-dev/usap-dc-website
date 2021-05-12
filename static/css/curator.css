@@ -210,3 +210,23 @@ input[type=number] {
 .coord-element {
   width: 50px;
 }
+
+.award-div {
+    margin: 20px;
+    width: 700px;
+    padding: 20px;
+}
+
+.award-summary {
+    margin: 7px 10px 15px 30px;
+}
+
+.award-title {
+    margin-top: 0;
+}
+
+.award-email-div {
+    border: 1px solid black;
+    margin: 10px;
+    padding: 7px;
+}

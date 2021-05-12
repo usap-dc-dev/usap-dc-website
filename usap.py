@@ -64,6 +64,8 @@ app.config.update(
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     GMAIL_PICKLE="inc/token.pickle",
+    AWARD_WELCOME_EMAIL="static/letters/USAP_DCactiveawardletter.html",
+    AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
     DEBUG=True
 )
 
@@ -1989,6 +1991,8 @@ def logout():
         del session['project_metadata']
     if request.args.get('type') == 'curator':
         return redirect(url_for('curator'))
+    if request.args.get('type') == 'award_letters':
+        return redirect(url_for('award_letters'))
     return redirect(url_for('home'))
 
 
@@ -4734,6 +4738,71 @@ def dashboard():
             a['date_created'] = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
 
     return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
+
+
+@app.route('/award_letters', methods=['GET', 'POST'])
+def award_letters():
+    template_dict = {}
+    template_dict['message'] = []
+    template_dict['welcome_awards'] = []
+    template_dict['final_awards'] = []
+    template_dict['tab'] = 'welcome'
+    (conn, cur) = connect_to_db(curator=True)
+
+    # login
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+    else:
+        template_dict['need_login'] = False
+        submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+
+
+    if request.method == 'POST':
+        print(request.form)
+        template_dict['tab'] = request.form.get('tab')
+
+
+    # find awards that need the Welcome Letter
+    query = """SELECT * FROM award 
+                LEFT JOIN project_award_map pam ON pam.award_id=award.award
+                WHERE expiry > NOW() 
+                AND project_needed
+                AND proj_uid IS NULL
+                AND NOT letter_welcome"""
+    cur.execute(query)
+    awards = cur.fetchall()
+    for award in awards:
+        with open(app.config['AWARD_WELCOME_EMAIL']) as infile:
+            email = infile.read()
+            email = email.replace('***Program Officer***', '%s &lt%s&gt' % (award['po_name'], award['po_email'])) \
+                         .replace('***DATE***', datetime.now().strftime('%Y-%m-%d')) \
+                         .replace('***PI LAST NAME***', award['name'].split(',')[0]) \
+                         .replace('***NUMBER - TITLE***', '%s - %s' % (award['award'], award['title']))
+            award['email'] = email
+    template_dict['welcome_awards'] = awards
+
+    # find awards that need the Final Letter
+    three_months = (datetime.now() + timedelta(3*31)).strftime('%m/%d/%Y')
+    query = """SELECT * FROM award 
+                LEFT JOIN project_award_map pam ON pam.award_id=award.award
+                WHERE expiry > NOW() 
+                AND expiry < '%s'
+                AND project_needed
+                AND NOT letter_final_year""" %three_months
+    cur.execute(query)
+
+    awards = cur.fetchall()
+    for award in awards:
+        with open(app.config['AWARD_FINAL_EMAIL']) as infile:
+            email = infile.read()
+            email = email.replace('***Program Officer***', '%s &lt%s&gt' % (award['po_name'], award['po_email'])) \
+                         .replace('***DATE***', datetime.now().strftime('%Y-%m-%d')) \
+                         .replace('***PI LAST NAME***', award['name'].split(',')[0]) \
+                         .replace('***NUMBER - TITLE***', '%s - %s' % (award['award'], award['title']))
+            award['email'] = email
+    template_dict['final_awards'] = awards
+    return render_template('award_letters.html', **template_dict)
 
 
 @app.errorhandler(500)

@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+{% set cur = "curator" %}
+{% block body %}
+
+    <div id="comments" hidden>
+    <div id="comments_header" class="window-header">
+        <span id="comments_title"></span><span class='close_comments_btn close_btn'>X</span>
+    </div>
+    <div id="comments_body">
+        <p id="comments_text"></p>
+    </div>
+    </div>
+
+    <div class="border">
+    <div class="content">
+
+    <h2 style="float:left;">Curator Page</h2>
+
+    <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('curator_help')}}" class="btn btn-primary">Help</a>
+    <div style="clear:both"></div>
+
+    {% for msg in message %}
+        <div class="alert alert-success" style="width:800;">
+            <h4>{{msg}}</h4>
+        </div>
+    {% endfor %}
+    {% if landing_page %}
+        <div class="alert alert-success" style="width:800;">
+            <h4><a target="_blank" href="{{landing_page}}">Click here to view landing page</a></h4>
+        </div>
+    {% endif %}
+    {% if error %}
+        <div class="alert alert-danger" style="width:800;">
+            <h4>{{error}}</h4>
+        </div>
+    {% endif %}
+
+    {% if need_login %}
+        
+        <div class="container">
+            
+        <h4>Curator Login </h4>
+
+        <div id="container">
+            <h5>
+            Sign in using an authorized curator account
+            </h5>
+            <div id="buttons">
+            <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+                Google
+            </a>
+            <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+                <span style="color:gray; font-weight:bolder">ORC</span>iD
+            </a>
+            </div>
+        </div>
+
+        
+    {% else %}
+        <a href="{{url_for('logout', type='award_letters')}}" style="float:right">Log out</a>
+
+
+        <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
+        <h3>Send Award Letters</h3>
+
+
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'welcomeTab')" {% if tab == 'welcome' %} id="defaultOpen" {% endif %}>Welcome Letter</button>
+            <button class="tablinks" onclick="openTab(event, 'finalTab')" {% if tab == 'final' %} id="defaultOpen" {% endif %} >Final Letter</button>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            <!-- <input type="hidden" id="email_text" name="email_text">  -->
+            <input type="hidden" name="tab" id="tab" value={{tab}}>
+
+            <div id="welcomeTab", class="tabcontent active">
+                
+                <h4>Awards that need Welcome Letters</h4>
+                <i>
+                    <font size=2 color=gray>{{welcome_awards|length}} award(s) found </font>
+                </i>
+                {% for award in welcome_awards %}
+                    <div class='award-div w3-card-2'>
+                        <b class='award-title'>{{award.award}}: </b> {{award.title}}<br>
+                        <div class='award-summary'>
+                            <i>PI:</i> {{award.name}}<br>
+                            <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
+                            <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
+
+                            <button class="btn  btn-link" type="button" data-toggle="collapse" data-target="#welcome-abstract-div-{{award.award}}" style="padding:0;">
+                                <span>Abstract</span><span class="caret"></span>
+                            </button>
+                            <div id="welcome-abstract-div-{{award.award}}" class="collapse">
+                                {{award.sum}}
+                            </div>
+
+                        </div>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#welcome-email-div-{{award.award}}"">View Email</button>
+                        <button class="btn btn-primary" type="submit" name="proj_not_needed_{{award.award}}" onclick="waitCursor()">Project Not Needed</button>
+                        <button class="btn btn-primary" type="submit" name="send_welcome_email_{{award.award}}" value="welcome" onclick="copyContent({{award.award}}, 'welcome')">Send Email</button>
+
+                        <div id="welcome-email-div-{{award.award}}" class="collapse">
+                            <div contenteditable="true" class='award-email-div' id='welcome_email_html_{{award.award}}'>{{award.email|safe}}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div id="finalTab", class="tabcontent">
+
+                <h4>Awards that need Final Letters</h4>
+                <i>
+                    <font size=2 color=gray>{{final_awards|length}} award(s) found </font>
+                </i>
+                {% for award in final_awards %}
+                    <div class='award-div w3-card-2'>
+                        <b class='award-title'>{{award.award}}: </b> {{award.title}}<br>
+                        <div class='award-summary'>
+                            <i>PI:</i> {{award.name}}<br>
+                            <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
+                            <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
+
+                            <button class="btn  btn-link" type="button" data-toggle="collapse" data-target="#final-abstract-div-{{award.award}}" style="padding:0;">
+                                <span>Abstract</span><span class="caret"></span>
+                            </button>
+                            <div id="final-abstract-div-{{award.award}}" class="collapse">
+                                {{award.sum}}
+                            </div>
+
+                        </div>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#final-email-div-{{award.award}}"">View Email</button>
+                        <!-- <button class="btn btn-primary" type="button" onclick="waitCursor()">Project Not Needed</button> -->
+                        <button class="btn btn-primary" type="submit" name="send_final_email" value="final">Send Email</button>
+
+                        <div id="final-email-div-{{award.award}}" class="collapse">
+                            <div contenteditable="true" class='award-email-div' id='final_email_html_{{award.award}}' onclick="copyContent({{award.award}}, 'final');">{{award.email|safe}}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </form>
+    {% endif %}
+
+
+    <script>
+        $(document).ready(function(){
+            // Get the element with id="defaultOpen" and click on it
+            if (document.getElementById("defaultOpen")) document.getElementById("defaultOpen").click();
+        })
+
+        function openTab(evt, tabName) {
+            // Declare all variables
+            var i, tabcontent, tablinks;
+        
+            // Get all elements with class="tabcontent" and hide them
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+        
+            // Get all elements with class="tablinks" and remove the class "active"
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+        
+            // Show the current tab, and add an "active" class to the button that opened the tab
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            document.getElementById("tab").value=tabName.replace('Tab','')
+          }
+
+        function copyContent (award_id, email_type) {
+            document.getElementById("email_text").value =  
+                document.getElementById(email_type+"_email_html_"+award_id).innerHTML;
+        }
+    </script>
+{% endblock body %}
