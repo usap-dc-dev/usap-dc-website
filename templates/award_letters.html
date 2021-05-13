@@ -64,15 +64,17 @@
         <h3>Send Award Letters</h3>
 
 
-
-        <div class="tab">
-            <button class="tablinks active" onclick="openTab(event, 'welcomeTab')" {% if tab == 'welcome' %} id="defaultOpen" {% endif %}>Welcome Letter</button>
-            <button class="tablinks" onclick="openTab(event, 'finalTab')" {% if tab == 'final' %} id="defaultOpen" {% endif %} >Final Letter</button>
-        </div>
-
         <form method="post" enctype="multipart/form-data">
-            <!-- <input type="hidden" id="email_text" name="email_text">  -->
+            <input type="hidden" id="email_text" name="email_text"> 
             <input type="hidden" name="tab" id="tab" value={{tab}}>
+            <input type="hidden" id="submit_type" name="submit_type">
+            <input type="checkbox" id="animate" name="animate" {% if animate %} checked {% endif %} style="margin:10px;">
+            <label for="animate">Display send animations</label>
+
+            <div class="tab">
+                <button class="tablinks active" type="button" onclick="openTab(event, 'welcomeTab')" {% if tab == 'welcome' %} id="defaultOpen" {% endif %}>Welcome Letter</button>
+                <button class="tablinks" type="button" onclick="openTab(event, 'finalTab')" {% if tab == 'final' %} id="defaultOpen" {% endif %} >Final Letter</button>
+            </div>
 
             <div id="welcomeTab", class="tabcontent active">
                 
@@ -81,31 +83,64 @@
                     <font size=2 color=gray>{{welcome_awards|length}} award(s) found </font>
                 </i>
                 {% for award in welcome_awards %}
-                    <div class='award-div w3-card-2'>
-                        <b class='award-title'>{{award.award}}: </b> {{award.title}}<br>
-                        <div class='award-summary'>
-                            <i>PI:</i> {{award.name}}<br>
-                            <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
-                            <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
+                    {% set id = award.award %}
+                    <table><tr>
+                        <td>
+                            <div class='award-div w3-card-2 front plate' id='welcome_plate_{{id}}'>
+                                <b class='award-title'>{{id}}: </b> {{award.title}}<br>
+                                <div class='award-summary'>
+                                    <i>PI:</i> {{award.name}}<br>
+                                    <i>PO:</i> {{award.po_name}}<br>
+                                    <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
+                                    <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
 
-                            <button class="btn  btn-link" type="button" data-toggle="collapse" data-target="#welcome-abstract-div-{{award.award}}" style="padding:0;">
-                                <span>Abstract</span><span class="caret"></span>
-                            </button>
-                            <div id="welcome-abstract-div-{{award.award}}" class="collapse">
-                                {{award.sum}}
+                                    <button class="btn  btn-link" type="button" data-toggle="collapse" data-target="#welcome_abstract_div_{{id}}" style="padding:0;">
+                                        <span>Abstract</span><span class="caret"></span>
+                                    </button>
+                                    <div id="welcome_abstract_div_{{id}}" class="collapse" style="text-align: left;">
+                                        {{award.sum|safe}}
+                                    </div>
+
+                                </div>
+                                <button class="btn btn-primary" type="button" onclick="$('#welcome_email_div_{{id}}').toggle(1000);">View Email</button>
+                                <button class="btn btn-primary" type="submit" value="proj_not_needed_{{id}}">Project Not Needed</button>
+                                <button class="btn btn-primary" type="submit" value="send_welcome_email_{{id}}" onclick="copyContent({{id}}, 'welcome')">Send Email</button>
                             </div>
 
-                        </div>
-                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#welcome-email-div-{{award.award}}"">View Email</button>
-                        <button class="btn btn-primary" type="submit" name="proj_not_needed_{{award.award}}" onclick="waitCursor()">Project Not Needed</button>
-                        <button class="btn btn-primary" type="submit" name="send_welcome_email_{{award.award}}" value="welcome" onclick="copyContent({{award.award}}, 'welcome')">Send Email</button>
-
-                        <div id="welcome-email-div-{{award.award}}" class="collapse">
-                            <div contenteditable="true" class='award-email-div' id='welcome_email_html_{{award.award}}'>{{award.email|safe}}</div>
-                        </div>
-                    </div>
+                            <div id="welcome_plane_container_{{id}}" class="plane_container beginning">
+                                <div id="welcome_left-wing_{{id}}" class="left-wing">
+                                    <div class="top_left curvable"> </div>
+                                    <div class="bottom_left curvable"> </div>
+                                    <div class="wing wing1"></div>
+                                    <div class="wing wing2"></div>
+                                </div>
+                    
+                                <div id="welcome_right-wing_{{id}}" class="right-wing">
+                                    <div class="top_right curvable"> </div>
+                                    <div class="bottom_right curvable"> </div>
+                                    <div class="wing wing3"></div>
+                                    <div class="wing wing4"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div id="welcome_email_div_{{id}}" class="award-email-div">
+                                <b>Recipients</b><br/>
+                                <textarea name="welcome_email_recipients_{{id}}" cols="80" rows="3">{{award.email_recipients}}</textarea>
+                                <br/><br/>
+                                <b>Subject</b><br/>
+                                <textarea name="welcome_email_subject_{{id}}" cols="80" rows="1">{{award.email_subject}}</textarea>  
+                                <br/><br/>
+                                <b>Text</b><br/>
+                                <div contenteditable="true" id='welcome_email_html_{{id}}' class="email-text">{{award.email_text|safe}}</div>
+                            </div>
+                        </td>
+                    </tr></table>
                 {% endfor %}
             </div>
+
+
+
 
             <div id="finalTab", class="tabcontent">
 
@@ -114,29 +149,59 @@
                     <font size=2 color=gray>{{final_awards|length}} award(s) found </font>
                 </i>
                 {% for award in final_awards %}
-                    <div class='award-div w3-card-2'>
-                        <b class='award-title'>{{award.award}}: </b> {{award.title}}<br>
-                        <div class='award-summary'>
-                            <i>PI:</i> {{award.name}}<br>
-                            <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
-                            <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
+                    {% set id = award.award %}
+                    <table><tr>
+                        <td>
+                            <div class='award-div w3-card-2 front plate' id='final_plate_{{id}}'>
+                                <b class='award-title'>{{id}}: </b> {{award.title}}<br>
+                                <div class='award-summary'>
+                                    <i>PI:</i> {{award.name}}<br>
+                                    <i>PO:</i> {{award.po_name}}<br>
+                                    <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
+                                    <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
 
-                            <button class="btn  btn-link" type="button" data-toggle="collapse" data-target="#final-abstract-div-{{award.award}}" style="padding:0;">
-                                <span>Abstract</span><span class="caret"></span>
-                            </button>
-                            <div id="final-abstract-div-{{award.award}}" class="collapse">
-                                {{award.sum}}
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#final_abstract_div_{{id}}" style="padding:0;">
+                                        <span>Abstract</span><span class="caret"></span>
+                                    </button>
+                                    <div id="final_abstract_div_{{id}}" class="collapse" style="text-align: left;">
+                                        {{award.sum|safe}}
+                                    </div>
+
+                                </div>
+                                <button class="btn btn-primary" type="button" onclick="$('#final_email_div_{{id}}').toggle(1000);">View Email</button>
+                                <!-- <button class="btn btn-primary" type="submit" value="proj_not_needed_{{id}}">Project Not Needed</button> -->
+                                <button class="btn btn-primary" type="submit" value="send_final_email_{{id}}" onclick="copyContent({{id}}, 'final')">Send Email</button>
                             </div>
 
-                        </div>
-                        <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#final-email-div-{{award.award}}"">View Email</button>
-                        <!-- <button class="btn btn-primary" type="button" onclick="waitCursor()">Project Not Needed</button> -->
-                        <button class="btn btn-primary" type="submit" name="send_final_email" value="final">Send Email</button>
-
-                        <div id="final-email-div-{{award.award}}" class="collapse">
-                            <div contenteditable="true" class='award-email-div' id='final_email_html_{{award.award}}' onclick="copyContent({{award.award}}, 'final');">{{award.email|safe}}</div>
-                        </div>
-                    </div>
+                            <div id="final_plane_container_{{id}}" class="plane_container beginning">
+                                <div id="final_left-wing_{{id}}" class="left-wing">
+                                    <div class="top_left curvable"> </div>
+                                    <div class="bottom_left curvable"> </div>
+                                    <div class="wing wing1"></div>
+                                    <div class="wing wing2"></div>
+                                </div>
+                    
+                                <div id="final_right-wing_{{id}}" class="right-wing">
+                                    <div class="top_right curvable"> </div>
+                                    <div class="bottom_right curvable"> </div>
+                                    <div class="wing wing3"></div>
+                                    <div class="wing wing4"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div id="final_email_div_{{id}}" class="award-email-div">
+                                <b>Recipients</b><br/>
+                                <textarea name="final_email_recipients_{{id}}" cols="80" rows="3">{{award.email_recipients}}</textarea>
+                                <br/><br/>
+                                <b>Subject</b><br/>
+                                <textarea name="final_email_subject_{{id}}" cols="80" rows="1">{{award.email_subject}}</textarea>  
+                                <br/><br/>
+                                <b>Text</b><br/>
+                                <div contenteditable="true" id='final_email_html_{{id}}' class="email-text">{{award.email_text|safe}}</div>
+                            </div>
+                        </td>
+                    </tr></table>
                 {% endfor %}
             </div>
         </form>
@@ -147,6 +212,49 @@
         $(document).ready(function(){
             // Get the element with id="defaultOpen" and click on it
             if (document.getElementById("defaultOpen")) document.getElementById("defaultOpen").click();
+
+            var form = $("form");
+            // On a click on a submit button, set the hidden field's value
+            form.find("button[type=submit]").on("click", function() {
+                $("#submit_type").val(this.value);
+            });
+            form.submit(function(e){
+                // Prevent the submission
+                e.preventDefault();
+                // Get award number so we can fold the right plane
+                var submit_type = $("#submit_type").val();
+                var award = submit_type.split('_').pop();
+                var letter = 'welcome';
+                if (submit_type.includes('final')) {
+                    letter = 'final';
+                }
+                $('#'+letter+'_email_div_'+award).hide(700);
+
+                if (submit_type.includes('proj_not_needed') || !$("#animate").is(':checked')) {
+                    form[0].submit();
+                }
+                else {
+                    $('#'+letter+'_plane_container_'+award).show();
+                    // Start the animation
+                    setTimeout(function() {
+                        $('#'+letter+'_plate_'+award).removeClass('front');
+                        $('#'+letter+'_plane_container_'+award).removeClass('beginning');
+                        $('.curvable').addClass('curved');
+                        setTimeout(function() {
+                            $('#'+letter+'_plane_container_'+award).addClass('hover');
+                            setTimeout(function() {
+                                $('#'+letter+'_plane_container_'+award).addClass('fly_away_first');
+                                setTimeout(function() {
+                                    $('#'+letter+'_plane_container_'+award).addClass('fly_away');
+                                    setTimeout(function(){
+                                        form[0].submit();
+                                    },3000);
+                                }, 600);
+                            }, 2000);
+                        }, 2800);
+                    }, 200);
+                }
+            });
         })
 
         function openTab(evt, tabName) {
@@ -176,5 +284,6 @@
             document.getElementById("email_text").value =  
                 document.getElementById(email_type+"_email_html_"+award_id).innerHTML;
         }
+
     </script>
 {% endblock body %}
