@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # make tmp dir for csv files
     os.mkdir(TMP_DIR)
 
-    query = "SELECT * FROM program ~* 'Antarctic;"
+    query = "SELECT * FROM program WHERE id ~* 'Antarctic';"
     cur.execute(query)
     res = cur.fetchall()
 

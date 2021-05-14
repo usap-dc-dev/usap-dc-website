@@ -10,7 +10,7 @@ import pickle
 import mimetypes
 
 
-GMAIL_PICKLE="../inc/token.pickle"
+GMAIL_PICKLE="/web/usap-dc/htdocs/inc/token.pickle"
 
 
 def connect_to_gmail():
