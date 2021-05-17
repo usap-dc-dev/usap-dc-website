@@ -181,12 +181,12 @@ def update_award(awards):
                         expiry, sum, name, email, org, orgaddress, orgcity,
                         orgstate, orgzip, po_name, po_email,
                         is_lead_award, lead_award_id, project_needed, letter_welcome, letter_year1, letter_final_year) 
-                        VALUES ('{0}','GEO','OPP','{1}','{2}','False',
-                        '{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}', '{14}', '{15}', 
-                        '{16}', '{17}', True, False, False, False);""" \
-                        .format(item['id'], escapeQuotes(item.get('title','')), 
+                        VALUES ('%s','GEO','OPP','%s','%s','False',
+                        '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s', '%s', 
+                        '%s', '%s', True, False, False, False);""" \
+                        % (item['id'], escapeQuotes(item.get('title','')), 
                                 collab, copi, item.get('startDate',''), item.get('expDate',''),
-                                escapeQuotes(item.get('abstractText','')).encode('utf-8'), pi, item.get('piEmail',''),
+                                escapeQuotes(item.get('abstractText','')).encode('ascii','ignore'), pi, item.get('piEmail',''),
                                 escapeQuotes(item.get('awardeeName','')), item.get('awardeeAddress',''),
                                 item.get('awardeeCity',''),item.get('awardeeState',''),item.get('awardeeZip',''),
                                 escapeQuotes(item.get('poName', '')), item.get('poEmail',''), lead, lead_id)
@@ -200,7 +200,7 @@ def update_award(awards):
                                <b>Program:</b> %s<br><br>""" \
                                % (item['id'], item['title'], pi, item['startDate'], item['fundProgramName'])
             except Exception as e:
-                text = "Database Error. %s<br>" % sys.exc_info()[1][0]
+                text = "Database Error. %s<br>" % sys.exc_info()[1]
                 print(text)
                 sendEmail(text,'Unsuccessul Awards Harvest')
                 sys.exit(1)
@@ -260,7 +260,7 @@ def update_award(awards):
                     out_text += "<b>Award %s Updated</b><br>" % a['award']
                     out_text += update_text + "<br>"
                 except Exception as e:
-                    text = "Database Error. %s<br>" % sys.exc_info()[1][0]
+                    text = "Database Error. %s<br>" % sys.exc_info()[1]
                     print(text)
                     sendEmail(text,'Unsuccessul Awards Harvest')
                     sys.exit(1)
@@ -303,7 +303,7 @@ def update_award_program(award_list, out_text):
                 try:
                     cur.execute(sql_line)
                 except:
-                    text = "Database Error. %s<br>" % sys.exc_info()[1][0]
+                    text = "Database Error. %s<br>" % sys.exc_info()[1]
                     print(text)
                     sendEmail(text,'Unsuccessul Awards Harvest')
                     sys.exit(1)
@@ -320,8 +320,8 @@ def update_award_program(award_list, out_text):
 
 
 if __name__ == '__main__':
-    # Get awards from NSF API for last 4 years
-    start_date = (datetime.datetime.now() - datetime.timedelta(days=4*365)).strftime('%m/%d/%Y')
+    # Get awards from NSF API for last 5 years
+    start_date = (datetime.datetime.now() - datetime.timedelta(days=5*365)).strftime('%m/%d/%Y')
     awards = getAwardsFromNSF(start_date)
     
     # Update award table

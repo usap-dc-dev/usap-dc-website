@@ -65,7 +65,7 @@ app.config.update(
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     GMAIL_PICKLE="inc/token.pickle",
-    AWARD_WELCOME_EMAIL="static/letters/USAP_DCwelcomeletter.html",
+    AWARD_WELCOME_EMAIL="static/letters/USAP_DCactiveawardletter.html",
     AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
     AWARD_EMAIL_BANNER="static/letters/images/image1.png",
     DEBUG=True
@@ -4782,9 +4782,12 @@ def award_letters():
             cur.execute(query)
 
     # find awards that need the Welcome Letter
-    query = """SELECT * FROM award 
+    query = """SELECT DISTINCT award,title,start,expiry,name,email,po_name, po_email FROM award 
                 LEFT JOIN project_award_map pam ON pam.award_id=award.award
-                WHERE expiry > NOW() 
+                LEFT JOIN award_program_map apm on apm.award_id=award.award
+                WHERE expiry > NOW()
+                AND apm.program_id != 'Arctic Natural Sciences' 
+                AND program_id != 'Polar Special Initiatives'
                 AND project_needed
                 AND proj_uid IS NULL
                 AND NOT letter_welcome"""
@@ -4792,13 +4795,16 @@ def award_letters():
 
     # find awards that need the Final Letter
     three_months = (datetime.now() + timedelta(3*31)).strftime('%m/%d/%Y')
-    query = """SELECT * FROM award 
+    query = """SELECT DISTINCT award,title,start,expiry,name,email,po_name, po_email FROM award 
                 LEFT JOIN project_award_map pam ON pam.award_id=award.award
+                JOIN award_program_map apm on apm.award_id=award.award
                 WHERE expiry > NOW() 
+                AND apm.program_id != 'Arctic Natural Sciences'
+                AND program_id != 'Polar Special Initiatives'
                 AND expiry < '%s'
                 AND project_needed
                 AND NOT letter_final_year""" %three_months
-    template_dict['final_awards'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'Final email from USAP-DC')
+    template_dict['final_awards'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'Award closeout email from USAP-DC')
 
     return render_template('award_letters.html', **template_dict)
 
