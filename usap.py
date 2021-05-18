@@ -67,7 +67,7 @@ app.config.update(
     GMAIL_PICKLE="inc/token.pickle",
     AWARD_WELCOME_EMAIL="static/letters/USAP_DCactiveawardletter.html",
     AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
-    AWARD_EMAIL_BANNER="static/letters/images/image1.png",
+    AWARD_EMAIL_BANNER="/static/letters/images/image1.png",
     DEBUG=True
 )
 
@@ -4869,9 +4869,12 @@ def send_award_email(res):
         recipients = recipients_text.splitlines()
         # recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
 
-        email_text = res.get('%s_email_text_%s' %(letter_type, award_id)).replace(app.config['AWARD_EMAIL_BANNER'], 'cid:image1')
+        banner_path = app.config['AWARD_EMAIL_BANNER']
+        email_text = res.get('%s_email_text_%s' %(letter_type, award_id)).replace(banner_path, 'cid:image1')
+        if banner_path.startswith('/'):
+            banner_path = banner_path[1:]
         success, error = send_gmail_message(sender, recipients, res.get('%s_email_subject_%s' %(letter_type, award_id)), email_text, 
-                                  None, app.config['AWARD_EMAIL_BANNER'])
+                                  None, banner_path)
         if success:
             # update database
             if letter_type == 'welcome':
