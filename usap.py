@@ -4742,10 +4742,11 @@ def dashboard():
     return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
 
 
-@app.route('/award_letters', methods=['GET', 'POST'])
+@app.route('/curator/award_letters', methods=['GET', 'POST'])
 def award_letters():
     template_dict = {}
     template_dict['message'] = []
+    template_dict['errors'] = []
     template_dict['welcome_awards'] = []
     template_dict['final_awards'] = []
     template_dict['tab'] = 'welcome'
@@ -4757,20 +4758,26 @@ def award_letters():
         template_dict['need_login'] = True
     else:
         template_dict['need_login'] = False
-        submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
 
-
+    # handle form submission
     if request.method == 'POST':
         res = request.form.to_dict()
-        print(res['submit_type'])
         template_dict['tab'] = res.get('tab')
         template_dict['animate'] = res.get('animate')
        
-        # send email
-        if 'send_' in res.get('submit_type'):
+        # send all emails
+        if 'send_all_' in res.get('submit_type'):
+            success, errors = send_all_award_emails(res)
+            if errors:
+                for error in errors:
+                    template_dict['errors'].append(error)
+            if success:
+                template_dict['message'].append(success)
+        # send individual email 
+        elif 'send_' in res.get('submit_type'):
             success, error = send_award_email(res)
             if error:
-                template_dict['error'] = error
+                template_dict['errors'].append(error)
             if success:
                 template_dict['message'].append(success)
 
@@ -4782,7 +4789,7 @@ def award_letters():
             cur.execute(query)
 
     # find awards that need the Welcome Letter
-    query = """SELECT DISTINCT award,title,start,expiry,name,email,po_name, po_email FROM award 
+    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email FROM award 
                 LEFT JOIN project_award_map pam ON pam.award_id=award.award
                 LEFT JOIN award_program_map apm on apm.award_id=award.award
                 WHERE expiry > NOW()
@@ -4791,11 +4798,11 @@ def award_letters():
                 AND project_needed
                 AND proj_uid IS NULL
                 AND NOT letter_welcome"""
-    template_dict['welcome_awards'] = get_letter_awards(query, app.config['AWARD_WELCOME_EMAIL'], 'Welcome email from USAP-DC')
+    template_dict['welcome_awards'], template_dict['welcome_award_ids'] = get_letter_awards(query, app.config['AWARD_WELCOME_EMAIL'], 'Welcome email from USAP-DC')
 
     # find awards that need the Final Letter
     three_months = (datetime.now() + timedelta(3*31)).strftime('%m/%d/%Y')
-    query = """SELECT DISTINCT award,title,start,expiry,name,email,po_name, po_email FROM award 
+    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email FROM award 
                 LEFT JOIN project_award_map pam ON pam.award_id=award.award
                 JOIN award_program_map apm on apm.award_id=award.award
                 WHERE expiry > NOW() 
@@ -4804,7 +4811,7 @@ def award_letters():
                 AND expiry < '%s'
                 AND project_needed
                 AND NOT letter_final_year""" %three_months
-    template_dict['final_awards'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'Award closeout email from USAP-DC')
+    template_dict['final_awards'], template_dict['final_award_ids'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'Award closeout email from USAP-DC')
 
     return render_template('award_letters.html', **template_dict)
 
@@ -4813,6 +4820,7 @@ def get_letter_awards(query, letter, email_subject):
     (conn, cur) = connect_to_db()
     cur.execute(query)
     awards = cur.fetchall()
+    award_ids = []
     for award in awards:
         with open(letter) as infile:
             email = infile.read()
@@ -4823,7 +4831,28 @@ def get_letter_awards(query, letter, email_subject):
             award['email_text'] = email
             award['email_recipients'] = '"%s" <%s>\n"%s" <%s>' % (award['name'], award['email'], award['po_name'], award['po_email'])          
             award['email_subject'] = email_subject
-    return awards
+            award_ids.append(award['award'])
+    return awards, award_ids
+
+
+def send_all_award_emails(res):
+    submit_type = res.get('submit_type').split('_')
+    letter_type = submit_type[2]
+    awards = json.loads(res.get(letter_type+'_award_ids').replace('\'', '"'))
+    errors = []
+
+    for award in awards:
+        res['submit_type'] = 'send_%s_%s' % (letter_type, award)
+        success, error = send_award_email(res)
+        if error:
+            errors.append('Award: %s %s' %(award, error))
+    
+    if len(errors) == 0:
+        return 'All emails successfully sent', None
+    elif len(errors) == len(awards):
+        return None, errors
+    else:
+        return 'Some emails successfully sent', errors
 
 
 def send_award_email(res):
@@ -4839,7 +4868,8 @@ def send_award_email(res):
 
         recipients = recipients_text.splitlines()
         # recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
-        email_text = res.get('email_text').replace(app.config['AWARD_EMAIL_BANNER'], 'cid:image1')
+
+        email_text = res.get('%s_email_text_%s' %(letter_type, award_id)).replace(app.config['AWARD_EMAIL_BANNER'], 'cid:image1')
         success, error = send_gmail_message(sender, recipients, res.get('%s_email_subject_%s' %(letter_type, award_id)), email_text, 
                                   None, app.config['AWARD_EMAIL_BANNER'])
         if success:

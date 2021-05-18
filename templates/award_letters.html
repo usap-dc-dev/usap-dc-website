@@ -24,16 +24,12 @@
             <h4>{{msg}}</h4>
         </div>
     {% endfor %}
-    {% if landing_page %}
-        <div class="alert alert-success" style="width:800;">
-            <h4><a target="_blank" href="{{landing_page}}">Click here to view landing page</a></h4>
-        </div>
-    {% endif %}
-    {% if error %}
+
+    {% for error in errors %}
         <div class="alert alert-danger" style="width:800;">
             <h4>{{error}}</h4>
         </div>
-    {% endif %}
+    {% endfor %}
 
     {% if need_login %}
         
@@ -63,17 +59,17 @@
         <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
         <h3>Send Award Letters</h3>
 
-
         <form method="post" enctype="multipart/form-data">
-            <input type="hidden" id="email_text" name="email_text"> 
             <input type="hidden" name="tab" id="tab" value={{tab}}>
             <input type="hidden" id="submit_type" name="submit_type">
+            <input type="hidden" name="welcome_award_ids" value="{{welcome_award_ids}}">
+            <input type="hidden" name="final_award_ids" value="{{final_award_ids}}">
             <input type="checkbox" id="animate" name="animate" {% if animate %} checked {% endif %} style="margin:10px;">
             <label for="animate">Display send animations</label>
 
             <div class="tab">
                 <button class="tablinks active" type="button" onclick="openTab(event, 'welcomeTab')" {% if tab == 'welcome' %} id="defaultOpen" {% endif %}>Welcome Letter</button>
-                <button class="tablinks" type="button" onclick="openTab(event, 'finalTab')" {% if tab == 'final' %} id="defaultOpen" {% endif %} >Final Letter</button>
+                <button class="tablinks" type="button" onclick="openTab(event, 'finalTab')" {% if tab == 'final' %} id="defaultOpen" {% endif %} >Close Out Letter</button>
             </div>
 
             <div id="welcomeTab", class="tabcontent active">
@@ -82,6 +78,8 @@
                 <i>
                     <font size=2 color=gray>{{welcome_awards|length}} award(s) found </font>
                 </i>
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_welcome_emails" onclick="copyAllContent({{welcome_award_ids}}, 'welcome')">Send All Welcome Emails</button>
                 {% for award in welcome_awards %}
                     {% set id = award.award %}
                     <table><tr>
@@ -136,7 +134,11 @@
                             </div>
                         </td>
                     </tr></table>
+                    <input type="hidden" id="welcome_email_text_{{id}}" name="welcome_email_text_{{id}}"> 
                 {% endfor %}
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_welcome_emails" onclick="copyAllContent({{welcome_award_ids}}, 'welcome')">Send All Welcome Emails</button>
+                <br><br>
             </div>
 
 
@@ -148,6 +150,9 @@
                 <i>
                     <font size=2 color=gray>{{final_awards|length}} award(s) found </font>
                 </i>
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_final_emails" onclick="copyAllContent({{final_award_ids}}, 'final')">Send All Close Out Emails</button>
+
                 {% for award in final_awards %}
                     {% set id = award.award %}
                     <table><tr>
@@ -202,7 +207,11 @@
                             </div>
                         </td>
                     </tr></table>
+                    <input type="hidden" id="final_email_text_{{id}}" name="final_email_text_{{id}}"> 
                 {% endfor %}
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_final_emails" onclick="copyAllContent({{final_award_ids}}, 'final')">Send All Close Out Emails</button>
+                <br><br>
             </div>
         </form>
     {% endif %}
@@ -225,12 +234,22 @@
                 var submit_type = $("#submit_type").val();
                 var award = submit_type.split('_').pop();
                 var letter = 'welcome';
+                var confirm_letter = 'welcome';
                 if (submit_type.includes('final')) {
                     letter = 'final';
+                    confirm_letter = 'close out'
                 }
                 $('#'+letter+'_email_div_'+award).hide(700);
 
-                if (submit_type.includes('proj_not_needed') || !$("#animate").is(':checked')) {
+                if (submit_type.includes('send_all')) {
+                    if (confirm('You are about to send all ' + confirm_letter + ' emails.  Are you sure?')) {
+                        form[0].submit();
+                    } else {
+                        $("html").removeClass("wait");
+                        return false;
+                    }
+                }
+                else if (submit_type.includes('proj_not_needed') || !$("#animate").is(':checked')) {
                     form[0].submit();
                 }
                 else {
@@ -278,10 +297,17 @@
             evt.currentTarget.className += " active";
 
             document.getElementById("tab").value=tabName.replace('Tab','')
-          }
+        }
+
+        function copyAllContent(awards, email_type) {
+            $("html").addClass("wait");
+            for (let award of awards) {
+                copyContent(award, email_type);
+            }
+        }
 
         function copyContent (award_id, email_type) {
-            document.getElementById("email_text").value =  
+            document.getElementById(email_type+"_email_text_"+award_id).value =  
                 document.getElementById(email_type+"_email_html_"+award_id).innerHTML;
         }
 
