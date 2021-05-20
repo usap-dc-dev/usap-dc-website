@@ -229,7 +229,6 @@ input[type=number] {
     border: 1px solid black;
     margin: 10px;
     padding: 7px;
-    /* width: 700px; */
     display: none;
     background-color: hsl(0, 0%, 88%);;
 }
@@ -239,6 +238,11 @@ input[type=number] {
     padding: 7px;
     width: 650px;
     background-color: #fff;
+}
+
+.award-btn {
+    font-size: 13px;
+    padding: 6px 2px;
 }
 
 .plate.front {
@@ -350,7 +354,7 @@ input[type=number] {
     -moz-box-sizing: border-box;
     -ms-box-sizing: border-box;
     box-sizing: border-box;
-    padding: 20px;
+    padding: 20px 5px;
     text-align: center;
     -webkit-backface-visibility: hidden;
     -moz-backface-visibility: hidden;

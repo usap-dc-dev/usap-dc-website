@@ -4788,36 +4788,46 @@ def award_letters():
             query = """UPDATE award SET project_needed=false WHERE award='%s'; COMMIT;""" % award_id 
             cur.execute(query)
 
+        # welcome email not needed
+        if 'welcome_email_not_needed' in res.get('submit_type'):
+            award_id = res.get('submit_type').split('_')[-1]
+            (conn, cur) = connect_to_db(curator=True)
+            query = """UPDATE award SET letter_welcome=true WHERE award='%s'; COMMIT;""" % award_id 
+            cur.execute(query)
+
+
     # find awards that need the Welcome Letter
-    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email FROM award 
+    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email, is_lead_award, lead_award_id FROM award 
                 LEFT JOIN project_award_map pam ON pam.award_id=award.award
                 LEFT JOIN award_program_map apm on apm.award_id=award.award
                 WHERE expiry > NOW()
                 AND apm.program_id != 'Arctic Natural Sciences' 
-                AND program_id != 'Polar Special Initiatives'
+                AND apm.program_id != 'Polar Special Initiatives'
                 AND project_needed
                 AND proj_uid IS NULL
-                AND NOT letter_welcome"""
-    template_dict['welcome_awards'], template_dict['welcome_award_ids'] = get_letter_awards(query, app.config['AWARD_WELCOME_EMAIL'], 'Welcome email from USAP-DC')
+                AND NOT letter_welcome
+                AND NOT letter_final_year"""
+
+    template_dict['welcome_awards'], template_dict['welcome_award_ids'] = get_letter_awards(query, app.config['AWARD_WELCOME_EMAIL'], 'Welcome to USAP-DC')
 
     # find awards that need the Final Letter
     three_months = (datetime.now() + timedelta(3*31)).strftime('%m/%d/%Y')
-    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email FROM award 
+    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email, is_lead_award, lead_award_id FROM award 
                 LEFT JOIN project_award_map pam ON pam.award_id=award.award
                 JOIN award_program_map apm on apm.award_id=award.award
-                WHERE expiry > NOW() 
+                WHERE expiry > NOW()
+                AND expiry < '%s' 
                 AND apm.program_id != 'Arctic Natural Sciences'
-                AND program_id != 'Polar Special Initiatives'
-                AND expiry < '%s'
+                AND apm.program_id != 'Polar Special Initiatives'
                 AND project_needed
                 AND NOT letter_final_year""" %three_months
-    template_dict['final_awards'], template_dict['final_award_ids'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'Award closeout email from USAP-DC')
+    template_dict['final_awards'], template_dict['final_award_ids'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'USAP-DC Project Close Out Actions')
 
     return render_template('award_letters.html', **template_dict)
 
 
 def get_letter_awards(query, letter, email_subject):
-    (conn, cur) = connect_to_db()
+    (conn, cur) = connect_to_prod_db()
     cur.execute(query)
     awards = cur.fetchall()
     award_ids = []
@@ -4830,7 +4840,7 @@ def get_letter_awards(query, letter, email_subject):
                          .replace('***NUMBER - TITLE***', '%s - %s' % (award['award'], award['title']))
             award['email_text'] = email
             award['email_recipients'] = '"%s" <%s>\n"%s" <%s>' % (award['name'], award['email'], award['po_name'], award['po_email'])          
-            award['email_subject'] = email_subject
+            award['email_subject'] = 'OPP award %s: %s' % (award['award'], email_subject)
             award_ids.append(award['award'])
     return awards, award_ids
 
