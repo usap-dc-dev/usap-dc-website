@@ -4877,7 +4877,6 @@ def send_award_email(res):
         recipients_text = session.get('user_info').get('email')
 
         recipients = recipients_text.splitlines()
-        # recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
 
         banner_path = app.config['AWARD_EMAIL_BANNER']
         email_text = res.get('%s_email_text_%s' %(letter_type, award_id)).replace(banner_path, 'cid:image1')
