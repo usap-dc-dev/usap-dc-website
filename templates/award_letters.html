@@ -1,0 +1,332 @@
+{% extends "layout.html" %}
+{% set cur = "curator" %}
+{% block body %}
+
+    <div id="comments" hidden>
+    <div id="comments_header" class="window-header">
+        <span id="comments_title"></span><span class='close_comments_btn close_btn'>X</span>
+    </div>
+    <div id="comments_body">
+        <p id="comments_text"></p>
+    </div>
+    </div>
+
+    <div class="border">
+    <div class="content">
+
+    <h2 style="float:left;">Curator Page</h2>
+
+    <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('curator_help')}}" class="btn btn-primary">Help</a>
+    <div style="clear:both"></div>
+
+    {% for msg in message %}
+        <div class="alert alert-success" style="width:800;">
+            <h4>{{msg}}</h4>
+        </div>
+    {% endfor %}
+
+    {% for error in errors %}
+        <div class="alert alert-danger" style="width:800;">
+            <h4>{{error}}</h4>
+        </div>
+    {% endfor %}
+
+    {% if need_login %}
+        
+        <div class="container">
+            
+        <h4>Curator Login </h4>
+
+        <div id="container">
+            <h5>
+            Sign in using an authorized curator account
+            </h5>
+            <div id="buttons">
+            <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+                Google
+            </a>
+            <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+                <span style="color:gray; font-weight:bolder">ORC</span>iD
+            </a>
+            </div>
+        </div>
+
+        
+    {% else %}
+        <a href="{{url_for('logout', type='award_letters')}}" style="float:right">Log out</a>
+
+
+        <a onclick="waitCursor()" href="{{url_for('curator')}}">Back to list</a>
+        <h3>Send Award Letters</h3>
+
+        <form method="post" enctype="multipart/form-data" action="{{url_for('award_letters')}}" >
+            <input type="hidden" name="tab" id="tab" value={{tab}}>
+            <input type="hidden" id="submit_type" name="submit_type">
+            <input type="hidden" name="welcome_award_ids" value="{{welcome_award_ids}}">
+            <input type="hidden" name="final_award_ids" value="{{final_award_ids}}">
+            <input type="checkbox" id="animate" name="animate" {% if animate %} checked {% endif %} style="margin:10px;">
+            <label for="animate">Display send animations</label>
+
+            <div class="tab">
+                <button class="tablinks active" type="button" onclick="openTab(event, 'welcomeTab')" {% if tab == 'welcome' %} id="defaultOpen" {% endif %}>Welcome Letter</button>
+                <button class="tablinks" type="button" onclick="openTab(event, 'finalTab')" {% if tab == 'final' %} id="defaultOpen" {% endif %} >Close Out Letter</button>
+            </div>
+
+            <div id="welcomeTab", class="tabcontent active">
+                
+                <h4>Awards that need Welcome Letters</h4>
+                <i>
+                    <font size=2 color=gray>{{welcome_awards|length}} award(s) found </font>
+                </i>
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_welcome_emails" onclick="copyAllContent({{welcome_award_ids}}, 'welcome')">Send All Welcome Emails</button>
+                {% for award in welcome_awards %}
+                    {% set id = award.award %}
+                    <table><tr>
+                        <td>
+                            <div class='award-div w3-card-2 front plate' id='welcome_plate_{{id}}'>
+                                <b class='award-title'>{{id}}: </b> {{award.title}}<br>
+                                <div class='award-summary'>
+                                    <i>PI:</i> {{award.name}}<br>
+                                    <i>PO:</i> {{award.po_name}}<br>
+                                    <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
+                                    <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
+                                    {% if award.is_lead_award == 'Non-Lead' %}
+                                        <i>Lead Award: </i> 
+                                        {% if award.lead_award_id in welcome_award_ids %}
+                                            <a href="#welcome_plate_{{award.lead_award_id}}">{{award.lead_award_id}}</a>
+                                        {% else %}
+                                            {{award.lead_award_id}}
+                                        {% endif %}
+                                        <br>
+                                    {% endif %}
+
+                                    <button class="btn  btn-link" type="button" data-toggle="collapse" data-target="#welcome_abstract_div_{{id}}" style="padding:0;">
+                                        <span>Abstract</span><span class="caret"></span>
+                                    </button>
+                                    <div id="welcome_abstract_div_{{id}}" class="collapse" style="text-align: left;">
+                                        {{award.sum|safe}}
+                                    </div>
+
+                                </div>
+                                <button class="btn btn-primary award-btn" type="button" onclick="$('#welcome_email_div_{{id}}').toggle(1000);">View Email</button>
+                                <button class="btn btn-primary award-btn" type="submit" value="proj_not_needed_{{id}}">Project Not Needed</button>
+                                <button class="btn btn-primary award-btn" type="submit" value="welcome_email_not_needed_{{id}}">Email Not Needed</button>
+                                <button class="btn btn-primary award-btn" type="submit" value="send_welcome_email_{{id}}" onclick="copyContent({{id}}, 'welcome')">Send Email</button>
+                            </div>
+
+                            <div id="welcome_plane_container_{{id}}" class="plane_container beginning">
+                                <div id="welcome_left-wing_{{id}}" class="left-wing">
+                                    <div class="top_left curvable"> </div>
+                                    <div class="bottom_left curvable"> </div>
+                                    <div class="wing wing1"></div>
+                                    <div class="wing wing2"></div>
+                                </div>
+                    
+                                <div id="welcome_right-wing_{{id}}" class="right-wing">
+                                    <div class="top_right curvable"> </div>
+                                    <div class="bottom_right curvable"> </div>
+                                    <div class="wing wing3"></div>
+                                    <div class="wing wing4"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div id="welcome_email_div_{{id}}" class="award-email-div">
+                                <b>Recipients</b><br/>
+                                <textarea name="welcome_email_recipients_{{id}}" cols="80" rows="3">{{award.email_recipients}}</textarea>
+                                <br/><br/>
+                                <b>Subject</b><br/>
+                                <textarea name="welcome_email_subject_{{id}}" cols="80" rows="1">{{award.email_subject}}</textarea>  
+                                <br/><br/>
+                                <b>Text</b><br/>
+                                <div contenteditable="true" id='welcome_email_html_{{id}}' class="email-text">{{award.email_text|safe}}</div>
+                            </div>
+                        </td>
+                    </tr></table>
+                    <input type="hidden" id="welcome_email_text_{{id}}" name="welcome_email_text_{{id}}"> 
+                {% endfor %}
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_welcome_emails" onclick="copyAllContent({{welcome_award_ids}}, 'welcome')">Send All Welcome Emails</button>
+                <br><br>
+            </div>
+
+
+            <div id="finalTab", class="tabcontent">
+
+                <h4>Awards that need Final Letters</h4>
+                <i>
+                    <font size=2 color=gray>{{final_awards|length}} award(s) found </font>
+                </i>
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_final_emails" onclick="copyAllContent({{final_award_ids}}, 'final')">Send All Close Out Emails</button>
+
+                {% for award in final_awards %}
+                    {% set id = award.award %}
+                    <table><tr>
+                        <td>
+                            <div class='award-div w3-card-2 front plate' id='final_plate_{{id}}'>
+                                <b class='award-title'>{{id}}: </b> {{award.title}}<br>
+                                <div class='award-summary'>
+                                    <i>PI:</i> {{award.name}}<br>
+                                    <i>PO:</i> {{award.po_name}}<br>
+                                    <i>Start:</i> {{award.start}} <i>Expiry:</i> {{award.expiry}}<br>
+                                    <i>Is Lead Award: </i> {{award.is_lead_award}}<br>
+                                    {% if award.is_lead_award == 'Non-Lead' %}
+                                        <i>Lead Award: </i> 
+                                        {% if award.lead_award_id in final_award_ids %}
+                                            <a href="#welcome_plate_{{award.lead_award_id}}">{{award.lead_award_id}}</a>
+                                        {% else %}
+                                            {{award.lead_award_id}}
+                                        {% endif %}
+                                        <br>
+                                    {% endif %}
+
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#final_abstract_div_{{id}}" style="padding:0;">
+                                        <span>Abstract</span><span class="caret"></span>
+                                    </button>
+                                    <div id="final_abstract_div_{{id}}" class="collapse" style="text-align: left;">
+                                        {{award.sum|safe}}
+                                    </div>
+
+                                </div>
+                                <button class="btn btn-primary" type="button" onclick="$('#final_email_div_{{id}}').toggle(1000);">View Email</button>
+                                <!-- <button class="btn btn-primary" type="submit" value="proj_not_needed_{{id}}">Project Not Needed</button> -->
+                                <button class="btn btn-primary" type="submit" value="send_final_email_{{id}}" onclick="copyContent({{id}}, 'final')">Send Email</button>
+                            </div>
+
+                            <div id="final_plane_container_{{id}}" class="plane_container beginning">
+                                <div id="final_left-wing_{{id}}" class="left-wing">
+                                    <div class="top_left curvable"> </div>
+                                    <div class="bottom_left curvable"> </div>
+                                    <div class="wing wing1"></div>
+                                    <div class="wing wing2"></div>
+                                </div>
+                    
+                                <div id="final_right-wing_{{id}}" class="right-wing">
+                                    <div class="top_right curvable"> </div>
+                                    <div class="bottom_right curvable"> </div>
+                                    <div class="wing wing3"></div>
+                                    <div class="wing wing4"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div id="final_email_div_{{id}}" class="award-email-div">
+                                <b>Recipients</b><br/>
+                                <textarea name="final_email_recipients_{{id}}" cols="80" rows="3">{{award.email_recipients}}</textarea>
+                                <br/><br/>
+                                <b>Subject</b><br/>
+                                <textarea name="final_email_subject_{{id}}" cols="80" rows="1">{{award.email_subject}}</textarea>  
+                                <br/><br/>
+                                <b>Text</b><br/>
+                                <div contenteditable="true" id='final_email_html_{{id}}' class="email-text">{{award.email_text|safe}}</div>
+                            </div>
+                        </td>
+                    </tr></table>
+                    <input type="hidden" id="final_email_text_{{id}}" name="final_email_text_{{id}}"> 
+                {% endfor %}
+                <br><br>
+                <button class="btn btn-primary" type="submit" value="send_all_final_emails" onclick="copyAllContent({{final_award_ids}}, 'final')">Send All Close Out Emails</button>
+                <br><br>
+            </div>
+        </form>
+    {% endif %}
+
+
+    <script>
+        $(document).ready(function(){
+            // Get the element with id="defaultOpen" and click on it
+            if (document.getElementById("defaultOpen")) document.getElementById("defaultOpen").click();
+
+            var form = $("form");
+            // On a click on a submit button, set the hidden field's value
+            form.find("button[type=submit]").on("click", function() {
+                $("#submit_type").val(this.value);
+            });
+            form.submit(function(e){
+                // Prevent the submission
+                e.preventDefault();
+                // Get award number so we can fold the right plane
+                var submit_type = $("#submit_type").val();
+                var award = submit_type.split('_').pop();
+                var letter = 'welcome';
+                var confirm_letter = 'welcome';
+                if (submit_type.includes('final')) {
+                    letter = 'final';
+                    confirm_letter = 'close out'
+                }
+                $('#'+letter+'_email_div_'+award).hide(700);
+
+                if (submit_type.includes('send_all')) {
+                    if (confirm('You are about to send all ' + confirm_letter + ' emails.  Are you sure?')) {
+                        form[0].submit();
+                    } else {
+                        $("html").removeClass("wait");
+                        return false;
+                    }
+                }
+                else if (submit_type.includes('not_needed') || !$("#animate").is(':checked')) {
+                    form[0].submit();
+                }
+                else {
+                    $('#'+letter+'_plane_container_'+award).show();
+                    // Start the animation
+                    setTimeout(function() {
+                        $('#'+letter+'_plate_'+award).removeClass('front');
+                        $('#'+letter+'_plane_container_'+award).removeClass('beginning');
+                        $('.curvable').addClass('curved');
+                        setTimeout(function() {
+                            $('#'+letter+'_plane_container_'+award).addClass('hover');
+                            setTimeout(function() {
+                                $('#'+letter+'_plane_container_'+award).addClass('fly_away_first');
+                                setTimeout(function() {
+                                    $('#'+letter+'_plane_container_'+award).addClass('fly_away');
+                                    setTimeout(function(){
+                                        form[0].submit();
+                                    },3000);
+                                }, 600);
+                            }, 2000);
+                        }, 2800);
+                    }, 200);
+                }
+            });
+        })
+
+        function openTab(evt, tabName) {
+            // Declare all variables
+            var i, tabcontent, tablinks;
+        
+            // Get all elements with class="tabcontent" and hide them
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+        
+            // Get all elements with class="tablinks" and remove the class "active"
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+        
+            // Show the current tab, and add an "active" class to the button that opened the tab
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            document.getElementById("tab").value=tabName.replace('Tab','')
+        }
+
+        function copyAllContent(awards, email_type) {
+            $("html").addClass("wait");
+            for (let award of awards) {
+                copyContent(award, email_type);
+            }
+        }
+
+        function copyContent (award_id, email_type) {
+            document.getElementById(email_type+"_email_text_"+award_id).value =  
+                document.getElementById(email_type+"_email_html_"+award_id).innerHTML;
+        }
+
+    </script>
+{% endblock body %}

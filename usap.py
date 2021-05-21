@@ -41,6 +41,7 @@ import base64
 import email
 from email.header import decode_header
 from dateutil.parser import parse
+from lib.gmail_functions import send_gmail_message
 
 
 app = Flask(__name__)
@@ -64,6 +65,9 @@ app.config.update(
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     GMAIL_PICKLE="inc/token.pickle",
+    AWARD_WELCOME_EMAIL="static/letters/USAP_DCactiveawardletter.html",
+    AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
+    AWARD_EMAIL_BANNER="/static/letters/images/image1.png",
     DEBUG=True
 )
 
@@ -1989,6 +1993,8 @@ def logout():
         del session['project_metadata']
     if request.args.get('type') == 'curator':
         return redirect(url_for('curator'))
+    if request.args.get('type') == 'award_letters':
+        return redirect(url_for('award_letters'))
     return redirect(url_for('home'))
 
 
@@ -4734,6 +4740,164 @@ def dashboard():
             a['date_created'] = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
 
     return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
+
+
+@app.route('/curator/award_letters', methods=['GET', 'POST'])
+def award_letters():
+    template_dict = {}
+    template_dict['message'] = []
+    template_dict['errors'] = []
+    template_dict['welcome_awards'] = []
+    template_dict['final_awards'] = []
+    template_dict['tab'] = 'welcome'
+    template_dict['animate'] = True
+    
+    # login
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+    else:
+        template_dict['need_login'] = False
+
+    # handle form submission
+    if request.method == 'POST':
+        res = request.form.to_dict()
+        template_dict['tab'] = res.get('tab')
+        template_dict['animate'] = res.get('animate')
+       
+        # send all emails
+        if 'send_all_' in res.get('submit_type'):
+            success, errors = send_all_award_emails(res)
+            if errors:
+                for error in errors:
+                    template_dict['errors'].append(error)
+            if success:
+                template_dict['message'].append(success)
+        
+        # send individual email 
+        elif 'send_' in res.get('submit_type'):
+            success, error = send_award_email(res)
+            if error:
+                template_dict['errors'].append(error)
+            if success:
+                template_dict['message'].append(success)
+
+        # project not needed
+        if 'proj_not_needed' in res.get('submit_type'):
+            award_id = res.get('submit_type').split('_')[-1]
+            (conn, cur) = connect_to_db(curator=True)
+            query = """UPDATE award SET project_needed=false WHERE award='%s'; COMMIT;""" % award_id 
+            cur.execute(query)
+
+        # welcome email not needed
+        if 'welcome_email_not_needed' in res.get('submit_type'):
+            award_id = res.get('submit_type').split('_')[-1]
+            (conn, cur) = connect_to_db(curator=True)
+            query = """UPDATE award SET letter_welcome=true WHERE award='%s'; COMMIT;""" % award_id 
+            cur.execute(query)
+
+
+    # find awards that need the Welcome Letter
+    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email, is_lead_award, lead_award_id FROM award 
+                LEFT JOIN project_award_map pam ON pam.award_id=award.award
+                LEFT JOIN award_program_map apm on apm.award_id=award.award
+                WHERE expiry > NOW()
+                AND apm.program_id != 'Arctic Natural Sciences' 
+                AND apm.program_id != 'Polar Special Initiatives'
+                AND project_needed
+                AND proj_uid IS NULL
+                AND NOT letter_welcome
+                AND NOT letter_final_year"""
+    template_dict['welcome_awards'], template_dict['welcome_award_ids'] = get_letter_awards(query, app.config['AWARD_WELCOME_EMAIL'], 'Welcome to USAP-DC')
+
+    # find awards that need the Final Letter
+    three_months = (datetime.now() + timedelta(3*31)).strftime('%m/%d/%Y')
+    query = """SELECT DISTINCT award, title, sum, start, expiry, name, email, po_name, po_email, is_lead_award, lead_award_id FROM award 
+                LEFT JOIN project_award_map pam ON pam.award_id=award.award
+                JOIN award_program_map apm on apm.award_id=award.award
+                WHERE expiry > NOW()
+                AND expiry < '%s' 
+                AND apm.program_id != 'Arctic Natural Sciences'
+                AND apm.program_id != 'Polar Special Initiatives'
+                AND project_needed
+                AND NOT letter_final_year""" %three_months
+    template_dict['final_awards'], template_dict['final_award_ids'] = get_letter_awards(query, app.config['AWARD_FINAL_EMAIL'], 'USAP-DC Project Close Out Actions')
+
+    return render_template('award_letters.html', **template_dict)
+
+
+def get_letter_awards(query, letter, email_subject):
+    (conn, cur) = connect_to_db()
+    cur.execute(query)
+    awards = cur.fetchall()
+    award_ids = []
+    for award in awards:
+        with open(letter) as infile:
+            email = infile.read()
+            # substitute in values from award into email
+            email = email.replace('***Program Officer***', '%s &lt%s&gt' % (award['po_name'], award['po_email'])) \
+                         .replace('***DATE***', datetime.now().strftime('%Y-%m-%d')) \
+                         .replace('***PI LAST NAME***', award['name'].split(',')[0]) \
+                         .replace('***NUMBER - TITLE***', '%s - %s' % (award['award'], award['title']))
+            award['email_text'] = email
+            award['email_recipients'] = '"%s" <%s>\n"%s" <%s>' % (award['name'], award['email'], award['po_name'], award['po_email'])          
+            award['email_subject'] = 'OPP award %s: %s' % (award['award'], email_subject)
+            award_ids.append(award['award'])
+    return awards, award_ids
+
+
+def send_all_award_emails(res):
+    submit_type = res.get('submit_type').split('_')
+    letter_type = submit_type[2]
+    awards = json.loads(res.get(letter_type+'_award_ids').replace('\'', '"'))
+    errors = []
+
+    for award in awards:
+        res['submit_type'] = 'send_%s_%s' % (letter_type, award)
+        success, error = send_award_email(res)
+        if error:
+            errors.append('Award: %s %s' %(award, error))
+    
+    if len(errors) == 0:
+        return 'All emails successfully sent', None
+    elif len(errors) == len(awards):
+        return None, errors
+    else:
+        return 'Some emails successfully sent', errors
+
+
+def send_award_email(res):
+    (conn, cur) = connect_to_db(curator=True)
+    submit_type = res.get('submit_type').split('_')
+    award_id = submit_type[-1]
+    letter_type = submit_type[1]
+    try:
+        sender = app.config['USAP-DC_GMAIL_ACCT']
+        recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id)).encode('utf-8')
+        # FOR TESTING - use curator's email
+        #recipients_text = session.get('user_info').get('email')
+
+        recipients = recipients_text.splitlines()
+
+        banner_path = app.config['AWARD_EMAIL_BANNER']
+        email_text = res.get('%s_email_text_%s' %(letter_type, award_id)).replace(banner_path, 'cid:image1')
+        if banner_path.startswith('/'):
+            banner_path = banner_path[1:]
+        success, error = send_gmail_message(sender, recipients, res.get('%s_email_subject_%s' %(letter_type, award_id)), email_text, 
+                                  None, banner_path)
+        if success:
+            # update database
+            if letter_type == 'welcome':
+                letter_col = 'letter_welcome'
+            else:
+                letter_col = 'letter_final_year'
+            query = """UPDATE award SET %s=true WHERE award='%s'; COMMIT;""" % (letter_col, award_id) 
+            cur.execute(query)
+            
+        return success, error
+
+    except Exception as err:
+        return None, "Error sending email: " + str(err)
 
 
 @app.errorhandler(500)

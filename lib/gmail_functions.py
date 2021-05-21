@@ -4,13 +4,14 @@ from apiclient.discovery import build
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
+from email.MIMEImage import MIMEImage
 from google.auth.transport.requests import Request as gRequest
 import base64
 import pickle
 import mimetypes
 
 
-GMAIL_PICKLE="/web/usap-dc/htdocs/inc/token.pickle"
+GMAIL_PICKLE="inc/token.pickle"
 
 
 def connect_to_gmail():
@@ -34,7 +35,7 @@ def connect_to_gmail():
     return service, None
 
 
-def create_gmail_message(sender, recipients, subject, message_text, file=None):
+def create_gmail_message(sender, recipients, subject, message_text, file=None, image=None):
     """Create a message for an email.
 
     Args:
@@ -80,6 +81,14 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None):
         msg.add_header('Content-Disposition', 'attachment', filename=filename)
         message.attach(msg)
 
+    if image:
+        fp = open(image,'rb')
+        msgImage = MIMEImage(fp.read())
+        fp.close()
+        msgImage.add_header('Content-ID', '<image1>')
+        message.attach(msgImage)
+
+
     return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
 
 
@@ -109,11 +118,11 @@ def send(service, user_id, message):
         return success, err
 
 
-def send_gmail_message(sender, recipients, subject, message_text, file):
+def send_gmail_message(sender, recipients, subject, message_text, file, image):
     success = None
     error = None
 
-    msg_raw = create_gmail_message(sender, recipients, subject, message_text, file)
+    msg_raw = create_gmail_message(sender, recipients, subject, message_text, file, image)
 
     service, error = connect_to_gmail()
     if error:
