@@ -4773,6 +4773,7 @@ def award_letters():
                     template_dict['errors'].append(error)
             if success:
                 template_dict['message'].append(success)
+        
         # send individual email 
         elif 'send_' in res.get('submit_type'):
             success, error = send_award_email(res)
@@ -4807,7 +4808,6 @@ def award_letters():
                 AND proj_uid IS NULL
                 AND NOT letter_welcome
                 AND NOT letter_final_year"""
-
     template_dict['welcome_awards'], template_dict['welcome_award_ids'] = get_letter_awards(query, app.config['AWARD_WELCOME_EMAIL'], 'Welcome to USAP-DC')
 
     # find awards that need the Final Letter
@@ -4827,13 +4827,14 @@ def award_letters():
 
 
 def get_letter_awards(query, letter, email_subject):
-    (conn, cur) = connect_to_prod_db()
+    (conn, cur) = connect_to_db()
     cur.execute(query)
     awards = cur.fetchall()
     award_ids = []
     for award in awards:
         with open(letter) as infile:
             email = infile.read()
+            # substitute in values from award into email
             email = email.replace('***Program Officer***', '%s &lt%s&gt' % (award['po_name'], award['po_email'])) \
                          .replace('***DATE***', datetime.now().strftime('%Y-%m-%d')) \
                          .replace('***PI LAST NAME***', award['name'].split(',')[0]) \
@@ -4872,9 +4873,9 @@ def send_award_email(res):
     letter_type = submit_type[1]
     try:
         sender = app.config['USAP-DC_GMAIL_ACCT']
-        # recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id)).encode('utf-8')
+        recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id)).encode('utf-8')
         # FOR TESTING - use curator's email
-        recipients_text = session.get('user_info').get('email')
+        #recipients_text = session.get('user_info').get('email')
 
         recipients = recipients_text.splitlines()
 
@@ -4892,7 +4893,7 @@ def send_award_email(res):
                 letter_col = 'letter_final_year'
             query = """UPDATE award SET %s=true WHERE award='%s'; COMMIT;""" % (letter_col, award_id) 
             cur.execute(query)
-
+            
         return success, error
 
     except Exception as err:
