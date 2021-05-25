@@ -2789,6 +2789,8 @@ def curator():
                     coords = cf.getProjectCoordsFromDatabase(uid)
                     if coords is not None:
                         template_dict['coords'] = coords
+                    # also retrieve awards linked to project
+                    template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid) 
 
                 if edit:
                     template_dict['status_options'] = ['Pending', 'Edit completed', 'Rejected', 'No Action Required']
@@ -3273,13 +3275,33 @@ def curator():
                 # update award in database
                 elif request.form.get('submit') == "project_award":
                     template_dict['tab'] = "spatial"
-                    award = request.form.get('proj_award')
-                    is_main_award = request.form.get('proj_main_award') == 'on'
-                    (msg, status) = cf.addAwardToProject(uid, award, is_main_award)
+                    data = dict(request.form)
+
+                    # any award updates
+                    update_awards = []
+                    for key in request.form.keys():
+                        if 'proj_award_' in key:
+                            award_id = key.split('_')[-1]
+                            update_awards.append({'award_id': award_id, 
+                                                 'is_main_award': data.get('proj_main_award') == [award_id], 
+                                                 'is_previous_award': data.get('proj_previous_award_'+award_id) == ['on'],
+                                                 'remove': data.get('remove_award_'+award_id) == ['on']
+                                                 })
+
+                    # any new awards
+                    new_award = None
+                    award = data.get('proj_award')[0]
+                    if award and award.strip() != '':
+                        new_award = {'award_id': award,
+                                     'is_main_award': data.get('proj_main_award') == ['new_award'], 
+                                     'is_previous_award': data.get('proj_previous_award') == ['on']}
+
+                    (msg, status) = cf.updateProjectAwards(uid, update_awards, new_award)
                     if status == 0:
                         template_dict['error'] = msg
                     else:
                         template_dict['message'].append(msg)
+                    template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid) 
 
                 # generate DIF XML from JSON file
                 elif request.form.get('submit') == "generate_difxml":

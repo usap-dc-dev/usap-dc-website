@@ -416,6 +416,13 @@ def getProjectCoordsFromDatabase(uid):
     return cur.fetchone()
 
 
+def getProjectAwardsFromDatabase(uid):
+    (conn, cur) = usap.connect_to_db()
+    query = "SELECT * FROM project_award_map WHERE proj_uid = '%s' ORDER by award_id DESC;" % uid
+    cur.execute(query)
+    return cur.fetchall()
+
+
 def addAwardToDataset(uid, award):
     (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
@@ -464,7 +471,7 @@ def addAwardToDataset(uid, award):
     return (out_text, status)
 
 
-def addAwardToProject(uid, award, is_main_award):
+def addAwardToProject(uid, award, is_main_award, is_previous_award):
     (conn, cur) = usap.connect_to_db(curator=True)
     status = 1
     if type(conn) is str:
@@ -483,7 +490,8 @@ def addAwardToProject(uid, award, is_main_award):
             if res['count'] == 0:
                 # Add award to award table
                 sql_cmd += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % award
-            sql_cmd += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', '%s');\n" % (uid, award, is_main_award)
+            sql_cmd += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award, is_previous_award) VALUES ('%s', '%s', '%s' ,'%s');\n" %( 
+                        uid, award, is_main_award, is_previous_award)
 
             print(sql_cmd)
             cur.execute(sql_cmd)
@@ -493,6 +501,49 @@ def addAwardToProject(uid, award, is_main_award):
             out_text = "Error adding award to database. \n%s" % str(e)
             status = 0
     return (out_text, status)
+
+
+def updateProjectAwards(uid, update_awards, new_award):
+    print(update_awards)
+    print(new_award)
+    print(uid)
+    (conn, cur) = usap.connect_to_db(curator=True)
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        try:
+            sql_cmd = ""
+            # update existing project awards
+            for award in update_awards:
+                if award['remove']:
+                    sql_cmd += "DELETE FROM project_award_map WHERE proj_uid='%s' AND award_id='%s';\n" % (uid, award['award_id'])
+                else:
+                    sql_cmd += """UPDATE project_award_map SET (is_main_award, is_previous_award) = (%s, %s) 
+                                  WHERE proj_uid='%s' AND award_id='%s';\n""" % (
+                                      award['is_main_award'], award['is_previous_award'], uid, award['award_id'])
+
+            # add new award
+            if new_award:
+            # check if this award is already in the award table
+                query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % new_award['award_id']
+                cur.execute(query)
+                res = cur.fetchone()
+                if res['count'] == 0:
+                    # Add award to award table
+                    sql_cmd += "INSERT INTO award(award, dir, div, title, name) VALUES ('%s', 'GEO', 'OPP', 'TBD', 'TBD');\n" % new_award['award_id']
+                sql_cmd += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award, is_previous_award) VALUES ('%s', '%s', '%s' ,'%s');\n" %( 
+                            uid, new_award['award_id'], new_award['is_main_award'], new_award['is_previous_award'])
+
+            # print(sql_cmd)
+            cur.execute(sql_cmd)
+            cur.execute('COMMIT;')
+            out_text = "Award(s) successfully updated for project %s" % uid
+        except Exception as e:
+            out_text = "Error updating awards in database. \n%s" % str(e)
+            status = 0
+    return (out_text, status)    
 
 
 def getKeywordsFromDatabase():

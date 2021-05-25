@@ -370,12 +370,26 @@
           </div>
           <br/><br/>
           <div>
-            <b>Award Number</b><br/>
-            <input type="text" name="proj_award" id="proj_award">
-             <input type="checkbox" name="proj_main_award" checked> Main Award</input><br/>
-            <br/><br/>
-            <button type="submit" name="submit" value="project_award" onclick="waitCursor()">Add Award</button>
+
+            <div>
+              <b>Update Awards</b><br>
+              {% for award in proj_awards %}
+                <input type="text" readonly name="proj_award_{{award.award_id}}" style="margin:5px;" value="{{award.award_id}}">
+                <input type="radio" name="proj_main_award" value="{{award.award_id}}" {% if award.is_main_award %} checked {% endif %}> Main Award</input>
+                <input type="checkbox" name="proj_previous_award_{{award.award_id}}" {% if award.is_previous_award %} checked {% endif %}> Previous Award</input>
+                <input type="checkbox" name="remove_award_{{award.award_id}}"> Remove</input><br/>
+              {% endfor %}
+            </div>
+            <br>
+            <b>Add Award Number</b><br/>
+            <input type="text" name="proj_award" id="proj_award" style="margin:5px;">
+            <input type="radio" name="proj_main_award" value="new_award"> Main Award</input>
+            <input type="checkbox" name="proj_previous_award"> Previous Award</input><br/>
+
+            <br/>
+            <button type="submit" name="submit" value="project_award" onclick="waitCursor()">Update Awards</button>
           </div>
+
         {% else %}
           <h4>You will be able to update spatial bounds and awards after Database import</h4>
         {% endif %}
