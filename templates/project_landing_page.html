@@ -143,18 +143,31 @@
             </div>
             <div class="value">
               <table class="borderless-table">
-                {% for f in data.funding %}
+                {% for f in data.funding |sort(attribute='award', reverse=True) %}
                   <tr>
-                    <td>
+                    <td valign="top">
                       {% if f.program %}
                         {{f.program}}
                       {% else %}
                         Unknown Program
                       {% endif %}
                     </td> 
-                    <td>
+                    <td valign="top">
                       Award # <a target="_blank" href="https://www.nsf.gov/awardsearch/showAward?AWD_ID={{f.award}}">{{f.award}}</a>
                     </td>
+                    {% if f.is_previous_award %}
+                      <td valign="top">
+                        <div data-toggle="popover" data-placement="top" data-content="Click to show/hide award details">
+                          <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#prev_award_div_{{f.award}}" style="padding:0;">
+                            <span>Previous Award </span><span class="caret"></span>
+                          </button>
+                        </div>
+                        <div id="prev_award_div_{{f.award}}" class="collapse" style="text-align: left; width: 600px;" tooltip="click for award details">
+                            <b>{{f.title}}</b>
+                            <p>{{f.abstract|safe}}</p>
+                        </div>
+                      </td>
+                    {% endif %}
                   </tr>
                 {% endfor %}
               </table>

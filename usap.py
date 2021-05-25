@@ -2609,7 +2609,7 @@ def makeCitation(metadata, dataset_id):
             etal = ' et al. ' 
         year = metadata['release_date'].split('-')[0]
 
-        citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: https://doi.org/%s.' % (initcap(last_name), first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
+        citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: https://doi.org/%s.' % (last_name, first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
         return citation
     except:
         return None
@@ -4276,7 +4276,8 @@ def get_project(project_id):
                         project p
                         LEFT JOIN (
                             SELECT pam.proj_uid AS a_proj_uid, json_agg(json_build_object('program',prog.id, 'award',a.award ,'dmp_link', a.dmp_link, 
-                            'is_main_award', pam.is_main_award, 'pi_name', a.name)) funding
+                            'is_main_award', pam.is_main_award, 'is_previous_award', pam.is_previous_award, 'pi_name', a.name, 'title', a.title,
+                            'abstract', a.sum)) funding
                             FROM project_award_map pam 
                             JOIN award a ON a.award=pam.award_id
                             LEFT JOIN award_program_map apm ON apm.award_id=a.award
