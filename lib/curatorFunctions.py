@@ -607,8 +607,8 @@ def projectJson2sql(data, uid):
     if data["award"] not in ["None", "Not In This List"] and len(data["award"].split(" ", 1)) > 1:
             data["award"] = data["award"].split(" ")[0]
     for i in range(len(data["other_awards"])):
-        if data["other_awards"][i] not in ["None", "Not In This List"] and len(data["other_awards"][i].split(" ", 1)) > 1:
-            (data["other_awards"][i]) = data["other_awards"][i].split(" ")[0]  # throw away the rest of the award string
+        if data["other_awards"][i]['id'] not in ["None", "Not In This List"] and len(data["other_awards"][i]['id'].split(" ", 1)) > 1:
+            (data["other_awards"][i]['id']) = data["other_awards"][i]['id'].split(" ")[0]  # throw away the rest of the award string
 
     sql_out = ""
     sql_out += "START TRANSACTION;\n\n"
@@ -764,9 +764,9 @@ def projectJson2sql(data, uid):
         sql_out += "INSERT INTO project_dif_map (proj_uid, dif_id) VALUES ('%s', '%s');\n" % (uid, dif_id)
 
     for other_award in data['other_awards']:
-        if 'Not_In_This_List' in other_award:
+        if 'Not_In_This_List' in other_award['id']:
                 sql_out += "--NOTE: AWARD NOT IN PROVIDED LIST\n"
-                (dummy, award) = other_award.split(':', 1)
+                (dummy, award) = other_award['id'].split(':', 1)
                 # check if this award is already in the award table
                 query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
                 cur.execute(query)
@@ -778,9 +778,9 @@ def projectJson2sql(data, uid):
                     sql_out += "--UPDATE award SET iscr='f', isopy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
 
         else:
-            award = other_award
+            award = other_award['id']
         sql_out += "\n--NOTE: adding other awards to project_award_map\n"
-        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'False');\n" % (uid, award)
+        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award, is_previous_award) VALUES ('%s', '%s', 'False', '%s');\n" % (uid, award, other_award.get('is_previous_award'))
     sql_out += '\n'
 
     # Add initiatives to project_initiative_map

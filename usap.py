@@ -1676,10 +1676,11 @@ def process_form_data(form):
     key = 'award1'
     while key in msg_data:
         user_award_key = 'user_award' + str(idx)
+        is_previous_award = msg_data.get('previous_award' + str(idx)) == 'on'
         if msg_data[key] != "":
             if msg_data[key] == 'Not In This List':
                 msg_data[key] = "Not_In_This_List:" + msg_data[user_award_key]
-            other_awards.append(msg_data[key])
+            other_awards.append({'id': msg_data[key], 'is_previous_award': is_previous_award})
         del msg_data[key]
         del msg_data[user_award_key]
         idx += 1
@@ -1854,15 +1855,17 @@ def project_db2form(uid):
                 form_data['copis'] = [copi for copi in form_data['copis'] if not (copi['name_first'] == name_first and copi['name_last'] == name_last)]
                 break
 
-    awards = set()
+    awards = []
     for award in db_data.get('funding'):
         if award.get('is_main_award'):
             form_data['award'] = award.get('award') + ' ' + award.get('pi_name')
             if award.get('dmp_link'):
                 form_data['dmp_file'] = award.get('dmp_link').split('/')[-1]
         else:
-            awards.add(award.get('award') + ' ' + award.get('pi_name'))
-    form_data['other_awards'] = list(awards)
+            other_award = {'id': award.get('award') + ' ' + award.get('pi_name'), 'is_previous_award': award.get('is_previous_award')}
+            if other_award not in awards:
+                awards.append(other_award)
+    form_data['other_awards'] = awards
 
     if db_data.get('initiatives'):
         i = db_data['initiatives'][0]
@@ -3225,6 +3228,7 @@ def curator():
 
                         template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
                         template_dict['db_imported'] = True
+                        template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid)
                     except Exception as err:
                         template_dict['error'] = "Error Importing to database: " + str(err)
                         problem = True

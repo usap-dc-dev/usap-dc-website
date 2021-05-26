@@ -68,7 +68,11 @@
                   {% endfor %}
                 </ul>
                 <a href="#awardForm" id="removeAwardRow" class="remover"><i class="fa fa-remove"></i></a>
-                <input class="input-sm form-control removable user_award_input" type="hidden" size=10 id="user_award" name="user_award" placeholder="Enter Award Number"/> 
+                <input class="input-sm form-control removable user_award_input" type="hidden" style="margin-bottom:10px" size=10 id="user_award" name="user_award" placeholder="Enter Award Number"/> 
+                <div id="previous_award_div" style="display:none;">
+                  <label for="previous_award" style="font-weight:normal" data-toggle="tooltip" data-placement="top" title="Check this if this award has been replaced by a more recent continuation award">Previous Award </label>
+                  <input type="checkbox" name="previous_award" id="previous_award">
+                </div>
                 <div style="clear:both"></div>
 
               </div>

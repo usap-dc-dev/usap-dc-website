@@ -460,10 +460,13 @@ $(document).ready(function() {
       $(extraAward).find('#award').attr({'id': 'award'+award_counter, 'name': 'award'+award_counter, 'value': ''});
       $(extraAward).find('#award_dropdown').attr({'id': 'award_dropdown'+award_counter}).html('None <span class="caret"></span>');
       $(extraAward).find('#user_award').attr({'id': 'user_award'+award_counter, 'name': 'user_award'+award_counter, 'type':'hidden', 'value': ''});
+      $(extraAward).find('#previous_award').attr({'id': 'previous_award'+award_counter, 'name': 'previous_award'+award_counter});
+      $(extraAward).find('#previous_award_div').show();
       $(extraAward).find('#removeAwardRow').show();
       $(extraAward).find('#extraAwardLine').show();
-      if (award !== null) {
-        $(extraAward).find('#award'+award_counter).attr('value', award);
+      if (award) {
+        $(extraAward).find('#award'+award_counter).attr('value', award.id);
+        $(extraAward).find('#previous_award'+award_counter).attr('checked', award.is_previous_award)
         // $(extraAward).find('#user_award'+award_counter).attr('value', award.user_award);
       }
       $(award_wrapper).append($('<div/>', {'class' : 'extraAward', html: extraAward.html()}));
