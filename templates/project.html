@@ -4,6 +4,7 @@
 
 <div id="persons" hidden>{{persons|tojson}}</div>
 <div id="orgs" hidden>{{orgs|tojson}}</div>
+<div id="main_award" hidden>{% if project_metadata['award']|length > 0 %}{{project_metadata['award']}}{% endif %}</div>
 <div id="awards_list" hidden>{% if project_metadata['other_awards']|length > 0 %}{{project_metadata['other_awards']|tojson}}{% endif %}</div>
 <div id="copis_list" hidden>{% if project_metadata['copis']|length > 0 %}{{project_metadata['copis']|tojson}}{% endif %}</div>
 <div id="websites_list" hidden>{% if project_metadata['websites']|length > 0 %}{{project_metadata['websites']|tojson}}{% endif %}</div>

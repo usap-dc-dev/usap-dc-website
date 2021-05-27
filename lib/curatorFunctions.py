@@ -1005,8 +1005,8 @@ def editProjectJson2sql(data, uid):
             data["award_num"] = data["award"].split(" ")[0]
     data["other_awards_num"] = data['other_awards'][:]
     for i in range(len(data["other_awards"])):
-        if data["other_awards"][i] not in ["None", "Not In This List"] and len(data["other_awards"][i].split(" ", 1)) > 1:
-            data["other_awards_num"][i] = data["other_awards"][i].split(" ")[0]  # throw away the rest of the award string
+        if data["other_awards"][i]['id'] not in ["None", "Not In This List"] and len(data["other_awards"][i]['id'].split(" ", 1)) > 1:
+            data["other_awards"][i]['id'] = data["other_awards"][i]['id'].split(" ")[0]  # throw away the rest of the award string
 
     # update database with edited values
     sql_out = ""
@@ -1033,7 +1033,16 @@ def editProjectJson2sql(data, uid):
 
                 sql_out += "UPDATE project_award_map SET award_id = '%s' WHERE proj_uid = '%s' AND is_main_award = 'True';\n" % (award, uid)
             else:
-                sql_out += "UPDATE project_award_map SET award_id = '%s' WHERE proj_uid = '%s' AND is_main_award = 'True';\n" % (data['award_num'], uid)
+                # check if old award has been moved to additional awards list
+                if data.get('other_awards'):
+                    orig_award_num = orig['award'].split(' ')[0]
+                    if orig_award_num in [x['id'] for x in data['other_awards']]:
+                        sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'True');\n" % (uid, data['award_num'])
+                    else:
+                        sql_out += "UPDATE project_award_map SET award_id = '%s' WHERE proj_uid = '%s' AND is_main_award = 'True';\n" % (data['award_num'], uid)
+
+                else:
+                    sql_out += "UPDATE project_award_map SET award_id = '%s' WHERE proj_uid = '%s' AND is_main_award = 'True';\n" % (data['award_num'], uid)
         
         elif k == 'copis':
             sql_out += "\n--NOTE: UPDATING CO-PIS\n"
@@ -1248,10 +1257,17 @@ def editProjectJson2sql(data, uid):
             sql_out += "\n--NOTE: First remove existing additional awards from project_award_map\n"
             sql_out += "DELETE FROM project_award_map WHERE proj_uid = '%s' AND is_main_award = 'False';\n" % (uid)
 
-            for other_award in data['other_awards_num']:
+            # if other_awards now includes the old main award, need to remove that from the project_award_map too
+            if orig.get('award'):
+                orig_award_num = orig['award'].split(' ')[0]
+                if orig_award_num in [x['id'] for x in data['other_awards']]:
+                    sql_out += "--NOTE: main award has changed, so remove old one from project_award_map\n"
+                    sql_out += "DELETE FROM project_award_map WHERE proj_uid = '%s' AND award_id = '%s' AND is_main_award = 'True';\n" % (uid, orig_award_num)   
+
+            for other_award in data['other_awards']:
                 if 'Not_In_This_List' in other_award:
                     sql_out += "\n--NOTE: AWARD NOT IN PROVIDED LIST\n"
-                    (dummy, award) = other_award.split(':', 1)
+                    (dummy, award) = other_award['id'].split(':', 1)
                     # check if this award is already in the award table
                     query = "SELECT COUNT(*) FROM  award WHERE award = '%s'" % award
                     cur.execute(query)
@@ -1263,8 +1279,8 @@ def editProjectJson2sql(data, uid):
                         sql_out += "--UPDATE award SET iscr='f', isopy='f', copi='', start='', expiry='', sum='', email='', orgcity='', orgzip='', dmp_link='' WHERE award='%s';\n" % award
 
                 else:
-                    award = other_award
-                sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award) VALUES ('%s', '%s', 'False');\n" % (uid, award)
+                    award = other_award['id']
+                sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award, is_previous_award) VALUES ('%s', '%s', 'False', %s);\n" % (uid, award, other_award['is_previous_award'])
             sql_out += "\n"
 
         elif k == 'parameters':

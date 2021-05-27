@@ -26,6 +26,7 @@ $(document).ready(function() {
       orgs.push(org.name);
     }
 
+    var main_award = {id:$("#main_award").text(), is_previous_award: false};
     var awards = [];
     if ($("#awards_list").text().length > 0) {
       awards = JSON.parse($("#awards_list").text());
@@ -177,6 +178,18 @@ $(document).ready(function() {
         });
       } else {
         $("#crossref_btn").hide();
+      }
+
+      //if in Edit mode and the main award changes, add the old award an an Additional award and mark as Previous
+      if (awards.length > 0) {
+        main_award.is_previous_award = true;
+        if (!awards.includes(main_award)){
+          awards.push(main_award);
+          addAwardRow(main_award);
+          //make title and abstract editable
+          $("#title").attr('readonly', false); 
+          $("#sum").attr('readonly', false); 
+        }
       }
     });
 
