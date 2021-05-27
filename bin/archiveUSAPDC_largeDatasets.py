@@ -31,7 +31,12 @@ ROOT_DIR = "/archive/usap-dc/dataset"
 
 config = json.loads(open('scripts/config.json', 'r').read())
 
-ds_id = sys.argv[1]
+dir_in = sys.argv[1]
+print(dir_in)
+if 'part' in dir_in:
+    ds_id = dir_in.split('_')[0]
+else:
+    ds_id = dir_in
 upload = sys.argv[2] in ['True', 'true', 'TRUE', 't', 'T']
 
 print("STARTING PYTHON SCRIPT")
@@ -59,7 +64,7 @@ ds_doi = res['doi'] if res.get('doi') else 'Not Available'
 cur.close()
 
 
-bag_dir = os.path.join(ROOT_DIR, ds_id)
+bag_dir = os.path.join(ROOT_DIR, dir_in)
 
 sub_meta = {
     "Source-Organization": "United States Antarctic Program Data Center (USAP-DC)",
@@ -103,18 +108,18 @@ with open(tar_name + ".md5", "w") as myfile:
     myfile.write(checksum_md5)
 
 print("MOVING TO ready_for_upload")
-os.system('mv %s_bag.tar.gz* ready_for_upload/' % ds_id)
+os.system('mv %s_bag.tar.gz* ready_for_upload/' % dir_in)
 
 
 # Print psql query
 print("UPDATING DATABASE - READY FOR UPLOAD")
 conn, cur = connect_to_db()
-query = "SELECT * FROM dataset_archive where dataset_id = '%s';" % ds_id
+query = "SELECT * FROM dataset_archive where dataset_id = '%s' AND (bagit_file_name = 'large_datasets/%s' OR bagit_file_name IS NULL);" % (ds_id,  os.path.basename(tar_name))
 cur.execute(query)
 res = cur.fetchall()
 if len(res) > 0:
-    query = """UPDATE dataset_archive SET (bagit_file_name, sha256_checksum, md5_checksum, status) = ('large_datasets/%s', '%s', '%s', 'Ready For Upload')
-               WHERE dataset_id = '%s';""" % (os.path.basename(tar_name), checksum, checksum_md5, ds_id)
+    query = """UPDATE dataset_archive SET (sha256_checksum, md5_checksum, status) = ('%s', '%s', 'Ready For Upload')
+               WHERE dataset_id = '%s' AND bagit_file_name = 'large_datasets/%s';""" % (checksum, checksum_md5, ds_id, os.path.basename(tar_name))
 else:
     query = """INSERT INTO dataset_archive (dataset_id, bagit_file_name, sha256_checksum, md5_checksum, status) 
                VALUES ('%s', 'large_datasets/%s', '%s', '%s', 'Ready For Upload');""" % (ds_id, os.path.basename(tar_name), checksum, checksum_md5)
@@ -125,7 +130,7 @@ cur.close()
 # if we are using this script to upload to AWS run this section
 if upload:
     print("UPLOADING TO AMAZON")
-    process = Popen(['scripts/upload_to_s3.sh', ds_id, 'true'], stdout=PIPE)
+    process = Popen(['scripts/upload_to_s3.sh', dir_in, 'true'], stdout=PIPE)
     (output, err) = process.communicate()
     if err:
         print("Error uploading to Amazon.  %s" % err.decode('ascii'))
@@ -139,12 +144,12 @@ if upload:
     print("UPDATING DATABASE - ARCHIVED")
     bagitDate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
     conn, cur = connect_to_db()
-    query = "SELECT * FROM dataset_archive where dataset_id = '%s';" % ds_id
+    query = "SELECT * FROM dataset_archive where dataset_id = '%s' AND (bagit_file_name = 'large_datasets/%s' OR bagit_file_name IS NULL);" % (ds_id,  os.path.basename(tar_name))
     cur.execute(query)
     res = cur.fetchall()
     if len(res) > 0:
-        query = """UPDATE dataset_archive SET (archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) = ('%s', 'large_datasets/%s', '%s', '%s', 'Archived')
-                WHERE dataset_id = '%s';""" % (bagitDate, os.path.basename(tar_name), checksum, checksum_md5, ds_id)
+        query = """UPDATE dataset_archive SET (archived_date, status) = ('%s', 'Archived')
+                WHERE dataset_id = '%s' AND bagit_file_name = 'large_datasets/%s';""" % (bagitDate, ds_id, os.path.basename(tar_name))
     else:
         query = """INSERT INTO dataset_archive (dataset_id, archived_date, bagit_file_name, sha256_checksum, md5_checksum, status) 
                 VALUES ('%s', '%s', 'large_datasets/%s', '%s', '%s', 'Archived');""" % (ds_id, bagitDate, os.path.basename(tar_name), checksum, checksum_md5)

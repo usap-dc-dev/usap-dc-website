@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# NOTE: for datasets > 5TB, split the dataset and use prepare_for_upload_5tb.sh
+# Use this version for datasets > 5TB.  First split the dataset up into separate directories that
+# are < 5TB each and label them <dataset_id>_archived_data_part1, <dataset_id>_archived_data_part2, etc.
 
 # A Bash script that will prepare large datasets on /archive/usap-dc/dataset for upload to Amazon.
 # This script should be run on seafloor-ph (or similar) in the location of the large datasets.
@@ -16,35 +17,52 @@
 # If upload is 'true', the python script will also upload to Amazon, check the ETag, and mark the dataset as
 # Archived in the database.
 
-# To run: >scripts/prepare_for_upload.sh <dataset_id> <upload>
+# To run: >scripts/prepare_for_upload_5tb.sh <dataset_id> <upload> <num_parts>
 
 set -euo pipefail
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 dataset_id upload";
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 dataset_id upload num_parts";
     exit 0;
 fi
 
 dsid=$1
 upload=$2
+num_parts=$3
 
 echo "UNZIPPING DATA FROM WEBSERVER"
 gunzip "$dsid"_need_archived_data.tar.gz
 
-echo "UNTARRING"
-tar xvf "$dsid"_need_archived_data.tar
+for (( part=1; part<=$num_parts; part++ ))
+do
+    echo "PART $part"
+
+    part_dir="$dsid"_part"$part"
+
+    echo "UNTARRING"
+    tar xvf "$dsid"_need_archived_data.tar 
+    mv $dsid $part_dir
+
+
+    echo "MOVING ARCHIVED DATA"
+    mkdir -p "$part_dir"/archive/"$dsid"_archived_data
+    rsync -a --itemize-changes "$dsid"_archived_data_part"$part"/ "$part_dir"/archive/"$dsid"_archived_data
+
+    echo "RUNNING PYTHON SCRIPT"
+    python3 scripts/archiveUSAPDC_largeDatasets.py "$part_dir" "$upload"
+
+    if [[ $upload == 'true' ]]
+    then
+        echo "MOVING TO large_datasets"
+        mv ready_for_upload/"$part_dir"* large_datasets/
+    fi
+done
+
 rm "$dsid"_need_archived_data.tar
 
-echo "MOVING ARCHIVED DATA"
-mkdir -p "$dsid"/archive/"$dsid"_archived_data
-rsync -a --itemize-changes "$dsid"_archived_data/ "$dsid"/archive/"$dsid"_archived_data
-
-echo "RUNNING PYTHON SCRIPT"
-python3 scripts/archiveUSAPDC_largeDatasets.py "$dsid" "$upload"
-
-if [[ $upload == 'true' ]]
-then
-    echo "MOVING TO large_datasets"
-    mv ready_for_upload/"$dsid"* large_datasets/
-fi
-
 echo "$dsid DONE"
+
+
+
+
+
+

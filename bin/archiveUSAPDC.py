@@ -35,6 +35,7 @@ from subprocess import Popen, PIPE
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import math
 
 
 config = json.loads(open('../config.json', 'r').read())
@@ -140,17 +141,21 @@ os.makedirs(bag_dir)
 
 # copy the data files and the metadata file to the bag dir
 # Get the data files (content items) from the dataset_file_info table
-query = "select dir_name from dataset_file_info where dataset_id ='%s';" % ds_id
+query = "select * from dataset_file_info where dataset_id ='%s';" % ds_id
 cur.execute(query)
 res = cur.fetchall()
 
 # check if dataset contains files in the archive on seafloor
 archive = False
+xlarge = False
 for row in res:
     if row['dir_name'][0:7] == "archive":
         text += "WARNING: %s contains archived files and needs to be bagged seperately\n" % ds_id
         print(text)
         archive = True
+        if row['file_size_on_disk'] >= 5*(1024**4):
+            xlarge = True
+            num_parts = int(math.ceil(row['file_size_on_disk']/(5.0*(1024**4))))
 
 for row in res:
     if row.get('dir_name') and row['dir_name'] != "" and row['dir_name'][0:7] != "archive":
@@ -388,8 +393,10 @@ else:
 
     # Delete bag file
     os.remove(tar_name)
-
-    text = "%s is a large dataset.  Please go to the local archive server and run 'scripts/prepare_for_upload.sh %s true' to complete the archiving process." %(ds_id, ds_id)
+    if xlarge:
+        text = "%s is an extra large dataset > 5TB.  Please go to the local archive server, split the dataset into %s parts <5Tb, and run 'scripts/prepare_for_upload_5tb.sh %s true %s' to complete the archiving process." %(ds_id, num_parts, ds_id, num_parts)
+    else:
+        text = "%s is a large dataset.  Please go to the local archive server and run 'scripts/prepare_for_upload.sh %s true' to complete the archiving process." %(ds_id, ds_id)
     print(text)
     if email: 
         sendEmail(text, 'Large Dataset Archive Needs To Be Completed: %s' % ds_id)
