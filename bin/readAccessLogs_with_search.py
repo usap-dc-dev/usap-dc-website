@@ -83,7 +83,7 @@ if __name__ == '__main__':
                 and status == '200' and not request_url.startswith('/?') and referer != 'https://orcid.org/' \
                 and not request_url.startswith('/static') and request_url != '' and referer != '' and request_url != '//' \
                 and request_url != '/jsglue.js' and 'invalid' not in request_url and 'authorized' not in request_url \
-                and 'supplement' not in request_url and 'accounts.' not in referer: 
+                and 'supplement' not in request_url and 'accounts.' not in referer and referer.startswith('http'): 
 
                 if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
                     print('%s: %s - %s' % (status, request_url, referer))
