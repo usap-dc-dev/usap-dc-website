@@ -75,6 +75,28 @@ if __name__ == '__main__':
         for entry in entries:
             log_line_data = line_parser(entry)
             request_url = log_line_data['request_url']
+
+            # REFERERS
+            referer = log_line_data['request_header_referer'].replace("'", "''")
+            status = log_line_data['status']
+            if 'usap-dc.org' not in referer and referer != '-' and 'not_found' not in request_url and request_url != '/search_old' \
+                and status == '200' and not request_url.startswith('/?') and referer != 'https://orcid.org/' \
+                and not request_url.startswith('/static') and request_url != '' and referer != '' and request_url != '//' \
+                and request_url != '/jsglue.js' and 'invalid' not in request_url and 'authorized' not in request_url \
+                and 'supplement' not in request_url and 'accounts.' not in referer: 
+
+                if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
+                    print('%s: %s - %s' % (status, request_url, referer))
+                    sql = '''INSERT INTO access_logs_referers (resource_requested, referer, remote_host, time)
+                             VALUES ('%s', '%s', '%s', '%s');''' % (request_url, referer, log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'])
+                    try:
+                        cur.execute(sql)
+                        num += 1
+                    except:
+                        #entry already exists, do nothing
+                        pass
+                    cur.execute("COMMIT;")      
+            
             # DOWNLOADS
             if "/dataset/usap-dc/" in request_url:
                 if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) and not valueInHoneyPot(request_url)):
@@ -105,4 +127,5 @@ if __name__ == '__main__':
                         #entry already exists, do nothing
                         pass
                     cur.execute("COMMIT;")
+            
         print("%s entries added to the database" % num)

@@ -750,6 +750,22 @@ content area & common elements
   margin-bottom: 10px;
 }
 
+.referer-stats {
+  display:inline-block;
+  height: 400px;
+  width: 300px;
+  margin-left:3em;
+  margin-bottom: 10px;
+
+}
+.referer-table {
+  display:inline-block;
+  height: 380px;
+  width: 300px;
+  overflow: auto;
+  font-size: 10px;
+}
+
 textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[disabled]{
     background-color: #eee;
     opacity: 1;

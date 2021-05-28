@@ -4055,7 +4055,7 @@ def stats():
     proj_catalog_date = dt_date(2019,5,1)
 
     # get download information from the database
-    (conn, cur) = connect_to_db()
+    (conn, cur) = connect_to_prod_db()
     query = "SELECT * FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
     cur.execute(query)
@@ -4106,7 +4106,6 @@ def stats():
     template_dict['download_numfiles_bytes'] = download_numfiles_bytes
     template_dict['download_users_downloads'] = download_users_downloads
 
-    # To be used if we start collecting stats on searches
     
     # get search information from the database
     query = "SELECT * FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
@@ -4128,6 +4127,39 @@ def stats():
             searches = binSearch(search, searches, search_param, searches_param)
 
     template_dict['searches'] = searches
+
+    # get refere information from the database
+    query = "SELECT * FROM access_logs_referers WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+
+    cur.execute(query)
+    data = cur.fetchall()
+    pages = {'/home':{} ,'/view/dataset':{}, '/view/project':{}, '/submit':{}, '/readme':{},
+            '/search':{}, '/contact':{}, '/faq':{}, '/dataset_search':{}, '/dataset':{}, '/login':{}, '/news':{}, '/api':{}}
+    for row in data:
+        referer = row['referer']
+        resource = row['resource_requested']
+        page = resource.split('?')[0]
+        if '/view/dataset' in page: page = '/view/dataset'
+        elif '/view/project' in page: page = '/view/project'
+        elif '/edit/dataset' in page: page = '/edit/dataset'
+        elif '/edit/project' in page: page = '/edit/project'
+        elif '/submit' in page: page = '/submit'
+        elif '/readme' in page: page = '/readme'
+        elif '/login' in page: page = '/login'
+        elif '/news' in page: page = '/news'
+        elif '/dataset_search' in page: page = '/dataset_search'
+        elif '/api' in page: page = '/api'
+        elif page in ['/', '/index']: page = '/home'
+        elif page.startswith('/dataset/ldeo') or page.startswith('/dataset/usap-dc') or page.startswith('/dataset/nsidc'): page = '/dataset'
+        if page not in pages:
+            pages[page] = {}
+        resource_referer = resource + '_' + referer
+        if resource_referer not in pages[page]:
+            pages[page][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
+        else:
+            pages[page][resource_referer]['count'] += 1
+
+    template_dict['referers'] = pages
 
     # get submission information from the database
     query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dt.date_created::text AS dif_date FROM dataset_file_info dsf 

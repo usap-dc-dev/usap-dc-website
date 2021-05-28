@@ -196,16 +196,43 @@
         </table>
     </div> -->
 
+
+    <p class="stats-text">Referer Statistics***</p>
+    {% for page, items in referers|dictsort %}
+    <div class="referer-stats">
+      <h4>{{page}}</h4>
+      <table class="nested_table referer-table">
+        <tr>
+          <th style="width:4em;">Count</th>
+          <th>Resource</th>
+          <th>Referer</th>
+        </tr>
+        {% for k, v in items.items()|sort(attribute='1.count', reverse=True) %}
+          <tr>
+            <td>{{v.count}}</td>
+            <td>{{v.resource}}</td>
+            <td>{{v.referer}}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endfor %}
+
+
     <div>
       <p><b>
         * Download statistics collection began in March 2017
       </b></p>
-        <p><b>
+      <p><b>
         ** Search statistics collection began in May 2019
+      </b></p>
+      <p><b>
+        *** Referer statistics collection began in May 2018
       </b></p>
     </div>
   </div>
 {% endif %}
+
 
 
 <script type="text/javascript">
