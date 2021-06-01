@@ -499,7 +499,7 @@
     </div>
 
       <div id='dif-browser-table'>
-        <table class='sortable' >
+        <table id='curator_table'>
              <thead class="w3-striped w3-bordered w3-hoverable">
               <tr>
                 <th>Submission</th>
@@ -540,6 +540,12 @@
     //Make the DIV element draggagle:
     dragElement(document.getElementById(("comments")));
     
+    //set up curator table
+    $('#curator_table').DataTable( {
+      "order": [[2, "desc"]],
+      "pageLength": 25
+    });
+
     //for keywords tab
     $('[data-toggle="popover"]').popover({html: true, container: 'body', trigger:"hover"});
     new_kw_counter = 1;
