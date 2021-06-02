@@ -6,6 +6,7 @@
 <div id="download_users_downloads" hidden>{{download_users_downloads|tojson}}</div>
 <div id="submission_submissions" hidden>{{submission_submissions|tojson}}</div>
 <div id="projects_created" hidden>{{projects_created|tojson}}</div>
+<div id="referers" hidden>{{referers|tojson}}</div>
 
 <div class="content">
 
@@ -181,43 +182,45 @@
           {% endfor %}
         </table>
     </div>
-  <!--   <div class="search-stats">
-        <table class="nested_table">
-          <tr>
-            <th style="width:4em;">Count</th>
-            <th>Spatial Bounds</th>
-          </tr>
-          {% for k,v in searches.spatial_bounds|dictsort(false, 'value', reverse=true) %}
-          <tr>
-            <td>{{v}}</td>
-            <td>{{k}}</td>
-          </tr>
-          {% endfor %}
-        </table>
-    </div> -->
 
 
     <p class="stats-text">Referer Statistics***</p>
-    {% for page, items in referers|dictsort %}
-    <div class="referer-stats">
-      <h4>{{page}}</h4>
-      <table class="nested_table referer-table">
-        <tr>
-          <th style="width:4em;">Count</th>
-          <th>Resource</th>
-          <th>Referer</th>
-        </tr>
-        {% for k, v in items.items()|sort(attribute='1.count', reverse=True) %}
-          <tr>
-            <td>{{v.count}}</td>
-            <td>{{v.resource}}</td>
-            <td>{{v.referer}}</td>
-          </tr>
-        {% endfor %}
-      </table>
-    </div>
-  {% endfor %}
+    <table>
+      
+        {% for page, items in referers|dictsort %}
 
+          {% if loop.index % 2 == 1 %}<tr>{% endif %}
+          <td class="referer-stats" valign="top">
+        
+          <h4>{% if page == '.all' %} ALL {% else %} {{page}} {% endif %}</h4>
+          <div id="referers{{page|replace('/','_')}}_div"></div>
+  
+          <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#referer_table_{{page|replace('/','')|replace('.','')}}" style="padding:0;">
+            <span>View Table </span><span class="caret"></span>
+          </button>
+    
+          <table class="collapse nested_table referer-table"  id="referer_table_{{page|replace('/','')|replace('.','')}}" >
+            <tr>
+              <th style="width:4em;">Count</th>
+              <th>Resource</th>
+              <th>Referer</th>
+            </tr>
+            {% for k, v in items.items()|sort(attribute='1.count', reverse=True) %}
+              {% if k != 'All' %}
+                <tr>
+                  <td>{{v.count}}</td>
+                  <td style="max-width:200px;">{{v.resource}}</td>
+                  <td>{{v.referer}}</td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </table>
+
+        </td>
+        {% if loop.index % 2 == 0 %}</tr>{% endif %}
+
+      {% endfor %}
+    </table>
 
     <div>
       <p><b>
@@ -278,6 +281,22 @@
 
     drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div', $("#dl_files"));
    
+    //referers
+    var referers = JSON.parse($("#referers").text());
+    for (var page in referers) {
+      delete referers[page].All.count;
+      var referers_arr = [];
+
+      for (var key in referers[page].All) {
+          if (referers[page].All.hasOwnProperty(key)) {
+            referers_arr.push( [ key, referers[page].All[key] ] );
+          }
+      }
+      referers_arr.sort(function(first, second) {
+        return second[1] - first[1];
+      })
+      drawPiChart(referers_arr, 'page', 'referers'+page.replaceAll('/','_')+'_div');
+    }
   });
 
   function makeDate(date_str) {
@@ -299,6 +318,21 @@
     d_options.vAxes[1].viewWindow = {min: ymin2, max: ymax2};
     var d_chart= new google.visualization.AreaChart(document.getElementById(target));
     d_chart.draw(d_data,d_options);
+  }
+
+  function drawPiChart(d_array, title, target) {
+    var d_data = new google.visualization.DataTable();
+    d_data.addColumn('string', 'Referer');
+    d_data.addColumn('number', 'Count');
+    d_data.addRows(d_array);
+
+    var d_options = {
+      title: title
+    };
+
+    var d_chart = new google.visualization.PieChart(document.getElementById(target));
+
+    d_chart.draw(d_data, d_options);
   }
 
   function drawChart(d_array, title, x_title, y_title, target) {

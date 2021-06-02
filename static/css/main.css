@@ -751,17 +751,14 @@ content area & common elements
 }
 
 .referer-stats {
-  display:inline-block;
-  height: 400px;
-  width: 300px;
-  margin-left:3em;
-  margin-bottom: 10px;
-
+  width: 600px;
+  border: 1px solid black;
+  padding: 20px;
 }
+
 .referer-table {
-  display:inline-block;
-  height: 380px;
-  width: 300px;
+  max-height: 380px;
+  width: 600px;
   overflow: auto;
   font-size: 10px;
 }

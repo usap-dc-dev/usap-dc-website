@@ -12,6 +12,7 @@ import os
 from flask_oauth import OAuth
 import json
 from urllib2 import Request, urlopen
+from urlparse import urlparse, unquote
 from werkzeug.utils import secure_filename
 import smtplib
 from email.mime.text import MIMEText
@@ -4133,10 +4134,17 @@ def stats():
 
     cur.execute(query)
     data = cur.fetchall()
-    pages = {'/home':{} ,'/view/dataset':{}, '/view/project':{}, '/submit':{}, '/readme':{},
-            '/search':{}, '/contact':{}, '/faq':{}, '/dataset_search':{}, '/dataset':{}, '/login':{}, '/news':{}, '/api':{}}
+    pages = {'.all': {'All': {'count':0}}, '/': {'All': {'count': 0}} ,'/view/dataset': {'All': {'count': 0}}, '/view/project': {'All': {'count': 0}}, 
+            '/submit': {'All': {'count': 0}}, '/readme': {'All': {'count': 0}}, '/search': {'All': {'count': 0}}, 
+            '/contact': {'All': {'count': 0}}, '/faq': {'All': {'count': 0}}, '/dataset_search': {'All': {'count': 0}}, 
+            '/dataset': {'All': {'count': 0}}, '/news': {'All': {'count': 0}}, '/api':{'All': {'count': 0}}}
     for row in data:
+        if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
         referer = row['referer']
+        if referer.endswith('/'): referer = referer[:-1]
+        referer_domain = urlparse(referer).netloc
+        if referer_domain.endswith('.ru') or 'baidu' in referer: continue
+        # if 'google' in referer_domain: referer_domain = 'www.google.com'
         resource = row['resource_requested']
         page = resource.split('?')[0]
         if '/view/dataset' in page: page = '/view/dataset'
@@ -4145,19 +4153,36 @@ def stats():
         elif '/edit/project' in page: page = '/edit/project'
         elif '/submit' in page: page = '/submit'
         elif '/readme' in page: page = '/readme'
-        elif '/login' in page: page = '/login'
+        elif '/login' in page: continue
+        elif '/curator' in page: continue
+        elif '/search_result' in page: continue
         elif '/news' in page: page = '/news'
         elif '/dataset_search' in page: page = '/dataset_search'
         elif '/api' in page: page = '/api'
-        elif page in ['/', '/index']: page = '/home'
+        elif page in ['/home', '/index']: page = '/'
         elif page.startswith('/dataset/ldeo') or page.startswith('/dataset/usap-dc') or page.startswith('/dataset/nsidc'): page = '/dataset'
         if page not in pages:
-            pages[page] = {}
+            pages[page] =  {'All': {'count': 0}}
+        if referer_domain not in pages[page]['All']:
+            pages[page]['All'][referer_domain] = 1       
+        else:
+            pages[page]['All'][referer_domain] += 1
+
+        if referer_domain not in pages['.all']['All']:
+            pages['.all']['All'][referer_domain] = 1
+        else:
+            pages['.all']['All'][referer_domain] += 1
+
         resource_referer = resource + '_' + referer
         if resource_referer not in pages[page]:
             pages[page][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
         else:
             pages[page][resource_referer]['count'] += 1
+
+        if resource_referer not in pages['.all']:
+            pages['.all'][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
+        else:
+            pages['.all'][resource_referer]['count'] += 1
 
     template_dict['referers'] = pages
 
@@ -4281,7 +4306,7 @@ def parseSearch(resource):
     for f in filters:
         try:
             filter, value = f.split('=', 1)
-            search[filter] = value
+            search[filter] = unquote(value)
         except:
             continue
     return search
