@@ -4056,7 +4056,7 @@ def stats():
     proj_catalog_date = dt_date(2019,5,1)
 
     # get download information from the database
-    (conn, cur) = connect_to_prod_db()
+    (conn, cur) = connect_to_db()
     query = "SELECT * FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
     cur.execute(query)
@@ -4266,7 +4266,13 @@ def stats():
 
 def binSearch(search, searches, search_param, searches_param):
     if search.get(search_param) and search[search_param] != '':
-        search[search_param] = search[search_param].replace('+', ' ').replace('%2C', ',')
+        search[search_param] = unquote(search[search_param]).replace('+', ' ').replace('%2C', ',')
+        if search_param == 'free_text':
+            search[search_param] = search[search_param].lower()
+            # some search end with slashes for some reason
+            while search[search_param].endswith('/'): 
+                search[search_param] = search[search_param][:-1]
+
         if searches[searches_param].get(search[search_param]):
             searches[searches_param][search[search_param]] += 1
         else:
@@ -4298,7 +4304,6 @@ def getDownloadsForDatasets(start_date, end_date):
     return res
 
 
-# To be used if we start collecting stats on searches
 def parseSearch(resource):
     resource = resource.split('?')[1]
     filters = resource.split('&')
@@ -4306,7 +4311,8 @@ def parseSearch(resource):
     for f in filters:
         try:
             filter, value = f.split('=', 1)
-            search[filter] = unquote(value)
+            value = unquote(value).replace('%20', ' ').replace('+', ' ')
+            search[filter] = value 
         except:
             continue
     return search
