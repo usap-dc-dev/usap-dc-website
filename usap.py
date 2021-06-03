@@ -1923,6 +1923,8 @@ def projectinfo():
 
 @app.route('/login')
 def login():
+    if request.referrer == url_for('stats', _external=True):
+        session['next'] = '/stats'
     if session.get('next') is None:
         session['next'] = '/home'
     return render_template('login.html')
