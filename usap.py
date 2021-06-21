@@ -2501,13 +2501,17 @@ def makeJsonLD(data, uid):
     else:
         doi = 'TBD'
 
+    description = data.get('abstract')
+    if not description or description == '':
+        description = data.get('title')
+
     json_ld = {
         "@context": "https://schema.org/",
         "@type": "Dataset",
         "@id": "doi:" + doi,
         "additionalType": ["geolink:Dataset", "vivo:Dataset"],
         "name": data.get('title'),
-        "description": data.get('abstract'),
+        "description": description,
         "citation": data.get('citation'),
         "datePublished": data.get('release_date'),
         "keywords": [kw['keyword_label'] for kw in keywords],
