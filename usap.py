@@ -3227,10 +3227,10 @@ def curator():
                             template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
                                                           + "\nThis is to confirm that your project, %s, has been successfully registered at USAP-DC." % data.get('title') \
                                                           + "\nPlease check the landing page %s and contact us (info@usap-dc.org) if there are any issues." % url_for('project_landing_page', project_id=uid, _external=True) \
-                                                          + "\n\nWe have also prepared and submitted a catalog entry (DIF) at the Antarctic Master Directory (AMD)." \
-                                                          + "\nThe DIF ID will be %s." % 'TBC' \
-                                                          + "\nThe direct link to the AMD record will be %s." % 'TBC' \
-                                                          + "\n\nIt usually takes AMD staff a few business days to review the submission before it goes live." \
+                                                          + "\n\nIf everything looks fine, I will also prepare and submit and entry (DIF record) to the Antarctic Master Directory (AMD)." \
+                                                          + "\n\nYou can update the project page in the future using the 'edit' function in the top right, e.g. when new datasets or publications " \
+                                                          + "become available. In the case that you archive your dataset(s) at the USAP-DC repository we will automatically link the dataset to the project." \
+                                                          + "\n\nAny edits will be reviewed by a USAP-DC curator before they become live." \
                                                           + "\n\nBest regards,"
 
                         template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
