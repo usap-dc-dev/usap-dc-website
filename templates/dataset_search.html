@@ -66,6 +66,8 @@
   <div>
     <form method="get" action="{{url_for('dataset_search')}}" id="data_link" onLoad="resetForm()">
 
+      <input type="hidden" id="show_map" name="show_map" value="{{show_map}}"/>
+
       <div class="row0">
         <div class="col100">
           <h2>Search USAP-DC Datasets<a name="top"></a></h2>

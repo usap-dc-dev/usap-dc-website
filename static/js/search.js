@@ -32,6 +32,7 @@ $(document).ready(function() {
 
     var search_params = JSON.parse($("#search_params").text());
     search_results = JSON.parse($("#search_results").text());
+    var show_map = $("#show_map").val();
 
     $('#dp_title').typeahead({autoSelect: false});
     $('#sci_program-input').typeahead({autoSelect: false});
@@ -177,6 +178,9 @@ $(document).ready(function() {
         if (results_map) {
             text === "View results on map" ? highlightVisibleRows(results_map, true) : unsetVisibleRows();
         }    
+        if (text === "Hide map") {
+            $("#show_map").val("False");
+        }
         return text === "View results on map" ? "Hide map" : "View results on map";
     })
     if (!results_map) {
@@ -190,6 +194,10 @@ $(document).ready(function() {
     }
   }));
 
+
+  if (show_map == "True") {
+    $('#geom_btn').click();
+  }
 
   $('.close_geom_btn').on('click', (function() {
     $("#geometry").hide();
@@ -752,6 +760,8 @@ function updateMenusWithSelected(selected) {
         $('#award-input').data('typeahead').source = makeAutocompleteSource(awards);
         $('#repo-input').data('typeahead').source = makeAutocompleteSource(repos);
         // $('#location-input').data('typeahead').source = makeAutocompleteSource(locations);
+
+        $('#show_map').val('True');
       }
     });
 }
@@ -774,6 +784,7 @@ function resetForm() {
     $("#spatial_bounds_interpolated").val("");
     $('#clear-polygon').click();
     $("#exclude").prop('checked', false);
+    $("#show_map").val("False");
     $("#search_btn").click();
 }
 

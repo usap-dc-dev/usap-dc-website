@@ -4563,6 +4563,10 @@ def search():
     params = request.args.to_dict()
     params['dp_type'] = 'Project'
 
+    template_dict['show_map'] = False
+    if params.get('show_map'):
+        template_dict['show_map'] = params.pop('show_map')
+    
     # block searches made by bots
     checkHoneypot(params, 'There was an issue with your search, please try again.', url_for('search'))
     params.pop('email', None)
@@ -4594,6 +4598,10 @@ def dataset_search():
     template_dict = {}
 
     params = request.args.to_dict()
+
+    template_dict['show_map'] = False
+    if params.get('show_map'):
+        template_dict['show_map'] = params.pop('show_map')
 
     # block searches made by bots
     checkHoneypot(params, 'There was an issue with your search, please try again.', url_for('search'))
