@@ -66,7 +66,7 @@ app.config.update(
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
     GMAIL_PICKLE="inc/token.pickle",
-    AWARD_WELCOME_EMAIL="static/letters/USAP_DCactiveawardletter.html",
+    AWARD_WELCOME_EMAIL="static/letters/USAP_DCwelcomeletter.html",
     AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
     AWARD_EMAIL_BANNER="/static/letters/images/image1.png",
     DEBUG=True
