@@ -79,6 +79,7 @@
           <button class="tablinks" onclick="openTab(event, 'projectSqlTab')" {% if tab == 'project_sql' %} id="defaultOpen" {% endif %}>SQL</button>
           <button class="tablinks" onclick="openTab(event, 'projectSpatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
           <button class="tablinks" onclick="openTab(event, 'difxmlTab')"  {% if tab == 'difxml' %} id="defaultOpen" {% endif %}>DIF XML</button>
+          <button class="tablinks" onclick="openTab(event, 'cmrTab')"  {% if tab == 'cmr' %} id="defaultOpen" {% endif %}>CMR Submission</button>
         {% endif %}
           <button class="tablinks" onclick="openTab(event, 'emailTab')"  {% if tab == 'email' %} id="defaultOpen" {% endif %}>Send Email</button>
           <button class="tablinks" onclick="openTab(event, 'statusTab')"  {% if tab == 'status' %} id="defaultOpen" {% endif %}>Change Status / Comments</button>
@@ -405,6 +406,19 @@
         <tr>
            <td>
                <textarea id="difxml" name="difxml" cols="130" rows="50">{{ difxml }}</textarea>
+           </td>
+        </tr>
+        </table>
+      </div>
+
+
+      <div id="cmrTab", class="tabcontent">
+        <h4>CMR submission text for {{uid}}</h4>
+        <button type="submit" name="submit" value="generate_cmr_text" onclick="waitCursor()">Generate CMR Text from DB</button>
+        <table>
+        <tr>
+           <td>
+               <div contenteditable="true" id="cmr_text" name="cmr_text" class="editable-div">{{ cmr_text|safe }}</div>
            </td>
         </tr>
         </table>

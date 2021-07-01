@@ -750,6 +750,13 @@ input[type=number] {
     display: none;
 }
 
+.editable-div {
+    width: 931px;
+    height: 1100px;
+    border: 1px solid black;
+    padding: 2px;
+    overflow-y: auto;
+}
 
 
 

@@ -125,7 +125,7 @@ def submitToDataCite(uid, edit=False):
 
 
 def getDataCiteXML(uid):
-    print('in getDataCiteXML')
+    print("in getDataCiteXML")
     status = 1
     (conn, cur) = usap.connect_to_db()
     if type(conn) is str:
@@ -2087,4 +2087,249 @@ def updateMatViews():
                REFRESH MATERIALIZED VIEW dataset_view;
                COMMIT;"""
     cur.execute(query)
+
+
+def getCMRText(data, uid):
+    
+    conn, cur = usap.connect_to_db()
+    text = ""
+    try:
+        text += "<b>Short name / version:</b><br>"
+        # query = """SELECT dif_id FROM dif_award_map dam 
+        #            JOIN  project_award_map pam ON pam.award_id = dam.award
+        #            WHERE pam.is_main_award is true AND pam.proj_uid = '%s';""" % uid
+        # cur.execute(query)
+        # res = cur.fetchone()
+        if data['dif_records']:
+            values = data['dif_records'][0]['dif_id'].rsplit('_', 1)
+            text += 'short name: %s<br> ' % values[0]
+            if len(values) > 1:
+                text += 'version   : %s<br>' % values[1]
+
+        text +="<br><b>Version Description:</b><br>"
+        text += "leave empty<br>"
+
+        text += "<br><b>Entry Title:</b><br>"
+        text += data['title']
+
+        text += "<br><br><b>DOI:</b><br>"
+        text += "Select DOI Not Available<br>"
+        text += "Missing reason: Not Applicable<br>"
+
+        # if datasets exists, print dataset DOIs
+        text += "<br><b>Associated DOIs:</b><br>"
+        text += "Could use this for dataset DOIs<br>"
+        text += " (Was just recently added by GCMD)<br>"
+
+        text += "<br><b>Abstract:</b><br>"
+        text += data['description']
+
+        text += "<br><br><b>Purpose:</b><br>"
+        text += "leave empty<br>"
+
+        text += "<br><b>Data Language:</b><br>"
+        text += "English<br>"
+
+        text += "<br><b>Data Dates:</b><br>"
+        text += "Creation: %s<br>" % data['date_created']
+        
+        text += "<br><b>Collection Data Type:</b><br>"
+        text += "Science Quality (or other, if appropriate)<br>"
+
+        text += "<br><b>Processing Level -  description:</b><br>"
+        text += "0 - raw data<br>"
+        text += "1 - processed data<br>"
+        text += "2 - model or derived data<br>"
+        text += "or select: Not provided<br>"
+
+        text += "<br><b>Collection Process:</b><br>"
+        text += "Active or Complete or Not Provided<br>"
+
+        text += "<br><b>Quality:</b><br>"
+        text += "(leave empty)<br>"
+
+        text += "<br><b>Use Constraints:</b><br>"
+        text += "leave empty or add CC-BY with other fields empty<br>"
+
+        text += "<br><b>Licence text:</b><br>" # need to come up with something here
+        text += "leave empty otherwise provides error<br>"
+
+        text += "<br><b>Access Constraints:</b><br>"
+        text += "Value: 0<br>"
+        text += "Description: Public<br>"
+
+        text += "<br><b>Metadata Association:</b><br>"
+        text += "leave empty<br>"
+
+        text += "<br><b>Publications:</b><br>"
+        if data['reference_list']:
+            for entry in data['reference_list']:
+                text += "&nbsp;&nbsp;%s<br>" % entry['ref_text']
+                text += "doi: %s<br>" % entry['doi']
+                text += "Authority: https://doi.org/<br><br>"
+ 
+
+        text += "<br><b>Related URLs:</b><br>"
+        if data['datasets']:
+            for entry in data['datasets']:
+                text += "Description: %s<br>" % entry['title']
+                text += "&nbsp;&nbsp;URL Content Type: Distribution URL<br>"
+                text += "&nbsp;&nbsp;Type: Get Data<br>"
+                text += "&nbsp;&nbsp;URL: %s<br>" % entry['url']
+    
+        text += "<br>Description: USAP-DC Project page<br>"
+        text += "&nbsp;&nbsp;Collection URL<br>"
+        text += "&nbsp;&nbsp;Type: Project Home Page<br>"
+        text += "&nbsp;&nbsp;URL : https://www.usap-dc.org/view/project/%s<br>" % uid
+
+        if data['website']:
+            for entry in data['website']:
+                text += "<br>Description: %s<br>" % entry['title']
+                text += "&nbsp;&nbsp;Collection URL<br>"
+                text += "&nbsp;&nbsp;Type: Project Home Page<br>"
+                text += "&nbsp;&nbsp;URL : %s<br>" % entry['url']
+        
+        if data['funding']:
+            for entry in data['funding']:
+                text += "<br>Description: NSF Award Information<br>"
+                text += "&nbsp;&nbsp;Publication URL<br>"
+                text += "&nbsp;&nbsp;View Related Information<br>"
+                text += "&nbsp;&nbsp;URL   : http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=%s<br>" % entry['award']
+
+
+        query = """SELECT gcmd_key_id FROM project_gcmd_science_key_map WHERE proj_uid = '%s';""" % uid
+        cur.execute(query)
+        res = cur.fetchall()
+        text += "<br><b>Science Keywords:</b><br>"
+        for entry in res:
+            text += "%s<br>" % entry['gcmd_key_id']
+        
+        query = """SELECT k1.keyword_label 
+				   FROM project_keyword_map p1 
+                   inner join keyword_usap k1 on p1.keyword_id = k1.keyword_id 
+                   WHERE p1.proj_uid = '%s';""" % uid
+        cur.execute(query)
+        res = cur.fetchall()
+        text += "<br><b>Auxillary Keywords:</b><br>"
+        text += "USAP-DC<br>"
+        text += "AMD<br>"
+        text += "AMD/US<br>"
+        text += "USA/NSF<br><br>"
+        for entry in res:
+            text += "%s<br>" % entry['keyword_label']
+
+        text += "<br><b>Platform:</b><br>"
+        text += "&nbsp;&nbsp;empty or choose one<br>"
+
+        text += "<br><b>Instrument:</b><br>"
+        text += "&nbsp;&nbsp;empty or choose one<br>"
+
+        text += "<br><b>Project:</b><br>"
+        text += "Short name: NSF/OPP<br>"
+        text += "Long Name: Office of Polar Programs, National Science Foundation<br>"
+        query = """SELECT deployment_id, deployment_type  FROM project_deployment WHERE proj_uid = '%s';""" % uid
+        cur.execute(query)
+        res = cur.fetchall()
+        text += "Deployments: %s<br>" % res
+
+        text += "<br><b>Temporal Extent:</b><br>"
+        text += "Range<br>"
+        text += "Ends At Present Flag: False<br>"
+        text += "start : %s<br>" % data['start_date']
+        text += "end : %s<br>" % data['end_date']
+        
+        text += "<br><b>Temporal Keywords:</b><br>"
+        text += "leave empty, if not approriate<br>"
+
+        text += "<br><b>Paleo Temporal Coverage:</b><br>"
+        text += "leave empty or choose one<br>"
+
+        text += "<br><b>Spatial Extent:</b><br>"
+        text += "Spatial Coverage Type: Horizontal<br>"
+        text += "Coordinate System: Cartesian<br>"
+        text += "bounding box<br>"
+        if data['spatial_bounds']:
+            text += "North : %s<br>" % data['spatial_bounds'][0]['north']
+            text += "South : %s<br>" %  data['spatial_bounds'][0]['south']
+            text += "West  : %s<br>" %  data['spatial_bounds'][0]['west']
+            text += "East : %s<br>" %  data['spatial_bounds'][0]['east']
+        else:
+            text += "North :<br>" 
+            text += "South :<br>"
+            text += "West  :<br>"
+            text += "East :<br>"
+
+        text += "Granule Spatial Representation: Cartesian<br>"
+
+        text += "<br><b>Location Keywords:</b><br>"
+        if data['gcmd_locations']:
+            for item in data['gcmd_locations']:
+                text += "%s<br>" % item['id']
+        text += "GEOGRAPHIC REGION > POLAR<br>"
+
+        text += "<br><b>Data Centers:</b><br>"
+        text += "Archiver Distributor<br>"
+        text += "USAP-DC<br>"
+        text += "United States Antarctic Program Data Center<br>"
+        text += "&nbsp;&nbsp;Contact Type: email<br>"
+        text += "&nbsp;&nbsp;&nbsp;&nbsp;value: info@usap-dc.org<br>"
+
+        text += "<br><b>Data Center related URL:</b><br>"
+        text += "Data Center URL<br>"
+        text += "Home Page<br>"
+        text += "https://www.usap-dc.org/<br>"
+
+
+        text += "<br><b>Data Contacts:</b><br>"
+        text += "Data Center Contact Person<br>"
+        text += "Data Center Contact<br>"
+        text += "USAP-DC<br>"
+        text += 'First: "Data"; Last: "Manager"<br>'
+        text += "&nbsp;&nbsp;Contact Type: email<br>"
+        text += "&nbsp;&nbsp;&nbsp;&nbsp;value: info@usap-dc.org<br>"
+
+        text += "<br>Non Data Center Contact Person<br>"
+        if data['persons']:
+            for item in data['persons']:
+                text += "%s<br>" % item['id']
+                text += "&nbsp;&nbsp;role: %s<br>" % item['role'] # role
+                text += "&nbsp;&nbsp;org:  %s<br>" % item['org'] # org
+                text += "&nbsp;&nbsp;email: %s<br>" % item['email'] # email
+                text += "&nbsp;&nbsp;country: United States<br>"
+
+
+        text += "<br><b>Collection Citations:</b><br>"
+        text += "Title:<br>"
+        text += "&nbsp;&nbsp;%s<br>" % data['title']
+        text += "Creator:<br>"
+        text += "&nbsp;&nbsp;%s<br>" % '; '.join(p['id'] for p in data['persons'] if p['role'] == "Investigator and contact")
+        text += "Release Date:<br>"
+        text += "&nbsp;&nbsp;%s<br>" % data['date_created']
+        text += "Publisher:<br>"
+        text += "&nbsp;&nbsp;USAP-DC<br>"
+        text += "Online Resource:<br>"
+        text += "&nbsp;&nbsp;Name: USAP-DC Project Landing Page<br>"
+        text += "&nbsp;&nbsp;Linkage : https://www.usap-dc.org/view/project/%s<br>" % data['proj_uid']
+        text += "&nbsp;&nbsp;Description: Project Landing Page<br>"
+
+        text += "<br><b>Metadata Language:</b><br>"
+        text += "English<br>"
+
+        text += "<br><b>Metadata Dates:</b><br>"
+        text += "&nbsp;&nbsp;no need to set anything here<br>"
+
+        text += "<br><b>File Archive (required):</b><br>"
+        text += "&nbsp;&nbsp;Format: Not Provided<br>"
+        text += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or use main file type<br>"
+
+        text += "<br><b>File Distribution (required):</b><br>"
+        text += "&nbsp;&nbsp;Format: Not Provided<br>"
+        text += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or use main file type<br>"
+
+        text += "<br><b>Direct Distribution Info:</b><br>"
+        text += "&nbsp;&nbsp;(for cloud services - leave empty)<br>"
+
+        return (text, None)
+    except Exception as e:
+        return (None, str(e)) 
 

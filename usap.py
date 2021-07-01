@@ -3371,6 +3371,17 @@ def curator():
                                                           + "\nThe direct link to the AMD record will be %s." % cf.getDifUrl(uid) \
                                                           + "\n\nIt usually takes AMD staff a few business days to review the submission before it goes live." \
                                                           + "\n\nBest regards,"
+                
+                # generate CMR Submission text for AMD
+                elif request.form.get('submit') == "generate_cmr_text":
+                    template_dict.update(request.form.to_dict())
+                    template_dict['tab'] = "cmr"
+                    proj_data = get_project(uid)
+                    cmr_text, error = cf.getCMRText(proj_data, uid)
+                    if error:
+                        template_dict['error'] = "Error: Unable to generate CMR text: %s" % error
+                    else:
+                        template_dict['cmr_text'] = cmr_text
 
             else:
                 # display submission json file
