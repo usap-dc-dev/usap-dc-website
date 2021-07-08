@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import csv
 
-nsf_file = "/web/usap-dc/htdocs/inc/nsf_table.tsv" # This is a tsv export of Proposals By Proposal Status-6.xlsx
+nsf_file = "/web/usap-dc/htdocs/inc/nsf_table_july2021.tsv" # This is a tsv export (copy and paste from the spreadsheet) of Part of PD-3PO-v1.3.2-USAPDC.xlsm 07-Jul-21 11-53-46.xlsx
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
