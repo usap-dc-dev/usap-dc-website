@@ -4322,6 +4322,8 @@ def getDownloadsForDatasets(start_date, end_date):
 
 
 def parseSearch(resource):
+    if '?' not in resource:
+        return {}
     resource = resource.split('?')[1]
     filters = resource.split('&')
     search = {}
