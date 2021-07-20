@@ -972,7 +972,10 @@ def failed_captcha(e):
 @app.errorhandler(BadSubmission)
 def invalid_dataset(e):
     session['error'] = True
-    return render_template('error.html', error_message=str(e), back_url=e.redirect, name=session['user_info']['name'])
+    name = ""
+    if session.get('user_info') and session['user_info'].get('name'):
+        name = session['user_info']['name']
+    return render_template('error.html', error_message=str(e), back_url=e.redirect, name=name)
 
 
 @app.errorhandler(psycopg2.OperationalError)
