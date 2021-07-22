@@ -2252,7 +2252,7 @@ def contact():
 
             return redirect('/thank_you/message')
         else:
-            msg = "<br/>You failed to pass the captcha<br/>"
+            msg = "<br/>You failed to pass the reCAPTCHA test<br/>"
             raise CaptchaException(msg, url_for('contact'))
 
 
@@ -2408,7 +2408,7 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
+    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'])
 
 
 def getCMRUrls(dif_records):
@@ -2628,27 +2628,37 @@ def makeCitation(metadata, dataset_id):
         return None
 
 
-@app.route('/dataset/<path:filename>')
+@app.route('/dataset/<path:filename>', methods=['GET','POST'])
 def file_download(filename):
-    dataset_id = request.args.get('dataset_id')
-    if not dataset_id: 
-        return redirect(url_for('not_found'))
+    form = request.form.to_dict()
+    g_recaptcha_response = form.get('g-recaptcha-response')
+    remoteip = request.remote_addr
 
-    # test for proprietary hold
-    ds = get_datasets([dataset_id])[0]
-    # check for proprietary hold
-    if len(ds['release_date']) == 4:
-        hold = datetime.strptime(ds['release_date'], '%Y') > datetime.utcnow()
-    elif len(ds['release_date']) == 10:  
-        hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
+    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
+    if resp.get('success'):
+        # dataset_id = request.args.get('dataset_id')
+        dataset_id = form.get('dataset_id')
+        if not dataset_id: 
+            return redirect(url_for('not_found'))
+
+        # test for proprietary hold
+        ds = get_datasets([dataset_id])[0]
+        # check for proprietary hold
+        if len(ds['release_date']) == 4:
+            hold = datetime.strptime(ds['release_date'], '%Y') > datetime.utcnow()
+        elif len(ds['release_date']) == 10:  
+            hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
+        else:
+            hold = False
+
+        if hold:
+            return redirect(url_for('data_on_hold', release_date=ds['release_date'])) 
+
+        directory = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'])
+        return send_from_directory(directory, filename, as_attachment=True)
     else:
-        hold = False
-
-    if hold:
-        return redirect(url_for('data_on_hold', release_date=ds['release_date'])) 
-
-    directory = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'])
-    return send_from_directory(directory, filename, as_attachment=True)
+        msg = "<br/>You failed to pass the reCAPTCHA test<br/>"
+        raise CaptchaException(msg, url_for('home'))
 
 
 @app.route('/readme/<dataset_id>')

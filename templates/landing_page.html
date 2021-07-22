@@ -5,15 +5,75 @@
 <script type="text/javascript">
 
   $(document).ready(function() {
-    $('.download').click(function() {
-      if ($(this).attr('data-url')) {
-        if ($(this).attr('data-id')) {
-          window.open($(this).attr('data-url')+'?dataset_id='+$(this).attr('data-id'), '_blank');
+
+
+    $('.readme_download').click(function() {
+      var data_url = $(this).attr('data-url');
+      var data_id = $(this).attr('data-id');
+      if (data_url) {
+        if (data_id) {
+          window.open(data_url+'?dataset_id='+data_id, '_blank');
         }
         else {
-          window.open($(this).attr('data-url'));
+          window.open(data_url);
+        }
+      };
+    });
+
+    $('.data_download').click(function() {
+      var data_url = $(this).attr('data-url');
+      var data_id = $(this).attr('data-id');
+
+      grecaptcha.reset(); 
+      $("#recaptcha_modal").show(); 
+      $("#complete_download").attr({'data-url':data_url, 'data-id':data_id});
+    });
+
+
+    $('#complete_download').click(function() {
+      var response = grecaptcha.getResponse();
+      var data_url = $(this).attr('data-url');
+      var data_id = $(this).attr('data-id');
+      if (typeof response !== 'undefined' && response != '') {
+        $("#recaptcha_modal").hide(); 
+        $("#recaptcha_alert").hide();
+        if (data_url) {
+            if (data_id) {
+                // Create a form
+                var downloadForm = document.createElement("form");
+                downloadForm.target = "_blank";    
+                downloadForm.method = "POST";
+                downloadForm.action = data_url;
+                // Create inputs
+                var datasetInput = document.createElement("input");
+                datasetInput.type = "hidden";
+                datasetInput.name = "dataset_id";
+                datasetInput.value = data_id;
+                var captchaInput = document.createElement("input");
+                captchaInput.type = "hidden";
+                captchaInput.name = "g-recaptcha-response";
+                captchaInput.value = response;
+                // Add the inputs to the form
+                downloadForm.appendChild(datasetInput);
+                downloadForm.appendChild(captchaInput);
+                // Add the form to dom
+                document.body.appendChild(downloadForm);
+                // Just submit
+                downloadForm.submit();
+            }
+            else {
+                window.open(data_url);
+            }
         }
       }
+      else {
+        $("#recaptcha_alert").show();
+      }
+    });
+
+    $("#modal_close").click(function() {
+      $("#recaptcha_alert").hide();
+      $("#recaptcha_modal").hide();
     });
 
     // add schema.org json_ld for google searches
@@ -26,6 +86,8 @@
 
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
 <div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])}}</div>
+
+
 
 <div id="metadata">
   <div class="header">
@@ -279,12 +341,12 @@
     </div>
     <div class="lprow2">
       <div class="col1">
-        <div class="download" data-url="/readme/{{data.id}}">
+        <div class="download readme_download" data-url="/readme/{{data.id}}">
           View
         </div>      
       </div>
       <div class="col2_short">
-        <div class="download" data-url="/readme-download/{{data.id}}">
+        <div class="download readme_download" data-url="/readme-download/{{data.id}}">
           Download
         </div>  
       </div>
@@ -309,27 +371,34 @@
     {% endif %}
 
     <div id="file-rows">
+    
+        {% for f in data.files %}
+        
+  
 
-      {% for f in data.files %}
-      <div class="lprow2">
-       <div class="col1">
-        <div class="download" 
-            {% if data.hold %} 
-                disabled 
-            {% else %} 
-                data-url="{{f['url']}}" 
-                {% if '.usap-dc.org/' in f['url'] %} 
-                    data-id="{{data.id}}" 
-                {% endif %} 
+        <div class="lprow2">
+        <div class="col1">
+          <div class="download data_download" 
+              {% if data.hold %} 
+                  disabled 
+              {% else %} 
+                  data-url="{{f['url']}}" 
+                  {% if '.usap-dc.org/' in f['url'] %} 
+                      data-id="{{data.id}}" 
+                  {% endif %} 
+              {% endif %}
+          >
+            {% if '.usap-dc.org/' in f['url'] %}
+              Download
+            {% else %}
+              External
             {% endif %}
-        >
-          {% if '.usap-dc.org/' in f['url'] %}
-            Download
-          {% else %}
-            External
-          {% endif %}
-       </div>
+        </div>
+      </script>
+
      </div>
+
+   
      <div class="col2">
       {{f['size']}}
     </div>
@@ -337,8 +406,23 @@
      {{f['name']}} 
    </div>
   </div>
+
   {% endfor %}
+
   </div>
+  
+ </div>
+ <div id="recaptcha_modal" class="modal">
+   <div class="modal-content">
+    <span class="close" id="modal_close">&times;</span>
+    <br>
+    <div id="recaptcha"> <div class="g-recaptcha" data-sitekey="{{secret}}"/></div>
+    <div id="recaptcha_alert" hidden><br><p style="color:red">Please complete the reCAPTCHA check</p></div>
+    <br>
+    <button id="complete_download" type="btn" class="download" data-attr="" data-id="">Complete Download</button>
+    <br><br>
+  </div>
+ </div>
  </div>
 
 {% if data.downloads >= 0 %}
