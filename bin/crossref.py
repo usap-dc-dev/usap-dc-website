@@ -29,7 +29,7 @@ def connect_to_db():
 
 
 def crossref2ref_text(item):
-    # probably not needed - the all publications appear to have a DOI that works with the API
+    # probably not needed - all publications appear to have a DOI that works with the API
     ref_text = ""
     if item.get('author'):
         for author in item['author']:
@@ -177,7 +177,7 @@ def get_crossref_pubs(new_only=True):
                 query = "SELECT * FROM project_view WHERE uid = '%s'" % proj_uid
                 cur.execute(query)
                 proj = cur.fetchone()
-                sql += "-- Project Title: %s\n-- Project People: %s\n" % (proj['title'], proj['persons'])
+                sql += "-- Project Title: %s\n-- Project People: %s\n" % (unicode(proj['title'], 'utf-8'), unicode(proj['persons'], 'utf-8'))
 
                 # include commented link to API URL so curator can check if not sure whether to include
                 sql += "-- %s%s\n\n" % (api, award_id)
@@ -188,9 +188,9 @@ def get_crossref_pubs(new_only=True):
                     output += """<li><a href="%s">%s</a> %s</li>""" % (proj_url, proj_uid, ref_text)
                 else:
                     output += """<li><i>(<a href="%s">%s</a> %s)</i></li>""" % (proj_url, proj_uid, ref_text)
-    
+
     if sql != '':    
-        # write sql to a file to be ingested by curator       
+        # write sql to a file to be ingested by curator
         sql += "\nCOMMIT;\n"
         with open(sql_file, 'a') as file:
             # file.write(sql.encode(encoding="ascii", errors="replace"))
