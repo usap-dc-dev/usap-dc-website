@@ -1165,7 +1165,7 @@ def editProjectJson2sql(data, uid):
                and data.get('award') is not None and data['award'] != '':
                 dst = os.path.join(AWARDS_FOLDER, data['award'], data['dmp_file'])
                 sql_out += "\n--NOTE: UPDATING DMP_LINK FOR AWARD %s\n" % data['award']
-                sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n" % (dst, data['award'])
+                sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n" % (dst, data['award_num'])
 
         elif k == 'email':
             # first check if pi is already in person DB table - if not, email will get added when pi is created later in the code
