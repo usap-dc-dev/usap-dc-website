@@ -2589,40 +2589,63 @@ def makeJsonLD(data, uid):
 def makeCitation(metadata, dataset_id):
     try:
         (conn, cur) = connect_to_db()
-        cur.execute("SELECT person_id, first_name, middle_name, last_name FROM dataset_person_map dpm JOIN person ON person.id=dpm.person_id WHERE dataset_id='%s'" % dataset_id)
+        cur.execute("SELECT person_id, first_name, middle_name, last_name FROM dataset_person_map dpm JOIN person ON person.id=dpm.person_id WHERE dataset_id='%s' ORDER BY person_id" % dataset_id)
         creators = cur.fetchall()
 
-        etal = ''
-        middle_init = ''
+        co_pis = []
 
         if len(creators) == 0: 
+            middle_init = ''
             creators = metadata['creator'].split(';')
             (last_name, first_name) = creators[0].split(',', 1)
             first_names = first_name.strip().split(' ')
             if len(first_names) > 1:
-                middle_init = ' ' + first_names[1][0] + '. '
+                middle_init = ' ' + first_names[1][0] + '.'
+            pi = {'last_name': last_name, 'first_name': first_name, 'middle_init':middle_init}
         else:
-            pi = creators[0]
+    
             # try and find the person who matches the first in the dataset.creators list
             creator1 = metadata['creator'].split(' ')[0]
-            for creator in creators:
-                if creator1 in creator['person_id']:
-                    pi = creator
+            for idx, creator in enumerate(creators):
+                middle_init = ''
 
-            if pi.get('first_name') and pi.get('last_name'):
-                first_name = pi['first_name']
-                last_name = pi['last_name']
-                
-                if pi.get('middle_name'):
-                    middle_init = ' ' + pi['middle_name'][0] + '. '
-            else:
-                (last_name, first_name) = pi['person_id'].split(',', 1)
+                if creator.get('first_name') and creator.get('last_name'):
+                    first_name = creator['first_name']
+                    last_name = creator['last_name']
+                    
+                    if creator.get('middle_name'):
+                        middle_init = ' ' + creator['middle_name'][0] + '.'
+                else:
+                    (last_name, first_name) = creator['person_id'].split(',', 1)
 
-        if len(creators) > 1: 
-            etal = ' et al. ' 
+                creator_details = {'last_name': last_name, 'first_name': first_name, 'middle_init':middle_init}
+
+                # make sure we have a PI
+                if idx == 0:
+                    pi = creator_details
+                if creator1.lower() in creator['person_id'].lower():
+                    pi = creator_details
+                else:
+                    co_pis.append(creator_details)
+ 
+        # try and follow AGU citation style guide https://www.agu.org/Publish-with-AGU/Publish/Author-Resources/Grammar-Style-Guide
+        creator_text = '%s, %s.%s' % (pi['last_name'], pi['first_name'].strip()[0], pi['middle_init'])
+
+        if len(creators) < 8:
+            for idx, co_pi in enumerate(co_pis):
+                if idx != len(co_pis)-1:
+                    creator_text += ', %s, %s.%s' % (co_pi['last_name'], co_pi['first_name'].strip()[0], co_pi['middle_init'])
+                else:
+                    creator_text += ', & %s, %s.%s' % (co_pi['last_name'], co_pi['first_name'].strip()[0], co_pi['middle_init'])
+        else:
+            for idx, co_pi in enumerate(co_pis):
+                if idx < 5:
+                    creator_text += ', %s, %s.%s' % (co_pi['last_name'], co_pi['first_name'].strip()[0], co_pi['middle_init'])
+
+            creator_text += ', et al. ' 
         year = metadata['release_date'].split('-')[0]
 
-        citation = '%s, %s.%s %s(%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: https://doi.org/%s.' % (last_name, first_name.strip()[0], middle_init, etal, year, metadata['title'], metadata['doi'])
+        citation = '%s (%s) "%s" U.S. Antarctic Program (USAP) Data Center. doi: https://doi.org/%s.' % (creator_text, year, metadata['title'], metadata['doi'])
         return citation
     except:
         return None
