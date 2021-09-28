@@ -343,7 +343,13 @@ if not archive:
     try:
         remotedir = os.path.join(config['LOCAL_ARCHIVE_DIR'],'small_datasets')
         remotefile = os.path.join(remotedir, os.path.basename(tar_name)) 
-        os.system('rsync "%s" "%s:%s"' % (tar_name, config['LOCAL_ARCHIVE_SERVER'], remotefile))
+        r = os.system('rsync "%s" "%s:%s"' % (tar_name, config['LOCAL_ARCHIVE_SERVER'], remotefile))
+        if r != 0: 
+            text += "Error transferring bagged dataset to local server.\n" 
+            print(text)
+            if email: 
+                sendEmail(text, 'Unsuccessful Dataset Archive: %s' % ds_id)
+            sys.exit(0)
     except:
         text += "Error transferring bagged dataset to local server. \n%s" % sys.exc_info()[1][0]
         print(text)
