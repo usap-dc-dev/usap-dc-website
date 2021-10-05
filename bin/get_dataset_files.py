@@ -1,11 +1,17 @@
 #!/opt/rh/python27/root/usr/bin/python
 
 """
-Created on 
-file_count.py
+This script will go through all the files on the local disk in the
+directory /web/usap-dc/htdocs/dataset and extract file sizes, mime types
+and document types for each one. It will examine the contents of tarred and
+zipped files.  The results will be written to the dataset_file table in the 
+database.
 
-@author: fnitsche & nshane
-run from main usap directory with >python bin/file_count.py
+Run from bin directory with >python get_dataset_files <arg>
+<arg> can be: 
+  - an individual dataset id: to run for a single dataset
+  - all: run for all datasets
+  - fix: run only for datasets returned by a specific query determined in the code.
 """
 
 import os
