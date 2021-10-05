@@ -23,7 +23,11 @@
     $('.data_download').click(function() {
       var data_url = $(this).attr('data-url');
       var data_id = $(this).attr('data-id');
-
+      if ($(this).text().trim() === 'External') {
+        //don't use captcha for external links
+        window.open(data_url);
+        return;
+      };
       grecaptcha.reset(); 
       $("#recaptcha_modal").show(); 
       $("#complete_download").attr({'data-url':data_url, 'data-id':data_id});
@@ -372,43 +376,42 @@
 
     <div id="file-rows">
     
-        {% for f in data.files %}
-        
-  
-
+      {% for f in data.files | sort(attribute='file_name') %}
+      
         <div class="lprow2">
-        <div class="col1">
-          <div class="download data_download" 
-              {% if data.hold %} 
-                  disabled 
-              {% else %} 
-                  data-url="{{f['url']}}" 
-                  {% if '.usap-dc.org/' in f['url'] %} 
-                      data-id="{{data.id}}" 
-                  {% endif %} 
+          <div class="col1">
+            <div class="download data_download" 
+                {% if data.hold %} 
+                    disabled 
+                {% else %} 
+                    data-url="{{f['url']}}" 
+                    {% if '.usap-dc.org/' in f['url'] %} 
+                        data-id="{{data.id}}" 
+                    {% endif %} 
+                {% endif %}
+            >
+              {% if '.usap-dc.org/' in f['url'] %}
+                Download
+              {% else %}
+                External
               {% endif %}
-          >
-            {% if '.usap-dc.org/' in f['url'] %}
-              Download
-            {% else %}
-              External
-            {% endif %}
+            </div>
         </div>
-      </script>
 
-     </div>
+  
+        <div class="col2">
+          {{f['size']}}
+        </div>
 
-   
-     <div class="col2">
-      {{f['size']}}
-    </div>
-    <div class="col3">
-     {{f['name']}} 
-   </div>
-  </div>
+        <div class="col3">
+          {{f['file_name']}}<br>
+          {% if '.usap-dc.org/' in f['url'] %}
+            <p class="file_info"><b>SHA256 Checksum:</b> {{f['md5_checksum']}} <b>File Type:</b> {{f['document_types']}}</p>
+          {% endif %}
+        </div>
+      </div>
 
-  {% endfor %}
-
+    {% endfor %}
   </div>
   
  </div>

@@ -45,6 +45,7 @@ from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
 
 
+
 app = Flask(__name__)
 jsglue = JSGlue(app)
 
@@ -526,6 +527,17 @@ def get_deployment_types(conn=None, cur=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM deployment_type ORDER BY deployment_type'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_files(conn=None, cur=None, dataset_id=None):
+    if not (conn and cur):
+        (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM dataset_file '
+    if dataset_id:
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+    query += cur.mogrify(' ORDER BY file_name;')
     cur.execute(query)
     return cur.fetchall()
 
@@ -2362,7 +2374,8 @@ def landing_page(dataset_id):
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
-    usap_domain = app.config['USAP_DOMAIN']
+    # ********** change before release **********
+    usap_domain = "https://www-dev.usap-dc.org"#app.config['USAP_DOMAIN']
     
     # check for proprietary hold
     if len(metadata['release_date']) == 4:
@@ -2372,21 +2385,18 @@ def landing_page(dataset_id):
     else:
         metadata['hold'] = False
 
-    if url.startswith(usap_domain):
-        directory = os.path.join(current_app.root_path, url[len(usap_domain):])
-        file_paths = [os.path.join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn]
+    if url.startswith(usap_domain): 
+        (conn, cur) = connect_to_db()
+        files_db = get_files(conn, cur, dataset_id)
         omit = set(['readme.txt', '00README.txt', 'index.php', 'index.html', 'data.html'])
-        file_paths = [f for f in file_paths if os.path.basename(f) not in omit]
-        files = []
-        for f_path in file_paths:
-            f_size = os.stat(f_path).st_size
-            f_name = os.path.basename(f_path)
-            f_subpath = f_path[len(directory):]
-            files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
-            metadata['files'] = files
-        files.sort()
+        files = [f for f in files_db if f['file_name'] not in omit]
+        for f in files:
+            f['size'] = humanize.naturalsize(f['file_size'])
+            f['url'] = url + f['dir_name']
+            f['document_types'] = f['document_types']
+        metadata['files'] = files
     else:
-        metadata['files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
+        metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
 
     if metadata.get('url_extra'):
         metadata['url_extra'] = os.path.basename(metadata['url_extra'])
@@ -3349,6 +3359,26 @@ def curator():
                     else:
                         template_dict['message'].append(msg)
                     template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid) 
+
+                # update file info in database
+                elif request.form.get('submit') == "generate_file_sql":
+                    template_dict['tab'] = "spatial"
+                    ds = get_datasets([uid])[0]
+                    url = ds['url']
+                    dataset_dir = app.config['DATASET_FOLDER'] + url.replace(config['USAP_DOMAIN']+'dataset', '')
+                    template_dict['file_sql'] = cf.get_file_info(uid, url, dataset_dir, True)
+                    template_dict['file_sql'] += "COMMIT;"
+                elif request.form.get('submit') == "update_file_info":
+                    template_dict['tab'] = "spatial"
+                    sql_str = request.form.get('file_sql').encode('utf-8')
+                    try:
+                        cur.execute(sql_str)
+                        msg = "File Info successfully updated in database."
+                        template_dict['message'].append(msg)
+                        template_dict['landing_page'] = cf.getLandingPage(uid)
+                        template_dict['file_sql'] = ''
+                    except Exception as err:
+                        template_dict['error'] = "Error Updating File Info in database: " + str(err)                    
 
                 # generate DIF XML from JSON file
                 elif request.form.get('submit') == "generate_difxml":

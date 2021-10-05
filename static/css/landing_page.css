@@ -69,7 +69,7 @@ position: absolute;
 
 .col3 {
 margin-left: 18em;
-width: 36em;
+/* width: 45em; */
 position: absolute;
 font-weight: bold;
 
@@ -240,4 +240,10 @@ font-size: 1.3em;
   margin:0 53px;
   width: 190px;
   font-size:medium;
+}
+
+.file_info {
+  font-size: 12px;
+  color: rgb(0,169,234);
+  font-weight: normal;
 }

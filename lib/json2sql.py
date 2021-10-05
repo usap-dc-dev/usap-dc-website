@@ -12,7 +12,7 @@ import json
 import copy
 from flask import url_for
 import usap
-from lib.curatorFunctions import makeBoundsGeom, makeCentroidGeom, updateSpatialMap, checkAltIds, generate_ref_uid
+from lib.curatorFunctions import makeBoundsGeom, makeCentroidGeom, updateSpatialMap, checkAltIds, generate_ref_uid, get_file_info
 
 config = json.loads(open('config.json', 'r').read())
 dc_config = json.loads(open('inc/datacite.json', 'r').read())
@@ -371,6 +371,12 @@ def make_sql(data, id):
                     (next_id, keyword)
                 sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-{}');\n".format(id, next_id)
                 last_id = next_id
+
+    # add file info to dataset_file table
+    sql_file_info = get_file_info(id, url, data['upload_directory'], False)
+    if sql_file_info:
+        sql_out += "\n--NOTE: add file info\n"
+        sql_out += sql_file_info
 
     # if this dataset is replacing an old dataset, need to deprecate the old one
     if data.get('related_dataset'):

@@ -10,7 +10,10 @@ import base64
 from datetime import datetime
 from dateutil.parser import parse
 import usap
-
+import tarfile
+import gzip
+import zipfile
+import mimetypes
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -30,6 +33,7 @@ LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
 PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
 RECENT_DATA_FILE = "inc/recent_data.txt"
 REF_UID_FILE = "inc/ref_uid"
+
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -2333,3 +2337,123 @@ def getCMRText(data, uid):
     except Exception as e:
         return (None, str(e)) 
 
+
+# get uncompressed file size of gzipped file
+def get_uncompressed_size(file):
+    fileobj = open(file, 'r')
+    fileobj.seek(-8, 2)
+    crc32 = gzip.read32(fileobj)
+    isize = gzip.read32(fileobj)  # may exceed 2GB
+    fileobj.close()
+    return isize
+
+
+def get_file_info(ds_id, url, dataset_dir, replace):
+    (conn, cur) = usap.connect_to_db()  
+    print(replace)
+    dir_name = ''
+    sql_out = ''
+    # if replace, remove existing entries from database first
+    if replace:
+        sql_out += "DELETE FROM dataset_file WHERE dataset_id = '%s';\n\n" % ds_id
+
+    if config['USAP_DOMAIN']+'dataset' in url:
+        dir_name = url.replace(config['USAP_DOMAIN']+'dataset', '')
+        for root, dirs, files in os.walk(dataset_dir):
+            for name in files:
+                mime_types = set()
+                doc_types = set()
+                path_name = os.path.join(root, name)
+                if '.tar' in name:
+                    try:
+                        with tarfile.open(path_name) as archive:
+                            for member in archive:
+                                if member.isreg():
+                                    mime_type, doc_type = getMimeAndDocTypes(member.name, cur)
+                                    mime_types.add(mime_type)
+                                    doc_types.add(doc_type)
+                    except:
+                        print("Couldn't open tar file %s\n" % name)
+                elif '.zip' in name:
+                    zp = zipfile.ZipFile(path_name)
+                    for z in zp.filelist:
+                        mime_type, doc_type = getMimeAndDocTypes(z.filename, cur)
+                        mime_types.add(mime_type)
+                        doc_types.add(doc_type)
+                else:
+                    mime_type, doc_type = getMimeAndDocTypes(name, cur)
+                    mime_types.add(mime_type)
+                    doc_types.add(doc_type)
+
+                file_size = os.path.getsize(os.path.join(root, name))
+
+                # if file is zipped, get  the uncompressed file size too
+                if '.gz' in name:
+                    u_file_size = get_uncompressed_size(path_name)
+                elif '.zip' in name:
+                    zp = zipfile.ZipFile(path_name)
+                    u_file_size = sum(zinfo.file_size for zinfo in zp.filelist)
+                else:
+                    u_file_size = file_size
+
+                # calculate checksums (hashlib library won't work on large files, so need to use openssl in unix)
+                process = Popen(['openssl', 'sha256', path_name], stdout=PIPE)
+                (output, err) = process.communicate()
+                if err:
+                    text = "Error calculating SHA256 checksum.  %s" % err.decode('ascii')
+                    print(text)
+                    sql_out += "-- %s\n " % text
+                checksum = output.decode('ascii').split(")= ")[1].replace("\n", "")
+
+                process = Popen(['openssl', 'md5', path_name], stdout=PIPE)
+                (output, err) = process.communicate()
+                if err:
+                    text = "Error calculating MD5 checksum.  %s" % err.decode('ascii')
+                    print(text)
+                    sql_out += "-- %s\n " % text
+                checksum_md5 = output.decode('ascii').split(")= ")[1].replace("\n", "")
+
+                # check if dataset_id already exist in table
+                sql_line = "SELECT * "\
+                            "FROM dataset_file "\
+                            "WHERE dataset_id = %s AND dir_name = %s AND file_name = %s;"
+                cur.execute(sql_line, (ds_id, dir_name, name))
+                data = cur.fetchall()
+
+                mime_str = "; ".join([m for m in mime_types if m])
+                doc_str = "; ".join([d for d in doc_types if d])
+
+                # if no data returned use insert otherwise update
+                if not data or replace:
+                    sql_out += "INSERT INTO dataset_file "\
+                        "(dataset_id, dir_name, file_name, file_size, file_size_uncompressed, sha256_checksum, " \
+                        "md5_checksum, mime_types, document_types) VALUES " \
+                        "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (ds_id, dir_name, name, file_size, 
+                        u_file_size, checksum, checksum_md5, mime_str, doc_str)
+                else:
+                    sql_out += "UPDATE dataset_file SET file_size = '%s', file_size_uncompressed = '%s', sha256_checksum = '%s', " \
+                        "md5_checksum = '%s', mime_types = '%s', document_types = '%s' " \
+                        "WHERE dataset_id = '%s' AND dir_name = '%s' AND file_name = '%s';\n\n" % (file_size, u_file_size,
+                        checksum, checksum_md5, mime_str, doc_str, ds_id, dir_name, name)
+        
+        return sql_out
+    else:
+        return None
+
+
+def getMimeAndDocTypes(name, cur):
+    mime_type = mimetypes.guess_type(name)[0]
+    if not mime_type:
+        ext = '.' + name.split('.')[-1]
+        if ext == '.old':
+            ext = '.' + name.split('.')[-2]
+        cur.execute("SELECT * FROM file_types WHERE extension = %s", (ext.lower(),))
+    else:
+        cur.execute("SELECT * FROM file_types WHERE mime_type = %s", (mime_type,))
+    res = cur.fetchone()
+
+    if res: 
+        doc_type = res['document_type']
+    else:
+        doc_type = 'Unknown'    
+    return mime_type, doc_type

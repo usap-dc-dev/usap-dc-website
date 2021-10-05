@@ -68,7 +68,7 @@
           <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
           <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
           <button class="tablinks" onclick="openTab(event, 'keywordsTab')"  {% if tab == 'keywords' %} id="defaultOpen" {% endif %}>Assign Keywords</button>
-          <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Spatial Bounds / Award</button>
+          <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Bounds / Award / File Info</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
           {% if db_imported %}
@@ -100,7 +100,7 @@
 
       <div id="sqlTab", class="tabcontent">
         <h4>SQL for {{filename}}</h4>
-        <button type="submit" name="submit" value="import_to_db" title="Import to DB and copy uploaded files" onclick="waitCursor()">Import to Database Only</button>
+        <button type="submit" name="submit" value="import_to_db" title="Import to DB and copy uploaded files" onclick="waitCursor()">Import to Database</button>
         <table>
         <tr>
            <td>
@@ -213,6 +213,20 @@
             <input type="text" name="award" id="award">
             <br/><br/>
             <button type="submit" name="submit" value="award" onclick="waitCursor()">Add Award</button>
+          </div>
+          <div>
+            <br><br>
+            <b>File Info</b><br/>
+            <button type="submit" name="submit" value="generate_file_sql" onclick="waitCursor()">Generate File Info SQL</button>
+            <button type="submit" name="submit" value="update_file_info" onclick="waitCursor()">Update Database</button>
+            <table>
+              <tr>
+                <td>
+                    <textarea id="file_sql" name="file_sql" cols="130" rows="20">{{ file_sql }}</textarea>
+                </td>
+              </tr>
+            </table>
+
           </div>
         {% else %}
           <h4>You will be able to update spatial bounds and awards after Database import</h4>
