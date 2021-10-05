@@ -45,7 +45,6 @@ from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
 
 
-
 app = Flask(__name__)
 jsglue = JSGlue(app)
 
@@ -2374,8 +2373,7 @@ def landing_page(dataset_id):
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
-    # ********** change before release **********
-    usap_domain = "https://www-dev.usap-dc.org"#app.config['USAP_DOMAIN']
+    usap_domain = app.config['USAP_DOMAIN']
     
     # check for proprietary hold
     if len(metadata['release_date']) == 4:
