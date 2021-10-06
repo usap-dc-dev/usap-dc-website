@@ -204,7 +204,7 @@
                   <th>Deployment</th>
                   <th>Type</th>
                 </tr>
-                {% for d in data.deployment %}
+                {% for d in data.deployment |sort(attribute='deployment_id') %}
                   <tr>
                     <td>
                       {% if d.url %}
