@@ -5,7 +5,7 @@ import os
 import sys
 import requests
 from flask import session, url_for, current_app, request
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, check_output
 import base64
 from datetime import datetime
 from dateutil.parser import parse
@@ -14,6 +14,7 @@ import tarfile
 import gzip
 import zipfile
 import mimetypes
+import shutil
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -2350,7 +2351,6 @@ def get_uncompressed_size(file):
 
 def get_file_info(ds_id, url, dataset_dir, replace):
     (conn, cur) = usap.connect_to_db()  
-    print(replace)
     dir_name = ''
     sql_out = ''
     # if replace, remove existing entries from database first
@@ -2364,31 +2364,47 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                 mime_types = set()
                 doc_types = set()
                 path_name = os.path.join(root, name)
-                if '.tar' in name:
+                if name.endswith('.tar.Z'):
+                    try:
+                        process = Popen(('zcat', path_name), stdout=PIPE)
+                        output = check_output(('tar', 'tf', '-'), stdin=process.stdout)
+                        files = output.split('\n')
+                        for file in files:
+                            if file != '':
+                                mime_type, doc_type = getMimeAndDocTypes(file, cur)
+                                mime_types.add(mime_type)
+                                doc_types.add(doc_type)
+
+                    except Exception as err:
+                        doc_types.add('Unknown')
+                        sql_out += "--ERROR: Couldn't open tar.Z file %s\n" % name
+
+                elif '.tar' in name:
                     try:
                         with tarfile.open(path_name) as archive:
                             for member in archive:
                                 if member.isreg():
-                                    mime_type, doc_type = getMimeAndDocTypes(member.name, cur)
+                                    mime_type, doc_type = getMimeAndDocTypes(member.name, cur, None, archive)
                                     mime_types.add(mime_type)
                                     doc_types.add(doc_type)
                     except:
-                        print("Couldn't open tar file %s\n" % name)
+                        sql_out += "--ERROR: Couldn't open tar file %s\n" % name
+
                 elif '.zip' in name:
                     zp = zipfile.ZipFile(path_name)
                     for z in zp.filelist:
-                        mime_type, doc_type = getMimeAndDocTypes(z.filename, cur)
+                        mime_type, doc_type = getMimeAndDocTypes(z.filename, cur, zp)
                         mime_types.add(mime_type)
                         doc_types.add(doc_type)
                 else:
-                    mime_type, doc_type = getMimeAndDocTypes(name, cur)
+                    mime_type, doc_type = getMimeAndDocTypes(path_name, cur)
                     mime_types.add(mime_type)
                     doc_types.add(doc_type)
 
-                file_size = os.path.getsize(os.path.join(root, name))
+                file_size = os.path.getsize(path_name)
 
                 # if file is zipped, get  the uncompressed file size too
-                if '.gz' in name:
+                if '.gz' in name or name.endswith('.Z'):
                     u_file_size = get_uncompressed_size(path_name)
                 elif '.zip' in name:
                     zp = zipfile.ZipFile(path_name)
@@ -2402,7 +2418,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                 if err:
                     text = "Error calculating SHA256 checksum.  %s" % err.decode('ascii')
                     print(text)
-                    sql_out += "-- %s\n " % text
+                    return "--%s\n " % text
                 checksum = output.decode('ascii').split(")= ")[1].replace("\n", "")
 
                 process = Popen(['openssl', 'md5', path_name], stdout=PIPE)
@@ -2410,7 +2426,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                 if err:
                     text = "Error calculating MD5 checksum.  %s" % err.decode('ascii')
                     print(text)
-                    sql_out += "-- %s\n " % text
+                    return "--%s\n " % text
                 checksum_md5 = output.decode('ascii').split(")= ")[1].replace("\n", "")
 
                 # check if dataset_id already exist in table
@@ -2441,19 +2457,53 @@ def get_file_info(ds_id, url, dataset_dir, replace):
         return None
 
 
-def getMimeAndDocTypes(name, cur):
+def getMimeAndDocTypes(name, cur, zp=None, tar_archive=None):
     mime_type = mimetypes.guess_type(name)[0]
+    ext = '.' + name.split('.')[-1]
     if not mime_type:
-        ext = '.' + name.split('.')[-1]
         if ext == '.old':
             ext = '.' + name.split('.')[-2]
-        cur.execute("SELECT * FROM file_types WHERE extension = %s", (ext.lower(),))
+        cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
     else:
-        cur.execute("SELECT * FROM file_types WHERE mime_type = %s", (mime_type,))
+        cur.execute("SELECT * FROM file_type WHERE mime_type = %s", (mime_type,))
     res = cur.fetchone()
 
-    if res: 
+    if res:
         doc_type = res['document_type']
     else:
-        doc_type = 'Unknown'    
+        doc_type = 'Unknown'
+
+    if 'README' in name.upper():
+        doc_type = 'Readme Text File'
+
+    if doc_type == 'Unknown':
+        try:
+            # determine whether text or binary
+            textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
+            is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
+            if zp:
+                f = zp.open(name, 'r')
+            elif tar_archive:
+                tar_archive.extract(name, path='tmp')
+                f = open(os.path.join('tmp',name), 'rb')
+            else:
+                f = open(name, 'rb')
+
+            data_file = ''
+            if ext.lower() == '.dat':
+                data_file = 'Data '
+            if is_binary_string(f.read(1024)):
+                doc_type = '%sBinary File' % data_file
+            else:
+                doc_type = '%sText File' % data_file
+            if tar_archive:
+                shutil.rmtree('tmp')
+
+        except Exception as e:
+            # for dataset 601323
+            if str(e) == 'Bad magic number for file header':
+                doc_type = None
+            else:
+                print(e)
+
     return mime_type, doc_type

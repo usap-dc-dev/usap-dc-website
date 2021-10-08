@@ -15,7 +15,6 @@ Run from bin directory with >python get_dataset_files <arg>
 """
 
 import os
-# import requests
 import psycopg2
 import psycopg2.extras
 import sys
@@ -25,6 +24,7 @@ import gzip
 import zipfile
 import mimetypes
 from subprocess import Popen, PIPE, check_output
+import shutil
 
 
 top_dir = '/web/usap-dc/htdocs/dataset'
@@ -86,7 +86,7 @@ def get_file_info(ds_id, url):
                         with tarfile.open(path_name) as archive:
                             for member in archive:
                                 if member.isreg():
-                                    mime_type, doc_type = getMimeAndDocTypes(member.name, cur)
+                                    mime_type, doc_type = getMimeAndDocTypes(member.name, cur, None, archive)
                                     mime_types.add(mime_type)
                                     doc_types.add(doc_type)
                     except Exception as err:
@@ -97,15 +97,17 @@ def get_file_info(ds_id, url):
                 elif '.zip' in name:
                     zp = zipfile.ZipFile(path_name)
                     for z in zp.filelist:
-                        mime_type, doc_type = getMimeAndDocTypes(z.filename, cur)
-                        mime_types.add(mime_type)
-                        doc_types.add(doc_type)
+                        if not z.filename.endswith('/'):
+                            mime_type, doc_type = getMimeAndDocTypes(z.filename, cur, zp)
+                            mime_types.add(mime_type)
+                            doc_types.add(doc_type)
+                            
                 else:
-                    mime_type, doc_type = getMimeAndDocTypes(name, cur)
+                    mime_type, doc_type = getMimeAndDocTypes(path_name, cur)
                     mime_types.add(mime_type)
                     doc_types.add(doc_type)
 
-                file_size = os.path.getsize(os.path.join(root, name))
+                file_size = os.path.getsize(path_name)
 
                 # if file is zipped, get  the uncompressed file size too
                 if '.gz' in name or name.endswith('.Z'):
@@ -165,21 +167,52 @@ def get_file_info(ds_id, url):
         print(ds_id, ' external data', url)
 
 
-def getMimeAndDocTypes(name, cur):
+def getMimeAndDocTypes(name, cur, zp=None, tar_archive=None):
     mime_type = mimetypes.guess_type(name)[0]
+    ext = '.' + name.split('.')[-1]
     if not mime_type:
-        ext = '.' + name.split('.')[-1]
         if ext == '.old':
             ext = '.' + name.split('.')[-2]
-        cur.execute("SELECT * FROM file_types WHERE extension = %s", (ext.lower(),))
+        cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
     else:
-        cur.execute("SELECT * FROM file_types WHERE mime_type = %s", (mime_type,))
+        cur.execute("SELECT * FROM file_type WHERE mime_type = %s", (mime_type,))
     res = cur.fetchone()
 
-    if res: 
+    if res:
         doc_type = res['document_type']
     else:
         doc_type = 'Unknown'
+
+    if 'README' in name.upper():
+        doc_type = 'Readme Text File'
+
+    if doc_type == 'Unknown':
+        try:
+            # determine whether text or binary
+            textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
+            is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
+            if zp:
+                f = zp.open(name, 'r')
+            elif tar_archive:
+                tar_archive.extract(name, path='tmp')
+                f = open(os.path.join('tmp',name), 'rb')
+            else:
+                f = open(name, 'rb')
+
+            data_file = ''
+            if ext.lower() == '.dat':
+                data_file = 'Data '
+            if is_binary_string(f.read(1024)):
+                doc_type = '%sBinary File' % data_file
+            else:
+                doc_type = '%sText File' % data_file
+            if tar_archive:
+                shutil.rmtree('tmp')
+
+        except Exception as e:
+            # for dataset 601323
+            if str(e) == 'Bad magic number for file header':
+                doc_type = None
 
     return mime_type, doc_type
 
@@ -192,7 +225,7 @@ ds_id = sys.argv[1]
 if ds_id == 'all':
     cur.execute("SELECT id, url FROM dataset where url IS NOT NULL ORDER BY id;")
 elif ds_id == 'fix':
-    cur.execute("SELECT DISTINCT(id), url FROM dataset JOIN dataset_file df ON dataset.id=df.dataset_id WHERE document_types ~* 'Unknown' ;")
+    cur.execute("SELECT DISTINCT(id), url FROM dataset JOIN dataset_file df ON dataset.id=df.dataset_id WHERE document_types LIKE '%Mathematica%' ORDER BY id;")
 else:
     cur.execute("SELECT id, url FROM dataset where id ='%s';" % ds_id)
 
