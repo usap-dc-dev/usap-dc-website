@@ -35,7 +35,8 @@ ant_program_dict = {'ANTARCTIC GLACIOLOGY':'Antarctic Glaciology',
                           'ANS-Arctic Natural Sciences':'Arctic Natural Sciences',
                           'Antarctic Science and Technolo':'Antarctic Science and Technology',
                           'Polar Special Initiatives': 'Polar Special Initiatives',
-                          'ANT Coordination & Information':'Antarctic Coordination and Information'}
+                          'ANT Coordination & Information': 'Antarctic Coordination and Information',
+                          'POST DOC/TRAVEL': 'Post Doc/Travel'}
 
 # read in tsv version of NSF spreadsheet
 with open(nsf_file) as csvfile:
@@ -111,7 +112,7 @@ def getAwardsFromNSF(start_date):
 
     while not_done:
         parameter = {'offset': offset,
-                    'fundProgramName': 'ANT',
+                    'fundProgramName': 'ANT, POST DOC/TRAVEL',
                     'dateStart': start_date,
                     'printFields':','.join(fields)} 
 
