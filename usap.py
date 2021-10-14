@@ -2390,7 +2390,10 @@ def landing_page(dataset_id):
         files = [f for f in files_db if f['file_name'] not in omit]
         for f in files:
             f['size'] = humanize.naturalsize(f['file_size'])
-            f['url'] = url + f['dir_name']
+            if f['dir_name'].startswith('/archive'):
+                f['url'] = 'archive'
+            else:
+                f['url'] = url + f['dir_name']
             f['document_types'] = f['document_types']
         metadata['files'] = files
     else:

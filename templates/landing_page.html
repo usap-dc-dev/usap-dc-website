@@ -28,6 +28,10 @@
         window.open(data_url);
         return;
       };
+      if (data_url == 'archive') {
+        window.open('mailto: {{contact_email}}?subject=Request for large dataset {{data.id}}');
+        return;
+      }
       grecaptcha.reset(); 
       $("#recaptcha_modal").show(); 
       $("#complete_download").attr({'data-url':data_url, 'data-id':data_id});
@@ -377,7 +381,6 @@
     <div id="file-rows">
     
       {% for f in data.files | sort(attribute='file_name') %}
-      
         <div class="lprow2">
           <div class="col1">
             <div class="download data_download" 
@@ -392,6 +395,8 @@
             >
               {% if '.usap-dc.org/' in f['url'] %}
                 Download
+              {% elif f['url'] == 'archive' %}
+                Contact Us
               {% else %}
                 External
               {% endif %}
@@ -404,8 +409,13 @@
         </div>
 
         <div class="col3">
-          {{f['file_name']}}<br>
-          {% if '.usap-dc.org/' in f['url'] %}
+          {% if f['url'] == 'archive' %}
+            Large dataset. Contact us to arrange download.
+          {% else %}
+            {{f['file_name']}}
+          {% endif %}
+          <br>
+          {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
             <p class="file_info"><b>SHA256 Checksum:</b> {{f['md5_checksum']}} <b>File Type:</b> {{f['document_types']}}</p>
           {% endif %}
         </div>
