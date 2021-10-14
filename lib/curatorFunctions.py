@@ -15,6 +15,7 @@ import gzip
 import zipfile
 import mimetypes
 import shutil
+import py7zlib
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -2371,7 +2372,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                         files = output.split('\n')
                         for file in files:
                             if file != '':
-                                mime_type, doc_type = getMimeAndDocTypes(file, cur)
+                                mime_type, doc_type = getMimeAndDocTypes(file, path_name, cur)
                                 mime_types.add(mime_type)
                                 doc_types.add(doc_type)
 
@@ -2379,25 +2380,88 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                         doc_types.add('Unknown')
                         sql_out += "--ERROR: Couldn't open tar.Z file %s\n" % name
 
-                elif '.tar' in name:
+                elif '.tar' in name.lower() or name.endswith('.tgz'):
                     try:
                         with tarfile.open(path_name) as archive:
                             for member in archive:
                                 if member.isreg():
-                                    mime_type, doc_type = getMimeAndDocTypes(member.name, cur, None, archive)
-                                    mime_types.add(mime_type)
-                                    doc_types.add(doc_type)
+                                    if '.zip' in member.name:
+                                        archive.extract(member.name, path='tmp')
+                                        zp = zipfile.ZipFile(os.path.join('tmp', member.name))
+                                        for z in zp.filelist:
+                                            if not z.filename.endswith('/'):
+                                                mime_type, doc_type = getMimeAndDocTypes(z.filename, os.path.join('tmp', member.name), cur, zp)
+                                                mime_types.add(mime_type)
+                                                doc_types.add(doc_type)
+                                        shutil.rmtree('tmp', ignore_errors=True)
+
+                                    elif member.name.endswith('.tar.Z'):
+                                        archive.extract(member.name, path='tmp')
+                                        try:
+                                            process = Popen(('zcat', os.path.join('tmp', member.name)), stdout=PIPE)
+                                            output = check_output(('tar', 'tf', '-'), stdin=process.stdout)
+                                            files = output.split('\n')
+                                            for file in files:
+                                                # print(file)
+                                                if file != '':
+                                                    mime_type, doc_type = getMimeAndDocTypes(file, os.path.join('tmp', member.name), cur)
+                                                    mime_types.add(mime_type)
+                                                    doc_types.add(doc_type)
+
+                                        except Exception as err:
+                                            doc_types.add('Unknown')
+                                            print("Couldn't open tar.Z file %s\n" % member.name)
+                                            print(err)
+
+                                    elif '.tar' in member.name.lower() or member.name.endswith('.tgz'):
+                                        archive.extract(member.name, path='tmp')
+                                        if os.path.basename(member.name).startswith('._'):
+                                            continue
+                                        
+                                        with tarfile.open(os.path.join('tmp', member.name)) as archive2:
+                                            for member2 in archive2:
+                                                if member2.isreg():
+                                                    mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), cur, None, archive2)
+                                                    mime_types.add(mime_type)
+                                                    doc_types.add(doc_type)
+                                        shutil.rmtree('tmp', ignore_errors=True)
+                                    else:
+                                        mime_type, doc_type = getMimeAndDocTypes(member.name, path_name, cur, None, archive)
+                                        mime_types.add(mime_type)
+                                        doc_types.add(doc_type)
                     except:
                         sql_out += "--ERROR: Couldn't open tar file %s\n" % name
 
                 elif '.zip' in name:
                     zp = zipfile.ZipFile(path_name)
                     for z in zp.filelist:
-                        mime_type, doc_type = getMimeAndDocTypes(z.filename, cur, zp)
-                        mime_types.add(mime_type)
-                        doc_types.add(doc_type)
+                        if not z.filename.endswith('/'):
+                            if z.filename.endswith('.tar') or z.filename.endswith('.tar.gz') or z.filename.endswith('.tgz'):
+                                if z.filename.startswith('__MACOSX'):
+                                    continue
+                                zp.extract(z.filename, 'tmp')
+                                with tarfile.open(os.path.join('tmp', z.filename)) as archive2:
+                                    for member2 in archive2:
+                                        if member2.isreg():
+                                            mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), cur, None, archive2)
+                                            mime_types.add(mime_type)
+                                            doc_types.add(doc_type)
+                                shutil.rmtree('tmp', ignore_errors=True)
+                            else:
+                                mime_type, doc_type = getMimeAndDocTypes(z.filename, path_name, cur, zp)
+                                mime_types.add(mime_type)
+                                doc_types.add(doc_type)
+                
+                elif name.endswith('.7z'):
+                    with open(path_name) as fp:
+                        archive = py7zlib.Archive7z(fp)
+                        for z in archive.getnames():
+                            if not z.endswith('/'):
+                                mime_type, doc_type = getMimeAndDocTypes(z, path_name, cur)
+                                mime_types.add(mime_type)
+                                doc_types.add(doc_type)
                 else:
-                    mime_type, doc_type = getMimeAndDocTypes(path_name, cur)
+                    mime_type, doc_type = getMimeAndDocTypes(path_name, path_name, cur)
                     mime_types.add(mime_type)
                     doc_types.add(doc_type)
 
@@ -2457,15 +2521,15 @@ def get_file_info(ds_id, url, dataset_dir, replace):
         return None
 
 
-def getMimeAndDocTypes(name, cur, zp=None, tar_archive=None):
+def getMimeAndDocTypes(name, path_name, cur, zp=None, tar_archive=None):
+
     mime_type = mimetypes.guess_type(name)[0]
     ext = '.' + name.split('.')[-1]
-    if not mime_type:
-        if ext == '.old':
-            ext = '.' + name.split('.')[-2]
-        cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
-    else:
-        cur.execute("SELECT * FROM file_type WHERE mime_type = %s", (mime_type,))
+
+    if ext in ['.old', '.gz']:
+        ext = '.' + name.split('.')[-2]
+    cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
+
     res = cur.fetchone()
 
     if res:
@@ -2487,7 +2551,7 @@ def getMimeAndDocTypes(name, cur, zp=None, tar_archive=None):
                 tar_archive.extract(name, path='tmp')
                 f = open(os.path.join('tmp',name), 'rb')
             else:
-                f = open(name, 'rb')
+                f = open(path_name, 'rb')
 
             data_file = ''
             if ext.lower() == '.dat':
@@ -2503,7 +2567,6 @@ def getMimeAndDocTypes(name, cur, zp=None, tar_archive=None):
             # for dataset 601323
             if str(e) == 'Bad magic number for file header':
                 doc_type = None
-            else:
-                print(e)
+            print(e)
 
     return mime_type, doc_type
