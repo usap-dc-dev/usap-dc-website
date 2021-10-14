@@ -90,8 +90,6 @@ if __name__ == '__main__':
                                % (d['proj_uid'], d['deployment_id'], d['url'], landing_page)
                 start = True
 
-
-
             # check if cruise is in project_dataset table, if not, add it
             if d['url'] != '':
                 sql_cmd = """SELECT * FROM project_dataset where repository='R2R' AND url = %s;"""
