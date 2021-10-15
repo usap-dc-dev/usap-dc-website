@@ -673,6 +673,10 @@ def editDatasetJson2sql(data, uid):
                             (ref_uid, usap.escapeQuotes(pub.get('text')), pub.get('doi'))
                     else:
                         ref_uid = res[0]['ref_uid']
+                        if res[0]['ref_text'] != usap.escapeQuotes(pub.get('text')):
+                            sql_out += "\n--NOTE: updating reference text\n"
+                            sql_out += "UPDATE reference SET ref_text = '%s' WHERE ref_uid = '%s';\n" % (usap.escapeQuotes(pub.get('text')), ref_uid)
+
                     # sql_out += "--NOTE: adding reference %s to dataset_reference_map\n" % ref_uid
                     sql_out += "INSERT INTO dataset_reference_map (dataset_id, ref_uid) VALUES ('%s', '%s');\n" % \
                         (uid, ref_uid)

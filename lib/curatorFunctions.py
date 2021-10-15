@@ -1390,6 +1390,10 @@ def editProjectJson2sql(data, uid):
                             (ref_uid, usap.escapeQuotes(pub.get('name')), pub.get('doi'))
                     else:
                         ref_uid = res[0]['ref_uid']
+                        if res[0]['ref_text'] != usap.escapeQuotes(pub.get('name')):
+                            sql_out += "\n--NOTE: updating reference text\n"
+                            sql_out += "UPDATE reference SET ref_text = '%s' WHERE ref_uid = '%s';\n" % (usap.escapeQuotes(pub.get('name')), ref_uid)
+
                     sql_out += "\n--NOTE: adding reference %s to project_ref_map\n" % ref_uid
                     sql_out += "INSERT INTO project_ref_map (proj_uid, ref_uid) VALUES ('%s', '%s');\n" % \
                         (uid, ref_uid)
