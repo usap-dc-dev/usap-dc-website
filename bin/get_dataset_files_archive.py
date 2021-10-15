@@ -173,7 +173,6 @@ def get_file_info(ds_id):
         print("Couldn't open tar file %s\n" % name)
         print(err)
     
-    doc_types.add('Zipped tar file')
     file_size = os.path.getsize(path_name)
 
     # if file is zipped, get  the uncompressed file size too
