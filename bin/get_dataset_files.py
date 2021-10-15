@@ -63,6 +63,7 @@ def get_file_info(ds_id, url):
         dir_full = top_dir + dir_name
         for root, dirs, files in os.walk(dir_full):
             for name in files:
+                # print(name)
                 mime_types = set()
                 doc_types = set()
                 path_name = os.path.join(root, name)
@@ -87,6 +88,7 @@ def get_file_info(ds_id, url):
                         with tarfile.open(path_name) as archive:
                             for member in archive:
                                 if member.isreg():
+                                    # print(member.name)
                                     if '.zip' in member.name:
                                         archive.extract(member.name, path='tmp')
                                         zp = zipfile.ZipFile(os.path.join('tmp', member.name))
@@ -118,14 +120,23 @@ def get_file_info(ds_id, url):
                                     elif '.tar' in member.name.lower() or member.name.endswith('.tgz'):
                                         archive.extract(member.name, path='tmp')
                                         if os.path.basename(member.name).startswith('._'):
-                                            continue
-                                        
+                                            continue     
                                         with tarfile.open(os.path.join('tmp', member.name)) as archive2:
                                             for member2 in archive2:
                                                 if member2.isreg():
-                                                    mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), cur, None, archive2)
-                                                    mime_types.add(mime_type)
-                                                    doc_types.add(doc_type)
+                                                    if member2.name.lower().endswith('.tar') or member2.name.endswith('.tar.gz'):
+                                                        archive2.extract(member2.name, path='tmp2')
+                                                        with tarfile.open(os.path.join('tmp2', member2.name)) as archive3:
+                                                            for member3 in archive3:
+                                                                if member3.isreg():
+                                                                    mime_type, doc_type = getMimeAndDocTypes(member3.name, os.path.join('tmp2', member3.name), cur, None, archive3)
+                                                                    mime_types.add(mime_type)
+                                                                    doc_types.add(doc_type)
+                                                        shutil.rmtree('tmp2', ignore_errors=True)
+                                                    else:
+                                                        mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), cur, None, archive2)
+                                                        mime_types.add(mime_type)
+                                                        doc_types.add(doc_type)
                                         shutil.rmtree('tmp', ignore_errors=True)
                                     else:
                                         mime_type, doc_type = getMimeAndDocTypes(member.name, path_name, cur, None, archive)
@@ -151,6 +162,15 @@ def get_file_info(ds_id, url):
                                             mime_types.add(mime_type)
                                             doc_types.add(doc_type)
                                 shutil.rmtree('tmp', ignore_errors=True)
+
+                            elif '.zip' in z.filename:
+                                zp.extract(z.filename, 'tmp')
+                                zp2 = zipfile.ZipFile(os.path.join('tmp', z.filename))
+                                for z2 in zp2.filelist:
+                                    if not z2.filename.endswith('/'):
+                                        mime_type, doc_type = getMimeAndDocTypes(z2.filename, os.path.join('tmp', z.filename), cur, zp2)
+                                        mime_types.add(mime_type)
+                                        doc_types.add(doc_type)
                             else:
                                 mime_type, doc_type = getMimeAndDocTypes(z.filename, path_name, cur, zp)
                                 mime_types.add(mime_type)
@@ -164,8 +184,6 @@ def get_file_info(ds_id, url):
                                 mime_type, doc_type = getMimeAndDocTypes(z, path_name, cur)
                                 mime_types.add(mime_type)
                                 doc_types.add(doc_type)
-
-
                 else:
                     mime_type, doc_type = getMimeAndDocTypes(path_name, path_name, cur)
                     mime_types.add(mime_type)
@@ -280,10 +298,10 @@ def getMimeAndDocTypes(name, path_name, cur, zp=None, tar_archive=None):
             print(e)
     if doc_type == 'Unknown':
         print('%s - unknown' % name)
-    if doc_type == 'Tape Archive (TAR)':
-        print('%s - %s - tar' % (path_name, name))
+    if doc_type == 'ZIP Archive':
+        print('%s - %s - zip' % (path_name, name))
         # sys.exit()
-
+    # print('%s - %s' %(name, doc_type))
     return mime_type, doc_type
 
 
