@@ -12,6 +12,9 @@ import os
 import sys
 import shutil
 from gmail_functions import send_gmail_message
+import io
+import requests
+
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
@@ -51,6 +54,23 @@ def sendEmail(message_text, subject, file=None):
         sys.exit()
 
 
+def getCMRUrl(dif_id):
+    # get the CMR page for a dif record
+    if not dif_id:
+        return ''
+
+    # use the CMR API to get the concept-id
+    try:
+        api_url = config['CMR_API'] + dif_id
+        r = requests.get(api_url).json()
+        concept_id = r['feed']['entry'][0]['id']
+        # generate the GCMD page URL
+        cmr_url = config['CMR_URL'] + concept_id + '.html'
+        return cmr_url
+    except:
+        return ''
+
+
 if __name__ == '__main__':
     # get current date
     today = datetime.date.today()
@@ -62,7 +82,7 @@ if __name__ == '__main__':
     # make tmp dir for csv files
     os.mkdir(TMP_DIR)
 
-    query = "SELECT * FROM program WHERE id ~* 'Antarctic';"
+    query = "SELECT * FROM program WHERE id ~* 'Antarctic' OR id ='Post Doc/Travel';"
     cur.execute(query)
     res = cur.fetchall()
 
@@ -124,7 +144,7 @@ if __name__ == '__main__':
                       <b>Number of Datasets:</b> %s<br>
                       <b>Dataset Links:</b> %s<br>
                       <b>Project Landing Page:</b> %s <br><br>""" \
-                      % (p['proj_title'], awards, p['date_created'], p['num_datasets'], datasets, url)
+                      % (unicode(p['proj_title'], 'utf-8'), awards, p['date_created'], p['num_datasets'], datasets, url)
 
 
         # new datasets submitted to USAP-DC        
@@ -149,7 +169,7 @@ if __name__ == '__main__':
                       <b>Award Title:</b> %s<br>
                       <b>Date Created:</b> %s<br>
                       <b>Dataset Landing Page:</b> %s <br><br>""" \
-                      % (d['ds_title'], d['award_id'], d['name'], unicode(d['title'], 'utf-8'), d['date_created'], url)
+                      % (unicode(d['ds_title'], 'utf-8'), d['award_id'], d['name'], unicode(d['title'], 'utf-8'), d['date_created'], url)
 
 
         # new dataset links to project pages
@@ -237,7 +257,8 @@ if __name__ == '__main__':
 
 
         # all active awards
-        query = """SELECT award.*, program.pec, p.proj_uid, d.num_datasets, nla.non_lead_awards FROM award
+        query = """SELECT award.*, program.pec, program.id as program_id, p.proj_uid, d.num_datasets, nla.non_lead_awards, pdm.dif_id 
+                FROM award
                     JOIN award_program_map apm ON apm.award_id = award.award
                     JOIN program ON program.id = apm.program_id
                     LEFT JOIN project_award_map pam ON  pam.award_id = award.award
@@ -253,19 +274,21 @@ if __name__ == '__main__':
                   		  WHERE a1.is_lead_award = 'Non-Lead'
                   		  GROUP BY a2.award
                   	) nla ON nla.lead_award = award.award
-                    WHERE apm.program_id='%s'
+                    LEFT JOIN project_dif_map pdm ON pdm.proj_uid = p.proj_uid
+                    WHERE (program.id ~* 'Antarctic' OR program.id ='Post Doc/Travel')
                     AND start <= '%s' AND expiry >= '%s'
                     AND award.is_lead_award IN ('Standard', 'Lead')
-                    ORDER BY award;""" % (program, today, today)
+                    ORDER BY award;""" % (today, today)
+
         cur.execute(query)
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
 
         # make csv file
-        filename = "%s_Active_Awards_%s_to_%s.tsv" % (program.replace(' ','_'), six_months_ago, today) 
-        filepath = os.path.join('tmp', filename)
-        tsv_file = open(filepath, 'w')
-        tsv_file.write("Award ID\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\n")
+        filename = "Active_Awards_%s_to_%s.tsv" % (six_months_ago, today) 
+        filepath = os.path.join('tmp', filename.replace('/','_'))
+        tsv_file = io.open(filepath, 'w', encoding="utf-8")
+        tsv_file.write(unicode("Award ID\tProgram\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\tAMD Record\n", 'utf-8'))
 
         msg += """<h2>Summary of All Active Awards:</h2>"""
         msg += """<table><thead><tr>
@@ -278,6 +301,7 @@ if __name__ == '__main__':
                     <th>Non-Lead Awards</th>
                     <th>Number of Datasets</th>
                     <th>Project Landing Page</th>
+                    <th>AMD Record</th>
                 </th></thead>"""
         for a in res2:
             if a['proj_uid']:
@@ -288,18 +312,24 @@ if __name__ == '__main__':
                 nla = ', '.join(a['non_lead_awards'])
             else:
                 nla = ''
-            tsv_file.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t %s\t%s\n" % (a['award'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], a['expiry'], nla, a['num_datasets'], url))
-            msg += """<tr><td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
-                    </tr>""" \
-                      % (a['award'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], a['expiry'], nla, a['num_datasets'], url)
+            amd_link = getCMRUrl(a['dif_id'])
+            tsv_file.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t %s\t%s\n" % (
+                a['award'], a['program_id'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], 
+                a['expiry'], nla, a['num_datasets'], url, amd_link))
+            if a['program_id'] == program:   
+                msg += """<tr><td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                            <td>%s</td>
+                        </tr>""" \
+                        % (a['award'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], 
+                        a['expiry'], nla, a['num_datasets'], url, amd_link)
         msg += "</table>"
         tsv_file.close()
 

@@ -79,8 +79,12 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None):
         filename = os.path.basename(file)
         msg.add_header('Content-Disposition', 'attachment', filename=filename)
         message.attach(msg)
+    try:
+        raw = base64.urlsafe_b64encode(message.as_string().decode('utf-8'))
+    except Exception as e:
+        raw = base64.urlsafe_b64encode(message.as_string())
 
-    return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
+    return {'raw': raw}
 
 
 def send(service, user_id, message):
