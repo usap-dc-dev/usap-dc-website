@@ -25,6 +25,10 @@ from time import gmtime, strftime
 from subprocess import Popen, PIPE
 import psycopg2
 import psycopg2.extras
+import zipfile
+import struct
+import mimetypes
+
 
 ROOT_DIR = "/archive/usap-dc/dataset"
 
@@ -53,6 +57,187 @@ def connect_to_db():
    
     return (conn, cur)
 
+
+# get uncompressed file size of gzipped file
+def get_uncompressed_size(filename):
+    with open(filename, 'rb') as f:
+        f.seek(-4, 2)
+        return struct.unpack('I', f.read(4))[0]
+
+
+def get_file_info(dataset_dir):
+    mime_types = set()
+    doc_types = set()
+
+    for root, dirs, files in os.walk(dataset_dir):
+        for name in files:
+            namel = name.lower()
+            path_name = os.path.join(root, name)
+            if namel.endswith('.tar.z'):
+                try:
+                    process = Popen(('zcat', path_name), stdout=PIPE)
+                    output = check_output(('tar', 'tf', '-'), stdin=process.stdout)
+                    files = output.split('\n')
+                    for file in files:
+                        if file != '':
+                            mime_type, doc_type = getMimeAndDocTypes(file, path_name)
+                            mime_types.add(mime_type)
+                            doc_types.add(doc_type)
+
+                except Exception as err:
+                    doc_types.add('Unknown')
+                    sql_out += "--ERROR: Couldn't open tar.Z file %s\n" % name
+
+            elif namel.endswith('.tar') or namel.endswith('tar.gz') or namel.endswith('.tgz'):
+                try:
+                    with tarfile.open(path_name) as archive:
+                        for member in archive:
+                            if member.isreg():
+                                mnamel = member.name.lower()
+                                if mnamel.endswith('.zip'):
+                                    archive.extract(member.name, path='tmp')
+                                    zp = zipfile.ZipFile(os.path.join('tmp', member.name))
+                                    for z in zp.filelist:
+                                        if not z.filename.endswith('/'):
+                                            mime_type, doc_type = getMimeAndDocTypes(z.filename, os.path.join('tmp', member.name), zp)
+                                            mime_types.add(mime_type)
+                                            doc_types.add(doc_type)
+                                    shutil.rmtree('tmp', ignore_errors=True)
+
+                                elif mnamel.endswith('.tar.z'):
+                                    archive.extract(member.name, path='tmp')
+                                    try:
+                                        process = Popen(('zcat', os.path.join('tmp', member.name)), stdout=PIPE)
+                                        output = check_output(('tar', 'tf', '-'), stdin=process.stdout)
+                                        files = output.split('\n')
+                                        for file in files:
+                                            # print(file)
+                                            if file != '':
+                                                mime_type, doc_type = getMimeAndDocTypes(file, os.path.join('tmp', member.name))
+                                                mime_types.add(mime_type)
+                                                doc_types.add(doc_type)
+
+                                    except Exception as err:
+                                        doc_types.add('Unknown')
+                                        print("Couldn't open tar.Z file %s\n" % member.name)
+                                        print(err)
+
+                                elif mnamel.endswith('.tar') or mnamel.endswith('.tar.gz') or mnamel.endswith('.tgz'):
+                                    archive.extract(member.name, path='tmp')
+                                    if os.path.basename(member.name).startswith('._'):
+                                        continue
+                                    
+                                    with tarfile.open(os.path.join('tmp', member.name)) as archive2:
+                                        for member2 in archive2:
+                                            if member2.isreg():
+                                                mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), None, archive2)
+                                                mime_types.add(mime_type)
+                                                doc_types.add(doc_type)
+                                    shutil.rmtree('tmp', ignore_errors=True)
+                                else:
+                                    mime_type, doc_type = getMimeAndDocTypes(member.name, path_name, None, archive)
+                                    mime_types.add(mime_type)
+                                    doc_types.add(doc_type)
+                except Execption as err:
+                    print("Error getting file types.  %s" % err.decode('ascii'))
+                    sys.exit(0)
+
+            elif namel.endswith('zip'):
+                zp = zipfile.ZipFile(path_name)
+                for z in zp.filelist:
+                    if not z.filename.endswith('/'):
+                        znamel = z.filename.lower()
+                        if znamel.endswith('.tar') or znamel.endswith('.tar.gz') or znamel.endswith('.tgz'):
+                            if z.filename.startswith('__MACOSX'):
+                                continue
+                            zp.extract(z.filename, 'tmp')
+                            with tarfile.open(os.path.join('tmp', z.filename)) as archive2:
+                                for member2 in archive2:
+                                    if member2.isreg():
+                                        mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), None, archive2)
+                                        mime_types.add(mime_type)
+                                        doc_types.add(doc_type)
+                            shutil.rmtree('tmp', ignore_errors=True)
+                        else:
+                            mime_type, doc_type = getMimeAndDocTypes(z.filename, path_name, zp)
+                            mime_types.add(mime_type)
+                            doc_types.add(doc_type)
+            
+            elif namel.endswith('.7z'):
+                with open(path_name) as fp:
+                    archive = py7zlib.Archive7z(fp)
+                    for z in archive.getnames():
+                        if not z.endswith('/'):
+                            mime_type, doc_type = getMimeAndDocTypes(z, path_name)
+                            mime_types.add(mime_type)
+                            doc_types.add(doc_type)
+            else:
+                mime_type, doc_type = getMimeAndDocTypes(path_name, path_name)
+                mime_types.add(mime_type)
+                doc_types.add(doc_type)
+
+    return mime_types, doc_types
+
+
+def getMimeAndDocTypes(name, path_name, zp=None, tar_archive=None):
+    (conn, cur) = connect_to_db()
+    mime_type = mimetypes.guess_type(name)[0]
+    ext = '.' + name.lower().split('.')[-1]
+
+    if ext in ['.old', '.gz']:
+        ext = '.' + name.lower().split('.')[-2]
+    cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
+
+    res = cur.fetchone()
+
+    if res:
+        doc_type = res['document_type']
+    else:
+        doc_type = 'Unknown'
+
+    if 'README' in name.upper():
+        doc_type = 'Readme Text File'
+
+    if doc_type == 'Unknown':
+        try:
+            # determine whether text or binary
+            textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
+            is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
+            if zp:
+                f = zp.open(name, 'r')
+            elif tar_archive:
+                tar_archive.extract(name, path='tmp')
+                f = open(os.path.join('tmp',name), 'rb')
+            else:
+                f = open(path_name, 'rb')
+
+            data_file = ''
+            if ext.lower() == '.dat':
+                data_file = 'Data '
+            if is_binary_string(f.read(1024)):
+                doc_type = '%sBinary File' % data_file
+            else:
+                doc_type = '%sText File' % data_file
+            if tar_archive:
+                shutil.rmtree('tmp')
+
+        except Exception as e:
+            # for dataset 601323
+            if str(e) == 'Bad magic number for file header':
+                doc_type = None
+            else:
+                print(e)
+
+    if doc_type == 'Unknown':
+        print('Error getting file types.  %s - unknown' % name)
+        sys.exit(0)
+
+    return mime_type, doc_type
+
+
+# Get file types for all files in dataset before bagging and zipping
+print("GET FILE TYPES FOR ALL FILES IN DATASET")
+mime_types, doc_types = get_file_info(os.path.join(ROOT_DIR, dir_in))
 
 # Get dataset information from database
 conn, cur = connect_to_db()
@@ -107,13 +292,47 @@ with open(tar_name + ".md5", "w") as myfile:
     checksum_md5 = output.decode('ascii').split(")= ")[1].replace("\n", "")
     myfile.write(checksum_md5)
 
+
+# calculate compressed and uncompressed file size
+btgz_name = dir_in + '_bag.tar.gz'
+print("CALCULATING FILE SIZES")
+file_size = os.path.getsize(os.path.join(ROOT_DIR, btgz_name))
+u_file_size = get_uncompressed_size(os.path.join(ROOT_DIR, btgz_name))
+
 print("MOVING TO ready_for_upload")
-os.system('mv %s_bag.tar.gz* ready_for_upload/' % dir_in)
+os.system('mv %s* ready_for_upload/' % btgz_name)
+
+
+# update dataset_file table
+print("UPDATING DATABASE - DATASET_FILE TABLE")
+# check if dataset_id already exist in table
+(conn, cur) = connect_to_db()
+sql_line = "SELECT * "\
+            "FROM dataset_file "\
+            "WHERE dataset_id = %s AND dir_name = '/archive/usap-dc/dataset/large_datasets' AND file_name = %s;"
+cur.execute(sql_line, (ds_id, btgz_name))
+data = cur.fetchall()
+
+mime_str = "; ".join([m for m in mime_types if m])
+doc_str = "; ".join([d for d in doc_types if d])
+
+# if no data returned use insert otherwise update
+if not data:
+    sql_line = """INSERT INTO dataset_file 
+        (dataset_id, dir_name, file_name, file_size, file_size_uncompressed, sha256_checksum, md5_checksum, mime_types, document_types) VALUES
+        (%s, '/archive/usap-dc/dataset/large_datasets', %s, %s, %s, %s, %s, %s, %s);"""
+    cur.execute(sql_line, (ds_id, btgz_name, file_size, u_file_size, checksum, checksum_md5, mime_str, doc_str))
+else:
+    sql_line = """ UPDATE dataset_file SET 
+        file_size = %s, file_size_uncompressed = %s, sha256_checksum = %s, 
+        md5_checksum = %s, mime_types = %s, document_types = %s
+        WHERE dataset_id = %s AND dir_name = '/archive/usap-dc/dataset/large_datasets' AND file_name = %s;"""
+    cur.execute(sql_line, (file_size, u_file_size, checksum, checksum_md5, mime_str, doc_str, ds_id, btgz_name))  
+
 
 
 # Print psql query
 print("UPDATING DATABASE - READY FOR UPLOAD")
-conn, cur = connect_to_db()
 query = "SELECT * FROM dataset_archive where dataset_id = '%s' AND (bagit_file_name = 'large_datasets/%s' OR bagit_file_name IS NULL);" % (ds_id,  os.path.basename(tar_name))
 cur.execute(query)
 res = cur.fetchall()
