@@ -2366,10 +2366,11 @@ def get_file_info(ds_id, url, dataset_dir, replace):
         dir_name = url.replace(config['USAP_DOMAIN']+'dataset', '')
         for root, dirs, files in os.walk(dataset_dir):
             for name in files:
+                namel = name.lower()
                 mime_types = set()
                 doc_types = set()
                 path_name = os.path.join(root, name)
-                if name.endswith('.tar.Z'):
+                if namel.endswith('.tar.z'):
                     try:
                         process = Popen(('zcat', path_name), stdout=PIPE)
                         output = check_output(('tar', 'tf', '-'), stdin=process.stdout)
@@ -2384,12 +2385,13 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                         doc_types.add('Unknown')
                         sql_out += "--ERROR: Couldn't open tar.Z file %s\n" % name
 
-                elif '.tar' in name.lower() or name.endswith('.tgz'):
+                elif namel.endswith('.tar') or namel.endswith('tar.gz') or namel.endswith('.tgz'):
                     try:
                         with tarfile.open(path_name) as archive:
                             for member in archive:
                                 if member.isreg():
-                                    if '.zip' in member.name:
+                                    mnamel = member.name.lower()
+                                    if mnamel.endswith('.zip'):
                                         archive.extract(member.name, path='tmp')
                                         zp = zipfile.ZipFile(os.path.join('tmp', member.name))
                                         for z in zp.filelist:
@@ -2399,7 +2401,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                                                 doc_types.add(doc_type)
                                         shutil.rmtree('tmp', ignore_errors=True)
 
-                                    elif member.name.endswith('.tar.Z'):
+                                    elif mnamel.endswith('.tar.z'):
                                         archive.extract(member.name, path='tmp')
                                         try:
                                             process = Popen(('zcat', os.path.join('tmp', member.name)), stdout=PIPE)
@@ -2417,7 +2419,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                                             print("Couldn't open tar.Z file %s\n" % member.name)
                                             print(err)
 
-                                    elif '.tar' in member.name.lower() or member.name.endswith('.tgz'):
+                                    elif mnamel.endswith('.tar') or mnamel.endswith('.tar.gz') or mnamel.endswith('.tgz'):
                                         archive.extract(member.name, path='tmp')
                                         if os.path.basename(member.name).startswith('._'):
                                             continue
@@ -2436,11 +2438,12 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                     except:
                         sql_out += "--ERROR: Couldn't open tar file %s\n" % name
 
-                elif '.zip' in name:
+                elif namel.endswith('zip'):
                     zp = zipfile.ZipFile(path_name)
                     for z in zp.filelist:
                         if not z.filename.endswith('/'):
-                            if z.filename.endswith('.tar') or z.filename.endswith('.tar.gz') or z.filename.endswith('.tgz'):
+                            znamel = z.filename.lower()
+                            if znamel.endswith('.tar') or znamel.endswith('.tar.gz') or znamel.endswith('.tgz'):
                                 if z.filename.startswith('__MACOSX'):
                                     continue
                                 zp.extract(z.filename, 'tmp')
@@ -2456,7 +2459,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                                 mime_types.add(mime_type)
                                 doc_types.add(doc_type)
                 
-                elif name.endswith('.7z'):
+                elif namel.endswith('.7z'):
                     with open(path_name) as fp:
                         archive = py7zlib.Archive7z(fp)
                         for z in archive.getnames():
@@ -2472,9 +2475,9 @@ def get_file_info(ds_id, url, dataset_dir, replace):
                 file_size = os.path.getsize(path_name)
 
                 # if file is zipped, get  the uncompressed file size too
-                if '.gz' in name or name.endswith('.Z'):
+                if namel.endswith('.gz') or namel.endswith('.z'):
                     u_file_size = get_uncompressed_size(path_name)
-                elif '.zip' in name:
+                elif namel.endswith('.zip'):
                     zp = zipfile.ZipFile(path_name)
                     u_file_size = sum(zinfo.file_size for zinfo in zp.filelist)
                 else:
@@ -2528,10 +2531,10 @@ def get_file_info(ds_id, url, dataset_dir, replace):
 def getMimeAndDocTypes(name, path_name, cur, zp=None, tar_archive=None):
 
     mime_type = mimetypes.guess_type(name)[0]
-    ext = '.' + name.split('.')[-1]
+    ext = '.' + name.lower().split('.')[-1]
 
     if ext in ['.old', '.gz']:
-        ext = '.' + name.split('.')[-2]
+        ext = '.' + name.lower().split('.')[-2]
     cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
 
     res = cur.fetchone()
