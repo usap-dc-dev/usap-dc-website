@@ -2360,7 +2360,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
     sql_out = ''
     # if replace, remove existing entries from database first
     if replace:
-        sql_out += "DELETE FROM dataset_file WHERE dataset_id = '%s';\n\n" % ds_id
+        sql_out += "DELETE FROM dataset_file WHERE dataset_id = '%s' AND dir_name  !~* 'archive/usap-dc';\n\n" % ds_id
 
     if config['USAP_DOMAIN']+'dataset' in url:
         dir_name = url.replace(config['USAP_DOMAIN']+'dataset', '')
