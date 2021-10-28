@@ -76,7 +76,7 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     today = today - relativedelta(days=10)
-    six_months_ago = today - relativedelta(months=6)
+    six_months_ago = "2021-03-10" #today - relativedelta(months=6)
     (conn, cur) = connect_to_db()
 
     # make tmp dir for csv files
@@ -91,12 +91,12 @@ if __name__ == '__main__':
         # if program != "Antarctic Organisms and Ecosystems": continue
         send_report = False
 
-        title = "USAP-DC QUARTERLY REPORT FOR %s: %s TO %s" % (program.upper(), six_months_ago, today)
+        title = "USAP-DC SEMI-ANNUAL REPORT FOR %s: %s TO %s" % (program.upper(), six_months_ago, today)
 
         msg = """<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
                 <title>%s</title>""" % title
 
-        msg = """<html><head>
+        msg += """<html><head>
                         <style>
                             table, th, td {
                                 border: 1px solid black;
@@ -104,6 +104,8 @@ if __name__ == '__main__':
                             }
                         </style>
                 </head><body><h1>%s</h1>""" % title
+
+        msg += "<h3><i>Attatched spreadsheet contains all active awards for all programs.</i></h3>"
 
         # new projects/data added and updated to DB
         query = """SELECT project.proj_uid, project.title AS proj_title, project.date_created, JSON_AGG(a.*) awards,d.num_datasets, JSON(d.datasets::text) datasets
@@ -129,7 +131,7 @@ if __name__ == '__main__':
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
 
-        msg += """<h2>New Projects Added to USAP-DC in Last Quarter:</h2>"""
+        msg += """<h2>New Projects Added to USAP-DC in Last Six Months:</h2>"""
         for p in res2:
             url = config['PROJECT_LANDING_PAGE'] % p['proj_uid']
             awards = ""
@@ -148,28 +150,33 @@ if __name__ == '__main__':
 
 
         # new datasets submitted to USAP-DC        
-        query = """SELECT dataset.title AS ds_title, dataset.date_created, award.*, dam.*, program.pec 
+        query = """SELECT dataset.id, dataset.title AS ds_title, dataset.date_created, json_agg(a.*) AS awards 
                     FROM dataset
                     JOIN dataset_award_map dam ON dam.dataset_id = dataset.id
-                    JOIN award ON award.award = dam.award_id
-                    JOIN award_program_map apm ON apm.award_id = award.award
-                    JOIN program ON program.id = apm.program_id
+                    JOIN (
+                    	SELECT * FROM award
+                    	JOIN award_program_map apm ON apm.award_id = award.award
+                    	JOIN program ON program.id = apm.program_id
+                    	) a ON a.award = dam.award_id
                     WHERE dataset.date_created > '%s'
-                    AND apm.program_id='%s';""" % (six_months_ago, program)
+                    AND a.program_id='%s'
+                    GROUP by dataset.id, dataset.title, dataset.date_created
+                    ORDER BY dataset.date_created;""" % (six_months_ago, program)
         cur.execute(query)
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
 
-        msg += """<h2>New Datasets Added to USAP-DC in Last Quarter:</h2>"""
+        msg += """<h2>New Datasets Added to USAP-DC in Last Six Months:</h2>"""
         for d in res2:
-            url = config['DATASET_LANDING_PAGE'] % d['dataset_id']
+            url = config['DATASET_LANDING_PAGE'] % d['id']
+            awards = ""
+            for a in d['awards']:
+                awards += """<br>&emsp;<b>%s</b> (PEC: %s, PI: %s)""" % (a['award'], a['pec'], a['name'])
             msg += """<b>Dataset Title:</b> %s<br>
-                      <b>Award ID:</b> %s<br>
-                      <b>PI:</b> %s<br>
-                      <b>Award Title:</b> %s<br>
+                      <b>Award(s):</b> %s<br>
                       <b>Date Created:</b> %s<br>
                       <b>Dataset Landing Page:</b> %s <br><br>""" \
-                      % (unicode(d['ds_title'], 'utf-8'), d['award_id'], d['name'], unicode(d['title'], 'utf-8'), d['date_created'], url)
+                      % (unicode(d['ds_title'], 'utf-8'), awards, d['date_created'], url)
 
 
         # new dataset links to project pages
@@ -204,7 +211,7 @@ if __name__ == '__main__':
         res2 = cur.fetchall()
         if len(res2) > 0: send_report = True
 
-        msg += """<h2>Projects Updated During Last Quarter:</h2>"""
+        msg += """<h2>Projects Updated During Last Six Months:</h2>"""
         for p in res2:
             url = config['PROJECT_LANDING_PAGE'] % p['proj_uid']
             awards = ""
