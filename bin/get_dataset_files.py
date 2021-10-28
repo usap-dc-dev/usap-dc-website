@@ -63,10 +63,10 @@ def get_file_info(ds_id, url):
         dir_full = top_dir + dir_name
         for root, dirs, files in os.walk(dir_full):
             for name in files:
-                # print(name)
                 mime_types = set()
                 doc_types = set()
                 path_name = os.path.join(root, name)
+                rel_name = path_name.replace(dir_full, '')
                 if name.endswith('.tar.Z'):
                     try:
                         process = Popen(('zcat', path_name), stdout=PIPE)
@@ -219,7 +219,7 @@ def get_file_info(ds_id, url):
                 sql_line = "SELECT * "\
                             "FROM dataset_file "\
                             "WHERE dataset_id = %s AND dir_name = %s AND file_name = %s;"
-                cur.execute(sql_line, (ds_id, dir_name, name))
+                cur.execute(sql_line, (ds_id, dir_name, rel_name))
                 data = cur.fetchall()
 
                 mime_str = "; ".join([m for m in mime_types if m])
@@ -231,14 +231,14 @@ def get_file_info(ds_id, url):
                     sql_line = """INSERT INTO dataset_file 
                         (dataset_id, dir_name, file_name, file_size, file_size_uncompressed, sha256_checksum, md5_checksum, mime_types, document_types) VALUES
                         (%s, %s, %s, %s, %s, %s, %s, %s, %s);"""
-                    cur.execute(sql_line, (ds_id, dir_name, name, file_size, u_file_size, checksum, checksum_md5, mime_str, doc_str))
+                    cur.execute(sql_line, (ds_id, dir_name, rel_name, file_size, u_file_size, checksum, checksum_md5, mime_str, doc_str))
                 else:
                     sql_line = """ UPDATE dataset_file SET 
                        file_size = %s, file_size_uncompressed = %s, sha256_checksum = %s, 
                        md5_checksum = %s, mime_types = %s, document_types = %s
-                       WHERE dataset_id = %s AND dir_name = %s AND file_name = %s;"""
+                       WHERE dataset_id = %s AND file_name = %s AND dir_name = %s;"""
 
-                    cur.execute(sql_line, (file_size, u_file_size, checksum, checksum_md5, mime_str, doc_str, ds_id, dir_name, name))   
+                    cur.execute(sql_line, (file_size, u_file_size, checksum, checksum_md5, mime_str, doc_str, ds_id, rel_name, dir_name))   
         # Make the changes to the database persistent
         conn.commit()
         cur.close()

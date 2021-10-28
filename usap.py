@@ -2393,7 +2393,7 @@ def landing_page(dataset_id):
             if f['dir_name'].startswith('/archive'):
                 f['url'] = 'archive'
             else:
-                f['url'] = url + f['file_name']
+                f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
     else:
