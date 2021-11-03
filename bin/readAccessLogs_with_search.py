@@ -48,6 +48,8 @@ def valueInHoneyPot(request_url):
 
 
 def parseSearch(resource):
+    if '?' not in resource:
+        return {}
     resource = resource.split('?')[1]
     filters = resource.split('&')
     search = {}
