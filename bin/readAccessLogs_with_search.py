@@ -141,7 +141,7 @@ if __name__ == '__main__':
                 and not request_url.startswith('/static') and request_url != '' and referer != '' and request_url != '//' \
                 and request_url != '/jsglue.js' and 'invalid' not in request_url and 'authorized' not in request_url \
                 and 'supplement' not in request_url and 'accounts.' not in referer and referer.startswith('http') \
-                and '34.195.51.19' not in referer: 
+                and '34.195.51.19' not in referer and '34.195.50.19' not in referer:
 
                 if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
                     print('%s: %s - %s' % (status, request_url, referer))
