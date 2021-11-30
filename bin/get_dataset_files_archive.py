@@ -23,6 +23,7 @@ from subprocess import Popen, PIPE, check_output
 top_dir = '/archive/usap-dc/dataset/large_datasets'
 
 config = json.loads(open('/archive/usap-dc/dataset/scripts/config.json', 'r').read())
+extensions = set()
 
 
 def connect_to_db():
@@ -66,13 +67,14 @@ def get_file_info(ds_id):
                             for file in files:
                                 if file != '':
                                     mime_type, doc_type = getMimeAndDocTypes(file, path_name)
-                                    mime_types.add(mime_type)
-                                    doc_types.add(doc_type)
+                                    if mime_type: mime_types.add(mime_type)
+                                    if doc_type: doc_types.add(doc_type)
 
                         except Exception as err:
                             doc_types.add('Unknown')
                             print("Couldn't open tar.Z file %s\n" % mname)
                             print(err)
+                            sys.exit(0)
 
                     elif mnamel.endswith('.tar') or mnamel.endswith('tar.gz') or mnamel.endswith('.tgz'):
                         print('1')
@@ -90,8 +92,8 @@ def get_file_info(ds_id):
                                             for z in zp.filelist:
                                                 if not z.filename.endswith('/'):
                                                     mime_type, doc_type = getMimeAndDocTypes(z.filename, os.path.join('tmp', member2.name), zp)
-                                                    mime_types.add(mime_type)
-                                                    doc_types.add(doc_type)
+                                                    if mime_type: mime_types.add(mime_type)
+                                                    if doc_type: doc_types.add(doc_type)
                                             shutil.rmtree('tmp', ignore_errors=True)
 
                                         elif mnamel2.endswith('.tar.Z'):
@@ -104,8 +106,8 @@ def get_file_info(ds_id):
                                                     # print(file)
                                                     if file != '':
                                                         mime_type, doc_type = getMimeAndDocTypes(file, os.path.join('tmp', member2.name))
-                                                        mime_types.add(mime_type)
-                                                        doc_types.add(doc_type)
+                                                        if mime_type: mime_types.add(mime_type)
+                                                        if doc_type: doc_types.add(doc_type)
 
                                             except Exception as err:
                                                 doc_types.add('Unknown')
@@ -121,19 +123,20 @@ def get_file_info(ds_id):
                                             with tarfile.open(os.path.join('tmp', member2.name)) as archive3:
                                                 for member3 in archive3:
                                                     if member3.isreg():
-                                                        mime_type, doc_type = getMimeAndDocTypes(member3.name, os.path.join('tmp', member3.name), None, archive3)
-                                                        mime_types.add(mime_type)
-                                                        doc_types.add(doc_type)
+                                                        mime_type, doc_type = getMimeAndDocTypes(member3.name, os.path.join('tmp', member3.name), None, archive3, extensions)
+                                                        if mime_type: mime_types.add(mime_type)
+                                                        if doc_type: doc_types.add(doc_type)
                                             shutil.rmtree('tmp', ignore_errors=True)
                                         else:
                                             print('4')
                                             mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), None, archive2)
-                                            mime_types.add(mime_type)
-                                            doc_types.add(doc_type)
+                                            if mime_type: mime_types.add(mime_type)
+                                            if doc_type: doc_types.add(doc_type)
                         except Exception as err:
                             doc_types.add('Unknown')
                             print("Couldn't open tar file %s\n" % mname)
                             print(err)
+                            sys.exit(0)
 
                     elif mnamel.endswith('.zip'):
                         print('5')
@@ -152,14 +155,14 @@ def get_file_info(ds_id):
                                         for member2 in archive2:
                                             if member2.isreg():
                                                 mime_type, doc_type = getMimeAndDocTypes(member2.name, os.path.join('tmp', member2.name), None, archive2)
-                                                mime_types.add(mime_type)
-                                                doc_types.add(doc_type)
+                                                if mime_type: mime_types.add(mime_type)
+                                                if doc_type: doc_types.add(doc_type)
                                     shutil.rmtree('tmp', ignore_errors=True)
                                 else: 
                                     print('7')                               
                                     mime_type, doc_type = getMimeAndDocTypes(z.filename, mpath_name, zp)
-                                    mime_types.add(mime_type)
-                                    doc_types.add(doc_type)
+                                    if mime_type: mime_types.add(mime_type)
+                                    if doc_type: doc_types.add(doc_type)
                             shutil.rmtree('tmp', ignore_errors=True)
                         
 
@@ -169,19 +172,20 @@ def get_file_info(ds_id):
                             for z in archive.getnames():
                                 if not z.endswith('/'):
                                     mime_type, doc_type = getMimeAndDocTypes(z, mpath_name)
-                                    mime_types.add(mime_type)
-                                    doc_types.add(doc_type)
+                                    if mime_type: mime_types.add(mime_type)
+                                    if doc_type: doc_types.add(doc_type)
 
                     else:
                         print('8')
                         mime_type, doc_type = getMimeAndDocTypes(mname, mpath_name, None, archive)
-                        mime_types.add(mime_type)
-                        doc_types.add(doc_type)
+                        if mime_type: mime_types.add(mime_type)
+                        if doc_type: doc_types.add(doc_type)
 
     except Exception as err:
         doc_types.add('Unknown')
         print("Couldn't open tar file %s\n" % name)
         print(err)
+        sys.exit(0)
     
     file_size = os.path.getsize(path_name)
 
@@ -224,12 +228,16 @@ def get_file_info(ds_id):
 
 
 def getMimeAndDocTypes(name, path_name, zp=None, tar_archive=None):
-    (conn, cur) = connect_to_db()
-    mime_type = mimetypes.guess_type(name)[0]
     ext = '.' + name.lower().split('.')[-1]
 
     if ext in ['.old', '.gz']:
         ext = '.' + name.lower().split('.')[-2]
+    if ext in extensions:
+        return None, None
+
+    (conn, cur) = connect_to_db()
+    mime_type = mimetypes.guess_type(name)[0]
+
 
     cur.execute("SELECT * FROM file_type WHERE extension = %s", (ext.lower(),))
     res = cur.fetchone()
@@ -281,6 +289,7 @@ def getMimeAndDocTypes(name, path_name, zp=None, tar_archive=None):
         print('%s - unknown' % name)
         sys.exit(0)
     # print('%s - %s' %(name, doc_type))
+    extensions.add(ext)
     return mime_type, doc_type
 
 
