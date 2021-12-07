@@ -5,7 +5,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app, Blueprint
+from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app, Blueprint, make_response
 from flask_jsglue import JSGlue
 from random import randint
 import os
@@ -5083,6 +5083,27 @@ def send_award_email(res):
 
     except Exception as err:
         return None, "Error sending email: " + str(err)
+
+
+@app.route('/view/dataset/sitemap.xml', methods=['GET'])
+def sitemap():
+    (conn, cur) = connect_to_db()
+    query = 'SELECT DISTINCT * FROM dataset ORDER BY id'
+    cur.execute(query)
+    datasets = cur.fetchall()
+
+    values = []
+    for ds in datasets:
+        values.append({
+            'loc':url_for('landing_page', dataset_id=ds['id'], _external=True), 
+            'lastmod': ds['date_modified']
+            })
+
+    template = render_template('sitemap.xml', values=values)
+    response = make_response(template)
+    response.headers['content-type'] = 'application/xml'
+
+    return response
 
 
 @app.errorhandler(500)

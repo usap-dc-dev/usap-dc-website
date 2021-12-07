@@ -11,3 +11,5 @@ Disallow: *.csi
 
 User-agent: AhrefsBot
 Disallow: /
+
+Sitemap: /view/dataset/sitemap.xml
