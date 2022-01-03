@@ -1555,6 +1555,16 @@ def getDifXML(data, uid):
     xml_aux_key = ET.SubElement(root, "Ancillary_Keyword")
     xml_aux_key.text = "USAP-DC"
 
+    # --- platform
+    xml_platform = ET.SubElement(root, "Platform")
+    xml_platform_type = ET.SubElement(xml_platform, "Type")
+    xml_platform_type.text = "Not applicable"
+    xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
+    xml_platform_sname.text = "Not applicable"
+    xml_instrument = ET.SubElement(xml_platform, "Instrument")
+    xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
+    xml_instrument_sname.text = "Not applicable"
+
     # --- temporal coverage
     xml_time = ET.SubElement(root, "Temporal_Coverage")
     xml_time_range = ET.SubElement(xml_time, "Range_DateTime")
@@ -1563,6 +1573,10 @@ def getDifXML(data, uid):
     xml_time_end = ET.SubElement(xml_time_range, "Ending_Date_Time")
     xml_time_end.text = str(data.get('end_date'))
 
+    # --- progress
+    xml_progress = ET.SubElement(root, "Dataset_Progress")
+    xml_progress.text = "COMPLETE"
+    
     # --- Spatial coverage
     if data.get('spatial_bounds'):
         for sb in data['spatial_bounds']:
@@ -1608,20 +1622,6 @@ def getDifXML(data, uid):
     # --- language
     xml_lang = ET.SubElement(root, "Dataset_Language")
     xml_lang.text = "English"
-
-    # --- progress
-    xml_progress = ET.SubElement(root, "Dataset_Progress")
-    xml_progress.text = "COMPLETE"
-
-    # --- platform
-    xml_platform = ET.SubElement(root, "Platform")
-    xml_platform_type = ET.SubElement(xml_platform, "Type")
-    xml_platform_type.text = "Not applicable"
-    xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
-    xml_platform_sname.text = "Not applicable"
-    xml_instrument = ET.SubElement(xml_platform, "Instrument")
-    xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
-    xml_instrument_sname.text = "Not applicable"
 
     # --- organization
     xml_org = ET.SubElement(root, "Organization")
