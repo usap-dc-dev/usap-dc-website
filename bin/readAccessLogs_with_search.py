@@ -24,9 +24,11 @@ config = json.loads(open('../config.json', 'r').read())
 
 exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-", "5.188.210", "5.188.211", 'Bot', 'Spider', 'Craw', 'WebInject', '63.142.253.235', 
               'BUbiNG', 'AddThis.com', 'ia_archiver', 'facebookexternalhit', 'ltx71', 'panscient', 'ns343855.ip-94-23-45.eu', 'ns320079.ip-37-187-150.eu', 
-              'hive.ldeo.columbia.edu', 'seafloor.mgds.ldeo.columbia.edu', 'ec01-vm3.ldeo.columbia.edu' ,'ns533874.ip-192-99-7.net', '31.187.70.17']
+              'hive.ldeo.columbia.edu', 'seafloor.mgds.ldeo.columbia.edu', 'ec01-vm3.ldeo.columbia.edu' ,'ns533874.ip-192-99-7.net', '31.187.70.17',
+              'The Knowledge AI', 'pool-72-89-254-157.nycmny.fios.verizon.net']
 
 reader = geoip2.database.Reader(country_db)
+
 
 def connect_to_db():
     info = config['DATABASE']
@@ -43,7 +45,7 @@ def valueInHoneyPot(request_url):
     # hidden fields that will only be populated by bots
     search = parseSearch(request_url)
     in_honey_pot = (search.get('email') and search['email'] != '') or (search.get('name') and search['name'] != '')
-    print(in_honey_pot)
+    # print(in_honey_pot)
     return in_honey_pot
 
 
@@ -98,6 +100,7 @@ def getCountryFromIP(ip_line):
         ip_to_country[ip_line] = country
     return ip_to_country[ip_line]
 
+
 if __name__ == '__main__':
 
     if len(sys.argv) == 3:
@@ -108,7 +111,6 @@ if __name__ == '__main__':
         now = datetime.datetime.now()
         year = now.year
         month = now.month
-
 
     # import previously saved ip_to_country table 
     if os.path.isfile(coutries_pickle):
@@ -144,7 +146,7 @@ if __name__ == '__main__':
                 and '34.195.51.19' not in referer and '34.195.50.19' not in referer:
 
                 if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
-                    print('%s: %s - %s' % (status, request_url, referer))
+                    # print('%s: %s - %s' % (status, request_url, referer))
                     country = getCountryFromIP(log_line_data['remote_host'])
                     sql = '''INSERT INTO access_logs_referers (resource_requested, referer, remote_host, time, country)
                              VALUES ('%s', '%s', '%s', '%s', '%s');''' % (request_url, referer, log_line_data['remote_host'], 
@@ -188,4 +190,22 @@ if __name__ == '__main__':
                         pass
                     cur.execute("COMMIT;")
             
+            # LANDING PAGE VIEWS
+            if "/view/" in request_url:
+                if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) 
+                    and (not any(substring in log_line_data['request_header_user_agent'] for substring in exclude))               
+                    and not valueInHoneyPot(request_url)):
+                    country = getCountryFromIP(log_line_data['remote_host'])
+                    sql = '''INSERT INTO access_logs_views (remote_host, time, resource_requested, resource_size, referer, user_agent, country) 
+                             VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
+                                log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
+                                log_line_data['request_header_user_agent'], country)
+                    try:
+                        cur.execute(sql)
+                        num += 1
+                    except:
+                        #entry already exists, do nothing
+                        pass
+                    cur.execute("COMMIT;") 
+
         print("%s entries added to the database" % num)

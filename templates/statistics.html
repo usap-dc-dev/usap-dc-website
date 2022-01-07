@@ -4,6 +4,7 @@
 
 <div id="download_numfiles_bytes" hidden>{{download_numfiles_bytes|tojson}}</div>
 <div id="download_users_downloads" hidden>{{download_users_downloads|tojson}}</div>
+<div id="num_project_views" hidden>{{num_project_views|tojson}}</div>
 <div id="submission_submissions" hidden>{{submission_submissions|tojson}}</div>
 <div id="projects_created" hidden>{{projects_created|tojson}}</div>
 <div id="referers" hidden>{{referers|tojson}}</div>
@@ -53,6 +54,8 @@
       <label for="exclude"><b>Exclude large dataset (FTP) downloads</b></label>
       <button type="submit">Replot</button>
     </div>
+
+    <div id="num_project_views_div"></div>
   </form>
   <!-- only curators can see stats below -->
   {% if session.user_info and session.user_info.is_curator %}
@@ -259,6 +262,13 @@
     row[0] = makeDate(row[0]);
   }
 
+  //Number of project views
+  var num_project_views_array = JSON.parse($("#num_project_views").text());
+  for (i in num_project_views_array) {
+    row = num_project_views_array[i];
+    row[0] = makeDate(row[0]);
+  }
+
   //submissions: number of dataset submissions
   var sm_submissions_array= JSON.parse($("#submission_submissions").text());
   for (i in sm_submissions_array) {
@@ -272,7 +282,7 @@
   }  
 
   google.setOnLoadCallback(function() {
-    drawChart(sm_submissions_array, 'USAP-DC Quartely Dataset Submissions', 'Quarter', 'Number of submissions', 'sm_submissions_chart_div');
+    drawChart_quarterly(sm_submissions_array, 'USAP-DC Quartely Dataset Submissions', 'Quarter', 'Number of submissions', 'sm_submissions_chart_div');
 
     drawChart2_quarterly(sm_projects_array, 'USAP-DC Quarterly Projects Created', 'Quarter', 'Number of registrations', 'Cumulative registrations',
                          'Before', 'After USAP-DC Project Catalog launch (May 2019)', 'Cumulative', 'sm_projects_chart_div');
@@ -281,6 +291,8 @@
 
     drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div', $("#dl_files"));
    
+    drawChart(num_project_views_array, 'USAP-DC Monthly Views of Project Pages (Project Catalog launch: May 2019)', 'Month', 'Number of views', 'num_project_views_div');
+
     //referers
     var referers = JSON.parse($("#referers").text());
     for (var page in referers) {
@@ -337,6 +349,25 @@
 
   function drawChart(d_array, title, x_title, y_title, target) {
     var d_data = new google.visualization.DataTable();
+    d_data.addColumn('date', 'Month');
+    d_data.addColumn('number', y_title);
+    d_data.addRows(d_array);
+    var d_options = {
+      legend: 'none',
+      title: title,
+      height: 350,
+      hAxis: {title: x_title},
+      vAxis: {
+        title: y_title,
+        viewWindowMode:'explicit'
+      }
+    };
+    var d_chart= new google.visualization.AreaChart(document.getElementById(target));
+    d_chart.draw(d_data,d_options);
+  }
+
+  function drawChart_quarterly(d_array, title, x_title, y_title, target) {
+    var d_data = new google.visualization.DataTable();
     d_data.addColumn('string', 'Quarter');
     d_data.addColumn('number', y_title);
     d_data.addRows(d_array);
@@ -353,6 +384,7 @@
     var d_chart= new google.visualization.AreaChart(document.getElementById(target));
     d_chart.draw(d_data,d_options);
   }
+
 
   function drawChart2_quarterly(d_array, title, x_title, y_title1, y_title2, legend1, legend2, legend3, target) {
     var d_data = new google.visualization.DataTable();

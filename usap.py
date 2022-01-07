@@ -4191,7 +4191,49 @@ def stats():
     template_dict['download_numfiles_bytes'] = download_numfiles_bytes
     template_dict['download_users_downloads'] = download_users_downloads
 
-    
+    # get project views from the database
+    query = "SELECT * FROM access_logs_views WHERE resource_requested ~* '/view/project/' AND time >= '%s' AND time <= '%s' ORDER BY time;" % (start_date, end_date)
+    cur.execute(query)
+    data = cur.fetchall()
+    proj_views = {}
+    tracker = {}
+    blocked_hosts = set()
+    for row in data:
+        if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
+        host = row['remote_host']
+        time = row['time']
+        month = "%s-%02d-01" % (time.year, time.month)  
+
+        # try and weed out bots by blocking any IPs that view 20 or more projects on a single day
+        day = "%s-%02d-%02d" % (time.year, time.month, time.day)
+        host_day = '%s_%s' % (host, day)
+        if tracker.get(host_day):
+            tracker[host_day] += 1
+            if tracker[host_day] == 20:
+                blocked_hosts.add(host)
+        else:
+            tracker[host_day] = 1
+
+        if proj_views.get(month):
+            if proj_views[month].get(host):
+                proj_views[month][host] += 1
+            else:
+               proj_views[month][host] = 1 
+        else:
+            proj_views[month] = {host:1}
+
+    num_project_views = []
+    months_list = proj_views.keys()
+    months_list.sort()
+    for month in months_list:
+        num_month_views = 0
+        for host in proj_views[month].keys():
+            if host not in blocked_hosts:
+                num_month_views += proj_views[month][host]
+        
+        num_project_views.append([month, num_month_views])
+    template_dict['num_project_views'] = num_project_views
+
     # get search information from the database
     query = "SELECT * FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
