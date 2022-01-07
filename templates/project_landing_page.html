@@ -255,7 +255,7 @@
                 {% for d in data.datasets %}
                   <tr>
                     <td>{{d.repository}}</td>
-                    <td><a target="_blank" href="{{d.url}}">{{d.title}}</a></td>
+                    <td><a target="_blank" href="{{url_for('tracker', type='dataset', url=d.url)}}">{{d.title}}</a></td>
                     <td>{{d.status}}</td>
                   </tr>
                 {% endfor %}
