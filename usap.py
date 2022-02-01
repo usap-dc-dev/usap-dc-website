@@ -2458,6 +2458,28 @@ def getDownloadsCount(uid):
         return None
 
 
+def getProjectViews(uid):
+    try:
+        (conn, cur) = connect_to_prod_db()
+        # count number of unique date-IP combinations, and exclude any where the remote_host
+        # has made more than 100 views in 1 day, as probably a bot
+        query = '''SELECT COUNT(*) FROM
+                    (SELECT DISTINCT(remote_host, TO_CHAR(time, 'YY-MM-DD'))::text AS host_date 
+                        FROM access_logs_views WHERE resource_requested ~ '%s'
+                    ) a1 
+                    JOIN 
+                    access_views_ip_date_matview a2
+                    ON a1.host_date = a2.host_date
+                    WHERE a2.count <= 100
+                    ''' % (uid)
+        cur.execute(query)
+        res = cur.fetchone()
+        return res['count']
+    except Exception as e:
+        print(e)
+        return None
+
+
 def makeJsonLD(data, uid):
     keywords = cf.getDatasetKeywords(uid)
     creators = []
@@ -4138,10 +4160,12 @@ def stats():
     template_dict['end_date'] = end_date
     template_dict['exclude'] = exclude
     proj_catalog_date = dt_date(2019,5,1)
+    template_dict['proj_catalog_date'] = proj_catalog_date
+    template_dict['download_stats_date'] = dt_date(2017,3,1)
 
     # get download information from the database
-    (conn, cur) = connect_to_db()
-    query = "SELECT * FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+    (conn, cur) = connect_to_prod_db()
+    query = "SELECT time, resource_size, remote_host, resource_requested FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
     cur.execute(query)
     data = cur.fetchall()
@@ -4163,7 +4187,7 @@ def stats():
 
     # ftp downloads of large datasets
     if not exclude :
-        query = "SELECT * FROM access_ftp_downloads WHERE date >= '%s' AND date <= '%s';" % (start_date, end_date)
+        query = "SELECT date, resource_size, request_email, dataset_id, file_count FROM access_ftp_downloads WHERE date >= '%s' AND date <= '%s';" % (start_date, end_date)
         cur.execute(query)
         data = cur.fetchall()
         for row in data:
@@ -4183,16 +4207,28 @@ def stats():
 
     download_numfiles_bytes = []
     download_users_downloads = []
+    downloads_total = 0
+    download_users_total = 0
+    download_files_total = 0
+    download_size_total = 0
     months_list = downloads.keys()
     months_list.sort()
     for month in months_list:
         download_numfiles_bytes.append([month, downloads[month]['num_files'], downloads[month]['bytes']])
+        download_files_total += downloads[month]['num_files']
+        download_size_total += downloads[month]['bytes']
         download_users_downloads.append([month, len(downloads[month]['users']), len(downloads[month]['user_files'])])
+        downloads_total += len(downloads[month]['user_files'])
+        download_users_total += len(downloads[month]['users'])
     template_dict['download_numfiles_bytes'] = download_numfiles_bytes
     template_dict['download_users_downloads'] = download_users_downloads
+    template_dict['downloads_total'] = "{:,}".format(downloads_total)
+    template_dict['download_users_total'] = "{:,}".format(download_users_total)
+    template_dict['download_files_total'] = "{:,}".format(download_files_total)
+    template_dict['download_size_total'] = human_size(download_size_total)
 
     # get project views from the database
-    query = "SELECT * FROM access_logs_views WHERE resource_requested ~* '/view/project/' AND time >= '%s' AND time <= '%s' ORDER BY time;" % (start_date, end_date)
+    query = "SELECT remote_host, country, time FROM access_logs_views WHERE resource_requested ~* '/view/project/' AND time >= '%s' AND time <= '%s' ORDER BY time;" % (start_date, end_date)
     cur.execute(query)
     data = cur.fetchall()
     proj_views = {}
@@ -4200,16 +4236,17 @@ def stats():
     blocked_hosts = set()
     for row in data:
         if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
+        if row['time'].date() < proj_catalog_date: continue
         host = row['remote_host']
         time = row['time']
         month = "%s-%02d-01" % (time.year, time.month)  
 
-        # try and weed out bots by blocking any IPs that view 20 or more projects on a single day
+        # try and weed out bots by blocking any IPs that view 100 or more projects on a single day
         day = "%s-%02d-%02d" % (time.year, time.month, time.day)
         host_day = '%s_%s' % (host, day)
         if tracker.get(host_day):
             tracker[host_day] += 1
-            if tracker[host_day] == 20:
+            if tracker[host_day] == 100:
                 blocked_hosts.add(host)
         else:
             tracker[host_day] = 1
@@ -4223,6 +4260,7 @@ def stats():
             proj_views[month] = {host:1}
 
     num_project_views = []
+    project_views_total = 0
     months_list = proj_views.keys()
     months_list.sort()
     for month in months_list:
@@ -4230,87 +4268,93 @@ def stats():
         for host in proj_views[month].keys():
             if host not in blocked_hosts:
                 num_month_views += proj_views[month][host]
+                project_views_total += proj_views[month][host]
         
         num_project_views.append([month, num_month_views])
     template_dict['num_project_views'] = num_project_views
-
+    template_dict['project_views_total'] = "{:,}".format(project_views_total)
+    
     # get search information from the database
-    query = "SELECT * FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+    if cf.isCurator():
+        query = "SELECT time, resource_size, remote_host, resource_requested FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+        cur.execute(query)
+        data = cur.fetchall()
+        searches = {'repos': {}, 'sci_progs': {}, 'nsf_progs': {}, 'persons': {}, 'awards': {}, 'free_texts': {}, 'titles': {}, 'spatial_bounds': {}}
+        params = {'repo': 'repos', 'sci_program': 'sci_progs', 'nsf_program': 'nsf_progs', 'person': 'persons', 'award': 'awards', 
+                'free_text': 'free_texts', 'dp_title': 'titles', 'spatial_bounds': 'spatial_bounds'}
+        for row in data:
+            time = row['time']
+            month = "%s-%02d-01" % (time.year, time.month)  
+            bytes = row['resource_size']
+            user = row['remote_host']
+            resource = row['resource_requested']
+            search = parseSearch(resource)
 
-    cur.execute(query)
-    data = cur.fetchall()
-    searches = {'repos': {}, 'sci_progs': {}, 'nsf_progs': {}, 'persons': {}, 'awards': {}, 'free_texts': {}, 'titles': {}, 'spatial_bounds': {}}
-    params = {'repo': 'repos', 'sci_program': 'sci_progs', 'nsf_program': 'nsf_progs', 'person': 'persons', 'award': 'awards', 
-              'free_text': 'free_texts', 'dp_title': 'titles', 'spatial_bounds': 'spatial_bounds'}
-    for row in data:
-        time = row['time']
-        month = "%s-%02d-01" % (time.year, time.month)  
-        bytes = row['resource_size']
-        user = row['remote_host']
-        resource = row['resource_requested']
-        search = parseSearch(resource)
+            for search_param, searches_param in params.items():
+                searches = binSearch(search, searches, search_param, searches_param)
 
-        for search_param, searches_param in params.items():
-            searches = binSearch(search, searches, search_param, searches_param)
+        template_dict['searches'] = searches
 
-    template_dict['searches'] = searches
+    # get referer information from the database
+    if cf.isCurator():
+        query = "SELECT country, referer, resource_requested FROM access_logs_referers WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
-    # get refere information from the database
-    query = "SELECT * FROM access_logs_referers WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+        cur.execute(query)
+        data = cur.fetchall()
+        pages = {'.all': {'All': {'count':0}}, '/': {'All': {'count': 0}} ,'/view/dataset': {'All': {'count': 0}}, '/view/project': {'All': {'count': 0}}, 
+                '/submit': {'All': {'count': 0}}, '/readme': {'All': {'count': 0}}, '/search': {'All': {'count': 0}}, 
+                '/contact': {'All': {'count': 0}}, '/faq': {'All': {'count': 0}}, '/dataset_search': {'All': {'count': 0}}, 
+                '/dataset': {'All': {'count': 0}}, '/news': {'All': {'count': 0}}, '/api':{'All': {'count': 0}}}
+        for row in data:
+            if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
+            referer = row['referer']
+            if referer.endswith('/'): referer = referer[:-1]
+            referer_domain = urlparse(referer).netloc
+            if referer_domain.endswith('.ru') or 'baidu' in referer: continue
+            # if 'google' in referer_domain: referer_domain = 'www.google.com'
+            resource = row['resource_requested']
+            page = resource.split('?')[0]
+            if '/view/dataset' in page: page = '/view/dataset'
+            elif '/view/project' in page: page = '/view/project'
+            elif '/edit/dataset' in page: page = '/edit/dataset'
+            elif '/edit/project' in page: page = '/edit/project'
+            elif '/submit' in page: page = '/submit'
+            elif '/readme' in page: page = '/readme'
+            elif '/login' in page: continue
+            elif '/curator' in page: continue
+            elif '/search_result' in page: continue
+            elif '/news' in page: page = '/news'
+            elif '/dataset_search' in page: page = '/dataset_search'
+            elif '/api' in page: page = '/api'
+            elif page in ['/home', '/index']: page = '/'
+            elif page.startswith('/dataset/ldeo') or page.startswith('/dataset/usap-dc') or page.startswith('/dataset/nsidc'): page = '/dataset'
+            if page not in pages:
+                pages[page] =  {'All': {'count': 0}}
+            if referer_domain not in pages[page]['All']:
+                pages[page]['All'][referer_domain] = 1       
+            else:
+                pages[page]['All'][referer_domain] += 1
 
-    cur.execute(query)
-    data = cur.fetchall()
-    pages = {'.all': {'All': {'count':0}}, '/': {'All': {'count': 0}} ,'/view/dataset': {'All': {'count': 0}}, '/view/project': {'All': {'count': 0}}, 
-            '/submit': {'All': {'count': 0}}, '/readme': {'All': {'count': 0}}, '/search': {'All': {'count': 0}}, 
-            '/contact': {'All': {'count': 0}}, '/faq': {'All': {'count': 0}}, '/dataset_search': {'All': {'count': 0}}, 
-            '/dataset': {'All': {'count': 0}}, '/news': {'All': {'count': 0}}, '/api':{'All': {'count': 0}}}
-    for row in data:
-        if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
-        referer = row['referer']
-        if referer.endswith('/'): referer = referer[:-1]
-        referer_domain = urlparse(referer).netloc
-        if referer_domain.endswith('.ru') or 'baidu' in referer: continue
-        # if 'google' in referer_domain: referer_domain = 'www.google.com'
-        resource = row['resource_requested']
-        page = resource.split('?')[0]
-        if '/view/dataset' in page: page = '/view/dataset'
-        elif '/view/project' in page: page = '/view/project'
-        elif '/edit/dataset' in page: page = '/edit/dataset'
-        elif '/edit/project' in page: page = '/edit/project'
-        elif '/submit' in page: page = '/submit'
-        elif '/readme' in page: page = '/readme'
-        elif '/login' in page: continue
-        elif '/curator' in page: continue
-        elif '/search_result' in page: continue
-        elif '/news' in page: page = '/news'
-        elif '/dataset_search' in page: page = '/dataset_search'
-        elif '/api' in page: page = '/api'
-        elif page in ['/home', '/index']: page = '/'
-        elif page.startswith('/dataset/ldeo') or page.startswith('/dataset/usap-dc') or page.startswith('/dataset/nsidc'): page = '/dataset'
-        if page not in pages:
-            pages[page] =  {'All': {'count': 0}}
-        if referer_domain not in pages[page]['All']:
-            pages[page]['All'][referer_domain] = 1       
-        else:
-            pages[page]['All'][referer_domain] += 1
+            if referer_domain not in pages['.all']['All']:
+                pages['.all']['All'][referer_domain] = 1
+            else:
+                pages['.all']['All'][referer_domain] += 1
 
-        if referer_domain not in pages['.all']['All']:
-            pages['.all']['All'][referer_domain] = 1
-        else:
-            pages['.all']['All'][referer_domain] += 1
+            resource_referer = resource + '_' + referer
+            if resource_referer not in pages[page]:
+                pages[page][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
+            else:
+                pages[page][resource_referer]['count'] += 1
 
-        resource_referer = resource + '_' + referer
-        if resource_referer not in pages[page]:
-            pages[page][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
-        else:
-            pages[page][resource_referer]['count'] += 1
+            if resource_referer not in pages['.all']:
+                pages['.all'][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
+            else:
+                pages['.all'][resource_referer]['count'] += 1
 
-        if resource_referer not in pages['.all']:
-            pages['.all'][resource_referer] = {'resource': resource, 'referer': referer, 'count': 1}
-        else:
-            pages['.all'][resource_referer]['count'] += 1
+        template_dict['referers'] = pages
 
-    template_dict['referers'] = pages
+    else:
+       template_dict['referers'] = {}
 
     # get submission information from the database
     query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dt.date_created::text AS dif_date FROM dataset_file_info dsf 
@@ -4319,10 +4363,14 @@ def stats():
     cur.execute(query)
     data = cur.fetchall()
 
+    submission_bytes = 0
+    submission_num_files = 0
+    submissions_total = 0
+
     q_dates = pd.date_range(start_date,end_date,freq='QS')
     quarters = ['%s-Q%s' % (q.year, q.quarter) for q in q_dates]
 
-    submissions = {q: {'bytes': 0, 'num_files': 0, 'submissions': set()} for q in quarters}
+    submissions = {q: {'submissions': set()} for q in quarters}
     for row in data:
         if row['dif_date'] is not None:
             date = row['dif_date']
@@ -4343,21 +4391,19 @@ def stats():
         bytes = row['file_size_uncompressed'] if row.get('file_size_uncompressed') else row['file_size_on_disk']
         num_files = row['file_count']
         submission = row['dataset_id']
-        submissions[qt]['bytes'] += bytes
-        submissions[qt]['num_files'] += num_files
+        submission_bytes += bytes
+        submission_num_files += num_files
         submissions[qt]['submissions'].add(submission)
 
-    submission_bytes = []
-    submission_num_files = []
     submission_submissions = []
     quarters_list = submissions.keys()
     quarters_list.sort()
     for qt in quarters_list:
-        submission_bytes.append([qt, submissions[qt]['bytes']])
-        submission_num_files.append([qt, submissions[qt]['num_files']])
         submission_submissions.append([qt, len(submissions[qt]['submissions'])])
-    template_dict['submission_bytes'] = submission_bytes
-    template_dict['submission_num_files'] = submission_num_files
+        submissions_total += len(submissions[qt]['submissions'])
+    template_dict['submission_size'] = human_size(submission_bytes)
+    template_dict['submission_num_files'] = "{:,}".format(submission_num_files)
+    template_dict['submissions_total'] = "{:,}".format(submissions_total)
     template_dict['submission_submissions'] = submission_submissions
     template_dict['download_numbers'] = getDownloadsForDatasets(start_date, end_date)
 
@@ -4365,6 +4411,7 @@ def stats():
     cur.execute(query)
     data = cur.fetchall()
 
+    projects_total = 0
     projects = {q:{'before':0, 'after':0} for q in quarters}
     for row in data:
         date = row['date_created']
@@ -4373,6 +4420,7 @@ def stats():
             projects[qt]['before'] += 1
         else: 
             projects[qt]['after'] += 1
+        projects_total += 1
 
     projects_created = []
     quarters_list = projects.keys()
@@ -4386,6 +4434,7 @@ def stats():
                                  cumulative
                                 ])
     template_dict['projects_created'] = projects_created
+    template_dict['projects_total'] = "{:,}".format(projects_total)
 
     return render_template('statistics.html', **template_dict)
 
@@ -4446,6 +4495,11 @@ def parseSearch(resource):
     return search
 
 
+def human_size(bytes, units=[' bytes','KB','MB','GB','TB', 'PB', 'EB']):
+    """ Returns a human readable string representation of bytes """
+    return str(bytes) + units[0] if bytes < 1024 else human_size(bytes>>10, units[1:])
+
+
 @app.route('/view/project/<project_id>')
 def project_landing_page(project_id):
     metadata = get_project(project_id)
@@ -4464,6 +4518,9 @@ def project_landing_page(project_id):
 
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
+
+    # get count of how many times this dataset has been downloaded
+    metadata['views'] = getProjectViews(project_id)
 
     return render_template('project_landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
 

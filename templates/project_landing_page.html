@@ -313,6 +313,16 @@
 
     </tr>
   </table>
-</div>
+
+
+  {% if data.views >= 0 %}
+  <div class="field">
+    <p>
+      <!-- <br> -->
+      This project has been viewed {{data.views}} time{%if data.views != 1 %}s{% endif %} since May 2019 (based on unique date-IP combinations)
+    </p>
+  </div>
+  {% endif %}
+  </div>
 
 {% endblock body %}

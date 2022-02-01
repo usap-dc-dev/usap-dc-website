@@ -18,10 +18,29 @@
     <input type="date" name="end_date" id="end_date" value={{end_date}} min={{start_date}}>
     <button type="submit">Submit</button>
 
+    <div class="plot_header">
+      <h4>USAP-DC Quarterly Dataset Submissions</h4>
+      <h5>{{submissions_total}} Submissions ({{submission_num_files}} files, {{submission_size}}) between {{start_date.strftime('%Y-%m-%d')}} and {{end_date.strftime('%Y-%m-%d')}}</h5>
+    </div>
     <div id="sm_submissions_chart_div"></div>
 
+    <div class="plot_header">
+      <h4>USAP-DC Quarterly Projects Created</h4>
+      <h5>{{projects_total}} Projects created between {{start_date.strftime('%Y-%m-%d')}} and {{end_date.strftime('%Y-%m-%d')}}</h5>
+    </div>
     <div id="sm_projects_chart_div"></div>
 
+
+    <div class="plot_header">
+      <h4>USAP-DC Monthly Data Download Requests*</h4>
+      <h5>{{downloads_total}} Unique data download requests, {{download_users_total}} unique users between 
+        {% if start_date.date() < download_stats_date %}
+          {{download_stats_date.strftime('%Y-%m-%d')}}
+        {% else %}
+          {{start_date.strftime('%Y-%m-%d')}} 
+        {% endif %}
+        and {{end_date.strftime('%Y-%m-%d')}}</h5>
+    </div>
     <div id="dl_users_downloads_chart_div"></div>
     <div class="stats-limits-div" id="dl_users">
       <input type="hidden" class="options">
@@ -36,6 +55,16 @@
       <button type="button" onclick="replot(this)">Replot</button>
     </div>
 
+    <div class="plot_header">
+      <h4>USAP-DC Monthly Data Downloads*</h4>
+      <h5>{{download_files_total}} File downloads ({{download_size_total}}) between 
+      {% if start_date.date() < download_stats_date %}
+        {{download_stats_date.strftime('%Y-%m-%d')}}
+      {% else %}
+        {{start_date.strftime('%Y-%m-%d')}} 
+      {% endif %}
+      and {{end_date.strftime('%Y-%m-%d')}}</h5>
+    </div>
     <div id="dl_numfiles_bytes_chart_div"></div>
     <div class="stats-limits-div" id="dl_files">
       <input type="hidden" class="options">
@@ -55,6 +84,16 @@
       <button type="submit">Replot</button>
     </div>
 
+    <div class="plot_header">
+      <h4>USAP-DC Monthly Views of Project Pages**</h4>
+      <h5>{{project_views_total}} Project page views between 
+      {% if start_date.date() < proj_catalog_date %}
+        {{proj_catalog_date.strftime('%Y-%m-%d')}}
+      {% else %}
+        {{start_date.strftime('%Y-%m-%d')}} 
+      {% endif %}
+      and {{end_date.strftime('%Y-%m-%d')}}</h5>
+    </div>
     <div id="num_project_views_div"></div>
   </form>
   <!-- only curators can see stats below -->
@@ -81,7 +120,7 @@
       </table>
     </div>
 
-    <p class="stats-text">Search Statistics**</p>
+    <p class="stats-text">Search Statistics***</p>
 
     <div class="search-stats">
         <table class="nested_table">
@@ -187,7 +226,7 @@
     </div>
 
 
-    <p class="stats-text">Referer Statistics***</p>
+    <p class="stats-text">Referer Statistics****</p>
     <table>
       
         {% for page, items in referers|dictsort %}
@@ -230,13 +269,25 @@
         * Download statistics collection began in March 2017
       </b></p>
       <p><b>
-        ** Search statistics collection began in May 2019
+        ** Project Catalog launched in May 2019
       </b></p>
       <p><b>
-        *** Referer statistics collection began in May 2018
+        *** Search statistics collection began in May 2019
+      </b></p>
+      <p><b>
+        **** Referer statistics collection began in May 2018
       </b></p>
     </div>
   </div>
+{% else %}
+<div>
+  <p><b>
+    * Download statistics collection began in March 2017
+  </b></p>
+  <p><b>
+    ** Project Catalog launched in May 2019
+  </b></p>
+</div>
 {% endif %}
 
 
@@ -354,7 +405,7 @@
     d_data.addRows(d_array);
     var d_options = {
       legend: 'none',
-      title: title,
+      //title: title,
       height: 350,
       hAxis: {title: x_title},
       vAxis: {
@@ -373,7 +424,7 @@
     d_data.addRows(d_array);
     var d_options = {
       legend: 'none',
-      title: title,
+    //  title: title,
       height: 350,
       hAxis: {title: x_title},
       vAxis: {
@@ -395,7 +446,7 @@
     d_data.addRows(d_array);
     var d_options = {
       legend: 'top',
-      title: title,
+   //   title: title,
       height: 350,
       hAxis: {
         title: x_title
@@ -419,7 +470,7 @@
     d_data.addColumn('number', legend2);
     d_data.addRows(d_array);
     var d_options = {
-      title: title,
+   //   title: title,
       hAxis: {title: x_title},
       height: 350,
       vAxes: {0: {title: y_title1},

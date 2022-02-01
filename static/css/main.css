@@ -858,3 +858,15 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
 .justify {
   text-align:justify;
 }
+
+.plot_header {
+  margin-bottom: -9px;
+  margin-top: 50px;
+  margin-left: 100px;
+}
+
+.plot_header h4, h5 {
+  color: black;
+  font-weight: bolder;
+}
+
