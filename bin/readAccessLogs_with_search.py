@@ -11,12 +11,15 @@ import pickle
 import socket
 import whois
 import geoip2.database
+import re
+from urlparse import unquote
 
 
 LOGS_DIR = "/var/log/httpd/"
 DOMAIN = "www.usap-dc.org"
 country_db = '/web/usap-dc/htdocs/static/GeoLite2-Country_20181030/GeoLite2-Country.mmdb'
 coutries_pickle = '/web/usap-dc/htdocs/inc/ip_countries.pickle'
+counter_robots_list = '/web/usap-dc/htdocs/static/COUNTER_Robots_list.json' # https://github.com/atmire/COUNTER-Robots/blob/master/COUNTER_Robots_list.json
 
 line_parser = apache_log_parser.make_parser("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"")
 
@@ -24,8 +27,13 @@ config = json.loads(open('../config.json', 'r').read())
 
 exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-", "5.188.210", "5.188.211", 'Bot', 'Spider', 'Craw', 'WebInject', '63.142.253.235', 
               'BUbiNG', 'AddThis.com', 'ia_archiver', 'facebookexternalhit', 'ltx71', 'panscient', 'ns343855.ip-94-23-45.eu', 'ns320079.ip-37-187-150.eu', 
-              'hive.ldeo.columbia.edu', 'seafloor.mgds.ldeo.columbia.edu', 'ec01-vm3.ldeo.columbia.edu' ,'ns533874.ip-192-99-7.net', '31.187.70.17',
+              'hive.ldeo.columbia.edu', 'seafloor.mgds.ldeo.columbia.edu', 'ec01-vm3.ldeo.columbia.edu', 'ns533874.ip-192-99-7.net', '31.187.70.17',
               'The Knowledge AI', 'pool-72-89-254-157.nycmny.fios.verizon.net']
+
+# add official list of user agents that are regarded as robots/spiders by Project COUNTER to my exclude list
+counter_robots = json.loads(open(counter_robots_list, 'r').read())
+for item in counter_robots:
+    exclude.append(item['pattern'])
 
 reader = geoip2.database.Reader(country_db)
 
@@ -58,7 +66,8 @@ def parseSearch(resource):
     for f in filters:
         try:
             filter, value = f.split('=', 1)
-            search[filter] = value
+            value = unquote(value).replace('%20', ' ').replace('+', ' ')
+            search[filter] = value 
         except:
             continue
     return search
@@ -99,6 +108,18 @@ def getCountryFromIP(ip_line):
             country = 'US'
         ip_to_country[ip_line] = country
     return ip_to_country[ip_line]
+
+
+def excludeEntry(log_line_data):
+    # exclude bots and crawlers
+    if ((any(re.search(substring.lower(), log_line_data['remote_host'].lower()) for substring in exclude)) 
+        or (any(re.search(substring.lower(), log_line_data['request_header_user_agent'].lower()) for substring in exclude))  
+        or valueInHoneyPot(request_url)): 
+        
+        # print("EXCLUDED:(%s) %s - %s" % (log_line_data['time_received_utc_isoformat'], log_line_data['remote_host'], log_line_data['request_header_user_agent']))
+        return True
+    return False
+    
 
 
 if __name__ == '__main__':
@@ -145,67 +166,88 @@ if __name__ == '__main__':
                 and 'supplement' not in request_url and 'accounts.' not in referer and referer.startswith('http') \
                 and '34.195.51.19' not in referer and '34.195.50.19' not in referer:
 
-                if (not any(substring in log_line_data['remote_host'] for substring in exclude)):
-                    # print('%s: %s - %s' % (status, request_url, referer))
-                    country = getCountryFromIP(log_line_data['remote_host'])
-                    sql = '''INSERT INTO access_logs_referers (resource_requested, referer, remote_host, time, country)
-                             VALUES ('%s', '%s', '%s', '%s', '%s');''' % (request_url, referer, log_line_data['remote_host'], 
-                             log_line_data['time_received_utc_isoformat'], country)
-                    try:
-                        cur.execute(sql)
-                        num += 1
-                    except:
-                        #entry already exists, do nothing
-                        pass
-                    cur.execute("COMMIT;")      
+                if excludeEntry(log_line_data): continue
+
+                # print('%s: %s - %s' % (status, request_url, referer))
+                country = getCountryFromIP(log_line_data['remote_host'])
+                sql = '''INSERT INTO access_logs_referers (resource_requested, referer, remote_host, time, country)
+                            VALUES ('%s', '%s', '%s', '%s', '%s');''' % (request_url, referer, log_line_data['remote_host'], 
+                            log_line_data['time_received_utc_isoformat'], country)
+                try:
+                    cur.execute(sql)
+                    num += 1
+                except:
+                    #entry already exists, do nothing
+                    pass
+                cur.execute("COMMIT;")      
             
             # DOWNLOADS
             if "/dataset/usap-dc/" in request_url:
-                if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) and not valueInHoneyPot(request_url)):
-                    sql = '''INSERT INTO access_logs_downloads (remote_host, time, resource_requested, resource_size, referer, user_agent) 
-                             VALUES ('%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
-                                log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
-                                log_line_data['request_header_user_agent'])
-                    try:
-                        cur.execute(sql)
-                        num += 1
-                    except:
-                        #entry already exists, do nothing
-                        pass
-                    cur.execute("COMMIT;")
+                if excludeEntry(log_line_data): continue
+
+                sql = '''INSERT INTO access_logs_downloads (remote_host, time, resource_requested, resource_size, referer, user_agent) 
+                            VALUES ('%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
+                            log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
+                            log_line_data['request_header_user_agent'])
+                try:
+                    cur.execute(sql)
+                    num += 1
+                except:
+                    #entry already exists, do nothing
+                    pass
+                cur.execute("COMMIT;")
             
             # SEARCHES
             elif "search?" in request_url:
+                if excludeEntry(log_line_data): continue
+
                 dataset_search = "dataset_search?" in request_url
-                if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) and not valueInHoneyPot(request_url)):
-                    sql = '''INSERT INTO access_logs_searches (remote_host, time, resource_requested, resource_size, referer, user_agent, dataset_search) 
-                             VALUES ('%s', '%s', '%s', '%s', '%s', '%s', %s);''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
-                                log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
-                                log_line_data['request_header_user_agent'], dataset_search)
-                    try:
-                        cur.execute(sql)
-                        num += 1
-                    except:
-                        #entry already exists, do nothing
-                        pass
-                    cur.execute("COMMIT;")
+                sql = '''INSERT INTO access_logs_searches (remote_host, time, resource_requested, resource_size, referer, user_agent, dataset_search) 
+                            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', %s);''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
+                            log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
+                            log_line_data['request_header_user_agent'], dataset_search)
+                try:
+                    cur.execute(sql)
+                    num += 1
+                except:
+                    #entry already exists, do nothing
+                    pass
+                cur.execute("COMMIT;")
             
             # LANDING PAGE VIEWS
             if "/view/" in request_url:
-                if ((not any(substring in log_line_data['remote_host'] for substring in exclude)) 
-                    and (not any(substring in log_line_data['request_header_user_agent'] for substring in exclude))               
-                    and not valueInHoneyPot(request_url)):
-                    country = getCountryFromIP(log_line_data['remote_host'])
-                    sql = '''INSERT INTO access_logs_views (remote_host, time, resource_requested, resource_size, referer, user_agent, country) 
-                             VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
-                                log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
-                                log_line_data['request_header_user_agent'], country)
-                    try:
-                        cur.execute(sql)
-                        num += 1
-                    except:
-                        #entry already exists, do nothing
-                        pass
-                    cur.execute("COMMIT;") 
+                if excludeEntry(log_line_data): continue
+
+                country = getCountryFromIP(log_line_data['remote_host'])
+                sql = '''INSERT INTO access_logs_views (remote_host, time, resource_requested, resource_size, referer, user_agent, country) 
+                            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
+                            log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
+                            log_line_data['request_header_user_agent'], country)
+                try:
+                    cur.execute(sql)
+                    num += 1
+                except:
+                    #entry already exists, do nothing
+                    pass
+                cur.execute("COMMIT;") 
+
+            # EXTERNAL DATASETS
+            if "/tracker?" in request_url:
+                if excludeEntry(log_line_data): continue
+                params = parseSearch(log_line_data['request_url'])
+                if config['USAP_DOMAIN'] in params['url']: continue #external datasets only 
+
+                country = getCountryFromIP(log_line_data['remote_host'])
+                sql = '''INSERT INTO access_logs_external (remote_host, time, resource_requested, resource_size, referer, user_agent, country) 
+                            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
+                            log_line_data['request_url'], log_line_data['response_bytes_clf'], log_line_data['request_header_referer'],
+                            log_line_data['request_header_user_agent'], country)
+                try:
+                    cur.execute(sql)
+                    num += 1
+                except:
+                    #entry already exists, do nothing
+                    pass
+                cur.execute("COMMIT;")             
 
         print("%s entries added to the database" % num)
