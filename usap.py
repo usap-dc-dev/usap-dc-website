@@ -123,6 +123,7 @@ orcid = oauth.remote_app('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
+
 def connect_to_prod_db(curator=False):
     info = config['PROD_DATABASE']
     if curator and cf.isCurator():
@@ -2460,7 +2461,7 @@ def getDownloadsCount(uid):
 
 def getProjectViews(uid):
     try:
-        (conn, cur) = connect_to_prod_db()
+        (conn, cur) = connect_to_db()
         # count number of unique date-IP combinations, and exclude any where the remote_host
         # has made more than 100 views in 1 day, as probably a bot
         query = '''SELECT COUNT(*) FROM
