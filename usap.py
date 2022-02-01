@@ -4164,7 +4164,7 @@ def stats():
     template_dict['download_stats_date'] = dt_date(2017,3,1)
 
     # get download information from the database
-    (conn, cur) = connect_to_prod_db()
+    (conn, cur) = connect_to_db()
     query = "SELECT time, resource_size, remote_host, resource_requested FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
 
     cur.execute(query)
