@@ -5,6 +5,7 @@
 <div id="download_numfiles_bytes" hidden>{{download_numfiles_bytes|tojson}}</div>
 <div id="download_users_downloads" hidden>{{download_users_downloads|tojson}}</div>
 <div id="num_project_views" hidden>{{num_project_views|tojson}}</div>
+<div id="num_ext_clicks" hidden>{{num_ext_clicks|tojson}}</div>
 <div id="submission_submissions" hidden>{{submission_submissions|tojson}}</div>
 <div id="projects_created" hidden>{{projects_created|tojson}}</div>
 <div id="referers" hidden>{{referers|tojson}}</div>
@@ -95,6 +96,20 @@
       and {{end_date.strftime('%Y-%m-%d')}}</h5>
     </div>
     <div id="num_project_views_div"></div>
+
+
+    <div class="plot_header">
+      <h4>USAP-DC Monthly Referrals to External Datasets***</h4>
+      <h5>{{ext_clicks_total}} External dataset referrals between 
+      {% if start_date.date() < ext_tracker_date %}
+        {{ext_tracker_date.strftime('%Y-%m-%d')}}
+      {% else %}
+        {{start_date.strftime('%Y-%m-%d')}} 
+      {% endif %}
+      and {{end_date.strftime('%Y-%m-%d')}}</h5>
+    </div>
+    <div id="num_ext_clicks_div"></div>
+
   </form>
   <!-- only curators can see stats below -->
   {% if session.user_info and session.user_info.is_curator %}
@@ -120,7 +135,7 @@
       </table>
     </div>
 
-    <p class="stats-text">Search Statistics***</p>
+    <p class="stats-text">Search Statistics****</p>
 
     <div class="search-stats">
         <table class="nested_table">
@@ -226,7 +241,7 @@
     </div>
 
 
-    <p class="stats-text">Referer Statistics****</p>
+    <p class="stats-text">Referer Statistics*****</p>
     <table>
       
         {% for page, items in referers|dictsort %}
@@ -272,10 +287,13 @@
         ** Project Catalog launched in May 2019
       </b></p>
       <p><b>
-        *** Search statistics collection began in May 2019
+        *** External Referrer statistics collection began in Feb 2022
       </b></p>
       <p><b>
-        **** Referer statistics collection began in May 2018
+        **** Search statistics collection began in May 2019
+      </b></p>
+      <p><b>
+        ***** Referer statistics collection began in May 2018
       </b></p>
     </div>
   </div>
@@ -286,6 +304,9 @@
   </b></p>
   <p><b>
     ** Project Catalog launched in May 2019
+  </b></p>
+  <p><b>
+    *** External Referrer statistics collection began in Feb 2022
   </b></p>
 </div>
 {% endif %}
@@ -320,6 +341,13 @@
     row[0] = makeDate(row[0]);
   }
 
+  //Number of external dataset referrals
+  var num_ext_clicks_array = JSON.parse($("#num_ext_clicks").text());
+  for (i in num_ext_clicks_array) {
+    row = num_ext_clicks_array[i];
+    row[0] = makeDate(row[0]);
+  }
+
   //submissions: number of dataset submissions
   var sm_submissions_array= JSON.parse($("#submission_submissions").text());
   for (i in sm_submissions_array) {
@@ -343,6 +371,8 @@
     drawChart2(dl_numfiles_bytes_array, 'USAP-DC Monthly Data Downloads*', 'Month', 'Number of files', 'MB', 'Total number of files downloaded', 'Total volume of data files downloaded (MB)', 'dl_numfiles_bytes_chart_div', $("#dl_files"));
    
     drawChart(num_project_views_array, 'USAP-DC Monthly Views of Project Pages (Project Catalog launch: May 2019)', 'Month', 'Number of views', 'num_project_views_div');
+
+    drawChart(num_ext_clicks_array, 'USAP-DC Monthly External Dataset Referrals', 'Month', 'Number of referrals', 'num_ext_clicks_div');
 
     //referers
     var referers = JSON.parse($("#referers").text());

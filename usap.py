@@ -4163,11 +4163,11 @@ def stats():
     proj_catalog_date = dt_date(2019,5,1)
     template_dict['proj_catalog_date'] = proj_catalog_date
     template_dict['download_stats_date'] = dt_date(2017,3,1)
+    template_dict['ext_tracker_date'] = dt_date(2022,2,1)
 
     # get download information from the database
     (conn, cur) = connect_to_db()
     query = "SELECT time, resource_size, remote_host, resource_requested FROM access_logs_downloads WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
-
     cur.execute(query)
     data = cur.fetchall()
     downloads = {}
@@ -4229,7 +4229,7 @@ def stats():
     template_dict['download_size_total'] = human_size(download_size_total)
 
     # get project views from the database
-    query = "SELECT remote_host, country, time FROM access_logs_views WHERE resource_requested ~* '/view/project/' AND time >= '%s' AND time <= '%s' ORDER BY time;" % (start_date, end_date)
+    query = "SELECT * FROM access_views_projects_matview WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
     cur.execute(query)
     data = cur.fetchall()
     proj_views = {}
@@ -4274,20 +4274,62 @@ def stats():
         num_project_views.append([month, num_month_views])
     template_dict['num_project_views'] = num_project_views
     template_dict['project_views_total'] = "{:,}".format(project_views_total)
-    
+
+  # get clicks to external datasets from the database
+    query = "SELECT resource_requested, remote_host, country, time FROM access_logs_external WHERE resource_requested ~* 'type=dataset' AND time >= '%s' AND time <= '%s' ORDER BY time;" % (start_date, end_date)
+    cur.execute(query)
+    data = cur.fetchall()
+    ext_clicks = {}
+    tracker = {}
+    blocked_hosts = set()
+    for row in data:
+        if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
+        host = row['remote_host']
+        time = row['time']
+        month = "%s-%02d-01" % (time.year, time.month)  
+
+        # try and weed out bots by blocking any IPs that make 100 or more referrals on a single day
+        day = "%s-%02d-%02d" % (time.year, time.month, time.day)
+        host_day = '%s_%s' % (host, day)
+        if tracker.get(host_day):
+            tracker[host_day] += 1
+            if tracker[host_day] == 100:
+                blocked_hosts.add(host)
+        else:
+            tracker[host_day] = 1
+
+        if ext_clicks.get(month):
+            if ext_clicks[month].get(host):
+                ext_clicks[month][host] += 1
+            else:
+               ext_clicks[month][host] = 1 
+        else:
+            ext_clicks[month] = {host:1}
+
+    num_ext_clicks = []
+    ext_clicks_total = 0
+    months_list = ext_clicks.keys()
+    months_list.sort()
+    for month in months_list:
+        num_month_views = 0
+        for host in ext_clicks[month].keys():
+            if host not in blocked_hosts:
+                num_month_views += ext_clicks[month][host]
+                ext_clicks_total += ext_clicks[month][host]
+        
+        num_ext_clicks.append([month, num_month_views])
+    template_dict['num_ext_clicks'] = num_ext_clicks
+    template_dict['ext_clicks_total'] = "{:,}".format(ext_clicks_total)
+
     # get search information from the database
     if cf.isCurator():
-        query = "SELECT time, resource_size, remote_host, resource_requested FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
+        query = "SELECT resource_requested FROM access_logs_searches WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
         cur.execute(query)
         data = cur.fetchall()
-        searches = {'repos': {}, 'sci_progs': {}, 'nsf_progs': {}, 'persons': {}, 'awards': {}, 'free_texts': {}, 'titles': {}, 'spatial_bounds': {}}
+        searches = {'repos': {}, 'sci_progs': {}, 'nsf_progs': {}, 'persons': {}, 'awards': {}, 'free_texts': {}, 'titles': {}}
         params = {'repo': 'repos', 'sci_program': 'sci_progs', 'nsf_program': 'nsf_progs', 'person': 'persons', 'award': 'awards', 
-                'free_text': 'free_texts', 'dp_title': 'titles', 'spatial_bounds': 'spatial_bounds'}
+                'free_text': 'free_texts', 'dp_title': 'titles'}
         for row in data:
-            time = row['time']
-            month = "%s-%02d-01" % (time.year, time.month)  
-            bytes = row['resource_size']
-            user = row['remote_host']
             resource = row['resource_requested']
             search = parseSearch(resource)
 
@@ -4298,16 +4340,34 @@ def stats():
 
     # get referer information from the database
     if cf.isCurator():
-        query = "SELECT country, referer, resource_requested FROM access_logs_referers WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
-
+        query = "SELECT country, referer, remote_host, resource_requested, time FROM access_logs_referers WHERE time >= '%s' AND time <= '%s';" % (start_date, end_date)
         cur.execute(query)
         data = cur.fetchall()
         pages = {'.all': {'All': {'count':0}}, '/': {'All': {'count': 0}} ,'/view/dataset': {'All': {'count': 0}}, '/view/project': {'All': {'count': 0}}, 
                 '/submit': {'All': {'count': 0}}, '/readme': {'All': {'count': 0}}, '/search': {'All': {'count': 0}}, 
                 '/contact': {'All': {'count': 0}}, '/faq': {'All': {'count': 0}}, '/dataset_search': {'All': {'count': 0}}, 
                 '/dataset': {'All': {'count': 0}}, '/news': {'All': {'count': 0}}, '/api':{'All': {'count': 0}}}
+
+        tracker = {}
+        blocked_hosts = set()
+        for row in data:
+            host = row['remote_host']
+            time = row['time']
+            month = "%s-%02d-01" % (time.year, time.month)  
+
+            # try and weed out bots by blocking any IPs that view 100 or more pages on a single day
+            day = "%s-%02d-%02d" % (time.year, time.month, time.day)
+            host_day = '%s_%s' % (host, day)
+            if tracker.get(host_day):
+                tracker[host_day] += 1
+                if tracker[host_day] == 200:
+                    blocked_hosts.add(host)
+            else:
+                tracker[host_day] = 1
+
         for row in data:
             if row['country'].lower() in ['china', 'russia', 'ukraine', 'ru']: continue
+            if row['remote_host'] in blocked_hosts: continue
             referer = row['referer']
             if referer.endswith('/'): referer = referer[:-1]
             referer_domain = urlparse(referer).netloc
@@ -4356,7 +4416,7 @@ def stats():
 
     else:
        template_dict['referers'] = {}
-
+    
     # get submission information from the database
     query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dt.date_created::text AS dif_date FROM dataset_file_info dsf 
             JOIN dataset d ON d.id = dsf.dataset_id
@@ -4368,8 +4428,12 @@ def stats():
     submission_num_files = 0
     submissions_total = 0
 
-    q_dates = pd.date_range(start_date,end_date,freq='QS')
+    q_dates = pd.date_range(start_date,end_date,freq='Q')
+    end_dt = pd.to_datetime(end_date)
     quarters = ['%s-Q%s' % (q.year, q.quarter) for q in q_dates]
+    end_q = '%s-Q%s' % (end_dt.year, end_dt.quarter)
+    if end_q not in quarters:
+        quarters.append(end_q)
 
     submissions = {q: {'submissions': set()} for q in quarters}
     for row in data:
@@ -4437,7 +4501,7 @@ def stats():
     template_dict['projects_created'] = projects_created
     template_dict['projects_total'] = "{:,}".format(projects_total)
 
-    return render_template('statistics.html', **template_dict)
+    return render_template('statistics.html', **template_dict) 
 
 
 def binSearch(search, searches, search_param, searches_param):
@@ -4474,7 +4538,6 @@ def getDownloadsForDatasets(start_date, end_date):
                           GROUP BY d.id
                    ) downloads GROUP BY id, title, creator, release_date
                    ORDER BY count DESC, id ASC;''' % (start_date, end_date, start_date, end_date)
-
     cur.execute(query)
     res = cur.fetchall()  
     return res

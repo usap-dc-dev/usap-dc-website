@@ -5,6 +5,8 @@ Disallow: /flask_session/
 Disallow: /static/
 Disallow: /templates/
 Disallow: /upload/
+Disallow: /search/
+Disallow: /dataset_search/
 
 User-agent: googlebot
 Disallow: *.csi

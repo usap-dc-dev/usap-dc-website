@@ -28,7 +28,7 @@ config = json.loads(open('../config.json', 'r').read())
 exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-", "5.188.210", "5.188.211", 'Bot', 'Spider', 'Craw', 'WebInject', '63.142.253.235', 
               'BUbiNG', 'AddThis.com', 'ia_archiver', 'facebookexternalhit', 'ltx71', 'panscient', 'ns343855.ip-94-23-45.eu', 'ns320079.ip-37-187-150.eu', 
               'hive.ldeo.columbia.edu', 'seafloor.mgds.ldeo.columbia.edu', 'ec01-vm3.ldeo.columbia.edu', 'ns533874.ip-192-99-7.net', '31.187.70.17',
-              'The Knowledge AI', 'pool-72-89-254-157.nycmny.fios.verizon.net']
+              'The Knowledge AI', 'pool-72-89-254-157.nycmny.fios.verizon.net', 'ip-172-31-34-50.ec2.internal']
 
 # add official list of user agents that are regarded as robots/spiders by Project COUNTER to my exclude list
 counter_robots = json.loads(open(counter_robots_list, 'r').read())
@@ -115,11 +115,8 @@ def excludeEntry(log_line_data):
     if ((any(re.search(substring.lower(), log_line_data['remote_host'].lower()) for substring in exclude)) 
         or (any(re.search(substring.lower(), log_line_data['request_header_user_agent'].lower()) for substring in exclude))  
         or valueInHoneyPot(request_url)): 
-        
-        # print("EXCLUDED:(%s) %s - %s" % (log_line_data['time_received_utc_isoformat'], log_line_data['remote_host'], log_line_data['request_header_user_agent']))
         return True
-    return False
-    
+    return False    
 
 
 if __name__ == '__main__':
