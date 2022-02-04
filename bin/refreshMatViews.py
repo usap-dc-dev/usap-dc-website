@@ -21,6 +21,7 @@ if __name__ == '__main__':
     query = """REFRESH MATERIALIZED VIEW project_view; 
         REFRESH MATERIALIZED VIEW dataset_view;
         REFRESH MATERIALIZED VIEW access_views_ip_date_matview;
+        REFRESH MATERIALIZED VIEW access_views_projects_matview;
         COMMIT;"""
     cur.execute(query)
     print("DONE")
