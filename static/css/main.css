@@ -870,3 +870,8 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
   font-weight: bolder;
 }
 
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
