@@ -21,6 +21,8 @@ country_db = '/web/usap-dc/htdocs/static/GeoLite2-Country_20181030/GeoLite2-Coun
 coutries_pickle = '/web/usap-dc/htdocs/inc/ip_countries.pickle'
 counter_robots_list = '/web/usap-dc/htdocs/static/COUNTER_Robots_list.json' # https://github.com/atmire/COUNTER-Robots/blob/master/COUNTER_Robots_list.json
 
+recaptcha_date = datetime.date(2021, 7, 1)  # date when we started using recaptcha for downloads - preventing automated python downloads
+
 line_parser = apache_log_parser.make_parser("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"")
 
 config = json.loads(open('../config.json', 'r').read())
@@ -28,7 +30,7 @@ config = json.loads(open('../config.json', 'r').read())
 exclude = ["bot", "craw", "spider", "159.255.167", "geoinfo-", "5.188.210", "5.188.211", 'Bot', 'Spider', 'Craw', 'WebInject', '63.142.253.235', 
               'BUbiNG', 'AddThis.com', 'ia_archiver', 'facebookexternalhit', 'ltx71', 'panscient', 'ns343855.ip-94-23-45.eu', 'ns320079.ip-37-187-150.eu', 
               'hive.ldeo.columbia.edu', 'seafloor.mgds.ldeo.columbia.edu', 'ec01-vm3.ldeo.columbia.edu', 'ns533874.ip-192-99-7.net', '31.187.70.17',
-              'The Knowledge AI', 'pool-72-89-254-157.nycmny.fios.verizon.net', 'ip-172-31-34-50.ec2.internal']
+              'The Knowledge AI', 'pool-72-89-254-157.nycmny.fios.verizon.net', 'ip-172-31-']
 
 # add official list of user agents that are regarded as robots/spiders by Project COUNTER to my exclude list
 counter_robots = json.loads(open(counter_robots_list, 'r').read())
@@ -130,6 +132,8 @@ if __name__ == '__main__':
         year = now.year
         month = now.month
 
+    log_date = datetime.date(year, month, 1)
+
     # import previously saved ip_to_country table 
     if os.path.isfile(coutries_pickle):
         print("IMPORTING %s" % coutries_pickle)
@@ -180,7 +184,11 @@ if __name__ == '__main__':
             
             # DOWNLOADS
             if "/dataset/usap-dc/" in request_url:
-                if excludeEntry(log_line_data): continue
+                if excludeEntry(log_line_data):                    
+                    if log_date < recaptcha_date and 'python' in log_line_data['request_header_user_agent'].lower() and 'ip-172-31-' not in log_line_data['remote_host']: 
+                        pass # allow python downloads to be counted before we started using recaptcha check, unless they were fro our own IP address 
+                    else:
+                        continue
 
                 sql = '''INSERT INTO access_logs_downloads (remote_host, time, resource_requested, resource_size, referer, user_agent) 
                             VALUES ('%s', '%s', '%s', '%s', '%s', '%s');''' % (log_line_data['remote_host'], log_line_data['time_received_utc_isoformat'],
@@ -189,7 +197,7 @@ if __name__ == '__main__':
                 try:
                     cur.execute(sql)
                     num += 1
-                except:
+                except Exception as e:
                     #entry already exists, do nothing
                     pass
                 cur.execute("COMMIT;")

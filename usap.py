@@ -1107,6 +1107,11 @@ def not_found():
     return render_template('not_found.html')
 
 
+@app.route('/maintenance')
+def maintenance():
+    return render_template('roadworks.html')
+
+
 def check_project_registration(msg_data):
 
     def default_func(field):
@@ -4139,7 +4144,6 @@ def crossref_pubs():
 
 @app.route('/stats', methods=['GET'])
 def stats():
-
     args = request.args.to_dict()
 
     template_dict = {}
@@ -4513,10 +4517,19 @@ def binSearch(search, searches, search_param, searches_param):
             while search[search_param].endswith('/'): 
                 search[search_param] = search[search_param][:-1]
 
-        if searches[searches_param].get(search[search_param]):
-            searches[searches_param][search[search_param]] += 1
+        if search_param == 'dp_title' or search_param == 'sci_program':
+            # make binning case insensitive for sci prog and title
+            s_lower = {k.lower():k for k in searches[searches_param].keys()}
+            param_lower = search[search_param].lower()
+            if s_lower.get(param_lower):
+                searches[searches_param][s_lower[param_lower]] += 1
+            else:
+                searches[searches_param][search[search_param]] = 1
         else:
-            searches[searches_param][search[search_param]] = 1
+            if searches[searches_param].get(search[search_param]):
+                searches[searches_param][search[search_param]] += 1
+            else:
+                searches[searches_param][search[search_param]] = 1
     return searches
 
 
