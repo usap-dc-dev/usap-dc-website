@@ -16,6 +16,7 @@ import zipfile
 import mimetypes
 import shutil
 import py7zlib
+import hashlib
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -248,9 +249,10 @@ def isCurator():
     userid = session['user_info'].get('id')
     if userid is None:
         userid = session['user_info'].get('orcid')
+    userid_sha256 = hashlib.sha256(userid).hexdigest()
     curator_file = open(CURATORS_LIST, 'r')
     curators = curator_file.read().split('\n')
-    return userid in curators
+    return userid_sha256 in curators
 
 
 def addKeywordsToDatabase(uid, keywords):
