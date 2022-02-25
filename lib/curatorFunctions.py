@@ -244,6 +244,9 @@ def ISOXMLExists(uid):
 
 
 def isCurator():
+    # Store ORCID or GOOGLE IDs of curators as sha256 hashed values in CURATORS_LIST.
+    # Use `hashlib.sha256("<ORCID or GOOGLE ID>").hexdigest()` in python, or
+    # `echo -n "<ORCID or GOOGLE ID>" | openssl sha256` on the command line
     if session.get('user_info') is None:
         return False
     userid = session['user_info'].get('id')
