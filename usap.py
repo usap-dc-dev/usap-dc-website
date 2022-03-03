@@ -2416,7 +2416,8 @@ def landing_page(dataset_id):
         else:
             metadata['creator_orcids'].append({'id': c, 'orcid': None})
 
-    metadata['citation'] = makeCitation(metadata, dataset_id)
+    if not metadata['citation'] or metadata['citation'] == '':
+        metadata['citation'] = makeCitation(metadata, dataset_id)
     metadata['json_ld'] = makeJsonLD(metadata, dataset_id)
 
     # get count of how many times this dataset has been downloaded
@@ -2623,6 +2624,16 @@ def makeJsonLD(data, uid):
     }
 
     return json_ld
+
+
+def getCitation(dataset_id):
+    datasets = get_datasets([dataset_id])
+    if len(datasets) == 0:
+        return 'Could not get citation for dataset %s' % dataset_id
+    metadata = datasets[0]
+    if not metadata['citation'] or metadata['citation'] == '':
+        metadata['citation'] = makeCitation(metadata, dataset_id)
+    return metadata['citation']
 
 
 def makeCitation(metadata, dataset_id):
@@ -2894,6 +2905,8 @@ def curator():
                     coords = cf.getCoordsFromDatabase(uid)
                     if coords is not None:
                         template_dict['coords'] = coords 
+                    # also retrieve citation
+                    template_dict['citation'] = getCitation(uid)
                     template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
                 # if this dataset replaces another, will need to update XML for old dataset too
                 if not request.form.get('dc_uid'):
@@ -2979,6 +2992,7 @@ def curator():
                         coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
                             template_dict['coords'] = coords
+                        template_dict['citation'] = getCitation(uid)
                         template_dict['landing_page'] = '/view/dataset/%s' % uid
                         template_dict['db_imported'] = True
                         template_dict['dataset_keywords'] = cf.getDatasetKeywords(uid)
@@ -3084,6 +3098,16 @@ def curator():
                     else:
                         template_dict['message'].append(msg)
 
+                # update citation in database 
+                elif request.form.get('submit') == "citation":
+                    template_dict['tab'] = "spatial"
+                    citation = request.form.get('citation')
+                    (msg, status) = cf.updateCitation(uid, citation)
+                    if status == 0:
+                        template_dict['error'] = msg
+                    else:
+                        template_dict['message'].append(msg)
+
                 # DataCite DOI submission
                 elif request.form.get('submit') == "submit_to_datacite":
                     template_dict.update(request.form.to_dict())
@@ -3128,6 +3152,7 @@ def curator():
                                                               + "\n\nBest regards," 
                             # Update submission table
                             update_status(uid, 'ISO XML file missing')
+                            template_dict['citation'] = getCitation(uid)
 
                     except Exception as err:
                         template_dict['error'] = "Error updating DataCite XML file: " + str(err) + " " + datacite_file

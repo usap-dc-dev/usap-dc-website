@@ -413,6 +413,27 @@ def updateProjectSpatialMap(uid, data, run_update=True):
     return (out_text, status)
 
 
+def updateCitation(uid, citation):
+    (conn, cur) = usap.connect_to_db(curator=True)
+    status = 1
+    if type(conn) is str:
+        out_text = conn
+        status = 0
+    else:
+        # query the database to get the XML for the submission ID
+        try:
+            sql_cmd = "UPDATE dataset SET citation = %s WHERE id = %s;"
+            cur.execute(sql_cmd, (citation, uid))
+            cur.execute('COMMIT;')
+            out_text = "Citation successfully updated for dataset %s" % uid
+        except:
+            out_text = "Error updating database. \n%s" % sys.exc_info()[1][0]
+            print(out_text)
+            status = 0
+
+    return (out_text, status)    
+
+
 def getCoordsFromDatabase(uid):
     (conn, cur) = usap.connect_to_db()
     query = "SELECT north as geo_n, east as geo_e, south as geo_s, west as geo_w, cross_dateline FROM dataset_spatial_map WHERE dataset_id = '%s';" % uid

@@ -68,7 +68,7 @@
           <button class="tablinks" onclick="openTab(event, 'sqlTab')" {% if tab == 'sql' %} id="defaultOpen" {% endif %}>SQL</button>
           <button class="tablinks" onclick="openTab(event, 'readmeTab')"  {% if tab == 'readme' %} id="defaultOpen" {% endif %}>README</button>
           <button class="tablinks" onclick="openTab(event, 'keywordsTab')"  {% if tab == 'keywords' %} id="defaultOpen" {% endif %}>Assign Keywords</button>
-          <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Bounds / Award / File Info</button>
+          <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Dataset Info</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
           {% if db_imported %}
@@ -211,9 +211,20 @@
           <div>
             <b>Award Number</b><br/>
             <input type="text" name="award" id="award">
-            <br/><br/>
+            <br/>
             <button type="submit" name="submit" value="award" onclick="waitCursor()">Add Award</button>
           </div>
+
+          <br/><br/>
+          <div>
+            <b>Citation</b>
+            (<a href="https://www.agu.org/Publish-with-AGU/Publish/Author-Resources/Grammar-Style-Guide", target="_blank">AGU citation style guide</a>)
+            <br/>
+            <textarea name="citation" id="citation" cols="130" rows="3">{{citation}}</textarea>
+            <br/>
+            <button type="submit" name="submit" value="citation" onclick="waitCursor()">Update Citation</button>
+          </div>
+
           <div>
             <br><br>
             <b>File Info</b><br/>
@@ -229,7 +240,7 @@
 
           </div>
         {% else %}
-          <h4>You will be able to update spatial bounds and awards after Database import</h4>
+          <h4>You will be able to update the dataset after Database import</h4>
         {% endif %}
       </div>
 
