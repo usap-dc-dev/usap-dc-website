@@ -836,7 +836,7 @@ def projectJson2sql(data, uid):
         for pub in data['publications']:
             # see if they are already in the references table
             res = []
-            if pub.get('doi'):
+            if pub.get('doi') and pub['doi'] != '':
                 query = "SELECT * FROM reference WHERE doi='%s';" % (pub.get('doi'))
                 cur.execute(query)
                 res = cur.fetchall()
@@ -849,8 +849,12 @@ def projectJson2sql(data, uid):
             if len(res) == 0:
                 # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
                 ref_uid = generate_ref_uid()
-                sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                    (ref_uid, usap.escapeQuotes(pub.get('name')), pub.get('doi'))
+                if (not pub.get('doi') or pub['doi'] == ''):
+                    sql_out += "INSERT INTO reference (ref_uid, ref_text) VALUES ('%s', '%s');\n" % \
+                        (ref_uid, usap.escapeQuotes(pub.get('name'))) 
+                else:
+                    sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
+                        (ref_uid, usap.escapeQuotes(pub.get('name')), pub['doi'])
             else:
                 ref_uid = res[0]['ref_uid']
             # sql_out += "--NOTE: adding reference %s to project_ref_map\n" % ref_uid
@@ -1399,7 +1403,7 @@ def editProjectJson2sql(data, uid):
                 for pub in data['publications']:
                     # see if they are already in the references table
                     res = []
-                    if pub.get('doi'):
+                    if pub.get('doi') and pub['doi'] != '':
                         query = "SELECT * FROM reference WHERE doi='%s';" % (pub.get('doi'))
                         cur.execute(query)
                         res = cur.fetchall()
@@ -1412,8 +1416,13 @@ def editProjectJson2sql(data, uid):
                     if len(res) == 0:
                         sql_out += "\n--NOTE: adding %s to reference table\n" % pub['name']
                         ref_uid = generate_ref_uid()
-                        sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
-                            (ref_uid, usap.escapeQuotes(pub.get('name')), pub.get('doi'))
+
+                        if (not pub.get('doi') or pub['doi'] == ''):
+                            sql_out += "INSERT INTO reference (ref_uid, ref_text) VALUES ('%s', '%s');\n" % \
+                                (ref_uid, usap.escapeQuotes(pub.get('name'))) 
+                        else:
+                            sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
+                                (ref_uid, usap.escapeQuotes(pub.get('name')), pub['doi'])
                     else:
                         ref_uid = res[0]['ref_uid']
                         if res[0]['ref_text'] != usap.escapeQuotes(pub.get('name')):
