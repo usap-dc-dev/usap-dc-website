@@ -97,7 +97,7 @@ def get_crossref_pubs(new_only=True):
     new_refs = {}
     new_proj_refs = set()
     if new_only:
-        with open (log_file, "r") as file:
+        with open(log_file, "r") as file:
             last_harvest_datetime = float(file.read())
 
     # for each entry in the project_award map, get the award_id, and look up publications in crossref
@@ -107,7 +107,11 @@ def get_crossref_pubs(new_only=True):
 
         if award_id == "None":
             continue
-        r = requests.get(api + award_id).json()
+        try:
+            r = requests.get(api + award_id).json()
+        except Exception as e:
+            print(e)
+            continue
 
         items = r['message'].get('items')
         if not items:
@@ -135,6 +139,7 @@ def get_crossref_pubs(new_only=True):
                 if r_bib.status_code == 200 and r_bib.content:
                     # split off the DOI in the cite-as string, as we don't need in our ref_text
                     ref_text = r_bib.content.rsplit(' doi', 1)[0]
+                    ref_text = ref_text.rsplit(' https://doi', 1)[0]
                 else:
                     # if x-bibliography API doesn't return anything, generate ref_text from what we have in crossref
                     ref_text = crossref2ref_text(item)
@@ -142,7 +147,7 @@ def get_crossref_pubs(new_only=True):
                 # if no DOI, generate ref_text from what we have in crossref
                 ref_text = crossref2ref_text(item)
 
-            ref_text = unicode(ref_text, 'utf-8')
+            ref_text = unicode(ref_text, 'utf-8').replace('\n', '').replace('\r', '')
 
             # check if publication has already been added during this run of this script
             if ref_doi in new_refs:

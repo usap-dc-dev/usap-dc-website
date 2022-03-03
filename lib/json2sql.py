@@ -668,7 +668,7 @@ def editDatasetJson2sql(data, uid):
 
                     if len(res) == 0:
                         # sql_out += "--NOTE: adding %s to reference table\n" % pub['name']
-                        ref_uid = generate_ref_uid
+                        ref_uid = generate_ref_uid()
                         sql_out += "INSERT INTO reference (ref_uid, ref_text, doi) VALUES ('%s', '%s', '%s');\n" % \
                             (ref_uid, usap.escapeQuotes(pub.get('text')), pub.get('doi'))
                     else:
