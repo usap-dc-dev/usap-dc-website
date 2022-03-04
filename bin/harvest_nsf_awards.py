@@ -131,7 +131,9 @@ def getAwardsFromNSF(start_date):
 
 
 def escapeQuotes(string):
-    return string.replace("'","''")
+    if not string:
+        return None
+    return string.replace("'", "''")
 
 
 def isLead(award_id):
@@ -162,7 +164,7 @@ def update_award(awards):
             copi = ' '.join(copi.split())
             copi = escapeQuotes(copi)
         else:
-            copi ='None'
+            copi = None
 
         # check if dataset_id already exist in table
         sql_line = "Select * " \
@@ -183,17 +185,16 @@ def update_award(awards):
                         expiry, sum, name, email, org, orgaddress, orgcity,
                         orgstate, orgzip, po_name, po_email,
                         is_lead_award, lead_award_id, project_needed, letter_welcome, letter_year1, letter_final_year) 
-                        VALUES ('%s','GEO','OPP','%s','%s','False',
-                        '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s', '%s', 
-                        '%s', '%s', True, False, False, False);""" \
-                        % (item['id'], escapeQuotes(item.get('title','')), 
+                        VALUES (%s, 'GEO', 'OPP', %s, %s, 'False',
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, True, False, False, False);"""                   
+         
+                cur.execute(sql_line, (item['id'], escapeQuotes(item.get('title','')), 
                                 collab, copi, item.get('startDate',''), item.get('expDate',''),
                                 escapeQuotes(item.get('abstractText','')).encode('ascii','ignore'), pi, item.get('piEmail',''),
                                 escapeQuotes(item.get('awardeeName','')), item.get('awardeeAddress',''),
                                 item.get('awardeeCity',''),item.get('awardeeState',''),item.get('awardeeZip',''),
-                                escapeQuotes(item.get('poName', '')), item.get('poEmail',''), lead, lead_id)
-         
-                cur.execute(sql_line)
+                                escapeQuotes(item.get('poName', '')), item.get('poEmail',''), lead, lead_id))
                 out_text += """<b>Award added.</b>
                                <br><b>ID:</b> %s<br>
                                <b>Title:</b> %s<br>
@@ -254,10 +255,10 @@ def update_award(awards):
                 updated_awards += 1
                 try:
                     sql_line = """UPDATE award SET (start, expiry, name, email, copi, po_name, po_email, is_lead_award, lead_award_id) 
-                            = ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
-                            WHERE award = '%s';""" % (start_date, expiry_date, pi, item['piEmail'], copi, escapeQuotes(item.get('poName','')), item.get('poEmail',''), 
-                             lead, lead_id, item['id'])
-                    cur.execute(sql_line)
+                            = (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            WHERE award = %s;"""
+                    cur.execute(sql_line, (start_date, expiry_date, pi, item['piEmail'], copi, escapeQuotes(item.get('poName','')), item.get('poEmail',''), 
+                             lead, lead_id, item['id']))
 
                     out_text += "<b>Award %s Updated</b><br>" % a['award']
                     out_text += update_text + "<br>"
