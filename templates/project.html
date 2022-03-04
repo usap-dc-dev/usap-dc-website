@@ -82,6 +82,14 @@
             <a href="#awardsForm" id="addAwardRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_award">Add additional award linked to project</span></a>
           </div>
    
+          <div id="proj_alert">
+            <div id="proj_alert_header" class="window-header">
+              <span>Project Exists</span><span class='close_proj_alert_btn close_btn'>X</span>
+            </div>
+              <p id="proj_alert_msg" style="margin:1em 1em 0.5em 1em;"></p>
+              <button id="proj_alert_confirm_btn" type="button" class="btn btn-primary btn-sm close_proj_alert_btn">OK</button>
+          </div>
+
           <div class="form-group required">
             <b>Title:</b><br>
             <textarea class="form-control" name="title" id="title" rows="2" {% if edit %} readonly {% endif %}>{{project_metadata.get('title','')}}</textarea>

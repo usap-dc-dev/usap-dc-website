@@ -174,6 +174,14 @@ $(document).ready(function() {
             $("#entry input[name='iscr']").prop('checked',msg.iscr);
             $("#entry input[name='isipy']").prop('checked',msg.isipy);
             $("#entry textarea[name='sum']").val(msg.sum);
+
+            if (msg.proj_uid) {
+              var proj_url = window.location.protocol + '//' + window.location.hostname + '/view/project/' + msg.proj_uid;
+              var alert = "A project already exists for this award at<br><a href='" + proj_url + "' target='_blank'>" + proj_url + "</a>.<br>You can edit this project if necessary."
+              $("#proj_alert_msg").html(alert);
+              $("#proj_alert").show();
+
+            }
         }
         });
       } else {
@@ -193,6 +201,12 @@ $(document).ready(function() {
       }
     });
 
+    $('.close_proj_alert_btn').click(function() {
+      $("#proj_alert").hide();
+    });
+
+    //Make the DIV element draggagle:
+    dragElement(document.getElementById(("proj_alert")));
 
   // if reloading, populate any added location fields
   $('#location').attr('value', locations[0]);

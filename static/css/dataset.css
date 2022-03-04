@@ -64,6 +64,20 @@ input, textarea {
   z-index: 1000;
 }
 
+#proj_alert {
+  display: none;
+  background: #fff;
+  border: 4px solid red;
+  position: absolute;
+  font-family: arial;
+  height: 180px;
+  padding: 0.5em;
+  width: 400px;
+  left: 10%;
+  top: 5%;
+  z-index: 1000;
+}
+
 .close_btn {
     float:right;
     display:inline-block;
@@ -96,6 +110,13 @@ input, textarea {
   left: 50%;
   margin-left:-75px;  
   z-index: 99;
+}
+
+#proj_alert_confirm_btn {
+  position: absolute;
+  left: 45%;
+  z-index: 99;
+  margin: 0;
 }
 
 .right-caret > .caret {

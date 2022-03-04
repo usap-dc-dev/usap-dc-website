@@ -1935,7 +1935,9 @@ def projectinfo():
     award_id = request.args.get('award')
     if award_id and award_id != 'Not_In_This_List':       
         (conn, cur) = connect_to_db()
-        query_string = "SELECT * FROM award a WHERE a.award = '%s'" % award_id
+        query_string = """SELECT a.*, pam.proj_uid FROM award a 
+            LEFT JOIN project_award_map pam ON pam.award_id = a.award        
+            WHERE a.award = '%s'""" % award_id
         cur.execute(query_string)
         return flask.jsonify(cur.fetchall()[0])
     return flask.jsonify({})
