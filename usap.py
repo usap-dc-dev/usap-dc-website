@@ -1277,6 +1277,8 @@ def dataset2(dataset_id=None):
                 sender = msg_data.get('submitter_email')
             else:
                 sender = msg_data.get('email')
+            if msg_data.get('submitter_name'):
+                sender = "%s <%s>" % (msg_data['submitter_name'], sender)
             recipients = [app.config['USAP-DC_GMAIL_ACCT']]
 
             if edit:
@@ -1490,6 +1492,8 @@ def project(project_id=None):
             sender = msg_data.get('submitter_email')
             if not sender: 
                 sender = msg_data.get('email')
+            if msg_data.get('submitter_name'):
+                sender = "%s <%s>" % (msg_data['submitter_name'], sender)
 
             recipients = [app.config['USAP-DC_GMAIL_ACCT']]
 
@@ -2246,7 +2250,7 @@ def contact():
         remoteip = request.remote_addr
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
-            sender = form['contactemail']
+            sender = "%s <%s>" % (form['contactname'], form['contactemail'])
             recipients = [app.config['USAP-DC_GMAIL_ACCT']] 
             message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['contactname'], form['msg'])
 
@@ -4666,7 +4670,7 @@ def get_project(project_id):
                         LEFT JOIN (
                             SELECT pperm.proj_uid AS per_proj_uid, json_agg(json_build_object('role', pperm.role ,'id', per.id, 'name_last', per.last_name, 
                             'name_first', per.first_name, 'org', per.organization, 'email', per.email, 'orcid', per.id_orcid)
-                            ORDER BY pperm.oid) persons
+                            ) persons
                             FROM project_person_map pperm JOIN person per ON (per.id=pperm.person_id)
                             GROUP BY pperm.proj_uid
                         ) per ON (p.proj_uid = per.per_proj_uid)
