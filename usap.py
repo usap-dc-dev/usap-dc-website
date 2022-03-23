@@ -171,6 +171,7 @@ def get_nsf_grants(columns, award=None, only_inhabited=True):
     return cur.fetchall()
 
 
+# DEPRECATED
 def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
                     sensor=None, west=None, east=None, south=None, north=None, spatial_bounds=None, spatial_bounds_interpolated=None, start=None, stop=None, program=None,
                     project=None, title=None, limit=None, offset=None):
@@ -5027,7 +5028,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         d_or_p = 'projects'
         query_string = '''SELECT * FROM dataset_view dpv'''
         if spatial_bounds_interpolated:
-            query_string += ''', text(JSON_ARRAY_ELEMENTS(dpv.bounds_geometry)) AS b'''
+            query_string = '''SELECT * FROM (
+                    SELECT *, text(value) AS b FROM dataset_view, JSON_ARRAY_ELEMENTS(bounds_geometry) 
+                ) AS dpv'''
         titles = 'project_titles'
     else:
         return
@@ -5043,7 +5046,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if person:
         conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
     if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
+        conds.append(cur.mogrify("st_intersects(('srid=4326;'||replace(b,'\"',''))::geography,st_transform(st_geomfromewkt('srid=3031;'||%s),4326))", (spatial_bounds_interpolated,)))
+
         conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
@@ -5068,7 +5072,6 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
         query_string += ' WHERE ' + ' AND '.join(conds)
-
     cur.execute(query_string)
     return cur.fetchall()
 
