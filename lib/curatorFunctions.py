@@ -249,10 +249,12 @@ def isCurator():
     # `echo -n "<ORCID or GOOGLE ID>" | openssl sha256` on the command line
     if session.get('user_info') is None:
         return False
-    userid = session['user_info'].get('id')
+    userid = session['user_info'].get('sub')
     if userid is None:
         userid = session['user_info'].get('orcid')
-    userid_sha256 = hashlib.sha256(userid).hexdigest()
+    if userid is None:
+        return False
+    userid_sha256 = hashlib.sha256(userid.encode()).hexdigest()
     curator_file = open(CURATORS_LIST, 'r')
     curators = curator_file.read().split('\n')
     return userid_sha256 in curators

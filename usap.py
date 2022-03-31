@@ -11,7 +11,8 @@ from flask_jsglue import JSGlue
 from random import randint
 import os
 # from flask_oauth import OAuth -- replaced by flask_dance
-from flask_dance.contrib.google import make_google_blueprint, google
+# from flask_dance.contrib.google import make_google_blueprint, google
+from authlib.integrations.flask_client import OAuth
 import json
 from urllib.request import Request, urlopen
 from urllib.parse import urlparse, unquote
@@ -96,16 +97,18 @@ def api():
     return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
 
-# google_blueprint = make_google_blueprint(
-#     client_id=app.config['GOOGLE_CLIENT_ID'],
-#     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
-#     scope=["profile", "email"]
-# )
+oauth = OAuth(app)
 
-# app.register_blueprint(google_blueprint, url_prefix="/login_google")
+google = oauth.register('google',
+                        client_id=app.config['GOOGLE_CLIENT_ID'],
+                        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+                        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+                        client_kwargs={'scope': 'openid profile email'}
+)
 
-# oauth = OAuth()
-# google = oauth.remote_app('google',
+
+
+# google = oauth.register('google',
 #                           base_url='https://www.google.com/accounts/',
 #                           authorize_url='https://accounts.google.com/o/oauth2/auth',
 #                           request_token_url=None,
@@ -637,7 +640,7 @@ def dataset(dataset_id=None):
             if user_info.get('orcid'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
             elif user_info.get('id'):
-                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to save dataset."
             if save_file:
@@ -657,7 +660,7 @@ def dataset(dataset_id=None):
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
             elif user_info.get('id'):
-                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to restore dataset"
 
@@ -1345,7 +1348,7 @@ def dataset2(dataset_id=None):
             if user_info.get('orcid'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
             elif user_info.get('id'):
-                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to save dataset."
             if save_file:
@@ -1364,7 +1367,7 @@ def dataset2(dataset_id=None):
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
             elif user_info.get('id'):
-                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to restore dataset"
             if saved_file:
@@ -1568,7 +1571,7 @@ def project(project_id=None):
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
             elif user_info.get('id'):
-                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + "_p.json")
             else:
                 error = "Unable to restore dataset"
             if saved_file:
@@ -1663,7 +1666,7 @@ def save_project(project_metadata):
     if user_info.get('orcid'):
         save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
     elif user_info.get('id'):
-        save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+        save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + "_p.json")
     else:
         error = "Unable to save project."
     if save_file:
@@ -1968,8 +1971,8 @@ def login():
 
 @app.route('/login_google')
 def login_google():
-    callback = url_for('authorized', _external=True)
-    return google.authorize(callback=callback)
+    redirect_uri = url_for('authorized', _external=True)
+    return google.authorize_redirect(redirect_uri)
 
 
 @app.route('/login_orcid')
@@ -1978,49 +1981,21 @@ def login_orcid():
     return orcid.authorize(callback=callback)
 
 
-# @app.route('/authorized')
-# @google.authorized_handler
-# def authorized(resp):
-#     access_token = resp['access_token']
-#     session['google_access_token'] = access_token, ''
-#     session['googleSignedIn'] = True
-#     headers = {'Authorization': 'OAuth ' + access_token}
-#     req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
-#                   None, headers)
-#     res = urlopen(req)
-#     session['user_info'] = json.loads(res.read())
-#     if session['user_info'].get('name') is None:
-#         session['user_info']['name'] = ""
-
-#     session['user_info']['is_curator'] = cf.isCurator()
-#     return redirect(session['next'])
-
-
-# @app.route('/authorized_orcid')
-# @orcid.authorized_handler
-# def authorized_orcid(resp):
-#     session['orcid_access_token'] = resp['access_token']
-
-#     session['user_info'] = {
-#         'name': resp.get('name'),
-#         'orcid': resp.get('orcid')
-#     }
-
-#     res = requests.get('https://pub.orcid.org/v2.1/' + resp['orcid'] + '/email',
-#                        headers={'accept': 'application/json'}).json()
-#     try:
-#         email = res['email'][0]['email']
-#         session['user_info']['email'] = email
-#     except:
-#         email = ''
-
-#     session['user_info']['is_curator'] = cf.isCurator()
-#     return redirect(session['next'])
-
-
-# @google.tokengetter
-# def get_access_token():
-#     return session.get('google_access_token')
+@app.route('/authorized')
+def authorized():
+    import hashlib
+    token = google.authorize_access_token()
+    user = token.get('userinfo')  
+    session['user_info'] = user
+    if user.get('name') is None:
+        session['user_info']['name'] = ""
+    userid = session['user_info'].get('sub')
+    if userid is None:
+        userid = session['user_info'].get('orcid')
+    session['user_info']['userid'] = userid
+    session['user_info']['is_curator'] = cf.isCurator() 
+    # return flask.jsonify(session['user_info'])  
+    return redirect(session['next'])
 
 
 @app.route('/logout', methods=['GET'])
