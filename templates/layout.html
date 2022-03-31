@@ -206,7 +206,7 @@
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
   <script src="{{ url_for('static', filename='js/search_old.js') }}" type="text/javascript"></script>
   {% endif %}
-  {% if cur=='dataset' or cur=='curator' or cur=='login' or cur=='submit'%}
+  {% if cur=='dataset' or cur=='curator' or cur=='login' or cur=='submit' or cur=='stats' or cur=='dashboard' %}
   <script src="{{ url_for('static', filename='js/logout.js') }}" type="text/javascript"></script>
   {% endif %}
   {% if cur=='stats' %}

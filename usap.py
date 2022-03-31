@@ -10,8 +10,6 @@ from flask import Flask, session, render_template, redirect, url_for, request, s
 from flask_jsglue import JSGlue
 from random import randint
 import os
-# from flask_oauth import OAuth -- replaced by flask_dance
-# from flask_dance.contrib.google import make_google_blueprint, google
 from authlib.integrations.flask_client import OAuth
 import json
 from urllib.request import Request, urlopen
@@ -103,36 +101,13 @@ google = oauth.register('google',
                         client_id=app.config['GOOGLE_CLIENT_ID'],
                         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
                         server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-                        client_kwargs={'scope': 'openid profile email'}
-)
+                        client_kwargs={'scope': 'openid profile email'})
 
-
-
-# google = oauth.register('google',
-#                           base_url='https://www.google.com/accounts/',
-#                           authorize_url='https://accounts.google.com/o/oauth2/auth',
-#                           request_token_url=None,
-#                           request_token_params={'scope': 'https://www.googleapis.com/auth/userinfo.email',
-#                                                 'response_type': 'code'},
-#                           access_token_url='https://accounts.google.com/o/oauth2/token',
-#                           access_token_method='POST',
-#                           access_token_params={'grant_type': 'authorization_code'},
-#                           consumer_key=app.config['GOOGLE_CLIENT_ID'],
-#                           consumer_secret=app.config['GOOGLE_CLIENT_SECRET'])
-
-
-# orcid = oauth.remote_app('orcid',
-#                          base_url='https://orcid.org/oauth/',
-#                          authorize_url='https://orcid.org/oauth/authorize',
-#                          request_token_url=None,
-#                          request_token_params={'scope': '/authenticate',
-#                                                'response_type': 'code',
-#                                                'show_login': 'true'},
-#                          access_token_url='https://pub.orcid.org/oauth/token',
-#                          access_token_method='POST',
-#                          access_token_params={'grant_type': 'authorization_code'},
-#                          consumer_key=app.config['ORCID_CLIENT_ID'],
-#                          consumer_secret=app.config['ORCID_CLIENT_SECRET'])
+orcid = oauth.register('orcid',
+                       client_id=app.config['ORCID_CLIENT_ID'],
+                       client_secret=app.config['ORCID_CLIENT_SECRET'],
+                       server_metadata_url='https://orcid.org/.well-known/openid-configuration',
+                       client_kwargs={'scope': 'openid '})
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -1977,22 +1952,44 @@ def login_google():
 
 @app.route('/login_orcid')
 def login_orcid():
-    callback = url_for('authorized_orcid', _external=True)
-    return orcid.authorize(callback=callback)
+    redirect_uri = url_for('authorized_orcid', _external=True)
+    return orcid.authorize_redirect(redirect_uri)
 
 
 @app.route('/authorized')
 def authorized():
-    import hashlib
     token = google.authorize_access_token()
+    session['google_access_token'] = token, ''
     user = token.get('userinfo')  
     session['user_info'] = user
     if user.get('name') is None:
         session['user_info']['name'] = ""
-    userid = session['user_info'].get('sub')
-    if userid is None:
-        userid = session['user_info'].get('orcid')
-    session['user_info']['userid'] = userid
+
+    session['user_info']['is_curator'] = cf.isCurator() 
+    # return flask.jsonify(session['user_info'])  
+    return redirect(session['next'])
+
+
+@app.route('/authorized_orcid')
+def authorized_orcid():
+    token = orcid.authorize_access_token()
+    session['orcid_access_token'] = token
+    user = token.get('userinfo')  
+    session['user_info'] = {
+        'name': '',
+        'orcid': user.get('sub')
+    }
+    if user.get('given_name') and user.get('family_name'):
+        session['user_info']['name'] =  '%s %s' % (user.get('given_name'), user.get('family_name'))
+
+    res = requests.get('https://pub.orcid.org/v2.1/' + user['sub'] + '/email',
+                       headers={'accept': 'application/json'}).json()
+    try:
+        email = res['email'][0]['email']
+        session['user_info']['email'] = email
+    except:
+        email = ''
+
     session['user_info']['is_curator'] = cf.isCurator() 
     # return flask.jsonify(session['user_info'])  
     return redirect(session['next'])
