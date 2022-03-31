@@ -1,9 +1,9 @@
 from services.lib.flask_restplus import Api
 from flask import Blueprint
-from endpoints_v1.datasets import ns as datasets_ns
-from endpoints_v1.projects import ns as projects_ns
-from endpoints_v1.persons import ns as persons_ns
-from endpoints_v1.awards import ns as awards_ns
+from .endpoints_v1.datasets import ns as datasets_ns
+from .endpoints_v1.projects import ns as projects_ns
+from .endpoints_v1.persons import ns as persons_ns
+from .endpoints_v1.awards import ns as awards_ns
 
 
 blueprint = Blueprint('api', __name__, url_prefix='/api/v1.0')

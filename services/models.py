@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from flask_restplus import fields
+from services.lib.flask_restplus import fields
 
 
 #short model for the datasets

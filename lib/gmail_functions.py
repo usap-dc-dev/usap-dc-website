@@ -4,7 +4,7 @@ from apiclient.discovery import build
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from email.MIMEImage import MIMEImage
+from email.mime.image import MIMEImage
 from google.auth.transport.requests import Request as gRequest
 import base64
 import pickle

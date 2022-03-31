@@ -1,18 +1,20 @@
 from __future__ import print_function
 
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
+# import importlib -- not needed in py3?
+# import sys -- not needed in py3?
+# importlib.reload(sys) -- not needed in py3?
+# sys.setdefaultencoding("utf-8") -- not needed in py3?
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app, Blueprint, make_response
+from flask import Flask, session, render_template, redirect, url_for, request, send_from_directory, send_file, current_app, make_response
 from flask_jsglue import JSGlue
 from random import randint
 import os
-from flask_oauth import OAuth
+# from flask_oauth import OAuth -- replaced by flask_dance
+from flask_dance.contrib.google import make_google_blueprint, google
 import json
-from urllib2 import Request, urlopen
-from urlparse import urlparse, unquote
+from urllib.request import Request, urlopen
+from urllib.parse import urlparse, unquote
 from werkzeug.utils import secure_filename
 import smtplib
 from email.mime.text import MIMEText
@@ -94,32 +96,40 @@ def api():
     return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
 
-oauth = OAuth()
-google = oauth.remote_app('google',
-                          base_url='https://www.google.com/accounts/',
-                          authorize_url='https://accounts.google.com/o/oauth2/auth',
-                          request_token_url=None,
-                          request_token_params={'scope': 'https://www.googleapis.com/auth/userinfo.email',
-                                                'response_type': 'code'},
-                          access_token_url='https://accounts.google.com/o/oauth2/token',
-                          access_token_method='POST',
-                          access_token_params={'grant_type': 'authorization_code'},
-                          consumer_key=app.config['GOOGLE_CLIENT_ID'],
-                          consumer_secret=app.config['GOOGLE_CLIENT_SECRET'])
+# google_blueprint = make_google_blueprint(
+#     client_id=app.config['GOOGLE_CLIENT_ID'],
+#     client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+#     scope=["profile", "email"]
+# )
+
+# app.register_blueprint(google_blueprint, url_prefix="/login_google")
+
+# oauth = OAuth()
+# google = oauth.remote_app('google',
+#                           base_url='https://www.google.com/accounts/',
+#                           authorize_url='https://accounts.google.com/o/oauth2/auth',
+#                           request_token_url=None,
+#                           request_token_params={'scope': 'https://www.googleapis.com/auth/userinfo.email',
+#                                                 'response_type': 'code'},
+#                           access_token_url='https://accounts.google.com/o/oauth2/token',
+#                           access_token_method='POST',
+#                           access_token_params={'grant_type': 'authorization_code'},
+#                           consumer_key=app.config['GOOGLE_CLIENT_ID'],
+#                           consumer_secret=app.config['GOOGLE_CLIENT_SECRET'])
 
 
-orcid = oauth.remote_app('orcid',
-                         base_url='https://orcid.org/oauth/',
-                         authorize_url='https://orcid.org/oauth/authorize',
-                         request_token_url=None,
-                         request_token_params={'scope': '/authenticate',
-                                               'response_type': 'code',
-                                               'show_login': 'true'},
-                         access_token_url='https://pub.orcid.org/oauth/token',
-                         access_token_method='POST',
-                         access_token_params={'grant_type': 'authorization_code'},
-                         consumer_key=app.config['ORCID_CLIENT_ID'],
-                         consumer_secret=app.config['ORCID_CLIENT_SECRET'])
+# orcid = oauth.remote_app('orcid',
+#                          base_url='https://orcid.org/oauth/',
+#                          authorize_url='https://orcid.org/oauth/authorize',
+#                          request_token_url=None,
+#                          request_token_params={'scope': '/authenticate',
+#                                                'response_type': 'code',
+#                                                'show_login': 'true'},
+#                          access_token_url='https://pub.orcid.org/oauth/token',
+#                          access_token_method='POST',
+#                          access_token_params={'grant_type': 'authorization_code'},
+#                          consumer_key=app.config['ORCID_CLIENT_ID'],
+#                          consumer_secret=app.config['ORCID_CLIENT_SECRET'])
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -1968,49 +1978,49 @@ def login_orcid():
     return orcid.authorize(callback=callback)
 
 
-@app.route('/authorized')
-@google.authorized_handler
-def authorized(resp):
-    access_token = resp['access_token']
-    session['google_access_token'] = access_token, ''
-    session['googleSignedIn'] = True
-    headers = {'Authorization': 'OAuth ' + access_token}
-    req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
-                  None, headers)
-    res = urlopen(req)
-    session['user_info'] = json.loads(res.read())
-    if session['user_info'].get('name') is None:
-        session['user_info']['name'] = ""
+# @app.route('/authorized')
+# @google.authorized_handler
+# def authorized(resp):
+#     access_token = resp['access_token']
+#     session['google_access_token'] = access_token, ''
+#     session['googleSignedIn'] = True
+#     headers = {'Authorization': 'OAuth ' + access_token}
+#     req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
+#                   None, headers)
+#     res = urlopen(req)
+#     session['user_info'] = json.loads(res.read())
+#     if session['user_info'].get('name') is None:
+#         session['user_info']['name'] = ""
 
-    session['user_info']['is_curator'] = cf.isCurator()
-    return redirect(session['next'])
-
-
-@app.route('/authorized_orcid')
-@orcid.authorized_handler
-def authorized_orcid(resp):
-    session['orcid_access_token'] = resp['access_token']
-
-    session['user_info'] = {
-        'name': resp.get('name'),
-        'orcid': resp.get('orcid')
-    }
-
-    res = requests.get('https://pub.orcid.org/v2.1/' + resp['orcid'] + '/email',
-                       headers={'accept': 'application/json'}).json()
-    try:
-        email = res['email'][0]['email']
-        session['user_info']['email'] = email
-    except:
-        email = ''
-
-    session['user_info']['is_curator'] = cf.isCurator()
-    return redirect(session['next'])
+#     session['user_info']['is_curator'] = cf.isCurator()
+#     return redirect(session['next'])
 
 
-@google.tokengetter
-def get_access_token():
-    return session.get('google_access_token')
+# @app.route('/authorized_orcid')
+# @orcid.authorized_handler
+# def authorized_orcid(resp):
+#     session['orcid_access_token'] = resp['access_token']
+
+#     session['user_info'] = {
+#         'name': resp.get('name'),
+#         'orcid': resp.get('orcid')
+#     }
+
+#     res = requests.get('https://pub.orcid.org/v2.1/' + resp['orcid'] + '/email',
+#                        headers={'accept': 'application/json'}).json()
+#     try:
+#         email = res['email'][0]['email']
+#         session['user_info']['email'] = email
+#     except:
+#         email = ''
+
+#     session['user_info']['is_curator'] = cf.isCurator()
+#     return redirect(session['next'])
+
+
+# @google.tokengetter
+# def get_access_token():
+#     return session.get('google_access_token')
 
 
 @app.route('/logout', methods=['GET'])
