@@ -441,7 +441,7 @@
             <label for="project">Science Project</label><br/>
             <select class="form-control selectpicker" name="project" data-width="225px">
               <option value="None" selected="selected">None</option>
-              {% for project in projects |sort %}
+              {% for project in projects %}
               {% set proj = project['id'] %}
               <option value="{{proj}}" {% if proj == dataset_metadata.get('project','') %} selected="selected" {% endif %}>{{proj}}</option>
               {% endfor %}

@@ -1,7 +1,7 @@
 
 import os
 import sys
-sys.path.append('/usr/lib64/python3.9/site-packages')
+sys.path.append('/usr/local/lib64/python3.9/site-packages')
 sys.path.append('/web/usap-dc/htdocs')
 
 # cd to root web directory so flask works correctly

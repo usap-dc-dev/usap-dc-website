@@ -345,7 +345,7 @@ def get_parameters(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT DISTINCT id FROM gcmd_science_key'
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -362,7 +362,7 @@ def get_locations(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT DISTINCT id FROM gcmd_location'
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -371,7 +371,7 @@ def get_usap_locations(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = "SELECT * FROM vw_location"
-    query += cur.mogrify(' ORDER BY keyword_label')
+    query += ' ORDER BY keyword_label'
     cur.execute(query)
     return cur.fetchall()
 
@@ -382,7 +382,7 @@ def get_keywords(conn=None, cur=None, dataset_id=None):
     query = 'SELECT * FROM keyword'
     if dataset_id:
         query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -393,7 +393,7 @@ def get_platforms(conn=None, cur=None, dataset_id=None):
     query = 'SELECT * FROM platform'
     if dataset_id:
         query += cur.mogrify(' WHERE id in (SELECT platform_id FROM dataset_platform_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -405,7 +405,7 @@ def get_persons(conn=None, cur=None, dataset_id=None, order=True):
     if dataset_id:
         query += cur.mogrify(' WHERE id in (SELECT person_id FROM dataset_person_map WHERE dataset_id=%s)', (dataset_id,))
     if order:
-        query += cur.mogrify(' ORDER BY id')
+        query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -416,7 +416,7 @@ def get_project_persons(conn=None, cur=None, project_id=None):
     query = 'SELECT * FROM person'
     if project_id:
         query += cur.mogrify(' WHERE id in (SELECT person_id FROM project_person_map WHERE proj_uid=%s)', (project_id,))
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -436,7 +436,7 @@ def get_sensors(conn=None, cur=None, dataset_id=None):
     query = 'SELECT * FROM sensor'
     if dataset_id:
         query += cur.mogrify(' WHERE id in (SELECT sensor_id FROM dataset_sensor_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -525,7 +525,7 @@ def get_files(conn=None, cur=None, dataset_id=None):
     query = 'SELECT * FROM dataset_file '
     if dataset_id:
         query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
-    query += cur.mogrify(' ORDER BY file_name;')
+    query += ' ORDER BY file_name;'
     cur.execute(query)
     return cur.fetchall()
 
