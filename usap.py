@@ -614,7 +614,7 @@ def dataset(dataset_id=None):
             # save to file
             if user_info.get('orcid'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
+            elif user_info.get('sub'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to save dataset."
@@ -634,7 +634,7 @@ def dataset(dataset_id=None):
             # restore from file
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
+            elif user_info.get('sub'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to restore dataset"
@@ -1260,7 +1260,7 @@ def dataset2(dataset_id=None):
                 message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message.encode('utf-8'))
+            msg = MIMEText(message)
             if msg_data.get('submitter_email'):
                 sender = msg_data.get('submitter_email')
             else:
@@ -1322,7 +1322,7 @@ def dataset2(dataset_id=None):
             # save to file
             if user_info.get('orcid'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
+            elif user_info.get('sub'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to save dataset."
@@ -1341,7 +1341,7 @@ def dataset2(dataset_id=None):
             # restore from file
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
+            elif user_info.get('sub'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to restore dataset"
@@ -1545,7 +1545,7 @@ def project(project_id=None):
             # restore from file
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
-            elif user_info.get('id'):
+            elif user_info.get('sub'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + "_p.json")
             else:
                 error = "Unable to restore dataset"
@@ -1640,7 +1640,7 @@ def save_project(project_metadata):
     # save to file
     if user_info.get('orcid'):
         save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
-    elif user_info.get('id'):
+    elif user_info.get('sub'):
         save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + "_p.json")
     else:
         error = "Unable to save project."
@@ -3759,48 +3759,48 @@ def emails():
 
 
 def create_gmail_message(sender, recipients, subject, message_text):
-  """Create a message for an email.
+    """Create a message for an email.
 
-  Args:
-    sender: Email address of the sender.
-    to: Email address of the receiver.
-    subject: The subject of the email message.
-    message_text: The text of the email message.
+    Args:
+        sender: Email address of the sender.
+        to: Email address of the receiver.
+        subject: The subject of the email message.
+        message_text: The text of the email message.
 
-  Returns:
-    An object containing a base64url encoded email object.
-  """
-  message = MIMEText(message_text.encode('utf-8'))
-  message['To'] = ', '.join(recipients).encode('utf-8')
-  message['From'] = sender.encode('utf-8')
-  message['Subject'] = subject.encode('utf-8')
-  return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
+    Returns:
+        An object containing a base64url encoded email object.
+    """
+    message = MIMEText(message_text)
+    message['To'] = ', '.join(recipients)
+    message['From'] = sender
+    message['Subject'] = subject
+    return {'raw': base64.urlsafe_b64encode(message.as_string().encode("utf-8")).decode()}
 
 
 def send_gmail(service, user_id, message):
-  """Send an email message.
+    """Send an email message.
 
-  Args:
-    service: Authorized Gmail API service instance.
-    user_id: User's email address. The special value "me"
-    can be used to indicate the authenticated user.
-    message: Message to be sent.
+    Args:
+        service: Authorized Gmail API service instance.
+        user_id: User's email address. The special value "me"
+        can be used to indicate the authenticated user.
+        message: Message to be sent.
 
-  Returns:
-    success and error messages.
-  """
-  success = None
-  error = None
-  try:
-    message = (service.users().messages().send(userId=user_id, body=message)
-               .execute())
-    print('Message Id: %s' % message['id'])
-    success = "Email sent"
-    return success, error
-  except Exception as error:
-    print('An error occurred: %s' % error)
-    err = "Error sending email: " + str(error)
-    return success, err
+    Returns:
+        success and error messages.
+    """
+    success = None
+    error = None
+    try:
+        message = (service.users().messages().send(userId=user_id, body=message)
+                    .execute())
+        print('Message Id: %s' % message['id'])
+        success = "Email sent"
+        return success, error
+    except Exception as error:
+        print('An error occurred: %s' % error)
+        err = "Error sending email: " + str(error)
+        return success, err
 
 
 def get_threadid(uid):
