@@ -381,7 +381,7 @@ def get_keywords(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM keyword'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
@@ -392,7 +392,7 @@ def get_platforms(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM platform'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT platform_id FROM dataset_platform_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE id in (SELECT platform_id FROM dataset_platform_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
@@ -403,7 +403,7 @@ def get_persons(conn=None, cur=None, dataset_id=None, order=True):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT person_id FROM dataset_person_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE id in (SELECT person_id FROM dataset_person_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     if order:
         query += ' ORDER BY id'
     cur.execute(query)
@@ -415,7 +415,7 @@ def get_project_persons(conn=None, cur=None, project_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if project_id:
-        query += cur.mogrify(' WHERE id in (SELECT person_id FROM project_person_map WHERE proj_uid=%s)', (project_id,))
+        query += cur.mogrify(' WHERE id in (SELECT person_id FROM project_person_map WHERE proj_uid=%s)', (project_id,)).decode()
     query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
@@ -425,7 +425,7 @@ def get_person(person_id):
     (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if person_id:
-        query += cur.mogrify(' WHERE id = %s', (person_id,))
+        query += cur.mogrify(' WHERE id = %s', (person_id,)).decode()
     cur.execute(query)
     return cur.fetchone()
 
@@ -435,7 +435,7 @@ def get_sensors(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM sensor'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT sensor_id FROM dataset_sensor_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE id in (SELECT sensor_id FROM dataset_sensor_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
@@ -446,7 +446,7 @@ def get_references(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM reference'
     if dataset_id:
-        query += cur.mogrify(' WHERE ref_uid in (SELECT ref_uid FROM dataset_reference_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE ref_uid in (SELECT ref_uid FROM dataset_reference_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     cur.execute(query)
     return cur.fetchall()
 
@@ -456,7 +456,7 @@ def get_spatial_extents(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_spatial_map'
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,)).decode()
     cur.execute(query)
     return cur.fetchall()
 
@@ -466,7 +466,7 @@ def get_temporal_extents(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_temporal_map'
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,)).decode()
     cur.execute(query)
     return cur.fetchall()
 
@@ -523,9 +523,8 @@ def get_files(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_file '
-    print(type(dataset_id))
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,)).decode()
     query += ' ORDER BY file_name;'
     cur.execute(query)
     return cur.fetchall()
