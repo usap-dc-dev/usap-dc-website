@@ -523,6 +523,7 @@ def get_files(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_file '
+    print(type(dataset_id))
     if dataset_id:
         query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
     query += ' ORDER BY file_name;'
@@ -4922,15 +4923,18 @@ def filter_joint_menus():
     dp_titles = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_title'})
     titles = set()
     for d in dp_titles:
-        titles.add(d['title'])
+        if d['title']:
+            titles.add(d['title'])
         if d.get('dataset_titles'):
             ds_titles = d['dataset_titles'].split(';')
             for ds in ds_titles:
-                titles.add(ds)
+                if ds:
+                    titles.add(ds)
         if d.get('project_titles'):
             p_titles = d['project_titles'].split(';')
             for p in p_titles:
-                titles.add(p)
+                if p:
+                    titles.add(p)
   
     dp_persons = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'person'})
     persons = set()
@@ -5009,7 +5013,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         d_or_p = 'projects'
         query_string = '''SELECT * FROM dataset_view dpv'''
         if spatial_bounds_interpolated:
-            query_string += ''', text(JSON_ARRAY_ELEMENTS(dpv.bounds_geometry)) AS b'''
+            query_string = '''SELECT * FROM (
+                    SELECT *, text(value) AS b FROM dataset_view, JSON_ARRAY_ELEMENTS(bounds_geometry) 
+                ) AS dpv'''
         titles = 'project_titles'
     else:
         return
@@ -5025,7 +5031,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if person:
         conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
     if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_intersects(st_transform(st_geomfromewkt('srid=4326;'||replace(b,'\"','')),3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
+        conds.append(cur.mogrify("st_intersects(('srid=4326;'||replace(b,'\"',''))::geography,st_transform(st_geomfromewkt('srid=3031;'||%s),4326))", (spatial_bounds_interpolated,)))
         conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
@@ -5047,10 +5053,13 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if repo:
         conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 
-    conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
-        query_string += ' WHERE ' + ' AND '.join(conds)
-
+        q_conds = []
+        for c in conds:
+            if isinstance(c, bytes):
+                c = c.decode()
+            q_conds.append('(%s)' % c)
+        query_string += ' WHERE ' + ' AND '.join(q_conds)
     cur.execute(query_string)
     return cur.fetchall()
 
@@ -5068,7 +5077,6 @@ def escapeQuotes(string):
 
 def initcap(s):
     parts = re.split("( |_|-|>)+", s)
-    print(parts)
     name = ' '.join([p.lower().capitalize() for p in parts])
     # handle names with apostrophes
     if "'" in name:
