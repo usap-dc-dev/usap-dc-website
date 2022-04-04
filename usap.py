@@ -484,7 +484,8 @@ def get_projects(conn=None, cur=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM initiative ORDER BY ID'
     cur.execute(query)
-    return cur.fetchall()
+    # need to convert from RealDictRow to dict
+    return [dict(row) for row in cur.fetchall()]
 
 
 def get_licenses(conn=None, cur=None):
@@ -1474,7 +1475,7 @@ def project(project_id=None):
                 message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message.encode('utf-8'))
+            msg = MIMEText(message)
 
             # use submitter's email if available, otherwise the email given in the form
             sender = msg_data.get('submitter_email')
@@ -1529,7 +1530,7 @@ def project(project_id=None):
             cur.execute(query)
             cur.execute('COMMIT')   
             
-            return redirect('thank_you/project')
+            return redirect('/thank_you/project')
 
         elif request.form.get('action') == "save":
 
