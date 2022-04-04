@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 """
  Run achiveUSAPDC for all datasets marked 'Ready To Archive'
  e.g.

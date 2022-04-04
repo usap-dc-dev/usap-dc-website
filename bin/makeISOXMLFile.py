@@ -12,7 +12,7 @@ def makeISOXMLFile(dcxml_filename, xsl_filename, isoxml_filename):
         out_text = ET.tostring(newdom, pretty_print=True)
 
         with open(isoxml_filename, "w") as myfile:
-            myfile.write(out_text)
+            myfile.write(out_text.decode())
         os.chmod(isoxml_filename, 0o664)
 
         return "Successfully created ISO XML file %s" % isoxml_filename

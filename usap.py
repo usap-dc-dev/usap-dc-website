@@ -12,7 +12,7 @@ from random import randint
 import os
 from authlib.integrations.flask_client import OAuth
 import json
-from urllib.request import Request, urlopen
+from urllib.request import urlopen
 from urllib.parse import urlparse, unquote
 from werkzeug.utils import secure_filename
 import smtplib
@@ -2922,7 +2922,7 @@ def curator():
 
                 # read in json and convert to sql
                 if request.form.get('submit') == 'make_sql':
-                    json_str = request.form.get('json').encode('utf-8')
+                    json_str = request.form.get('json')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
 
@@ -3042,7 +3042,7 @@ def curator():
                     filename = request.form.get('readme_file')
                     try:
                         with open(filename, 'w') as out_file:
-                            out_file.write(readme_str)
+                            out_file.write(readme_str.decode())
                         os.chmod(filename, 0o664)
                         template_dict['message'].append("Successfully updated Read Me file")
                     except:
@@ -3109,7 +3109,7 @@ def curator():
                     datacite_file = cf.getDCXMLFileName(dc_uid)
                     try:
                         with open(datacite_file, 'w') as out_file:
-                            out_file.write(xml_str)
+                            out_file.write(xml_str.decode())
                         os.chmod(datacite_file, 0o664)
 
                         msg = cf.submitToDataCite(dc_uid, edit)
@@ -3178,7 +3178,7 @@ def curator():
                     isoxml_file = cf.getISOXMLFileName(dc_uid)
                     try:
                         with open(isoxml_file, 'w') as out_file:
-                            out_file.write(xml_str)
+                            out_file.write(xml_str.decode())
                             template_dict['message'].append("ISO XML file saved to watch directory.")
                         os.chmod(isoxml_file, 0o664)
                         if not edit:
@@ -3229,12 +3229,12 @@ def curator():
                     template_dict['tab'] = 'email'
                     try:
                         sender = app.config['USAP-DC_GMAIL_ACCT']
-                        recipients_text = request.form.get('email_recipients').encode('utf-8')
+                        recipients_text = request.form.get('email_recipients')
                         recipients = recipients_text.splitlines()
                         recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
                         msg_raw = create_gmail_message(sender, recipients, request.form.get('email_subject'), request.form.get('email_text'))
                         msg_raw['threadId'] = get_threadid(uid)
- 
+
                         service, error = connect_to_gmail()
                         if error:
                             template_dict['error'] = error
@@ -3818,12 +3818,13 @@ def get_threadid(uid):
         message = thread['messages'][0]
         raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
         msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
-        mime_msg = email.message_from_string(msg_str)
+        mime_msg = email.message_from_string(msg_str.decode())
         subject = decode_header(mime_msg["Subject"])[0][0]
+        if isinstance(subject, bytes):
+            subject = subject.decode()
         substr = '[uid:%s]' % uid
         if subject.find(substr) >=0:
             return t['id']
-    
     return None
 
 
@@ -5327,6 +5328,11 @@ def tracker():
     if url:
         return redirect(url)
     return redirect(url_for('not_found'))
+
+
+@app.route('/favicon.ico', methods=['GET'])
+def favicon():
+    return redirect(url_for('static', filename='imgs/favicon.ico'))
 
 
 @app.errorhandler(500)

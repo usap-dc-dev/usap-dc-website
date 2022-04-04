@@ -31,8 +31,6 @@ CURATORS_LIST = "inc/curators.txt"
 DATACITE_CONFIG = "inc/datacite.json"
 DATACITE_TO_ISO_XSLT = "static/DataciteToISO19139v3.2.xslt"
 ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
-PYTHON = "/opt/rh/python27/root/usr/bin/python"
-LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
 PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
 RECENT_DATA_FILE = "inc/recent_data.txt"
 REF_UID_FILE = "inc/ref_uid"
@@ -73,7 +71,7 @@ def submitToDataCite(uid, edit=False):
 
     # apply base64 encoding
     try:
-        xml_b64 = base64.b64encode(xml)
+        xml_b64 = base64.b64encode(xml.encode("utf-8")).decode()
     except Exception as e:
         return("Error encoding DataCite XML: %s" % str(e))
 
@@ -153,7 +151,7 @@ def getDataCiteXML(uid):
     # write the xml to a temporary file
     xml_file = getDCXMLFileName(uid)
     with open(xml_file, "w") as myfile:
-        myfile.write(out_text)
+        myfile.write(out_text.decode())
     os.chmod(xml_file, 0o664)
     return(xml_file, status)
 
@@ -180,7 +178,7 @@ def getISOXMLFromFile(uid, update=False):
     # check if datacite xml file already exists
     # if not, or if updating, run doISOXML to generate 
     if not os.path.exists(isoxml_file) or update:
-        msg = doISOXML(uid)
+        msg = doISOXML(uid).decode()
         if msg.find("Error") >= 0:
             return msg
     try:
@@ -189,7 +187,6 @@ def getISOXMLFromFile(uid, update=False):
         return isoxml
     except:
         return "Error reading ISO XML file."
-    return "Will be generated after Database import"
 
 
 def getISOXMLFileName(uid):
@@ -202,7 +199,7 @@ def isRegisteredWithDataCite(uid):
     cur.execute(query)
     res = cur.fetchone()
     return (res['doi'] and len(res['doi']) > 0)
-    
+
 
 def doISOXML(uid):
     # get datacite XML
@@ -217,9 +214,9 @@ def doISOXML(uid):
         xsl_filename = DATACITE_TO_ISO_XSLT
         isoxml_filename = getISOXMLFileName(uid)
 
-        os.environ['LD_LIBRARY_PATH'] = LD_LIBRARY_PATH
+        os.environ['LD_LIBRARY_PATH'] = config['LD_LIBRARY_PATH']
         # need to run external script as lxml module doesn't seem to work when running with apache
-        process = Popen([PYTHON, ISOXML_SCRIPT, xml_filename, xsl_filename, isoxml_filename], stdout=PIPE)
+        process = Popen([config['PYTHON_PATH'], ISOXML_SCRIPT, xml_filename, xsl_filename, isoxml_filename], stdout=PIPE)
         (output, err) = process.communicate()
         if err:
             return "Error making ISO XML file.  %s" % err

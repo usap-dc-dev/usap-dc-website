@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 """
 Author: Neville Shane
@@ -216,7 +216,7 @@ except:
 # write the xml to a file
 xml_file = os.path.join(bag_dir, ds_id + ".xml")
 with open(xml_file, "w") as myfile:
-    myfile.write(out_text)
+    myfile.write(out_text.decode())
 
 # add some submission meta for the bagit
 if not archive:
@@ -406,7 +406,3 @@ else:
     print(text)
     if email: 
         sendEmail(text, 'Large Dataset Archive Needs To Be Completed: %s' % ds_id)
-
-
-
-
