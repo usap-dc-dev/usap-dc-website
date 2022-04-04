@@ -2237,7 +2237,7 @@ def contact():
             recipients = [app.config['USAP-DC_GMAIL_ACCT']] 
             message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['contactname'], form['msg'])
 
-            msg = MIMEText(message.encode('utf-8'))
+            msg = MIMEText(message)
             msg['Subject'] = form['subj']
             msg['From'] = sender
             msg['To'] = ', '.join(recipients)
