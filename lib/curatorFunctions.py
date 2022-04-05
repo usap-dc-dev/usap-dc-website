@@ -2022,9 +2022,10 @@ def updateRecentData(uid):
     return("Error updating Recent Data file: can't find database record for %s." % uid)
 
 
-def getLandingPage(uid):
+def getLandingPage(uid, cur):
     landing_page = ''
-    conn, cur = usap.connect_to_db()
+    if not cur:
+        conn, cur = usap.connect_to_db()
     if (uid.find('p') > -1):
         query = "SELECT COUNT(*) FROM project WHERE proj_uid = '%s';" % uid.replace('e', '')
         cur.execute(query)

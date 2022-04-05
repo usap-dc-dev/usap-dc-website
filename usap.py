@@ -44,6 +44,7 @@ import email
 from email.header import decode_header
 from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
+import time
 
 
 app = Flask(__name__)
@@ -2829,7 +2830,7 @@ def curator():
             finally:
                 return render_template('curator.html', type='addCrossref', crossref_sql=sql_str, message=message, error=error)
             
-        if not request.args.get('uid'):    
+        if not request.args.get('uid'):
             # get list of json files in submission directory, ordered by date
             query = "SELECT * FROM submission ORDER BY submitted_date DESC"
             cur.execute(query)
@@ -2838,7 +2839,7 @@ def curator():
                 submissions = []
                 for sub in res:
                     uid = sub['uid']
-                    landing_page = cf.getLandingPage(uid)
+                    landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update']})
 
@@ -3233,7 +3234,7 @@ def curator():
                         recipients = recipients_text.splitlines()
                         recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
                         msg_raw = create_gmail_message(sender, recipients, request.form.get('email_subject'), request.form.get('email_text'))
-                        msg_raw['threadId'] = get_threadid(uid)
+                        # msg_raw['threadId'] = get_threadid(uid) - this slow down the process, and I don't know if it is necessary
 
                         service, error = connect_to_gmail()
                         if error:
@@ -3280,7 +3281,7 @@ def curator():
 
                 # read in json and convert to sql
                 elif request.form.get('submit') == 'make_project_sql':
-                    json_str = request.form.get('proj_json').encode('utf-8')
+                    json_str = request.form.get('proj_json')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
                     sql = cf.projectJson2sql(json_data, uid)
@@ -3289,7 +3290,7 @@ def curator():
    
                 # read in sql and submit to the database only
                 elif request.form.get('submit') == 'import_project_to_db':
-                    sql_str = request.form.get('proj_sql').encode('utf-8')
+                    sql_str = request.form.get('proj_sql')
                     template_dict['sql'] = sql_str
                     template_dict['tab'] = "project_sql"
                     problem = False
@@ -3376,25 +3377,27 @@ def curator():
                 elif request.form.get('submit') == "project_award":
                     template_dict['tab'] = "spatial"
                     data = dict(request.form)
-
+                    print(request.form)
                     # any award updates
                     update_awards = []
                     for key in request.form.keys():
                         if 'proj_award_' in key:
+                            print(key)
                             award_id = key.split('_')[-1]
                             update_awards.append({'award_id': award_id, 
-                                                 'is_main_award': data.get('proj_main_award') == [award_id], 
-                                                 'is_previous_award': data.get('proj_previous_award_'+award_id) == ['on'],
-                                                 'remove': data.get('remove_award_'+award_id) == ['on']
+                                                 'is_main_award': data.get('proj_main_award') == award_id, 
+                                                 'is_previous_award': data.get('proj_previous_award_'+award_id) == 'on',
+                                                 'remove': data.get('remove_award_'+award_id) == 'on'
                                                  })
+                    print(update_awards)
 
                     # any new awards
                     new_award = None
-                    award = data.get('proj_award')[0]
+                    award = data.get('proj_award')
                     if award and award.strip() != '':
                         new_award = {'award_id': award,
-                                     'is_main_award': data.get('proj_main_award') == ['new_award'], 
-                                     'is_previous_award': data.get('proj_previous_award') == ['on']}
+                                     'is_main_award': data.get('proj_main_award') == 'new_award', 
+                                     'is_previous_award': data.get('proj_previous_award') == 'on'}
 
                     (msg, status) = cf.updateProjectAwards(uid, update_awards, new_award)
                     if status == 0:
@@ -3418,7 +3421,7 @@ def curator():
                         cur.execute(sql_str)
                         msg = "File Info successfully updated in database."
                         template_dict['message'].append(msg)
-                        template_dict['landing_page'] = cf.getLandingPage(uid)
+                        template_dict['landing_page'] = cf.getLandingPage(uid, cur)
                         template_dict['file_sql'] = ''
                     except Exception as err:
                         template_dict['error'] = "Error Updating File Info in database: " + str(err)                    
@@ -3441,7 +3444,7 @@ def curator():
                     difxml_file = cf.getDifXMLFileName(uid)
                     try:
                         with open(difxml_file, 'w') as out_file:
-                            out_file.write(xml_str)
+                            out_file.write(xml_str.decode())
                             template_dict['message'].append("DIF XML file saved to watch directory.")
                         os.chmod(difxml_file, 0o664)
                         # Update submission table
