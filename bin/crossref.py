@@ -181,7 +181,7 @@ def get_crossref_pubs(new_only=True):
                 query = "SELECT * FROM project_view WHERE uid = '%s'" % proj_uid
                 cur.execute(query)
                 proj = cur.fetchone()
-                sql += "-- Project Title: %s\n-- Project People: %s\n" % (proj['title'], proj['persons'])
+                sql += "-- Project Title: %s\n-- Project People: %s\n" % (proj['title'].replace('\n', '').replace('\r', ''), proj['persons'])
 
                 # include commented link to API URL so curator can check if not sure whether to include
                 sql += "-- %s%s\n\n" % (api, award_id)
