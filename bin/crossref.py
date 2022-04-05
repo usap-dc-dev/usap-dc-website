@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 import psycopg2
 import psycopg2.extras
@@ -47,7 +47,7 @@ def crossref2ref_text(item):
         year = item['published_print']['date-parts'][0][0]
     elif item.get('created'):
         year = item['created']['date-parts'][0][0]
-    
+
     if year != "":
         ref_text += "(%s). " % year
 
@@ -68,7 +68,7 @@ def crossref2ref_text(item):
 
     ref_text += "."
 
-    print("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text
+    print(("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text)
 
     return ref_text
 
@@ -77,11 +77,10 @@ def isNsfFunder(funders, award, doi):
     nsf_dois = ['10.13039/100000001', '10.13039/100000087', '10.13039/100000162', '10.13039/100007352', '10.13039/100006447']
     nsf_names = ['National Science Foundation', 'NSF', 'Polar', 'Antarctic', 'Ice Sheets', 'WAIS', 'LTER', 'Southern Ocean']
 
-
     award_dash = award[0:2] + "-" + award[2:]
     for funder in funders:
         if funder.get('DOI') and funder['DOI'] in nsf_dois and funder.get('award') and (award in funder['award'] or award_dash in funder['award']): 
-           return True
+            return True
         if funder.get('name') and any(n in funder['name'] for n in nsf_names) and funder.get('award') and (award in funder['award'] or award_dash in funder['award']):
             return True
     return False
@@ -138,7 +137,7 @@ def get_crossref_pubs(new_only=True):
                 r_bib = requests.get(bib_url)
                 if r_bib.status_code == 200 and r_bib.content:
                     # split off the DOI in the cite-as string, as we don't need in our ref_text
-                    ref_text = r_bib.content.rsplit(' doi', 1)[0]
+                    ref_text = r_bib.content.decode().rsplit(' doi', 1)[0]
                     ref_text = ref_text.rsplit(' https://doi', 1)[0]
                 else:
                     # if x-bibliography API doesn't return anything, generate ref_text from what we have in crossref
@@ -147,7 +146,7 @@ def get_crossref_pubs(new_only=True):
                 # if no DOI, generate ref_text from what we have in crossref
                 ref_text = crossref2ref_text(item)
 
-            ref_text = unicode(ref_text, 'utf-8').replace('\n', '').replace('\r', '')
+            ref_text = ref_text.replace('\n', '').replace('\r', '')
 
             # check if publication has already been added during this run of this script
             if ref_doi in new_refs:
@@ -182,7 +181,7 @@ def get_crossref_pubs(new_only=True):
                 query = "SELECT * FROM project_view WHERE uid = '%s'" % proj_uid
                 cur.execute(query)
                 proj = cur.fetchone()
-                sql += "-- Project Title: %s\n-- Project People: %s\n" % (unicode(proj['title'], 'utf-8'), unicode(proj['persons'], 'utf-8'))
+                sql += "-- Project Title: %s\n-- Project People: %s\n" % (proj['title'], proj['persons'])
 
                 # include commented link to API URL so curator can check if not sure whether to include
                 sql += "-- %s%s\n\n" % (api, award_id)
@@ -199,7 +198,7 @@ def get_crossref_pubs(new_only=True):
         sql += "\nCOMMIT;\n"
         with open(sql_file, 'a') as file:
             # file.write(sql.encode(encoding="ascii", errors="replace"))
-            file.write(sql.encode('utf-8'))
+            file.write(sql)
 
     # write timestamp to log
     with open(log_file, 'w') as file:

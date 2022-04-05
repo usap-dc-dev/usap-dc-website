@@ -2819,10 +2819,11 @@ def curator():
             error = None 
             try:
                 # run sql to import data into the database
-                sql_str = request.form.get('crossref_sql').encode('utf-8')   
+                sql_str = request.form.get('crossref_sql')
                 cur.execute(sql_str)
                 # rename crossref file once it has been ingested
-                os.rename(app.config['CROSSREF_FILE'], app.config['OLD_CROSSREF_FILE'])
+                if os.path.exists(app.config['CROSSREF_FILE']):
+                    os.rename(app.config['CROSSREF_FILE'], app.config['OLD_CROSSREF_FILE'])
 
                 message.append("Successfully imported to database")                        
             except Exception as err:
@@ -3377,19 +3378,17 @@ def curator():
                 elif request.form.get('submit') == "project_award":
                     template_dict['tab'] = "spatial"
                     data = dict(request.form)
-                    print(request.form)
+
                     # any award updates
                     update_awards = []
                     for key in request.form.keys():
                         if 'proj_award_' in key:
-                            print(key)
                             award_id = key.split('_')[-1]
                             update_awards.append({'award_id': award_id, 
                                                  'is_main_award': data.get('proj_main_award') == award_id, 
                                                  'is_previous_award': data.get('proj_previous_award_'+award_id) == 'on',
                                                  'remove': data.get('remove_award_'+award_id) == 'on'
                                                  })
-                    print(update_awards)
 
                     # any new awards
                     new_award = None
@@ -4115,7 +4114,7 @@ def crossref2ref_text(item):
 
     ref_text += "."
 
-    print("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text
+    print(("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text)
 
     return ref_text
 
@@ -4145,7 +4144,7 @@ def crossref_pubs():
                         r_bib = requests.get(bib_url)
                         if r_bib.status_code == 200 and r_bib.content:
                             # split off the DOI in the cite-as string, as we don't need in our ref_text
-                            ref_text = r_bib.content.rsplit(' doi', 1)[0]
+                            ref_text = r_bib.content.decode().rsplit(' doi', 1)[0]
                         else:
                             # if x-bibliography API doesn't return anything, generate ref_text from what we have in crossref
                             ref_text = crossref2ref_text(item)
@@ -4153,7 +4152,6 @@ def crossref_pubs():
                         # if no DOI, generate ref_text from what we have in crossref
                         ref_text = crossref2ref_text(item)
 
-                    ref_text = unicode(ref_text, 'utf-8')
                     pub = {'doi': ref_doi, 'ref_text': ref_text}
                     pubs.append(pub)
 
