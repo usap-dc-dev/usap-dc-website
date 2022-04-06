@@ -4251,8 +4251,7 @@ def stats():
     download_users_total = 0
     download_files_total = 0
     download_size_total = 0
-    months_list = downloads.keys()
-    months_list.sort()
+    months_list = sorted(downloads)
     for month in months_list:
         download_numfiles_bytes.append([month, downloads[month]['num_files'], downloads[month]['bytes']])
         download_files_total += downloads[month]['num_files']
@@ -4301,8 +4300,7 @@ def stats():
 
     num_project_views = []
     project_views_total = 0
-    months_list = proj_views.keys()
-    months_list.sort()
+    months_list = sorted(proj_views)
     for month in months_list:
         num_month_views = 0
         for host in proj_views[month].keys():
@@ -4347,8 +4345,7 @@ def stats():
 
     num_ext_clicks = []
     ext_clicks_total = 0
-    months_list = ext_clicks.keys()
-    months_list.sort()
+    months_list = sorted(ext_clicks)
     for month in months_list:
         num_month_views = 0
         for host in ext_clicks[month].keys():
@@ -4500,8 +4497,7 @@ def stats():
         submissions[qt]['submissions'].add(submission)
 
     submission_submissions = []
-    quarters_list = submissions.keys()
-    quarters_list.sort()
+    quarters_list = sorted(submissions)
     for qt in quarters_list:
         submission_submissions.append([qt, len(submissions[qt]['submissions'])])
         submissions_total += len(submissions[qt]['submissions'])
@@ -4527,8 +4523,7 @@ def stats():
         projects_total += 1
 
     projects_created = []
-    quarters_list = projects.keys()
-    quarters_list.sort()
+    quarters_list = sorted(projects)
     cumulative = 0
     for qt in quarters_list:
         cumulative += projects[qt]['before'] + projects[qt]['after']
