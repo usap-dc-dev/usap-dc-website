@@ -3,15 +3,16 @@ import os
 from apiclient.discovery import build
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
+from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
 from google.auth.transport.requests import Request as gRequest
 import base64
 import pickle
 import mimetypes
 
 
-GMAIL_PICKLE="inc/token.pickle"
+GMAIL_PICKLE = "inc/token.pickle"
 
 
 def connect_to_gmail():
@@ -49,9 +50,9 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None, i
         An object containing a base64url encoded email object.
     """
     message = MIMEMultipart('mixed')
-    message['To'] = ', '.join(recipients).encode('utf-8')
-    message['From'] = sender.encode('utf-8')
-    message['Subject'] = subject.encode('utf-8')
+    message['To'] = ', '.join(recipients)
+    message['From'] = sender
+    message['Subject'] = subject
     content = MIMEText(message_text, 'html', 'utf-8')
     message.attach(content)
 
@@ -82,14 +83,13 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None, i
         message.attach(msg)
 
     if image:
-        fp = open(image,'rb')
+        fp = open(image, 'rb')
         msgImage = MIMEImage(fp.read())
         fp.close()
         msgImage.add_header('Content-ID', '<image1>')
         message.attach(msgImage)
 
-
-    return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
+    return {'raw': base64.urlsafe_b64encode(message.as_string().encode()).decode()}
 
 
 def send(service, user_id, message):

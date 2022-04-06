@@ -3839,7 +3839,7 @@ def get_threadid(uid):
         thread = service.users().threads().get(userId='me', id=t['id']).execute()
         message = thread['messages'][0]
         raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
-        msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
+        msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII')).decode()
         mime_msg = email.message_from_string(msg_str.decode())
         subject = decode_header(mime_msg["Subject"])[0][0]
         if isinstance(subject, bytes):
@@ -5291,9 +5291,9 @@ def send_award_email(res):
     letter_type = submit_type[1]
     try:
         sender = app.config['USAP-DC_GMAIL_ACCT']
-        recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id)).encode('utf-8')
+        recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id))
         # FOR TESTING - use curator's email
-        #recipients_text = session.get('user_info').get('email')
+        # recipients_text = session.get('user_info').get('email')
 
         recipients = recipients_text.splitlines()
         recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
