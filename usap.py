@@ -865,9 +865,9 @@ def dataset_db2form(uid):
                 f_name = os.path.basename(f_path)
                 f_subpath = f_path[len(directory):]
                 files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
+                page2['filenames'].append(f_name)
             page2['uploaded_files'] = files
-            page2['filenames'].append(f_name)
-            # files.sort()
+
         else:
             page2['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
