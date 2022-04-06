@@ -431,7 +431,7 @@ def editDatasetJson2sql(data, uid):
 
     # compare original with edited json
     updates = set()
-    for k in orig.keys():
+    for k in list(orig.keys()):
         if orig[k] != data.get(k):
             print(k)
             print("orig:", orig.get(k))

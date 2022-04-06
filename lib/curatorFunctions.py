@@ -1014,11 +1014,11 @@ def editProjectJson2sql(data, uid):
 
     # compare original with edited json
     updates = set()
-    for k in orig.keys():
+    for k in list(orig.keys()):
         if orig[k] != data.get(k) and not (orig[k] in ['None', None, ''] and data.get(k) in ['None', None, '']):
             print(k)
-            print("orig:", orig.get(k))
-            print("new:", data.get(k))
+            print(("orig:", orig.get(k)))
+            print(("new:", data.get(k)))
             if k in ['geo_e', 'geo_n', 'geo_s', 'geo_w', 'cross_dateline']:
                 updates.add('spatial_extents')
             elif k in ['pi_name_last', 'pi_name_first']:
@@ -2014,7 +2014,7 @@ def updateRecentData(uid):
                 # re-write file
                 with open(RECENT_DATA_FILE, 'w') as rd_file:
                     rd_file.write(lines[0])
-                    for entry in sorted(entries.items(), key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=True):
+                    for entry in sorted(list(entries.items()), key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=True):
                         rd_file.write(entry[0])
             return None
         except Exception as e:
@@ -2451,7 +2451,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
 
                                         except Exception as err:
                                             doc_types.add('Unknown')
-                                            print("Couldn't open tar.Z file %s\n" % member.name)
+                                            print(("Couldn't open tar.Z file %s\n" % member.name))
                                             print(err)
 
                                     elif mnamel.endswith('.tar') or mnamel.endswith('.tar.gz') or mnamel.endswith('.tgz'):

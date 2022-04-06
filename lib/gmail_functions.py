@@ -113,7 +113,7 @@ def send(service, user_id, message):
         success = "Email sent"
         return success, error
     except Exception as error:
-        print('An error occurred: %s' % error)
+        print(('An error occurred: %s' % error))
         err = "Error sending email: " + str(error)
         return success, err
 

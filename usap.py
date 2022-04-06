@@ -1,9 +1,3 @@
-from __future__ import print_function
-
-# import importlib -- not needed in py3?
-# import sys -- not needed in py3?
-# importlib.reload(sys) -- not needed in py3?
-# sys.setdefaultencoding("utf-8") -- not needed in py3?
 import math
 import flask
 from flask import Flask, session, render_template, redirect, url_for, request, send_from_directory, send_file, current_app, make_response
@@ -13,7 +7,7 @@ import os
 from authlib.integrations.flask_client import OAuth
 import json
 from urllib.request import urlopen
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, urlencode
 from werkzeug.utils import secure_filename
 import smtplib
 from email.mime.text import MIMEText
@@ -26,7 +20,6 @@ from datetime import datetime, timedelta, date as dt_date
 import csv
 from collections import namedtuple
 import humanize
-import urllib
 import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
@@ -710,7 +703,7 @@ def dataset(dataset_id=None):
 def groupPage1Fields(page1):
     # collect publications, awards, authors, etc, and save as lists
 
-    publications_keys = [s for s in page1.keys() if "publication" in s and s != "publications"]
+    publications_keys = [s for s in list(page1.keys()) if "publication" in s and s != "publications"]
     if len(publications_keys) > 0:
         page1['publications'] = []
         publications_keys.sort(key=partial(sortNumerically, replace_str='publication'))
@@ -723,7 +716,7 @@ def groupPage1Fields(page1):
             del page1[key]
             del page1[key.replace('publication', 'pub_doi')]
 
-    awards_keys = [s for s in page1.keys() if "award" in s and "user" not in s and s != "awards"]
+    awards_keys = [s for s in list(page1.keys()) if "award" in s and "user" not in s and s != "awards"]
     awards = []
     if len(awards_keys) > 0:
         awards_keys.sort(key=partial(sortNumerically, replace_str='award'))
@@ -739,7 +732,7 @@ def groupPage1Fields(page1):
             del page1[key]
         page1['awards'] = awards
 
-    locations_keys = [s for s in page1.keys() if "location" in s and "user" not in s and s != "locations"]
+    locations_keys = [s for s in list(page1.keys()) if "location" in s and "user" not in s and s != "locations"]
     locations = []
     if len(locations_keys) > 0:
         locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
@@ -756,7 +749,7 @@ def groupPage1Fields(page1):
         page1['locations'] = locations
 
 
-    author_keys = [s for s in page1.keys() if "author_name_last" in s and s != "authors"]
+    author_keys = [s for s in list(page1.keys()) if "author_name_last" in s and s != "authors"]
     if len(author_keys) > 0:
         page1['authors'] = []
         author_keys.sort(key=partial(sortNumerically, replace_str='author_name_last'))
@@ -1222,7 +1215,7 @@ def dataset2(dataset_id=None):
 
             if edit:
                 # get all the names of any files previously uploaded
-                file_keys = [s for s in request.form.keys() if "uploaded_file_" in s]
+                file_keys = [s for s in list(request.form.keys()) if "uploaded_file_" in s]
                 for f in file_keys:
                     msg_data['filenames'].append(f.replace('uploaded_file_', ''))
                     del(msg_data[f])
@@ -1238,7 +1231,7 @@ def dataset2(dataset_id=None):
                 if len(fname) > 0:
                     fnames[fname] = f
 
-            msg_data['filenames'] += fnames.keys()
+            msg_data['filenames'] += list(fnames.keys())
 
             # if files have been added or deleted during an edit, we will create a new dataset
             if edit and (len(fnames) > 0 or msg_data.get('file_deleted') == 'true'):
@@ -1259,7 +1252,7 @@ def dataset2(dataset_id=None):
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
 
-            for fname, fobj in fnames.items():
+            for fname, fobj in list(fnames.items()):
                 fobj.save(os.path.join(upload_dir, fname))
           
             # save json file in submitted dir
@@ -1793,7 +1786,7 @@ def process_form_data(form):
         key = 'publication' + str(idx)
     msg_data['publications'] = publications
 
-    locations_keys = [s for s in request.form.keys() if "location" in s and "user" not in s]
+    locations_keys = [s for s in list(request.form.keys()) if "location" in s and "user" not in s]
     locations = []
     if len(locations_keys) > 0:
         locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
@@ -3401,7 +3394,7 @@ def curator():
 
                     # any award updates
                     update_awards = []
-                    for key in request.form.keys():
+                    for key in list(request.form.keys()):
                         if 'proj_award_' in key:
                             award_id = key.split('_')[-1]
                             update_awards.append({'award_id': award_id, 
@@ -4011,7 +4004,7 @@ def genBank_datasets():
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
     if request.args.get('layers') != "":
-        url = urllib.parse.unquote('https://api.usap-dc.org:8443/wfs?' + urllib.parse.urlencode(request.args))
+        url = unquote('https://api.usap-dc.org:8443/wfs?' + urlencode(request.args))
         return requests.get(url).text
     return None
 
@@ -4303,7 +4296,7 @@ def stats():
     months_list = sorted(proj_views)
     for month in months_list:
         num_month_views = 0
-        for host in proj_views[month].keys():
+        for host in list(proj_views[month].keys()):
             if host not in blocked_hosts:
                 num_month_views += proj_views[month][host]
                 project_views_total += proj_views[month][host]
@@ -4348,7 +4341,7 @@ def stats():
     months_list = sorted(ext_clicks)
     for month in months_list:
         num_month_views = 0
-        for host in ext_clicks[month].keys():
+        for host in list(ext_clicks[month].keys()):
             if host not in blocked_hosts:
                 num_month_views += ext_clicks[month][host]
                 ext_clicks_total += ext_clicks[month][host]
@@ -4369,7 +4362,7 @@ def stats():
             resource = row['resource_requested']
             search = parseSearch(resource)
 
-            for search_param, searches_param in params.items():
+            for search_param, searches_param in list(params.items()):
                 searches = binSearch(search, searches, search_param, searches_param)
 
         template_dict['searches'] = searches
@@ -4549,7 +4542,7 @@ def binSearch(search, searches, search_param, searches_param):
 
         if search_param == 'dp_title' or search_param == 'sci_program':
             # make binning case insensitive for sci prog and title
-            s_lower = {k.lower():k for k in searches[searches_param].keys()}
+            s_lower = {k.lower():k for k in list(searches[searches_param].keys())}
             param_lower = search[search_param].lower()
             if s_lower.get(param_lower):
                 searches[searches_param][s_lower[param_lower]] += 1
