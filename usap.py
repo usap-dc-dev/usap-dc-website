@@ -4010,9 +4010,8 @@ def genBank_datasets():
 
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
-    print('getfeatureinfo')
     if request.args.get('layers') != "":
-        url = urllib.unquote('https://api.usap-dc.org:8443/wfs?' + urllib.urlencode(request.args))
+        url = urllib.parse.unquote('https://api.usap-dc.org:8443/wfs?' + urllib.parse.urlencode(request.args))
         return requests.get(url).text
     return None
 
