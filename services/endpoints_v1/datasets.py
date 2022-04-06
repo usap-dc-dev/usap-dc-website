@@ -1,9 +1,7 @@
-import flask
-from flask import request, json, jsonify, Response
+from flask import json
 import usap
-from datetime import datetime
 from collections import OrderedDict
-from services.lib.flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
+from services.lib.flask_restplus import Resource, reqparse, fields, inputs, Namespace
 import services.models as models
 
 

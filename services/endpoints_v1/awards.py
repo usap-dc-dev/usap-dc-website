@@ -1,9 +1,7 @@
-import flask
-from flask import request, json, jsonify, Response
+from flask import json
 import usap
-from datetime import datetime
 from collections import OrderedDict
-from services.lib.flask_restplus import Resource, reqparse, fields, marshal_with, inputs, Namespace
+from services.lib.flask_restplus import Resource, reqparse, fields, inputs, Namespace
 import services.models as models
 
 
@@ -13,7 +11,7 @@ ns = Namespace('awards', description='Operations related to awards', ordered=Tru
 
 #input arguments
 awards_arguments = reqparse.RequestParser()
-awards_arguments.add_argument('award_uid', help='award number', example='0724929')
+awards_arguments.add_argument('award_uid', help='award number', example='1936530')
 awards_arguments.add_argument('title', help="(any part of) award title", example="Antarctic Ice Cores")
 awards_arguments.add_argument('pi', help="PI's name (can be partial)", example="Carbotte, Suzanne")
 awards_arguments.add_argument('copi', help="co-PI's name (can be partial)", example="Tinto")
@@ -23,7 +21,7 @@ awards_arguments.add_argument('start_date',type=inputs.date,  help='returns awar
 awards_arguments.add_argument('expiry_date',type=inputs.date,  help='returns awards with expiry dates on or before this date (in YYYY-MM-DD format)', example="2019-09-10"),
 awards_arguments.add_argument('nsf_funding_program', help='name of NSF funding program', example="Antarctic Earth Sciences")
 
-# #model for the datasets associated with each award
+# model for the datasets associated with each award
 datasets_fields = models.getDatasetsShortModel(ns)
 #model for the projects associated with each award
 projects_fields = models.getProjectsShortModel(ns)
@@ -47,8 +45,7 @@ award_model = ns.model('Award', OrderedDict([
 ]))
 
 
-
-#database query used to find results
+# database query used to find results
 def getQuery():
     return """SELECT  *
                FROM award a
@@ -157,9 +154,10 @@ class AwardsCollection(Resource):
 
         return results
 
+
 example = """Base URL: {0}\n
         Example:
-            {0}0724929""".format(base_url)
+            {0}1936530""".format(base_url)
 
 
 @ns.route('/<award_uid>', doc={'description': example})
