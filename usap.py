@@ -589,7 +589,7 @@ def dataset(dataset_id=None):
 
     # if editing - check user has editing permissions on this dataset
     if edit and not check_user_permission(user_info, dataset_id):
-            return redirect(url_for('invalid_user', dataset_id=dataset_id))
+        return redirect(url_for('invalid_user', dataset_id=dataset_id))
 
     if request.method == 'POST':
         if request.form.get('action') == "Previous Page":
@@ -657,11 +657,10 @@ def dataset(dataset_id=None):
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
                                    only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
- 
-     
+
         if edit:
             return redirect('/edit/dataset2/' + dataset_id, code=307)
-       
+
         return redirect(url_for('dataset2'), code=307)
 
     else:
@@ -708,7 +707,6 @@ def dataset(dataset_id=None):
                                persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
 
 
-
 def groupPage1Fields(page1):
     # collect publications, awards, authors, etc, and save as lists
 
@@ -724,7 +722,6 @@ def groupPage1Fields(page1):
                 page1['publications'].append(publication)
             del page1[key]
             del page1[key.replace('publication', 'pub_doi')]
-
 
     awards_keys = [s for s in page1.keys() if "award" in s and "user" not in s and s != "awards"]
     awards = []
@@ -868,9 +865,9 @@ def dataset_db2form(uid):
                 f_name = os.path.basename(f_path)
                 f_subpath = f_path[len(directory):]
                 files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
-                page2['uploaded_files'] = files
-                page2['filenames'].append(f_name)
-            files.sort()
+            page2['uploaded_files'] = files
+            page2['filenames'].append(f_name)
+            # files.sort()
         else:
             page2['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
@@ -884,26 +881,50 @@ def dataset_readme2form(uid):
     # check readme file is found and is plain text (not a pdf)
     if r.url != url_for('not_found', _external=True) and r.headers.get('Content-Type') and r.headers['Content-Type'].find('text/plain') == 0:
         text = r.text
-        start = text.find('Instruments and devices:') + len('Instruments and devices:')
-        end = text.find('Acquisition procedures:')
-        form_data['devices'] = text[start:end].replace('\n', '')
 
-        start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
-        end = text.find('Content and processing steps:')
-        form_data['procedures'] = text[start:end].replace('\n', '')
+        if 'Content and processing steps' in text:
+            # old readme file format
+            start = text.find('Instruments and devices:') + len('Instruments and devices:')
+            end = text.find('Acquisition procedures:')
+            form_data['devices'] = text[start:end].replace('\n', '')
 
-        start = text.find('Content and processing steps:') + len('Content and processing steps:')
-        end = text.find('Limitations and issues:')
-        c_p = text[start:end].replace('\r', '').split('\n\n')
-        form_data['content'] = c_p[0].replace('\n', '')
-        if len(c_p) > 1:
-            form_data['data_processing'] = c_p[1].replace('\n', '')
+            start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
+            end = text.find('Content and processing steps:')
+            form_data['procedures'] = text[start:end].replace('\n', '')
+
+            start = text.find('Content and processing steps:') + len('Content and processing steps:')
+            end = text.find('Limitations and issues:')
+            c_p = text[start:end].replace('\r', '').split('\n\n')
+            form_data['content'] = c_p[0].replace('\n', '')
+            if len(c_p) > 1:
+                form_data['data_processing'] = c_p[1].replace('\n', '')
+            else:
+                form_data['data_processing'] = ''
+
+            start = text.find('Limitations and issues:') + len('Limitations and issues:')
+            end = text.find('Checkboxes:')
+            form_data['issues'] = text[start:end].replace('\n', '')
         else:
-            form_data['data_processing'] = ''
+            # new readme file format
+            start = text.find('Instruments and devices:') + len('Instruments and devices:')
+            end = text.find('Acquisition procedures:')
+            form_data['devices'] = text[start:end].replace('\n', '').strip()
 
-        start = text.find('Limitations and issues:') + len('Limitations and issues:')
-        end = text.find('Checkboxes:')
-        form_data['issues'] = text[start:end].replace('\n', '')
+            start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
+            end = text.find('Description of data processing:')
+            form_data['procedures'] = text[start:end].replace('\n', '').strip()
+
+            start = text.find('Description of data processing:') + len('Description of data processing:')
+            end = text.find('Description of data content:')
+            form_data['data_processing'] = text[start:end].replace('\n', '').strip()
+
+            start = text.find('Description of data content:') + len('Description of data content:')
+            end = text.find('Limitations and issues:')
+            form_data['content'] = text[start:end].replace('\n', '').strip()
+
+            start = text.find('Limitations and issues:') + len('Limitations and issues:')
+            end = text.find('Checkboxes:')
+            form_data['issues'] = text[start:end].replace('\n', '').strip()
 
     return form_data
 
@@ -1220,7 +1241,7 @@ def dataset2(dataset_id=None):
             msg_data['filenames'] += fnames.keys()
 
             # if files have been added or deleted during an edit, we will create a new dataset
-            if edit and (len(files) > 0 or msg_data.get('file_deleted') == 'true'):
+            if edit and (len(fnames) > 0 or msg_data.get('file_deleted') == 'true'):
                 msg_data['related_dataset'] = dataset_id
                 msg_data['edit'] = False
                 edit = False
@@ -3323,7 +3344,6 @@ def curator():
                                                           + "become available. In the case that you archive your dataset(s) at the USAP-DC repository we will automatically link the dataset to the project." \
                                                           + "\n\nAny edits will be reviewed by a USAP-DC curator before they become live." \
                                                           + "\n\nBest regards,"
-
                         template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
                         template_dict['db_imported'] = True
                         template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid)
