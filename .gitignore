@@ -1,6 +1,5 @@
 config.json
 node_modules/
-node_modules_delete_me/
 mapfiles/
 www.usap-data.org/
 bower_components/
