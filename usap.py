@@ -1283,13 +1283,13 @@ def dataset2(dataset_id=None):
                 sender = msg_data.get('email')
             if msg_data.get('submitter_name'):
                 sender = "%s <%s>" % (msg_data['submitter_name'], sender)
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']]
+            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']])
 
             if edit:
                 msg['Subject'] = 'USAP-DC Dataset Edit [uid:%s]' % dataset_id
             else: 
                 msg['Subject'] = 'USAP-DC Dataset Submission [uid:%s]' % next_id
-            msg['From'] = sender
+            msg['From'] = parse_email(sender)
             msg['To'] = ', '.join(recipients)
 
             smtp_details = config['SMTP']
@@ -1499,13 +1499,13 @@ def project(project_id=None):
             if msg_data.get('submitter_name'):
                 sender = "%s <%s>" % (msg_data['submitter_name'], sender)
 
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']]
+            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']])
 
             if edit:
                 msg['Subject'] = 'USAP-DC Project Edit [uid:%s]' % project_id
             else: 
                 msg['Subject'] = 'USAP-DC Project Submission [uid:%s]' % next_id
-            msg['From'] = sender
+            msg['From'] = parse_email(sender)
             msg['To'] = ', '.join(recipients)
 
             smtp_details = config['SMTP']
@@ -2197,43 +2197,6 @@ def filter_search_menus():
         'sci_program': sorted(projects)
     })
 
-# DEPRECATED
-@app.route('/search_result', methods=['GET', 'POST'])
-def search_result():
-    if 'filtered_datasets' not in session:
-        return redirect('/search_old')
-    filtered_ids = session['filtered_datasets']
-    
-    exclude = False
-    if request.method == 'POST':
-        exclude = request.form.get('exclude') == "on"
-
-    datasets = get_datasets(filtered_ids)
-
-    grp_size = 50
-    dataset_grps = []
-    cur_grp = []
-    total_count = 0
-    for d in datasets:
-        if exclude and d.get('spatial_extents') and len(d.get('spatial_extents')) > 0 and \
-            ((d.get('spatial_extents')[0].get('east') == 180 and d.get('spatial_extents')[0].get('west') == -180) or \
-            (d.get('spatial_extents')[0].get('east') == 360 and d.get('spatial_extents')[0].get('west') == 0)):
-            continue
-        if len(cur_grp) < grp_size:
-            cur_grp.append(d)
-        else:
-            dataset_grps.append(cur_grp)
-            cur_grp = []
-        total_count += 1
-    if len(cur_grp) > 0:
-        dataset_grps.append(cur_grp)
-    
-    return render_template('search_result.html',
-                                      total_count=total_count,
-                                      dataset_grps=dataset_grps,
-                                      exclude=exclude,
-                                      search_params=session['search_params'])
-
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -2249,12 +2212,12 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = "%s <%s>" % (form['contactname'], form['contactemail'])
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']] 
+            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']]) 
             message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['contactname'], form['msg'])
 
             msg = MIMEText(message)
             msg['Subject'] = form['subj']
-            msg['From'] = sender
+            msg['From'] = parse_email(sender)
             msg['To'] = ', '.join(recipients)
             smtp_details = config['SMTP']
             s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
@@ -3774,6 +3737,23 @@ def emails():
     return render_template('emails.html', **template_dict)
 
 
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
+
+
+def parse_email_list(recipients):
+    return [parse_email(r) for r in recipients]
+
+
+# remove any names with non-ascii characters
+def parse_email(r):
+    if is_ascii(r):
+        return r
+    else:
+        start = r.find('<')+1
+        end = r.find('>')
+        return r[start:end]
+
 def create_gmail_message(sender, recipients, subject, message_text):
     """Create a message for an email.
 
@@ -3787,10 +3767,11 @@ def create_gmail_message(sender, recipients, subject, message_text):
         An object containing a base64url encoded email object.
     """
     message = MIMEText(message_text)
+    recipients = parse_email_list(recipients)
     message['To'] = ', '.join(recipients)
-    message['From'] = sender
+    message['From'] = parse_email(sender)
     message['Subject'] = subject
-    return {'raw': base64.urlsafe_b64encode(message.as_string().encode("utf-8")).decode()}
+    return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
 
 
 def send_gmail(service, user_id, message):
