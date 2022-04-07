@@ -149,7 +149,6 @@ $(document).ready(function() {
 
 
             // add co-pis
-            console.log(msg)
             if (msg.copi != null && msg.copi !== ''){
                 var copis = msg.copi.split(';');
                 if (copis.length > 0) {
