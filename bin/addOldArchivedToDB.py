@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/root/usr/bin/python3
 from time import strftime
 import json
 import psycopg2

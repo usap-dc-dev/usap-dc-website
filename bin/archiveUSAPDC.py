@@ -22,7 +22,6 @@ import sys
 import os
 import getopt
 import json
-import hashlib
 import shutil
 import bagit
 import tarfile

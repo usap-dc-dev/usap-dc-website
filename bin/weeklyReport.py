@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 # Run as a cron task to generate weekly report
 # run from main usap-dc directory with python bin/weeklyReport
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     msg += """<h3>New Datasets Added to USAP-DC in Last Week:</h3><ul>"""
     for d in res:
         url = config['DATASET_LANDING_PAGE'] % d['id']
-        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, d['id'], d['date_created'], unicode(d['title'], 'utf-8'))
+        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, d['id'], d['date_created'], d['title'])
     msg += """</ul>"""
 
     # Get projects INGESTED in last week
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     msg += """<h3>New Projects Registered at USAP-DC in Last Week:</h3><ul>"""
     for p in res:
         url = config['PROJECT_LANDING_PAGE'] % p['proj_uid']
-        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, p['proj_uid'], p['date_created'], unicode(p['title'], 'utf-8'))
+        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, p['proj_uid'], p['date_created'], p['title'])
     msg += """</ul>"""
 
     # Get datasets MODIFIED in last week
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     msg += """<h3>Datasets Modified in Last Week:</h3><ul>"""
     for d in res:
         url = config['DATASET_LANDING_PAGE'] % d['id']
-        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, d['id'], d['date_modified'], unicode(d['title'], 'utf-8'))
+        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, d['id'], d['date_modified'], d['title'])
     msg += """</ul>"""
 
     # Get projects MODIFIED in last week
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     msg += """<h3>Projects Modified in Last Week:</h3><ul>"""
     for p in res:
         url = config['PROJECT_LANDING_PAGE'] % p['proj_uid']
-        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, p['proj_uid'], p['date_modified'], unicode(p['title'], 'utf-8'))
+        msg += """<li><a href="%s">%s</a> %s %s</li>""" % (url, p['proj_uid'], p['date_modified'], p['title'])
     msg += """</ul>"""
 
     msg += """<h3>Datasets Not Yet Ingested:</h3><ul>"""
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         msg += """<h3>Datasets Without a Valid DIF:</h3><ul>"""
         for r in res:
             url = config['DATASET_LANDING_PAGE'] % r['id']
-            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], unicode(r['title'], 'utf-8'))
+            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], r['title'])
         msg += """</ul>"""
 
     # Check if datasets not linked to projects
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         msg += """<h3>Datasets not Linked to a Project:</h3><ul>"""
         for r in res:
             url = config['DATASET_LANDING_PAGE'] % r['id']
-            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], unicode(r['title'], 'utf-8'))
+            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], r['title'])
         msg += """</ul>"""
 
     # datasets that are not yet archived in glacier
@@ -191,7 +191,7 @@ if __name__ == '__main__':
         msg += """<h3>Datasets Not Archived in Glacier:</h3><ul>"""
         for r in res:
             url = config['DATASET_LANDING_PAGE'] % r['id']
-            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], unicode(r['title'], 'utf-8'))
+            msg += """<li><a href="%s">%s</a> %s</li>""" % (url, r['id'], r['title'])
         msg += """</ul>"""
 
     msg += """</body></html>"""

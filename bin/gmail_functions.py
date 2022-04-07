@@ -1,4 +1,3 @@
-import json
 import os
 from apiclient.discovery import build
 from email.mime.text import MIMEText
@@ -10,7 +9,7 @@ import pickle
 import mimetypes
 
 
-GMAIL_PICKLE="/web/usap-dc/htdocs/inc/token.pickle"
+GMAIL_PICKLE = "/web/usap-dc/htdocs/inc/token.pickle"
 
 
 def connect_to_gmail():
@@ -48,9 +47,9 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None):
         An object containing a base64url encoded email object.
     """
     message = MIMEMultipart('mixed')
-    message['To'] = ', '.join(recipients).encode('utf-8')
-    message['From'] = sender.encode('utf-8')
-    message['Subject'] = subject.encode('utf-8')
+    message['To'] = ', '.join(recipients)
+    message['From'] = sender
+    message['Subject'] = subject
     content = MIMEText(message_text, 'html', 'utf-8')
     message.attach(content)
 
@@ -61,7 +60,7 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None):
         main_type, sub_type = content_type.split('/', 1)
         if main_type == 'text':
             fp = open(file, 'rb')
-            msg = MIMEText(fp.read(), _subtype=sub_type)
+            msg = MIMEText(fp.read().decode(), _subtype=sub_type)
             fp.close()
         elif main_type == 'image':
             fp = open(file, 'rb')
@@ -80,9 +79,9 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None):
         msg.add_header('Content-Disposition', 'attachment', filename=filename)
         message.attach(msg)
     try:
-        raw = base64.urlsafe_b64encode(message.as_string().decode('utf-8'))
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
     except Exception as e:
-        raw = base64.urlsafe_b64encode(message.as_string())
+        raw = base64.urlsafe_b64encode(message.as_bytes())
 
     return {'raw': raw}
 

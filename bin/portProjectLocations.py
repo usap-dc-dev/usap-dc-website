@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 # script to port gcmd locations to project_keyword_map
 # and to add keyword_id to the gcmd_locations table

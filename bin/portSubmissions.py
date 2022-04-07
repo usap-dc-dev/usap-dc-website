@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/root/usr/bin/python3
 
 # script to submissions to submission table
 # to run from main dir: >python bin/portSubmissions

@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/root/usr/bin/python3
 # Run as a cron task to generate quarterly reports for project managers
 # run from main usap-dc directory with python bin/pmReport
 
@@ -19,6 +19,7 @@ import requests
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 TMP_DIR = 'tmp'
+
 
 def connect_to_db():
     # info = config['PROD_DATABASE'] # when running on dev server, so we can access prouction DB
@@ -146,7 +147,7 @@ if __name__ == '__main__':
                       <b>Number of Datasets:</b> %s<br>
                       <b>Dataset Links:</b> %s<br>
                       <b>Project Landing Page:</b> %s <br><br>""" \
-                      % (unicode(p['proj_title'], 'utf-8'), awards, p['date_created'], p['num_datasets'], datasets, url)
+                      % (p['proj_title'], awards, p['date_created'], p['num_datasets'], datasets, url)
 
 
         # new datasets submitted to USAP-DC        
@@ -176,7 +177,7 @@ if __name__ == '__main__':
                       <b>Award(s):</b> %s<br>
                       <b>Date Created:</b> %s<br>
                       <b>Dataset Landing Page:</b> %s <br><br>""" \
-                      % (unicode(d['ds_title'], 'utf-8'), awards, d['date_created'], url)
+                      % (d['ds_title'], awards, d['date_created'], url)
 
 
         # new dataset links to project pages
@@ -295,7 +296,7 @@ if __name__ == '__main__':
         filename = "Active_Awards_%s_to_%s.tsv" % (six_months_ago, today) 
         filepath = os.path.join('tmp', filename.replace('/','_'))
         tsv_file = io.open(filepath, 'w', encoding="utf-8")
-        tsv_file.write(unicode("Award ID\tProgram\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\tAMD Record\n", 'utf-8'))
+        tsv_file.write("Award ID\tProgram\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\tAMD Record\n")
 
         msg += """<h2>Summary of All Active Awards:</h2>"""
         msg += """<table><thead><tr>
@@ -321,7 +322,7 @@ if __name__ == '__main__':
                 nla = ''
             amd_link = getCMRUrl(a['dif_id'])
             tsv_file.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t %s\t%s\n" % (
-                a['award'], a['program_id'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], 
+                a['award'], a['program_id'], a['pec'], a['name'], a['title'], a['start'], 
                 a['expiry'], nla, a['num_datasets'], url, amd_link))
             if a['program_id'] == program:   
                 msg += """<tr><td>%s</td>
@@ -335,7 +336,7 @@ if __name__ == '__main__':
                             <td>%s</td>
                             <td>%s</td>
                         </tr>""" \
-                        % (a['award'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], 
+                        % (a['award'], a['pec'], a['name'], a['title'], a['start'], 
                         a['expiry'], nla, a['num_datasets'], url, amd_link)
         msg += "</table>"
         tsv_file.close()

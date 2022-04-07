@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 """
 Created on 
@@ -9,10 +9,8 @@ run from main usap directory with >python bin/file_count.py
 """
 
 import os
-# import requests
 import psycopg2
 import psycopg2.extras
-import sys
 import json
 import tarfile
 import gzip
@@ -52,7 +50,7 @@ def usap_get_url_list_test():
     cur.execute("SELECT id, url FROM dataset where url IS NOT NULL;")
     data = cur.fetchall()
 
-    print('records: ', len(data))
+    print(('records: ', len(data)))
     for row in list(data):
         data_list.append(row)
         # print(row)
@@ -89,7 +87,7 @@ def get_dir_info(topdir):
                         # count = sum(1 for member in archive if member.isreg())
                         file_count += count
                 except:
-                    print("Couldn't open tar file %s\n" %name)
+                    print(("Couldn't open tar file %s\n" %name))
                     file_count += 1
             else:
                 file_count += 1
@@ -136,7 +134,7 @@ def get_dataset_info(in_list):
             (file_count, file_size, u_file_size, mime_types) = get_dir_info(dir_full)
             result_list.append([dataset_id, dir_name, file_count, file_size, u_file_size, mime_types])
         else:
-            print(dataset_id, ' external data', row['id'])
+            print((dataset_id, ' external data', row['id']))
     
     return result_list
 
@@ -166,14 +164,14 @@ def update_db(data_list):
         # print(data)
         # if no data returned use insert otherwise update
         if not data:
-            print "--> insert ", row[0]
+            print("--> insert ", row[0])
             sql_line = """INSERT INTO dataset_file_info 
                        (dataset_id, dir_name, file_count, file_size_on_disk, file_size_uncompressed, mime_types) VALUES
                        (%s, %s, %s, %s, %s, %s);"""
             cur.execute(sql_line, (row[0], row[1], row[2], row[3], row[4], row[5]))
 
         else:
-            print "update ", row[0]
+            print("update ", row[0])
             sql_line = """UPDATE dataset_file_info SET 
                        file_count = %s, file_size_on_disk = %s, file_size_uncompressed = %s, mime_types = %s
                        WHERE dataset_id = %s AND dir_name = %s;"""
