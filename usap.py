@@ -924,14 +924,18 @@ def dataset_readme2form(uid):
 
 def dataset_oldform2form(uid):
     #get Related Field Event IDs and Region Feature Name from previous submission
-    submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-    # if there is an editted file, use taht one, other wise use original
-    if os.path.isfile(os.path.join(submitted_dir, "e" + uid + ".json")):
-        submitted_file = os.path.join(submitted_dir, "e" + uid + ".json")
-    else:
-        submitted_file = os.path.join(submitted_dir, uid + ".json")
-
+    submitted_dir = os.path.normpath(os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER']))
     try:
+        if not submitted_dir.startswith(current_app.root_path):
+            raise Exception()
+        # if there is an editted file, use that one, other wise use original
+        if os.path.isfile(os.path.join(submitted_dir, "e" + uid + ".json")):
+            submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + uid + ".json"))
+        else:
+            submitted_file = os.path.normpath(os.path.join(submitted_dir, uid + ".json"))
+  
+        if not submitted_file.startswith(current_app.root_path):
+            raise Exception()
         with open(submitted_file) as infile:
             submitted_data = json.load(infile)
     except:
@@ -1256,17 +1260,25 @@ def dataset2(dataset_id=None):
                 fobj.save(os.path.join(upload_dir, fname))
           
             # save json file in submitted dir
-            submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-            if edit:
-                submitted_file = os.path.join(submitted_dir, "e" + dataset_id + ".json")
-            else:
-                # get next_id
-                next_id = getNextDOIRef()
-                updateNextDOIRef()
-                submitted_file = os.path.join(submitted_dir, next_id + ".json")
-            with open(submitted_file, 'w') as file:
-                file.write(json.dumps(msg_data, indent=4, sort_keys=True))
-            os.chmod(submitted_file, 0o664)
+            try:
+                submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+                if edit:
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + dataset_id + ".json"))
+                else:
+                    # get next_id
+                    next_id = getNextDOIRef()
+                    updateNextDOIRef()
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, next_id + ".json"))
+                if not submitted_file.startswith(current_app.root_path):
+                    raise Exception()
+                with open(submitted_file, 'w') as file:
+                    file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+                os.chmod(submitted_file, 0o664)
+
+            except Exception as e:
+                error = "Unable to submit dataset. Please contact info@usap-dc.org"
+                return render_template('dataset2.html', error=error, success=success, 
+                                dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
           
             # email RT queue
             if edit:
@@ -1470,17 +1482,22 @@ def project(project_id=None):
                 del msg_data['current_dmp']
 
             # save json file in submitted dir
-            submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-            if edit:
-                submitted_file = os.path.join(submitted_dir, "e" + project_id + ".json")
-            else:
-                # get next_id for project
-                next_id = getNextProjectRef()
-                updateNextProjectRef()
-                submitted_file = os.path.join(submitted_dir, next_id + ".json")
-            with open(submitted_file, 'w') as file:
-                file.write(json.dumps(msg_data, indent=4, sort_keys=True))
-            os.chmod(submitted_file, 0o664)
+            try:
+                submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+                if edit:
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + project_id + ".json"))
+                else:
+                    # get next_id for project
+                    next_id = getNextProjectRef()
+                    updateNextProjectRef()
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, next_id + ".json"))
+                if not submitted_file.startswith(current_app.root_path):
+                    raise Exception()
+                with open(submitted_file, 'w') as file:
+                    file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+                os.chmod(submitted_file, 0o664)
+            except:
+                raise BadSubmission('Unable to submit Project. Please contact info@usap-dc.org', '/submit/project')
 
             # email RT queue
             if edit:
@@ -2918,10 +2935,13 @@ def curator():
                         json_data = json.loads(json_str)
                         timestamp = json_data.get('timestamp')
                         if timestamp:
-                            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
-                            uid_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid)
+                            upload_dir = os.path.normpath(os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp))
+                            uid_dir = os.path.normpath(os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid))
                             dest_dir = os.path.join(uid_dir, timestamp)
                             try:
+                                if not uid_dir.startswith(current_app.root_path) or not upload_dir.startswith(current_app.root_path):
+                                    raise Exception()
+
                                 if os.path.exists(dest_dir):
                                     shutil.rmtree(dest_dir)
                                 shutil.copytree(upload_dir, dest_dir)
@@ -2932,7 +2952,10 @@ def curator():
                                 # or the replaced dataset
                                 if json_data.get('related_dataset') and json_data.get('filenames'):
                                     old_ds = get_datasets([json_data['related_dataset']])[0]
-                                    old_dir = old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/')
+                                    old_dir = os.path.normpath(old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/'))
+                                    if not old_dir.startswith(current_app.root_path):
+                                        raise Exception()
+
                                     for f in json_data['filenames']:
                                         if not os.path.exists(os.path.join(dest_dir, f)) and os.path.exists(os.path.join(old_dir, f)):
                                             shutil.copy(os.path.join(old_dir, f), dest_dir)
@@ -2960,8 +2983,10 @@ def curator():
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "readme"
                     readme_str = request.form.get('readme').encode('utf-8')
-                    filename = request.form.get('readme_file')
+                    filename = os.path.normpath(request.form.get('readme_file'))
                     try:
+                        if not filename.startswith(app.config['DOCS_FOLDER']):
+                            raise Exception()
                         with open(filename, 'w') as out_file:
                             out_file.write(readme_str.decode())
                         os.chmod(filename, 0o664)
@@ -3256,16 +3281,25 @@ def curator():
                         json_data = json.loads(json_str)
                         if json_data.get('dmp_file') is not None and json_data['dmp_file'] != '' and \
                            json_data.get('upload_directory') is not None and json_data.get('award') is not None:
-                            
-                            src = os.path.join(json_data['upload_directory'], json_data['dmp_file'])
-                            dst_dir = os.path.join(app.config['AWARDS_FOLDER'], json_data['award'].split(' ')[0])
+                            src = os.path.normpath(os.path.join(json_data['upload_directory'], json_data['dmp_file']))
+                            dst_dir = os.path.normpath(os.path.join(app.config['AWARDS_FOLDER'], json_data['award'].split(' ')[0]))
                             try:
+                                # secutity check
+                                if not dst_dir.startswith(app.config['AWARDS_FOLDER']):
+                                    raise Exception()
+
                                 if not os.path.exists(dst_dir):
                                     os.mkdir(dst_dir)
-                                dst = os.path.join(dst_dir, json_data['dmp_file'])
+                                
+                                dst = os.path.normpath(os.path.join(dst_dir, json_data['dmp_file']))
+                                # secutity check
+                                upload_path = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'])
+                                if not dst.startswith(app.config['AWARDS_FOLDER']) or not src.startswith(upload_path):
+                                    raise Exception()
+
                                 shutil.copyfile(src, dst)
                             except Exception as e:
-                                return ("ERROR: unable to copy data management plan to award directory. \n" + str(e))
+                                template_dict['error'] = "ERROR: unable to copy data management plan to award directory. \n" + str(e)
                                 problem = True
 
                         # Update submission table
@@ -3415,6 +3449,9 @@ def curator():
             else:
                 # display submission json file
                 try:
+                    submission_file = os.path.normpath(submission_file)
+                    if not submission_file.startswith(submitted_dir):
+                        raise Exception()
                     with open(submission_file) as infile:
                         data = json.load(infile)
                         submission_data = json.dumps(data, sort_keys=True, indent=4)
