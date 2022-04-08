@@ -229,7 +229,7 @@ function showAbstract(el) {
     }
     var row = $(el).closest('tr');
     var abstract = row.children('td').eq(abstract_ind).text();
-    $("#abstract_text").html(abstract);
+    $("#abstract_text").text(abstract);
     var x = event.pageX;
     var y = event.pageY;
 

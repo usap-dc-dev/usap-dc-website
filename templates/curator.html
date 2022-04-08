@@ -758,7 +758,7 @@
       // put all information needed to create a new keyword in the DB in the value field
       // use ::: as a separator
       $(new_button).find('input').attr({'id': id, 'value': id+':::'+label+':::'+description+':::'+type_id+':::'+source, 'label': label});
-      $(new_button).find('span').html(label);
+      $(new_button).find('span').text(label);
       $(new_button).find('input').click(function(e){
         assignKeyword($(this).attr('id'), $(this).attr('label'));
       });
@@ -899,7 +899,7 @@
 
     var row = $(el).closest('tr');
     var comments = row.children('td').eq(comments_ind).text();
-    $("#comments_text").html(comments);
+    $("#comments_text").text(comments);
     var x = event.pageX;
     var y = event.pageY;
 

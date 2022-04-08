@@ -450,7 +450,7 @@ $(document).ready(function() {
 
   function addPubRow(publication) {
       if (publication && $('#publication').val() === "") {
-        $('#publication').html(publication.name);
+        $('#publication').text(publication.name);
         $('#pub_doi').val(publication.doi);
       }
       else {
@@ -461,7 +461,7 @@ $(document).ready(function() {
         $(extraPub).find('#removePubRow').show();
         $(extraPub).find('#extraPubLine').show();
         if (typeof publication != 'undefined') {
-            $(extraPub).find('#publication'+pub_counter).html(publication.name);
+            $(extraPub).find('#publication'+pub_counter).text(publication.name);
             $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
         }
         $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
