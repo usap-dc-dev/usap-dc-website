@@ -2040,7 +2040,7 @@ def home():
 
     # read in news
     news_dict = []
-    with open("inc/recent_news.txt") as csvfile:
+    with open("inc/recent_news.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 2:
@@ -2049,7 +2049,7 @@ def home():
         template_dict['news_dict'] = news_dict
     # read in recent data
     data_dict = []
-    with open("inc/recent_data.txt") as csvfile:
+    with open("inc/recent_data.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 4: 
@@ -2265,7 +2265,7 @@ def news():
     template_dict = {}
     # read in news
     news_dict = []
-    with open("inc/recent_news.txt") as csvfile:
+    with open("inc/recent_news.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 2:
@@ -2281,7 +2281,7 @@ def data():
     template_dict = {}
     # read in recent data
     data_dict = []
-    with open("inc/recent_data.txt") as csvfile:
+    with open("inc/recent_data.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 4:
@@ -3087,7 +3087,7 @@ def curator():
                         edit = True
                     datacite_file = cf.getDCXMLFileName(dc_uid)
                     try:
-                        with open(datacite_file, 'w') as out_file:
+                        with open(datacite_file, 'w', encoding='utf-8') as out_file:
                             out_file.write(xml_str.decode())
                         os.chmod(datacite_file, 0o664)
 
@@ -3156,7 +3156,7 @@ def curator():
                     xml_str = request.form.get('isoxml').encode('utf-8')
                     isoxml_file = cf.getISOXMLFileName(dc_uid)
                     try:
-                        with open(isoxml_file, 'w') as out_file:
+                        with open(isoxml_file, 'w', encoding='utf-8') as out_file:
                             out_file.write(xml_str.decode())
                             template_dict['message'].append("ISO XML file saved to watch directory.")
                         os.chmod(isoxml_file, 0o664)
@@ -3418,7 +3418,7 @@ def curator():
                     xml_str = request.form.get('difxml').encode('utf-8')
                     difxml_file = cf.getDifXMLFileName(uid)
                     try:
-                        with open(difxml_file, 'w') as out_file:
+                        with open(difxml_file, 'w', encoding='utf-8') as out_file:
                             out_file.write(xml_str.decode())
                             template_dict['message'].append("DIF XML file saved to watch directory.")
                         os.chmod(difxml_file, 0o664)

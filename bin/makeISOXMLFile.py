@@ -9,9 +9,9 @@ def makeISOXMLFile(dcxml_filename, xsl_filename, isoxml_filename):
         xslt = ET.parse(xsl_filename)
         transform = ET.XSLT(xslt)
         newdom = transform(dom)
-        out_text = ET.tostring(newdom, pretty_print=True)
+        out_text = ET.tostring(newdom, pretty_print=True, encoding='utf-8')
 
-        with open(isoxml_filename, "w") as myfile:
+        with open(isoxml_filename, "w", encoding='utf-8') as myfile:
             myfile.write(out_text.decode())
         os.chmod(isoxml_filename, 0o664)
 

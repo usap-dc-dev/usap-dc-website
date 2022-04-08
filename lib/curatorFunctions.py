@@ -64,7 +64,7 @@ def submitToDataCite(uid, edit=False):
  
     # read in datacite xml file
     try:
-        with open(datacite_file, "r") as f:
+        with open(datacite_file, "r", encoding='utf-8') as f:
             xml = f.read()
     except Exception as e:
         return("Error reading DataCite XML file: %s" % str(e))
@@ -150,7 +150,7 @@ def getDataCiteXML(uid):
 
     # write the xml to a temporary file
     xml_file = getDCXMLFileName(uid)
-    with open(xml_file, "w") as myfile:
+    with open(xml_file, "w", encoding='utf-8') as myfile:
         myfile.write(out_text.decode())
     os.chmod(xml_file, 0o664)
     return(xml_file, status)
@@ -161,7 +161,7 @@ def getDataCiteXMLFromFile(uid):
     # check if datacite xml file already exists
     if os.path.exists(dcxml_file):
         try:
-            with open(dcxml_file) as infile:
+            with open(dcxml_file, encoding='utf-8') as infile:
                 dcxml = infile.read()
             return dcxml
         except:
@@ -182,7 +182,7 @@ def getISOXMLFromFile(uid, update=False):
         if msg.find("Error") >= 0:
             return msg
     try:
-        with open(isoxml_file) as infile:
+        with open(isoxml_file, encoding='utf-8') as infile:
             isoxml = infile.read()
         return isoxml
     except:
@@ -1758,7 +1758,7 @@ def getDifXML(data, uid):
 
     # write XML to file
     file_name = getDifXMLFileName(uid)
-    with open(file_name, 'w') as out_file:
+    with open(file_name, 'w', encoding='utf-8') as out_file:
         out_file.write(prettify(root))
     os.chmod(file_name, 0o664)
 
@@ -2005,14 +2005,14 @@ def updateRecentData(uid):
                                                                      res.get('creator'), res.get('title'))
         try:
             # read in file
-            with open(RECENT_DATA_FILE, 'r') as rd_file:
+            with open(RECENT_DATA_FILE, 'r', encoding='utf-8') as rd_file:
                 lines = rd_file.readlines()
             for line in lines[1:]:
                 entries[line] = line[0:10]
             if newline not in lines:
                 entries[newline] = newline[0:10]
                 # re-write file
-                with open(RECENT_DATA_FILE, 'w') as rd_file:
+                with open(RECENT_DATA_FILE, 'w', encoding='utf-8') as rd_file:
                     rd_file.write(lines[0])
                     for entry in sorted(list(entries.items()), key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=True):
                         rd_file.write(entry[0])
