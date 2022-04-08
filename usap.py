@@ -2140,64 +2140,6 @@ def abstract_examples():
     return render_template('abstract_examples.html')
 
 
-#DEPRECATED
-@app.route('/search_old', methods=['GET', 'POST'])
-def search_old():
-    if request.method == 'GET':
-        return render_template('search_old.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
-                               parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
-                               persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
-    elif request.method == 'POST':
-        params = request.form.to_dict()
-        filtered = filter_datasets(**params)
-
-        del params['spatial_bounds_interpolated']
-        session['filtered_datasets'] = filtered
-        session['search_params'] = params
-
-        return redirect('/search_result')
-
-
-#DEPRECATED
-@app.route('/filter_search_menus', methods=['GET'])
-def filter_search_menus():
-    keys = ['person', 'parameter', 'program', 'award', 'title', 'project']
-    args = request.args.to_dict()
-    # if reseting:
-    if args == {}:
-        session['search_params'] = {}
-
-    person_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'person'})
-    person_dsets = get_datasets(person_ids)
-    persons = set([p['id'] for d in person_dsets for p in d['persons']])
-
-    parameter_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'parameter'})
-    parameter_dsets = get_datasets(parameter_ids)
-    parameters = set([' > '.join(p['id'].split(' > ')[2:]) for d in parameter_dsets for p in d['parameters']])
-
-    program_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'program'})
-    program_dsets = get_datasets(program_ids)
-    programs = set([p['id'] for d in program_dsets for p in d['programs']])
-
-    award_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'award'})
-    award_dsets = get_datasets(award_ids)
-    awards = set([(p['name'], p['award']) for d in award_dsets for p in d['awards']])
-
-    project_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'project'})
-    project_dsets = get_datasets(project_ids)
-    projects = set([p['id'] for d in project_dsets for p in d['projects']])
-#    projects = set([d['id'] for d in project_dsets])
-
-    return flask.jsonify({
-        'person': sorted(persons),
-        'parameter': sorted(parameters),
-        'program': sorted(programs),
-        'award': [a[1] + ' ' + a[0] for a in sorted(awards)],
-        'project': sorted(projects),
-        'sci_program': sorted(projects)
-    })
-
-
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'GET':
@@ -3834,88 +3776,6 @@ def getFromDifTable(col, all_selected):
     return cur.fetchall()
 
 
-@app.route('/catalog_browser', methods=['GET', 'POST'])
-def catalog_browser():
-    all_selected = False
-    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': '', 'all_selected': all_selected}
-    (conn, cur) = connect_to_db()
-
-    query = "SELECT DISTINCT dif_test.*, ST_AsText(dsm.bounds_geometry) AS bounds_geometry FROM dif_test LEFT JOIN dif_spatial_map dsm ON dsm.dif_id = dif_test.dif_id WHERE dif_test.dif_id !=''"
-
-    if request.method == 'POST':
-
-        template_dict['pi_name'] = request.form.get('pi_name')
-        template_dict['title'] = request.form.get('title')
-        template_dict['summary'] = request.form.get('summary')
-        template_dict['award'] = request.form.get('award')
-        template_dict['dif_id'] = request.form.get('dif_id')
-        all_selected = bool(int(request.form.get('all_selected')))
-        template_dict['all_selected'] = all_selected
-
-        # print(bool(int(request.form.get('all_selected'))))
-        if (request.form.get('pi_name') != ""):
-            query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
-        if(request.form.get('title') != ""):
-            query += " AND dif_test.title ILIKE '%" + request.form['title'] + "%'"
-        if(request.form.get('summary') != ""):
-            query += " AND dif_test.summary ILIKE '%" + request.form['summary'] + "%'"
-        if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
-            query += " AND dif_test.award = '%s'" % request.form['award']
-        if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):
-            query += " AND dif_test.dif_id = '%s'" % request.form['dif_id']
-
-    if not all_selected:
-        query += " AND dif_test.is_usap_dc = true"
-
-    query += " ORDER BY dif_test.date_created DESC"
-
-    query_string = cur.mogrify(query)
-    cur.execute(query_string)
-    rows = cur.fetchall()
-
-    for row in rows:
-        authors = row['pi_name']
-        if row['co_pi'] != "":
-            authors += "; %s" % row['co_pi']
-        row['authors'] = authors
-        if row['award'] != "":
-            row['award'] = int(row['award'])
-            row['award_7d'] = "%07d" % row['award']
-        ds_query = "SELECT * FROM dif_data_url_map WHERE dif_id = '%s'" % row['dif_id']
-        ds_query_string = cur.mogrify(ds_query)
-        cur.execute(ds_query_string)
-        datasets = cur.fetchall()
-
-        # get the list of repositories
-        repos = []
-        for ds in datasets:
-            repo = ds['repository']
-            if repo not in repos:
-                repos.append(repo)
-        row['repositories'] = repos
-
-        if row['dif_id'] == "NSF-ANT05-37143":
-            datasets = [{'title': 'Studies of Antarctic Fungi', 'url': url_for('genBank_datasets')}]
-
-        row['datasets'] = datasets
-
-    template_dict['dif_records'] = rows
-
-    if template_dict['award'] == "":
-        template_dict['award'] = "Any award"
-
-    if template_dict['dif_id'] == "":
-        template_dict['dif_id'] = "Any DIF ID"
-
-    # get list of available options for drop downs and autocomplete
-    template_dict['awards'] = getFromDifTable('award', all_selected)
-    template_dict['dif_ids'] = getFromDifTable('dif_id', all_selected)
-    template_dict['titles'] = getFromDifTable('title', all_selected)
-    template_dict['pi_names'] = getFromDifTable('pi_name', all_selected)
-
-    return render_template('catalog_browser.html', **template_dict)
-
-
 @app.route('/filter_dif_menus', methods=['GET'])
 def filter_dif_menus():
     args = request.args.to_dict()
@@ -4614,11 +4474,12 @@ def data_management_plan():
     dmp_link = request.form.get('dmp_link')
     if dmp_link.startswith('/'):
         dmp_link = dmp_link[1:]
+    fullpath = os.path.normpath(os.path.join(current_app.root_path, dmp_link))
+
     try:
-        if not validate_dmp_link(dmp_link):
+        if not validate_dmp_link(dmp_link) or not fullpath.startswith(current_app.root_path):
             return redirect(url_for('not_found'))
-        return send_file(os.path.join(current_app.root_path, dmp_link),
-                         attachment_filename=os.path.basename(dmp_link))
+        return send_file(fullpath, attachment_filename=os.path.basename(dmp_link))
     except:
         return redirect(url_for('not_found'))
 
@@ -4742,93 +4603,6 @@ def get_project(project_id):
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
-
-
-#DEPRECATED
-@app.route('/project_browser', methods=['GET', 'POST'])
-def project_browser():
-
-    if request.method == 'POST':
-        params = request.form.to_dict()
-        filtered = filter_datasets(**params)
-
-        del params['spatial_bounds_interpolated']
-        session['filtered_datasets'] = filtered
-        session['search_params'] = params
-
-    template_dict = {'pi_name': '', 'title': '', 'award': '', 'summary': ''}
-    (conn, cur) = connect_to_db()
-
-    query = "SELECT DISTINCT project.*, per.persons, a.awards, ST_AsText(psm.bounds_geometry) AS bounds_geometry " + \
-            "FROM project " + \
-            "LEFT JOIN project_spatial_map psm ON psm.proj_uid = project.proj_uid " + \
-            "LEFT JOIN (" + \
-            "SELECT pperm.proj_uid, string_agg(per.id, '; ') persons " + \
-            "FROM project_person_map pperm JOIN person per ON per.id=pperm.person_id " + \
-            "WHERE pperm.role ILIKE '%investigator%' " + \
-            "GROUP BY pperm.proj_uid) per ON per.proj_uid = project.proj_uid " + \
-            "LEFT JOIN ( " + \
-            "SELECT pam.proj_uid, string_agg(a.award,'; ') awards " + \
-            "FROM project_award_map pam JOIN award a ON a.award=pam.award_id " + \
-            "GROUP BY pam.proj_uid) a ON a.proj_uid = project.proj_uid " + \
-            "WHERE project.proj_uid !=''"
-
-    if request.method == 'POST':
-        template_dict['pi_name'] = request.form.get('pi_name')
-        template_dict['title'] = request.form.get('title')
-        template_dict['summary'] = request.form.get('summary')
-        template_dict['award'] = request.form.get('award')
-
-        if (request.form.get('pi_name') != ""):
-            query += " AND per.persons ~* '%s'" % request.form['pi_name']
-        if(request.form.get('title') != ""):
-            query += " AND project.title ILIKE '%" + request.form['title'] + "%'"
-        if(request.form.get('summary') != ""):
-            query += " AND project.description ILIKE '%" + request.form['summary'] + "%'"
-        if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
-            query += " AND a.awards ~* '%s'" % request.form['award']
-
-    query += " ORDER BY project.date_created DESC"
-
-    query_string = cur.mogrify(query)
-    cur.execute(query_string)
-    rows = cur.fetchall()
-
-    for row in rows:
-        authors = row['persons']
-        row['authors'] = authors
-        if row['awards'] != "":
-            awards = row['awards'].split('; ')
-            row['awards_7d'] = []
-            for award in awards:
-                row['awards_7d'].append("%07d" % int(award))
-        ds_query = "SELECT * FROM project_dataset pd " + \
-                   "LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = pd.dataset_id " + \
-                   "WHERE pdm.proj_uid = '%s'" % row['proj_uid']
-        ds_query_string = cur.mogrify(ds_query)
-        cur.execute(ds_query_string)
-        datasets = cur.fetchall()
-        row['datasets'] = datasets
-
-    template_dict['proj_records'] = rows
-
-    if template_dict['award'] == "":
-        template_dict['award'] = "Any award"
-
-    # get list of available options for drop downs and autocomplete
-    query = "SELECT DISTINCT award_id as award FROM project_award_map ORDER BY award_id;"
-    cur.execute(query)
-    template_dict['awards'] = cur.fetchall()
-    query = "SELECT DISTINCT title FROM project ORDER BY title;"
-    cur.execute(query)
-    template_dict['titles'] = cur.fetchall()
-    query = "SELECT DISTINCT person_id as pi_name FROM project_person_map pperm " + \
-            "WHERE pperm.role ILIKE '%investigator%' ORDER BY person_id;"
-    cur.execute(query)
-    template_dict['pi_names'] = cur.fetchall()
-    template_dict['dif_ids'] = getFromDifTable('dif_id', True)
-
-    return render_template('project_browser.html', **template_dict)
 
 
 @app.route('/search', methods=['GET'])
@@ -5346,8 +5120,3 @@ app.jinja_env.globals.update(ceil=math.ceil)
 app.jinja_env.globals.update(int=int)
 app.jinja_env.globals.update(filter_awards=lambda awards: [aw for aw in awards if aw['award'] != 'XXXXXXX'])
 app.jinja_env.globals.update(json_dumps=json.dumps)
-
-if __name__ == "__main__":
-    # SECRET_KEY = 'development key'
-    # app.secret_key = SECRET_KEY
-    app.run(host=app.config['SERVER_NAME'], debug=True, threaded=True)

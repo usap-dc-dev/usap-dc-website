@@ -91,7 +91,7 @@
             </div>
             <div class="value">
               {% for w in data.website %}
-                <a target="_blank" href="{{w.url}}">{{w.title}}</a><br/>
+                <a target="_blank" href="{{w.url}}" rel="noopener noreferrer">{{w.title}}</a><br/>
               {% endfor %}
             </div>
           </div>
@@ -208,7 +208,7 @@
                   <tr>
                     <td>
                       {% if d.url %}
-                        <a target="_blank" href="{{d.url}}">{{d.deployment_id}}</a></td>
+                        <a target="_blank" href="{{d.url}}" rel="noopener noreferrer">{{d.deployment_id}}</a></td>
                       {% else %}
                         {{d.deployment_id}}
                       {% endif %}

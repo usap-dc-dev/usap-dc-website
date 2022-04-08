@@ -26,7 +26,7 @@
 {% endfor %}
 {% if landing_page %}
   <div class="alert alert-success" style="width:800;">
-    <h4><a target="_blank" href="{{landing_page}}">Click here to view landing page</a></h4>
+    <h4><a target="_blank" href="{{landing_page}}" rel="noopener noreferrer">Click here to view landing page</a></h4>
   </div>
 {% endif %}
 {% if error %}
@@ -559,7 +559,7 @@
                     <td>{{sub.status}}</td>
                     <td>{% if sub.comments %}
                         <button type="button" class="in-table-button abstract-button" id="comments_btn" onclick="showComments(this);"><b>View Comments</b></button>{% endif %}</td>
-                    <td>{% if sub.landing_page %} <a target="_blank" href={{sub['landing_page']}}>{{sub.landing_page}}</a> {% endif %}</td>
+                    <td>{% if sub.landing_page %} <a target="_blank" href={{sub['landing_page']}} rel="noopener noreferrer">{{sub.landing_page}}</a> {% endif %}</td>
                     <td hidden>{{sub.comments}}</td>
                 </tr>
             {% endfor %}

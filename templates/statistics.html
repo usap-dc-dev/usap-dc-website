@@ -126,7 +126,7 @@
         {% for d in download_numbers %}
         <tr>
           <td>{{d.count}}</td>
-          <td><a href={{url_for('landing_page', dataset_id=d.id)}} target="_blank">{{d.id}}</a></td>
+          <td><a href={{url_for('landing_page', dataset_id=d.id)}} target="_blank" rel="noopener noreferrer">{{d.id}}</a></td>
           <td>{{d.title}}</td>
           <td>{{d.creator}}</td>
           <td>{{d.release_date}}</td>
