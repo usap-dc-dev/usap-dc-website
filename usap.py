@@ -153,79 +153,6 @@ def get_nsf_grants(columns, award=None, only_inhabited=True):
     return cur.fetchall()
 
 
-def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
-                    sensor=None, west=None, east=None, south=None, north=None, spatial_bounds=None, spatial_bounds_interpolated=None, start=None, stop=None, program=None,
-                    project=None, title=None, limit=None, offset=None):
-    (conn, cur) = connect_to_db()
-    query_string = '''SELECT DISTINCT d.id
-                      FROM dataset d
-                      LEFT JOIN dataset_award_map dam ON dam.dataset_id=d.id
-                      LEFT JOIN award a ON a.award = dam.award_id
-                      LEFT JOIN dataset_keyword_map dkm ON dkm.dataset_id=d.id
-                      LEFT JOIN keyword k ON k.id=dkm.keyword_id
-                      LEFT JOIN dataset_parameter_map dparm ON dparm.dataset_id=d.id
-                      LEFT JOIN parameter par ON par.id=dparm.parameter_id
-                      LEFT JOIN dataset_location_map dlm ON dlm.dataset_id=d.id
-                      LEFT JOIN location l ON l.id=dlm.location_id
-                      LEFT JOIN dataset_person_map dperm ON dperm.dataset_id=d.id
-                      LEFT JOIN person per ON per.id=dperm.person_id
-                      LEFT JOIN dataset_platform_map dplm ON dplm.dataset_id=d.id
-                      LEFT JOIN platform pl ON pl.id=dplm.platform_id
-                      LEFT JOIN dataset_sensor_map dsenm ON dsenm.dataset_id=d.id
-                      LEFT JOIN sensor sen ON sen.id=dsenm.sensor_id
-                      LEFT JOIN dataset_spatial_map sp ON sp.dataset_id=d.id
-                      LEFT JOIN dataset_temporal_map tem ON tem.dataset_id=d.id
-                      LEFT JOIN award_program_map apm ON apm.award_id=a.award
-                      LEFT JOIN program prog ON prog.id=apm.program_id
-                      LEFT JOIN dataset_initiative_map dprojm ON dprojm.dataset_id=d.id
-                      LEFT JOIN initiative proj ON proj.id=dprojm.initiative_id
-                   '''
-    conds = []
-    if dataset_id:
-        conds.append(cur.mogrify('d.id=%s', (dataset_id,)))
-    if title:
-        conds.append(cur.mogrify('d.title ILIKE %s', ('%' + title + '%',)))
-    if award:
-        [num, name] = award.split(' ', 1)
-        conds.append(cur.mogrify('a.award=%s', (num,)))
-        conds.append(cur.mogrify('a.name=%s', (name,)))
-    if parameter:
-        conds.append(cur.mogrify('par.id ILIKE %s', ('%' + parameter + '%',)))
-    if location:
-        conds.append(cur.mogrify('l.id=%s', (location,)))
-    if person:
-        conds.append(cur.mogrify('per.id=%s', (person,)))
-    if platform:
-        conds.append(cur.mogrify('pl.id=%s', (platform,)))
-    if sensor:
-        conds.append(cur.mogrify('sen.id=%s', (sensor,)))
-    if west:
-        conds.append(cur.mogrify('%s <= sp.east', (west,)))
-    if east:
-        conds.append(cur.mogrify('%s >= sp.west', (east,)))
-    if north:
-        conds.append(cur.mogrify('%s >= sp.south', (north,)))
-    if south:
-        conds.append(cur.mogrify('%s <= sp.north', (south,)))
-    if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_intersects(st_transform(sp.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
-    if start:
-        conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
-    if stop:
-        conds.append(cur.mogrify('%s >= tem.start_date', (stop,)))
-    if program:
-        conds.append(cur.mogrify('prog.id=%s ', (program,)))
-    if project:
-        conds.append(cur.mogrify('proj.id=%s ', (project,)))
-    conds.append(cur.mogrify('url IS NOT NULL '))
-    conds = ['(' + c + ')' for c in conds]
-    if len(conds) > 0:
-        query_string += ' WHERE ' + ' AND '.join(conds)
-
-    cur.execute(query_string)
-    return [d['id'] for d in cur.fetchall()]
-
-
 def get_datasets(dataset_ids):
     if len(dataset_ids) == 0:
         return []
@@ -3882,7 +3809,7 @@ def genBank_datasets():
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
     if request.args.get('layers') != "":
-        url = unquote('https://api.usap-dc.org:8443/wfs?' + urlencode(request.args))
+        url = unquote('https://api-upgrade.usap-dc.org:8443/wfs?' + urlencode(request.args))
         return requests.get(url).text
     return None
 
