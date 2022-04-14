@@ -19,3 +19,4 @@ pytz
 py-dateutil
 wheel
 whois
+testing
