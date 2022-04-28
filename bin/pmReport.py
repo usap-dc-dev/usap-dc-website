@@ -286,7 +286,7 @@ if __name__ == '__main__':
                   		  GROUP BY a2.award
                   	) nla ON nla.lead_award = award.award
                     LEFT JOIN project_dif_map pdm ON pdm.proj_uid = p.proj_uid
-                    WHERE (program.id ~* 'Antarctic' OR program.id ='Post Doc/Travel')
+                    WHERE (program.id ~* 'Antarctic' OR program.id ='Post Doc/Travel' OR id = 'Polar Cyberinfrastructure')
                     AND start <= '%s' AND expiry >= '%s'
                     AND award.is_lead_award IN ('Standard', 'Lead')
                     ORDER BY award;""" % (today, today)
