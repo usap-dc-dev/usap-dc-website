@@ -77,13 +77,13 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     today = today - relativedelta(days=10)
-    six_months_ago = "2021-03-10" #today - relativedelta(months=6)
+    six_months_ago = "2021-10-01" #today - relativedelta(months=6)
     (conn, cur) = connect_to_db()
 
     # make tmp dir for csv files
     os.mkdir(TMP_DIR)
 
-    query = "SELECT * FROM program WHERE id ~* 'Antarctic' OR id ='Post Doc/Travel';"
+    query = "SELECT * FROM program WHERE id ~* 'Antarctic' OR id ='Post Doc/Travel' OR id = 'Polar Cyberinfrastructure';"
     cur.execute(query)
     res = cur.fetchall()
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                     	JOIN award_program_map apm ON apm.award_id = award.award
                     	JOIN program ON program.id = apm.program_id
                     	) a ON a.award = pam.award_id
-                    JOIN (
+                    LEFT JOIN (
                         SELECT proj_uid, JSON_AGG(pd.*) AS datasets , COUNT(pdm.dataset_id) AS num_datasets
                         FROM project_dataset_map pdm 
                         JOIN project_dataset pd ON pd.dataset_id = pdm.dataset_id
@@ -181,10 +181,9 @@ if __name__ == '__main__':
 
 
         # new dataset links to project pages
-        query = """SELECT project.proj_uid,project.title AS proj_title, ppm.person_id AS proj_pi, project.date_created, project.date_modified, 
+        query = """SELECT project.proj_uid,project.title AS proj_title, pis.proj_pi, project.date_created, project.date_modified, 
                     JSON_AGG(a.*) awards, JSON(d.datasets::text) datasets, JSON(pubs.pubs::text) pubs
                     FROM project
-                    JOIN project_person_map ppm ON ppm.proj_uid = project.proj_uid
                     JOIN project_award_map pam ON pam.proj_uid = project.proj_uid
                     JOIN (
                     	SELECT * FROM award
@@ -192,21 +191,25 @@ if __name__ == '__main__':
                     	JOIN program ON program.id = apm.program_id
                     	) a ON a.award = pam.award_id
                     JOIN (
+                    	SELECT project.proj_uid, string_agg(person_id, '; ') AS proj_pi FROM project
+                 	    JOIN project_person_map ppm ON ppm.proj_uid = project.proj_uid
+	                    WHERE ppm."role" IN ('Investigator and contact', 'Investigator')
+	                    GROUP BY project.proj_uid) pis ON pis.proj_uid = project.proj_uid
+                    JOIN (
                         SELECT proj_uid, JSON_AGG(pd.*) AS datasets 
                         FROM project_dataset_map pdm 
                         JOIN project_dataset pd ON pd.dataset_id = pdm.dataset_id
                         GROUP BY proj_uid
                     ) d ON d.proj_uid=project.proj_uid
-                    JOIN (
+                    LEFT JOIN (
                         SELECT proj_uid, JSON_AGG(r.*) AS pubs 
                         FROM project_ref_map prm 
                         JOIN reference r ON r.ref_uid = prm.ref_uid
                         GROUP BY proj_uid
                     ) pubs ON pubs.proj_uid=project.proj_uid  
                     WHERE project.date_modified >= '%s' AND date_modified != date_created
-                    AND ppm."role" IN ('Investigator and contact', 'Investigator')
                     AND a.program_id='%s'
-                    GROUP BY project.proj_uid, d.datasets::text, pubs.pubs::text, ppm.person_id
+                    GROUP BY project.proj_uid, d.datasets::text, pubs.pubs::text,pis.proj_pi
                     ORDER BY project.proj_uid;""" % (six_months_ago, program)
         cur.execute(query)
         res2 = cur.fetchall()
