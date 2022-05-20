@@ -1047,6 +1047,12 @@ def maintenance():
     return render_template('roadworks.html')
 
 
+#test route for static site maintenance page that should be copied to /var/www/html
+@app.route('/site_maintenance')
+def site_maintenance():
+    return redirect(url_for('static', filename='maintenance.html'))
+
+
 def check_project_registration(msg_data):
 
     def default_func(field):
