@@ -3815,7 +3815,7 @@ def genBank_datasets():
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
     if request.args.get('layers') != "":
-        url = unquote('https://api-upgrade.usap-dc.org:8443/wfs?' + urlencode(request.args))
+        url = unquote('https://api.usap-dc.org:8443/wfs?' + urlencode(request.args))
         return requests.get(url).text
     return None
 
