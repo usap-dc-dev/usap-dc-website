@@ -8,7 +8,7 @@
 		{% if ds.get('url') == None %}
 			<h4>{{ds['title']}}</h4>
 		{% else %}
-			<a target="_blank" href="{{ds['url']}}">{{ds['title']}}</a>
+			<a target="_blank" href="{{ds['url']}}" rel="noopener noreferrer">{{ds['title']}}</a>
 		{% endif %}
 	{% endfor %}
 </div>

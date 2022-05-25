@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 """
 This script will go through all the files on the local disk in the

@@ -1,0 +1,21 @@
+aniso8601
+apache_log_parser
+apiclient
+authlib
+bagit
+boto3
+flask
+flask_jsglue
+geoip2
+google_api_python_client
+humanize
+jinja2 (v3.0)
+jsonschema
+lxml
+pandas
+pylzma
+pyscopg2-binary
+pytz
+py-dateutil
+wheel
+whois

@@ -85,7 +85,7 @@
               <br>
               {% for f in dataset_metadata.uploaded_files %}
                 <div>
-                  <a href={{f.url}} target="_blank">{{f.name}}</a>
+                  <a href={{f.url}} target="_blank" rel="noopener noreferrer">{{f.name}}</a>
                   <a href="#uploaded_files" class="removeFile"><i class="fa fa-remove"></i></a>
                   <input type='hidden' name='uploaded_file_{{f.name}}'>
                 </div>

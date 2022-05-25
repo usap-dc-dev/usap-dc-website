@@ -152,14 +152,29 @@ $(document).ready(function() {
             if (msg.copi != null && msg.copi !== ''){
                 var copis = msg.copi.split(';');
                 if (copis.length > 0) {
-                    copi = copis[0].split(',');
-                    $('#copi_name_last').attr('value', copi[0]);
-                    $('#copi_name_first').attr('value', copi[1].trim());
+                    delim = copis[0].includes(',') ? ',' : ' ';
+                    
+                    if (delim == ',') {
+                      copi = copis[0].split(delim);
+                      $('#copi_name_last').attr('value', copi[0].trim());
+                      $('#copi_name_first').attr('value', copi[1].trim());
+                    }
+                    else {
+                      var lastIndex = copis[0].lastIndexOf(' ');
+                      $('#copi_name_last').attr('value', copis[0].substr(lastIndex+1).trim());
+                      $('#copi_name_first').attr('value', copis[0].substr(0, lastIndex).trim());
+                    }
                 
                     for (var i=1; i < copis.length; i++ ) {
-                        copi = copis[i].split(',');
-                        var author = {'last_name': copi[0], 'first_name': copi[1].trim()};
-                        addAuthorRow(author);
+                      if (delim == ',') {
+                        copi = copis[i].split(delim);
+                        var author = {'name_last': copi[0].trim(), 'name_first': copi[1].trim()};
+                      }
+                      else {
+                        var lastIndex = copis[i].lastIndexOf(' ');
+                        var author = {'name_last': copis[i].substr(lastIndex+1).trim(), 'name_first': copis[i].substr(0, lastIndex).trim()};
+                      }
+                      addAuthorRow(author);
                     }
                 }
             }
@@ -435,7 +450,7 @@ $(document).ready(function() {
 
   function addPubRow(publication) {
       if (publication && $('#publication').val() === "") {
-        $('#publication').html(publication.name);
+        $('#publication').text(publication.name);
         $('#pub_doi').val(publication.doi);
       }
       else {
@@ -446,7 +461,7 @@ $(document).ready(function() {
         $(extraPub).find('#removePubRow').show();
         $(extraPub).find('#extraPubLine').show();
         if (typeof publication != 'undefined') {
-            $(extraPub).find('#publication'+pub_counter).html(publication.name);
+            $(extraPub).find('#publication'+pub_counter).text(publication.name);
             $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
         }
         $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));

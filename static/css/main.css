@@ -180,7 +180,7 @@ ul#ieda-menu li a:hover,
 ul#ieda-menu > li:hover > a,
 ul#ieda-menu li a.cur {
   color: #fff;
-  background: transparent url('/imgs/menu_hover_bg.gif') repeat top left;
+  background-color:#326c83;
 }
 /*Old rules for IE*/
 ul#ieda-menu li ul,

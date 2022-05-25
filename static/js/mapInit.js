@@ -18,8 +18,7 @@ function MapClient(zoom) {
     this.map = map;
 
     var api_url = 'https://api-upgrade.usap-dc.org:8443/wfs?';
-    console.log(api_url)
-    
+  
     var gmrt = new ol.layer.Tile({
     type: 'base',
     title: "GMRT Synthesis",

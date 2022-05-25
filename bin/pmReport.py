@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/root/usr/bin/python3
 # Run as a cron task to generate quarterly reports for project managers
 # run from main usap-dc directory with python bin/pmReport
 
@@ -19,6 +19,7 @@ import requests
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 TMP_DIR = 'tmp'
+
 
 def connect_to_db():
     # info = config['PROD_DATABASE'] # when running on dev server, so we can access prouction DB
@@ -76,13 +77,13 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     today = today - relativedelta(days=10)
-    six_months_ago = "2021-03-10" #today - relativedelta(months=6)
+    six_months_ago = "2021-10-01" #today - relativedelta(months=6)
     (conn, cur) = connect_to_db()
 
     # make tmp dir for csv files
     os.mkdir(TMP_DIR)
 
-    query = "SELECT * FROM program WHERE id ~* 'Antarctic' OR id ='Post Doc/Travel';"
+    query = "SELECT * FROM program WHERE id ~* 'Antarctic' OR id ='Post Doc/Travel' OR id = 'Polar Cyberinfrastructure';"
     cur.execute(query)
     res = cur.fetchall()
 
@@ -116,7 +117,7 @@ if __name__ == '__main__':
                     	JOIN award_program_map apm ON apm.award_id = award.award
                     	JOIN program ON program.id = apm.program_id
                     	) a ON a.award = pam.award_id
-                    JOIN (
+                    LEFT JOIN (
                         SELECT proj_uid, JSON_AGG(pd.*) AS datasets , COUNT(pdm.dataset_id) AS num_datasets
                         FROM project_dataset_map pdm 
                         JOIN project_dataset pd ON pd.dataset_id = pdm.dataset_id
@@ -146,7 +147,7 @@ if __name__ == '__main__':
                       <b>Number of Datasets:</b> %s<br>
                       <b>Dataset Links:</b> %s<br>
                       <b>Project Landing Page:</b> %s <br><br>""" \
-                      % (unicode(p['proj_title'], 'utf-8'), awards, p['date_created'], p['num_datasets'], datasets, url)
+                      % (p['proj_title'], awards, p['date_created'], p['num_datasets'], datasets, url)
 
 
         # new datasets submitted to USAP-DC        
@@ -176,14 +177,13 @@ if __name__ == '__main__':
                       <b>Award(s):</b> %s<br>
                       <b>Date Created:</b> %s<br>
                       <b>Dataset Landing Page:</b> %s <br><br>""" \
-                      % (unicode(d['ds_title'], 'utf-8'), awards, d['date_created'], url)
+                      % (d['ds_title'], awards, d['date_created'], url)
 
 
         # new dataset links to project pages
-        query = """SELECT project.proj_uid,project.title AS proj_title, ppm.person_id AS proj_pi, project.date_created, project.date_modified, 
+        query = """SELECT project.proj_uid,project.title AS proj_title, pis.proj_pi, project.date_created, project.date_modified, 
                     JSON_AGG(a.*) awards, JSON(d.datasets::text) datasets, JSON(pubs.pubs::text) pubs
                     FROM project
-                    JOIN project_person_map ppm ON ppm.proj_uid = project.proj_uid
                     JOIN project_award_map pam ON pam.proj_uid = project.proj_uid
                     JOIN (
                     	SELECT * FROM award
@@ -191,21 +191,25 @@ if __name__ == '__main__':
                     	JOIN program ON program.id = apm.program_id
                     	) a ON a.award = pam.award_id
                     JOIN (
+                    	SELECT project.proj_uid, string_agg(person_id, '; ') AS proj_pi FROM project
+                 	    JOIN project_person_map ppm ON ppm.proj_uid = project.proj_uid
+	                    WHERE ppm."role" IN ('Investigator and contact', 'Investigator')
+	                    GROUP BY project.proj_uid) pis ON pis.proj_uid = project.proj_uid
+                    JOIN (
                         SELECT proj_uid, JSON_AGG(pd.*) AS datasets 
                         FROM project_dataset_map pdm 
                         JOIN project_dataset pd ON pd.dataset_id = pdm.dataset_id
                         GROUP BY proj_uid
                     ) d ON d.proj_uid=project.proj_uid
-                    JOIN (
+                    LEFT JOIN (
                         SELECT proj_uid, JSON_AGG(r.*) AS pubs 
                         FROM project_ref_map prm 
                         JOIN reference r ON r.ref_uid = prm.ref_uid
                         GROUP BY proj_uid
                     ) pubs ON pubs.proj_uid=project.proj_uid  
                     WHERE project.date_modified >= '%s' AND date_modified != date_created
-                    AND ppm."role" IN ('Investigator and contact', 'Investigator')
                     AND a.program_id='%s'
-                    GROUP BY project.proj_uid, d.datasets::text, pubs.pubs::text, ppm.person_id
+                    GROUP BY project.proj_uid, d.datasets::text, pubs.pubs::text,pis.proj_pi
                     ORDER BY project.proj_uid;""" % (six_months_ago, program)
         cur.execute(query)
         res2 = cur.fetchall()
@@ -282,7 +286,7 @@ if __name__ == '__main__':
                   		  GROUP BY a2.award
                   	) nla ON nla.lead_award = award.award
                     LEFT JOIN project_dif_map pdm ON pdm.proj_uid = p.proj_uid
-                    WHERE (program.id ~* 'Antarctic' OR program.id ='Post Doc/Travel')
+                    WHERE (program.id ~* 'Antarctic' OR program.id ='Post Doc/Travel' OR id = 'Polar Cyberinfrastructure')
                     AND start <= '%s' AND expiry >= '%s'
                     AND award.is_lead_award IN ('Standard', 'Lead')
                     ORDER BY award;""" % (today, today)
@@ -295,7 +299,7 @@ if __name__ == '__main__':
         filename = "Active_Awards_%s_to_%s.tsv" % (six_months_ago, today) 
         filepath = os.path.join('tmp', filename.replace('/','_'))
         tsv_file = io.open(filepath, 'w', encoding="utf-8")
-        tsv_file.write(unicode("Award ID\tProgram\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\tAMD Record\n", 'utf-8'))
+        tsv_file.write("Award ID\tProgram\tPEC\tPI\tAward Title\tAward Start\tAward Expiry\tNon-Lead Awards\tNumber of Datasets\tProject Landing Page\tAMD Record\n")
 
         msg += """<h2>Summary of All Active Awards:</h2>"""
         msg += """<table><thead><tr>
@@ -321,7 +325,7 @@ if __name__ == '__main__':
                 nla = ''
             amd_link = getCMRUrl(a['dif_id'])
             tsv_file.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t %s\t%s\n" % (
-                a['award'], a['program_id'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], 
+                a['award'], a['program_id'], a['pec'], a['name'], a['title'], a['start'], 
                 a['expiry'], nla, a['num_datasets'], url, amd_link))
             if a['program_id'] == program:   
                 msg += """<tr><td>%s</td>
@@ -335,7 +339,7 @@ if __name__ == '__main__':
                             <td>%s</td>
                             <td>%s</td>
                         </tr>""" \
-                        % (a['award'], a['pec'], a['name'], unicode(a['title'], 'utf-8'), a['start'], 
+                        % (a['award'], a['pec'], a['name'], a['title'], a['start'], 
                         a['expiry'], nla, a['num_datasets'], url, amd_link)
         msg += "</table>"
         tsv_file.close()

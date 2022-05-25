@@ -14,7 +14,7 @@
   <meta name="MSSmartTagsPreventParsing" content="true" />
   <meta name="google-signin-client_id" content="721663637720-0a8uo4obj9sqs4vchbl2ti1l0euu6lpr.apps.googleusercontent.com"/>
   <meta name="google-site-verification" content="Y3conOQPHcauhmSbYswJ6Cj8i8in8PtPPn1UWYHFyNo" />
-  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.png') }}" type="image/x-icon"/>
+  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon"/>
   <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet"/>
   <link rel="stylesheet" href="https://www.w3schools.com/lib/w3.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
@@ -206,7 +206,7 @@
   <script src="{{ url_for('static', filename='bower_components/arc.js/arc.js') }}"></script>
   <script src="{{ url_for('static', filename='js/search_old.js') }}" type="text/javascript"></script>
   {% endif %}
-  {% if cur=='dataset' or cur=='curator' or cur=='login' or cur=='submit'%}
+  {% if cur=='dataset' or cur=='curator' or cur=='login' or cur=='submit' or cur=='stats' or cur=='dashboard' %}
   <script src="{{ url_for('static', filename='js/logout.js') }}" type="text/javascript"></script>
   {% endif %}
   {% if cur=='stats' %}

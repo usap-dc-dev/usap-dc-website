@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 """
 Script to go through project_deployment table and check that R2R URLs are correct.
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 landing_page = R2R_LANDING_PAGE + cruise
             else:
                 landing_page = ''
-                print('No cruise data found for %s') % cruise
+                print(('No cruise data found for %s') % cruise)
             
             if d['url'] != landing_page:
                 sql_cmd = """UPDATE project_deployment SET url = %s WHERE proj_uid = %s AND deployment_id = %s;""" 

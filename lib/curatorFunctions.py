@@ -31,8 +31,6 @@ CURATORS_LIST = "inc/curators.txt"
 DATACITE_CONFIG = "inc/datacite.json"
 DATACITE_TO_ISO_XSLT = "static/DataciteToISO19139v3.2.xslt"
 ISOXML_SCRIPT = "bin/makeISOXMLFile.py"
-PYTHON = "/opt/rh/python27/root/usr/bin/python"
-LD_LIBRARY_PATH = "/opt/rh/python27/root/usr/lib64"
 PROJECT_DATASET_ID_FILE = "inc/proj_ds_ref"
 RECENT_DATA_FILE = "inc/recent_data.txt"
 REF_UID_FILE = "inc/ref_uid"
@@ -66,14 +64,14 @@ def submitToDataCite(uid, edit=False):
  
     # read in datacite xml file
     try:
-        with open(datacite_file, "r") as f:
+        with open(datacite_file, "r", encoding='utf-8') as f:
             xml = f.read()
     except Exception as e:
         return("Error reading DataCite XML file: %s" % str(e))
 
     # apply base64 encoding
     try:
-        xml_b64 = base64.b64encode(xml)
+        xml_b64 = base64.b64encode(xml.encode("utf-8")).decode()
     except Exception as e:
         return("Error encoding DataCite XML: %s" % str(e))
 
@@ -152,8 +150,8 @@ def getDataCiteXML(uid):
 
     # write the xml to a temporary file
     xml_file = getDCXMLFileName(uid)
-    with open(xml_file, "w") as myfile:
-        myfile.write(out_text)
+    with open(xml_file, "w", encoding='utf-8') as myfile:
+        myfile.write(out_text.decode())
     os.chmod(xml_file, 0o664)
     return(xml_file, status)
 
@@ -163,7 +161,7 @@ def getDataCiteXMLFromFile(uid):
     # check if datacite xml file already exists
     if os.path.exists(dcxml_file):
         try:
-            with open(dcxml_file) as infile:
+            with open(dcxml_file, encoding='utf-8') as infile:
                 dcxml = infile.read()
             return dcxml
         except:
@@ -180,16 +178,15 @@ def getISOXMLFromFile(uid, update=False):
     # check if datacite xml file already exists
     # if not, or if updating, run doISOXML to generate 
     if not os.path.exists(isoxml_file) or update:
-        msg = doISOXML(uid)
+        msg = doISOXML(uid).decode()
         if msg.find("Error") >= 0:
             return msg
     try:
-        with open(isoxml_file) as infile:
+        with open(isoxml_file, encoding='utf-8') as infile:
             isoxml = infile.read()
         return isoxml
     except:
         return "Error reading ISO XML file."
-    return "Will be generated after Database import"
 
 
 def getISOXMLFileName(uid):
@@ -202,7 +199,7 @@ def isRegisteredWithDataCite(uid):
     cur.execute(query)
     res = cur.fetchone()
     return (res['doi'] and len(res['doi']) > 0)
-    
+
 
 def doISOXML(uid):
     # get datacite XML
@@ -217,9 +214,9 @@ def doISOXML(uid):
         xsl_filename = DATACITE_TO_ISO_XSLT
         isoxml_filename = getISOXMLFileName(uid)
 
-        os.environ['LD_LIBRARY_PATH'] = LD_LIBRARY_PATH
+        os.environ['LD_LIBRARY_PATH'] = config['LD_LIBRARY_PATH']
         # need to run external script as lxml module doesn't seem to work when running with apache
-        process = Popen([PYTHON, ISOXML_SCRIPT, xml_filename, xsl_filename, isoxml_filename], stdout=PIPE)
+        process = Popen([config['PYTHON_PATH'], ISOXML_SCRIPT, xml_filename, xsl_filename, isoxml_filename], stdout=PIPE)
         (output, err) = process.communicate()
         if err:
             return "Error making ISO XML file.  %s" % err
@@ -249,10 +246,12 @@ def isCurator():
     # `echo -n "<ORCID or GOOGLE ID>" | openssl sha256` on the command line
     if session.get('user_info') is None:
         return False
-    userid = session['user_info'].get('id')
+    userid = session['user_info'].get('sub')
     if userid is None:
         userid = session['user_info'].get('orcid')
-    userid_sha256 = hashlib.sha256(userid).hexdigest()
+    if userid is None:
+        return False
+    userid_sha256 = hashlib.sha256(userid.encode()).hexdigest()
     curator_file = open(CURATORS_LIST, 'r')
     curators = curator_file.read().split('\n')
     return userid_sha256 in curators
@@ -1015,11 +1014,11 @@ def editProjectJson2sql(data, uid):
 
     # compare original with edited json
     updates = set()
-    for k in orig.keys():
+    for k in list(orig.keys()):
         if orig[k] != data.get(k) and not (orig[k] in ['None', None, ''] and data.get(k) in ['None', None, '']):
             print(k)
-            print("orig:", orig.get(k))
-            print("new:", data.get(k))
+            print(("orig:", orig.get(k)))
+            print(("new:", data.get(k)))
             if k in ['geo_e', 'geo_n', 'geo_s', 'geo_w', 'cross_dateline']:
                 updates.add('spatial_extents')
             elif k in ['pi_name_last', 'pi_name_first']:
@@ -1759,7 +1758,7 @@ def getDifXML(data, uid):
 
     # write XML to file
     file_name = getDifXMLFileName(uid)
-    with open(file_name, 'w') as out_file:
+    with open(file_name, 'w', encoding='utf-8') as out_file:
         out_file.write(prettify(root))
     os.chmod(file_name, 0o664)
 
@@ -2006,16 +2005,16 @@ def updateRecentData(uid):
                                                                      res.get('creator'), res.get('title'))
         try:
             # read in file
-            with open(RECENT_DATA_FILE, 'r') as rd_file:
+            with open(RECENT_DATA_FILE, 'r', encoding='utf-8') as rd_file:
                 lines = rd_file.readlines()
             for line in lines[1:]:
                 entries[line] = line[0:10]
             if newline not in lines:
                 entries[newline] = newline[0:10]
                 # re-write file
-                with open(RECENT_DATA_FILE, 'w') as rd_file:
+                with open(RECENT_DATA_FILE, 'w', encoding='utf-8') as rd_file:
                     rd_file.write(lines[0])
-                    for entry in sorted(entries.items(), key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=True):
+                    for entry in sorted(list(entries.items()), key=lambda x: datetime.strptime(x[1], '%Y-%m-%d'), reverse=True):
                         rd_file.write(entry[0])
             return None
         except Exception as e:
@@ -2023,9 +2022,10 @@ def updateRecentData(uid):
     return("Error updating Recent Data file: can't find database record for %s." % uid)
 
 
-def getLandingPage(uid):
+def getLandingPage(uid, cur):
     landing_page = ''
-    conn, cur = usap.connect_to_db()
+    if not cur:
+        conn, cur = usap.connect_to_db()
     if (uid.find('p') > -1):
         query = "SELECT COUNT(*) FROM project WHERE proj_uid = '%s';" % uid.replace('e', '')
         cur.execute(query)
@@ -2451,7 +2451,7 @@ def get_file_info(ds_id, url, dataset_dir, replace):
 
                                         except Exception as err:
                                             doc_types.add('Unknown')
-                                            print("Couldn't open tar.Z file %s\n" % member.name)
+                                            print(("Couldn't open tar.Z file %s\n" % member.name))
                                             print(err)
 
                                     elif mnamel.endswith('.tar') or mnamel.endswith('.tar.gz') or mnamel.endswith('.tgz'):

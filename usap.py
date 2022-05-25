@@ -1,18 +1,13 @@
-from __future__ import print_function
-
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, flash, send_from_directory, send_file, current_app, Blueprint, make_response
+from flask import Flask, session, render_template, redirect, url_for, request, send_from_directory, send_file, current_app, make_response
 from flask_jsglue import JSGlue
 from random import randint
 import os
-from flask_oauth import OAuth
+from authlib.integrations.flask_client import OAuth
 import json
-from urllib2 import Request, urlopen
-from urlparse import urlparse, unquote
+from urllib.request import urlopen
+from urllib.parse import urlparse, unquote, urlencode
 from werkzeug.utils import secure_filename
 import smtplib
 from email.mime.text import MIMEText
@@ -25,7 +20,6 @@ from datetime import datetime, timedelta, date as dt_date
 import csv
 from collections import namedtuple
 import humanize
-import urllib
 import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
@@ -43,6 +37,7 @@ import email
 from email.header import decode_header
 from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
+import time
 
 
 app = Flask(__name__)
@@ -94,32 +89,19 @@ def api():
     return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
 
-oauth = OAuth()
-google = oauth.remote_app('google',
-                          base_url='https://www.google.com/accounts/',
-                          authorize_url='https://accounts.google.com/o/oauth2/auth',
-                          request_token_url=None,
-                          request_token_params={'scope': 'https://www.googleapis.com/auth/userinfo.email',
-                                                'response_type': 'code'},
-                          access_token_url='https://accounts.google.com/o/oauth2/token',
-                          access_token_method='POST',
-                          access_token_params={'grant_type': 'authorization_code'},
-                          consumer_key=app.config['GOOGLE_CLIENT_ID'],
-                          consumer_secret=app.config['GOOGLE_CLIENT_SECRET'])
+oauth = OAuth(app)
 
+google = oauth.register('google',
+                        client_id=app.config['GOOGLE_CLIENT_ID'],
+                        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+                        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+                        client_kwargs={'scope': 'openid profile email'})
 
-orcid = oauth.remote_app('orcid',
-                         base_url='https://orcid.org/oauth/',
-                         authorize_url='https://orcid.org/oauth/authorize',
-                         request_token_url=None,
-                         request_token_params={'scope': '/authenticate',
-                                               'response_type': 'code',
-                                               'show_login': 'true'},
-                         access_token_url='https://pub.orcid.org/oauth/token',
-                         access_token_method='POST',
-                         access_token_params={'grant_type': 'authorization_code'},
-                         consumer_key=app.config['ORCID_CLIENT_ID'],
-                         consumer_secret=app.config['ORCID_CLIENT_SECRET'])
+orcid = oauth.register('orcid',
+                       client_id=app.config['ORCID_CLIENT_ID'],
+                       client_secret=app.config['ORCID_CLIENT_SECRET'],
+                       server_metadata_url='https://orcid.org/.well-known/openid-configuration',
+                       client_kwargs={'scope': 'openid '})
 
 config = json.loads(open('config.json', 'r').read())
 
@@ -169,80 +151,6 @@ def get_nsf_grants(columns, award=None, only_inhabited=True):
 
     cur.execute(query_string)
     return cur.fetchall()
-
-
-# DEPRECATED
-def filter_datasets(dataset_id=None, award=None, parameter=None, location=None, person=None, platform=None,
-                    sensor=None, west=None, east=None, south=None, north=None, spatial_bounds=None, spatial_bounds_interpolated=None, start=None, stop=None, program=None,
-                    project=None, title=None, limit=None, offset=None):
-    (conn, cur) = connect_to_db()
-    query_string = '''SELECT DISTINCT d.id
-                      FROM dataset d
-                      LEFT JOIN dataset_award_map dam ON dam.dataset_id=d.id
-                      LEFT JOIN award a ON a.award = dam.award_id
-                      LEFT JOIN dataset_keyword_map dkm ON dkm.dataset_id=d.id
-                      LEFT JOIN keyword k ON k.id=dkm.keyword_id
-                      LEFT JOIN dataset_parameter_map dparm ON dparm.dataset_id=d.id
-                      LEFT JOIN parameter par ON par.id=dparm.parameter_id
-                      LEFT JOIN dataset_location_map dlm ON dlm.dataset_id=d.id
-                      LEFT JOIN location l ON l.id=dlm.location_id
-                      LEFT JOIN dataset_person_map dperm ON dperm.dataset_id=d.id
-                      LEFT JOIN person per ON per.id=dperm.person_id
-                      LEFT JOIN dataset_platform_map dplm ON dplm.dataset_id=d.id
-                      LEFT JOIN platform pl ON pl.id=dplm.platform_id
-                      LEFT JOIN dataset_sensor_map dsenm ON dsenm.dataset_id=d.id
-                      LEFT JOIN sensor sen ON sen.id=dsenm.sensor_id
-                      LEFT JOIN dataset_spatial_map sp ON sp.dataset_id=d.id
-                      LEFT JOIN dataset_temporal_map tem ON tem.dataset_id=d.id
-                      LEFT JOIN award_program_map apm ON apm.award_id=a.award
-                      LEFT JOIN program prog ON prog.id=apm.program_id
-                      LEFT JOIN dataset_initiative_map dprojm ON dprojm.dataset_id=d.id
-                      LEFT JOIN initiative proj ON proj.id=dprojm.initiative_id
-                   '''
-    conds = []
-    if dataset_id:
-        conds.append(cur.mogrify('d.id=%s', (dataset_id,)))
-    if title:
-        conds.append(cur.mogrify('d.title ILIKE %s', ('%' + title + '%',)))
-    if award:
-        [num, name] = award.split(' ', 1)
-        conds.append(cur.mogrify('a.award=%s', (num,)))
-        conds.append(cur.mogrify('a.name=%s', (name,)))
-    if parameter:
-        conds.append(cur.mogrify('par.id ILIKE %s', ('%' + parameter + '%',)))
-    if location:
-        conds.append(cur.mogrify('l.id=%s', (location,)))
-    if person:
-        conds.append(cur.mogrify('per.id=%s', (person,)))
-    if platform:
-        conds.append(cur.mogrify('pl.id=%s', (platform,)))
-    if sensor:
-        conds.append(cur.mogrify('sen.id=%s', (sensor,)))
-    if west:
-        conds.append(cur.mogrify('%s <= sp.east', (west,)))
-    if east:
-        conds.append(cur.mogrify('%s >= sp.west', (east,)))
-    if north:
-        conds.append(cur.mogrify('%s >= sp.south', (north,)))
-    if south:
-        conds.append(cur.mogrify('%s <= sp.north', (south,)))
-    if spatial_bounds_interpolated:
-        conds.append(cur.mogrify("st_intersects(st_transform(sp.bounds_geometry,3031),st_geomfromewkt('srid=3031;'||%s))", (spatial_bounds_interpolated,)))
-    if start:
-        conds.append(cur.mogrify('%s <= tem.stop_date', (start,)))
-    if stop:
-        conds.append(cur.mogrify('%s >= tem.start_date', (stop,)))
-    if program:
-        conds.append(cur.mogrify('prog.id=%s ', (program,)))
-    if project:
-        conds.append(cur.mogrify('proj.id=%s ', (project,)))
-    conds.append(cur.mogrify('url IS NOT NULL '))
-    conds = ['(' + c + ')' for c in conds]
-    if len(conds) > 0:
-        query_string += ' WHERE ' + ' AND '.join(conds)
-
-    cur.execute(query_string)
-    return [d['id'] for d in cur.fetchall()]
 
 
 def get_datasets(dataset_ids):
@@ -358,7 +266,7 @@ def get_parameters(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT DISTINCT id FROM gcmd_science_key'
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -375,7 +283,7 @@ def get_locations(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = 'SELECT DISTINCT id FROM gcmd_location'
-    query += cur.mogrify(' ORDER BY id')
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -384,7 +292,7 @@ def get_usap_locations(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
     query = "SELECT * FROM vw_location"
-    query += cur.mogrify(' ORDER BY keyword_label')
+    query += ' ORDER BY keyword_label'
     cur.execute(query)
     return cur.fetchall()
 
@@ -394,8 +302,8 @@ def get_keywords(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM keyword'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+        query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,)).decode()
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -405,8 +313,8 @@ def get_platforms(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM platform'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT platform_id FROM dataset_platform_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+        query += cur.mogrify(' WHERE id in (SELECT platform_id FROM dataset_platform_map WHERE dataset_id=%s)', (dataset_id,)).decode()
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -416,9 +324,9 @@ def get_persons(conn=None, cur=None, dataset_id=None, order=True):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT person_id FROM dataset_person_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE id in (SELECT person_id FROM dataset_person_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     if order:
-        query += cur.mogrify(' ORDER BY id')
+        query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -428,8 +336,8 @@ def get_project_persons(conn=None, cur=None, project_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if project_id:
-        query += cur.mogrify(' WHERE id in (SELECT person_id FROM project_person_map WHERE proj_uid=%s)', (project_id,))
-    query += cur.mogrify(' ORDER BY id')
+        query += cur.mogrify(' WHERE id in (SELECT person_id FROM project_person_map WHERE proj_uid=%s)', (project_id,)).decode()
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -438,7 +346,7 @@ def get_person(person_id):
     (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person'
     if person_id:
-        query += cur.mogrify(' WHERE id = %s', (person_id,))
+        query += cur.mogrify(' WHERE id = %s', (person_id,)).decode()
     cur.execute(query)
     return cur.fetchone()
 
@@ -448,8 +356,8 @@ def get_sensors(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM sensor'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT sensor_id FROM dataset_sensor_map WHERE dataset_id=%s)', (dataset_id,))
-    query += cur.mogrify(' ORDER BY id')
+        query += cur.mogrify(' WHERE id in (SELECT sensor_id FROM dataset_sensor_map WHERE dataset_id=%s)', (dataset_id,)).decode()
+    query += ' ORDER BY id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -459,7 +367,7 @@ def get_references(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM reference'
     if dataset_id:
-        query += cur.mogrify(' WHERE ref_uid in (SELECT ref_uid FROM dataset_reference_map WHERE dataset_id=%s)', (dataset_id,))
+        query += cur.mogrify(' WHERE ref_uid in (SELECT ref_uid FROM dataset_reference_map WHERE dataset_id=%s)', (dataset_id,)).decode()
     cur.execute(query)
     return cur.fetchall()
 
@@ -469,7 +377,7 @@ def get_spatial_extents(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_spatial_map'
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,)).decode()
     cur.execute(query)
     return cur.fetchall()
 
@@ -479,7 +387,7 @@ def get_temporal_extents(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_temporal_map'
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,)).decode()
     cur.execute(query)
     return cur.fetchall()
 
@@ -497,7 +405,8 @@ def get_projects(conn=None, cur=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM initiative ORDER BY ID'
     cur.execute(query)
-    return cur.fetchall()
+    # need to convert from RealDictRow to dict
+    return [dict(row) for row in cur.fetchall()]
 
 
 def get_licenses(conn=None, cur=None):
@@ -537,8 +446,8 @@ def get_files(conn=None, cur=None, dataset_id=None):
         (conn, cur) = connect_to_db()
     query = 'SELECT * FROM dataset_file '
     if dataset_id:
-        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,))
-    query += cur.mogrify(' ORDER BY file_name;')
+        query += cur.mogrify(' WHERE dataset_id=%s', (dataset_id,)).decode()
+    query += ' ORDER BY file_name;'
     cur.execute(query)
     return cur.fetchall()
 
@@ -600,7 +509,7 @@ def dataset(dataset_id=None):
 
     # if editing - check user has editing permissions on this dataset
     if edit and not check_user_permission(user_info, dataset_id):
-            return redirect(url_for('invalid_user', dataset_id=dataset_id))
+        return redirect(url_for('invalid_user', dataset_id=dataset_id))
 
     if request.method == 'POST':
         if request.form.get('action') == "Previous Page":
@@ -627,8 +536,8 @@ def dataset(dataset_id=None):
             # save to file
             if user_info.get('orcid'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
-                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            elif user_info.get('sub'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to save dataset."
             if save_file:
@@ -647,8 +556,8 @@ def dataset(dataset_id=None):
             # restore from file
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
-                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            elif user_info.get('sub'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to restore dataset"
 
@@ -668,11 +577,10 @@ def dataset(dataset_id=None):
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
                                    only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
- 
-     
+
         if edit:
             return redirect('/edit/dataset2/' + dataset_id, code=307)
-       
+
         return redirect(url_for('dataset2'), code=307)
 
     else:
@@ -719,11 +627,10 @@ def dataset(dataset_id=None):
                                persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
 
 
-
 def groupPage1Fields(page1):
     # collect publications, awards, authors, etc, and save as lists
 
-    publications_keys = [s for s in page1.keys() if "publication" in s and s != "publications"]
+    publications_keys = [s for s in list(page1.keys()) if "publication" in s and s != "publications"]
     if len(publications_keys) > 0:
         page1['publications'] = []
         publications_keys.sort(key=partial(sortNumerically, replace_str='publication'))
@@ -736,8 +643,7 @@ def groupPage1Fields(page1):
             del page1[key]
             del page1[key.replace('publication', 'pub_doi')]
 
-
-    awards_keys = [s for s in page1.keys() if "award" in s and "user" not in s and s != "awards"]
+    awards_keys = [s for s in list(page1.keys()) if "award" in s and "user" not in s and s != "awards"]
     awards = []
     if len(awards_keys) > 0:
         awards_keys.sort(key=partial(sortNumerically, replace_str='award'))
@@ -753,7 +659,7 @@ def groupPage1Fields(page1):
             del page1[key]
         page1['awards'] = awards
 
-    locations_keys = [s for s in page1.keys() if "location" in s and "user" not in s and s != "locations"]
+    locations_keys = [s for s in list(page1.keys()) if "location" in s and "user" not in s and s != "locations"]
     locations = []
     if len(locations_keys) > 0:
         locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
@@ -770,7 +676,7 @@ def groupPage1Fields(page1):
         page1['locations'] = locations
 
 
-    author_keys = [s for s in page1.keys() if "author_name_last" in s and s != "authors"]
+    author_keys = [s for s in list(page1.keys()) if "author_name_last" in s and s != "authors"]
     if len(author_keys) > 0:
         page1['authors'] = []
         author_keys.sort(key=partial(sortNumerically, replace_str='author_name_last'))
@@ -879,9 +785,9 @@ def dataset_db2form(uid):
                 f_name = os.path.basename(f_path)
                 f_subpath = f_path[len(directory):]
                 files.append({'url': os.path.join(url, f_subpath), 'name': f_name, 'size': humanize.naturalsize(f_size)})
-                page2['uploaded_files'] = files
                 page2['filenames'].append(f_name)
-            files.sort()
+            page2['uploaded_files'] = files
+
         else:
             page2['uploaded_files'] = [{'url': url, 'name': os.path.basename(os.path.normpath(url))}]
 
@@ -895,40 +801,68 @@ def dataset_readme2form(uid):
     # check readme file is found and is plain text (not a pdf)
     if r.url != url_for('not_found', _external=True) and r.headers.get('Content-Type') and r.headers['Content-Type'].find('text/plain') == 0:
         text = r.text
-        start = text.find('Instruments and devices:') + len('Instruments and devices:')
-        end = text.find('Acquisition procedures:')
-        form_data['devices'] = text[start:end].replace('\n', '')
 
-        start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
-        end = text.find('Content and processing steps:')
-        form_data['procedures'] = text[start:end].replace('\n', '')
+        if 'Content and processing steps' in text:
+            # old readme file format
+            start = text.find('Instruments and devices:') + len('Instruments and devices:')
+            end = text.find('Acquisition procedures:')
+            form_data['devices'] = text[start:end].replace('\n', '')
 
-        start = text.find('Content and processing steps:') + len('Content and processing steps:')
-        end = text.find('Limitations and issues:')
-        c_p = text[start:end].replace('\r', '').split('\n\n')
-        form_data['content'] = c_p[0].replace('\n', '')
-        if len(c_p) > 1:
-            form_data['data_processing'] = c_p[1].replace('\n', '')
+            start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
+            end = text.find('Content and processing steps:')
+            form_data['procedures'] = text[start:end].replace('\n', '')
+
+            start = text.find('Content and processing steps:') + len('Content and processing steps:')
+            end = text.find('Limitations and issues:')
+            c_p = text[start:end].replace('\r', '').split('\n\n')
+            form_data['content'] = c_p[0].replace('\n', '')
+            if len(c_p) > 1:
+                form_data['data_processing'] = c_p[1].replace('\n', '')
+            else:
+                form_data['data_processing'] = ''
+
+            start = text.find('Limitations and issues:') + len('Limitations and issues:')
+            end = text.find('Checkboxes:')
+            form_data['issues'] = text[start:end].replace('\n', '')
         else:
-            form_data['data_processing'] = ''
+            # new readme file format
+            start = text.find('Instruments and devices:') + len('Instruments and devices:')
+            end = text.find('Acquisition procedures:')
+            form_data['devices'] = text[start:end].replace('\n', '').strip()
 
-        start = text.find('Limitations and issues:') + len('Limitations and issues:')
-        end = text.find('Checkboxes:')
-        form_data['issues'] = text[start:end].replace('\n', '')
+            start = text.find('Acquisition procedures:') + len('Acquisition procedures:')
+            end = text.find('Description of data processing:')
+            form_data['procedures'] = text[start:end].replace('\n', '').strip()
+
+            start = text.find('Description of data processing:') + len('Description of data processing:')
+            end = text.find('Description of data content:')
+            form_data['data_processing'] = text[start:end].replace('\n', '').strip()
+
+            start = text.find('Description of data content:') + len('Description of data content:')
+            end = text.find('Limitations and issues:')
+            form_data['content'] = text[start:end].replace('\n', '').strip()
+
+            start = text.find('Limitations and issues:') + len('Limitations and issues:')
+            end = text.find('Checkboxes:')
+            form_data['issues'] = text[start:end].replace('\n', '').strip()
 
     return form_data
 
 
 def dataset_oldform2form(uid):
     #get Related Field Event IDs and Region Feature Name from previous submission
-    submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-    # if there is an editted file, use taht one, other wise use original
-    if os.path.isfile(os.path.join(submitted_dir, "e" + uid + ".json")):
-        submitted_file = os.path.join(submitted_dir, "e" + uid + ".json")
-    else:
-        submitted_file = os.path.join(submitted_dir, uid + ".json")
-
+    submitted_dir = os.path.normpath(os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER']))
     try:
+        if not submitted_dir.startswith(current_app.root_path):
+            raise Exception()
+        # if there is an editted file, use that one, other wise use original
+        if os.path.isfile(os.path.join(submitted_dir, "e" + uid + ".json")):
+            submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + uid + ".json"))
+        else:
+            submitted_file = os.path.normpath(os.path.join(submitted_dir, uid + ".json"))
+  
+        if not submitted_file.startswith(current_app.root_path):
+            raise Exception()
         with open(submitted_file) as infile:
             submitted_data = json.load(infile)
     except:
@@ -1113,6 +1047,12 @@ def maintenance():
     return render_template('roadworks.html')
 
 
+#test route for static site maintenance page that should be copied to /var/www/html
+@app.route('/site_maintenance')
+def site_maintenance():
+    return redirect(url_for('static', filename='maintenance.html'))
+
+
 def check_project_registration(msg_data):
 
     def default_func(field):
@@ -1212,7 +1152,7 @@ def dataset2(dataset_id=None):
 
             if edit:
                 # get all the names of any files previously uploaded
-                file_keys = [s for s in request.form.keys() if "uploaded_file_" in s]
+                file_keys = [s for s in list(request.form.keys()) if "uploaded_file_" in s]
                 for f in file_keys:
                     msg_data['filenames'].append(f.replace('uploaded_file_', ''))
                     del(msg_data[f])
@@ -1228,10 +1168,10 @@ def dataset2(dataset_id=None):
                 if len(fname) > 0:
                     fnames[fname] = f
 
-            msg_data['filenames'] += fnames.keys()
+            msg_data['filenames'] += list(fnames.keys())
 
             # if files have been added or deleted during an edit, we will create a new dataset
-            if edit and (len(files) > 0 or msg_data.get('file_deleted') == 'true'):
+            if edit and (len(fnames) > 0 or msg_data.get('file_deleted') == 'true'):
                 msg_data['related_dataset'] = dataset_id
                 msg_data['edit'] = False
                 edit = False
@@ -1249,21 +1189,29 @@ def dataset2(dataset_id=None):
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
 
-            for fname, fobj in fnames.items():
+            for fname, fobj in list(fnames.items()):
                 fobj.save(os.path.join(upload_dir, fname))
           
             # save json file in submitted dir
-            submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-            if edit:
-                submitted_file = os.path.join(submitted_dir, "e" + dataset_id + ".json")
-            else:
-                # get next_id
-                next_id = getNextDOIRef()
-                updateNextDOIRef()
-                submitted_file = os.path.join(submitted_dir, next_id + ".json")
-            with open(submitted_file, 'w') as file:
-                file.write(json.dumps(msg_data, indent=4, sort_keys=True))
-            os.chmod(submitted_file, 0o664)
+            try:
+                submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+                if edit:
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + dataset_id + ".json"))
+                else:
+                    # get next_id
+                    next_id = getNextDOIRef()
+                    updateNextDOIRef()
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, next_id + ".json"))
+                if not submitted_file.startswith(current_app.root_path):
+                    raise Exception()
+                with open(submitted_file, 'w') as file:
+                    file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+                os.chmod(submitted_file, 0o664)
+
+            except Exception as e:
+                error = "Unable to submit dataset. Please contact info@usap-dc.org"
+                return render_template('dataset2.html', error=error, success=success, 
+                                dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
           
             # email RT queue
             if edit:
@@ -1273,20 +1221,20 @@ def dataset2(dataset_id=None):
                 message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message.encode('utf-8'))
+            msg = MIMEText(message)
             if msg_data.get('submitter_email'):
                 sender = msg_data.get('submitter_email')
             else:
                 sender = msg_data.get('email')
             if msg_data.get('submitter_name'):
                 sender = "%s <%s>" % (msg_data['submitter_name'], sender)
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']]
+            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']])
 
             if edit:
                 msg['Subject'] = 'USAP-DC Dataset Edit [uid:%s]' % dataset_id
             else: 
                 msg['Subject'] = 'USAP-DC Dataset Submission [uid:%s]' % next_id
-            msg['From'] = sender
+            msg['From'] = parse_email(sender)
             msg['To'] = ', '.join(recipients)
 
             smtp_details = config['SMTP']
@@ -1335,8 +1283,8 @@ def dataset2(dataset_id=None):
             # save to file
             if user_info.get('orcid'):
                 save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
-                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            elif user_info.get('sub'):
+                save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to save dataset."
             if save_file:
@@ -1354,8 +1302,8 @@ def dataset2(dataset_id=None):
             # restore from file
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + ".json")
-            elif user_info.get('id'):
-                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + ".json")
+            elif user_info.get('sub'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + ".json")
             else:
                 error = "Unable to restore dataset"
             if saved_file:
@@ -1467,17 +1415,22 @@ def project(project_id=None):
                 del msg_data['current_dmp']
 
             # save json file in submitted dir
-            submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-            if edit:
-                submitted_file = os.path.join(submitted_dir, "e" + project_id + ".json")
-            else:
-                # get next_id for project
-                next_id = getNextProjectRef()
-                updateNextProjectRef()
-                submitted_file = os.path.join(submitted_dir, next_id + ".json")
-            with open(submitted_file, 'w') as file:
-                file.write(json.dumps(msg_data, indent=4, sort_keys=True))
-            os.chmod(submitted_file, 0o664)
+            try:
+                submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
+                if edit:
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + project_id + ".json"))
+                else:
+                    # get next_id for project
+                    next_id = getNextProjectRef()
+                    updateNextProjectRef()
+                    submitted_file = os.path.normpath(os.path.join(submitted_dir, next_id + ".json"))
+                if not submitted_file.startswith(current_app.root_path):
+                    raise Exception()
+                with open(submitted_file, 'w') as file:
+                    file.write(json.dumps(msg_data, indent=4, sort_keys=True))
+                os.chmod(submitted_file, 0o664)
+            except:
+                raise BadSubmission('Unable to submit Project. Please contact info@usap-dc.org', '/submit/project')
 
             # email RT queue
             if edit:
@@ -1487,7 +1440,7 @@ def project(project_id=None):
                 message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
                     % (request.url_root, next_id)
             message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message.encode('utf-8'))
+            msg = MIMEText(message)
 
             # use submitter's email if available, otherwise the email given in the form
             sender = msg_data.get('submitter_email')
@@ -1496,13 +1449,13 @@ def project(project_id=None):
             if msg_data.get('submitter_name'):
                 sender = "%s <%s>" % (msg_data['submitter_name'], sender)
 
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']]
+            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']])
 
             if edit:
                 msg['Subject'] = 'USAP-DC Project Edit [uid:%s]' % project_id
             else: 
                 msg['Subject'] = 'USAP-DC Project Submission [uid:%s]' % next_id
-            msg['From'] = sender
+            msg['From'] = parse_email(sender)
             msg['To'] = ', '.join(recipients)
 
             smtp_details = config['SMTP']
@@ -1542,7 +1495,7 @@ def project(project_id=None):
             cur.execute(query)
             cur.execute('COMMIT')   
             
-            return redirect('thank_you/project')
+            return redirect('/thank_you/project')
 
         elif request.form.get('action') == "save":
 
@@ -1558,8 +1511,8 @@ def project(project_id=None):
             # restore from file
             if user_info.get('orcid'):
                 saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
-            elif user_info.get('id'):
-                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+            elif user_info.get('sub'):
+                saved_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + "_p.json")
             else:
                 error = "Unable to restore dataset"
             if saved_file:
@@ -1653,8 +1606,8 @@ def save_project(project_metadata):
     # save to file
     if user_info.get('orcid'):
         save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['orcid'] + "_p.json")
-    elif user_info.get('id'):
-        save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['id'] + "_p.json")
+    elif user_info.get('sub'):
+        save_file = os.path.join(app.config['SAVE_FOLDER'], user_info['sub'] + "_p.json")
     else:
         error = "Unable to save project."
     if save_file:
@@ -1783,7 +1736,7 @@ def process_form_data(form):
         key = 'publication' + str(idx)
     msg_data['publications'] = publications
 
-    locations_keys = [s for s in request.form.keys() if "location" in s and "user" not in s]
+    locations_keys = [s for s in list(request.form.keys()) if "location" in s and "user" not in s]
     locations = []
     if len(locations_keys) > 0:
         locations_keys.sort(key=partial(sortNumerically, replace_str='location'))
@@ -1959,45 +1912,43 @@ def login():
 
 @app.route('/login_google')
 def login_google():
-    callback = url_for('authorized', _external=True)
-    return google.authorize(callback=callback)
+    redirect_uri = url_for('authorized', _external=True)
+    return google.authorize_redirect(redirect_uri)
 
 
 @app.route('/login_orcid')
 def login_orcid():
-    callback = url_for('authorized_orcid', _external=True)
-    return orcid.authorize(callback=callback)
+    redirect_uri = url_for('authorized_orcid', _external=True)
+    return orcid.authorize_redirect(redirect_uri)
 
 
 @app.route('/authorized')
-@google.authorized_handler
-def authorized(resp):
-    access_token = resp['access_token']
-    session['google_access_token'] = access_token, ''
-    session['googleSignedIn'] = True
-    headers = {'Authorization': 'OAuth ' + access_token}
-    req = Request('https://www.googleapis.com/oauth2/v1/userinfo',
-                  None, headers)
-    res = urlopen(req)
-    session['user_info'] = json.loads(res.read())
-    if session['user_info'].get('name') is None:
+def authorized():
+    token = google.authorize_access_token()
+    session['google_access_token'] = token, ''
+    user = token.get('userinfo')  
+    session['user_info'] = user
+    if user.get('name') is None:
         session['user_info']['name'] = ""
 
-    session['user_info']['is_curator'] = cf.isCurator()
+    session['user_info']['is_curator'] = cf.isCurator() 
+    # return flask.jsonify(session['user_info'])  
     return redirect(session['next'])
 
 
 @app.route('/authorized_orcid')
-@orcid.authorized_handler
-def authorized_orcid(resp):
-    session['orcid_access_token'] = resp['access_token']
-
+def authorized_orcid():
+    token = orcid.authorize_access_token()
+    session['orcid_access_token'] = token
+    user = token.get('userinfo')  
     session['user_info'] = {
-        'name': resp.get('name'),
-        'orcid': resp.get('orcid')
+        'name': '',
+        'orcid': user.get('sub')
     }
+    if user.get('given_name') and user.get('family_name'):
+        session['user_info']['name'] =  '%s %s' % (user.get('given_name'), user.get('family_name'))
 
-    res = requests.get('https://pub.orcid.org/v2.1/' + resp['orcid'] + '/email',
+    res = requests.get('https://pub.orcid.org/v2.1/' + user['sub'] + '/email',
                        headers={'accept': 'application/json'}).json()
     try:
         email = res['email'][0]['email']
@@ -2005,13 +1956,9 @@ def authorized_orcid(resp):
     except:
         email = ''
 
-    session['user_info']['is_curator'] = cf.isCurator()
+    session['user_info']['is_curator'] = cf.isCurator() 
+    # return flask.jsonify(session['user_info'])  
     return redirect(session['next'])
-
-
-@google.tokengetter
-def get_access_token():
-    return session.get('google_access_token')
 
 
 @app.route('/logout', methods=['GET'])
@@ -2043,7 +1990,7 @@ def home():
 
     # read in news
     news_dict = []
-    with open("inc/recent_news.txt") as csvfile:
+    with open("inc/recent_news.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 2:
@@ -2052,7 +1999,7 @@ def home():
         template_dict['news_dict'] = news_dict
     # read in recent data
     data_dict = []
-    with open("inc/recent_data.txt") as csvfile:
+    with open("inc/recent_data.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 4: 
@@ -2143,101 +2090,6 @@ def abstract_examples():
     return render_template('abstract_examples.html')
 
 
-#DEPRECATED
-@app.route('/search_old', methods=['GET', 'POST'])
-def search_old():
-    if request.method == 'GET':
-        return render_template('search_old.html', search_params=session.get('search_params'), nsf_grants=get_nsf_grants(['award', 'name', 'title']), keywords=get_keywords(),
-                               parameters=get_parameters(), locations=get_locations(), platforms=get_platforms(),
-                               persons=get_persons(), sensors=get_sensors(), programs=get_programs(), projects=get_projects(), titles=get_titles())
-    elif request.method == 'POST':
-        params = request.form.to_dict()
-        filtered = filter_datasets(**params)
-
-        del params['spatial_bounds_interpolated']
-        session['filtered_datasets'] = filtered
-        session['search_params'] = params
-
-        return redirect('/search_result')
-
-
-#DEPRECATED
-@app.route('/filter_search_menus', methods=['GET'])
-def filter_search_menus():
-    keys = ['person', 'parameter', 'program', 'award', 'title', 'project']
-    args = request.args.to_dict()
-    # if reseting:
-    if args == {}:
-        session['search_params'] = {}
-
-    person_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'person'})
-    person_dsets = get_datasets(person_ids)
-    persons = set([p['id'] for d in person_dsets for p in d['persons']])
-
-    parameter_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'parameter'})
-    parameter_dsets = get_datasets(parameter_ids)
-    parameters = set([' > '.join(p['id'].split(' > ')[2:]) for d in parameter_dsets for p in d['parameters']])
-
-    program_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'program'})
-    program_dsets = get_datasets(program_ids)
-    programs = set([p['id'] for d in program_dsets for p in d['programs']])
-
-    award_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'award'})
-    award_dsets = get_datasets(award_ids)
-    awards = set([(p['name'], p['award']) for d in award_dsets for p in d['awards']])
-
-    project_ids = filter_datasets(**{k: args.get(k) for k in keys if k != 'project'})
-    project_dsets = get_datasets(project_ids)
-    projects = set([p['id'] for d in project_dsets for p in d['projects']])
-#    projects = set([d['id'] for d in project_dsets])
-
-    return flask.jsonify({
-        'person': sorted(persons),
-        'parameter': sorted(parameters),
-        'program': sorted(programs),
-        'award': [a[1] + ' ' + a[0] for a in sorted(awards)],
-        'project': sorted(projects),
-        'sci_program': sorted(projects)
-    })
-
-# DEPRECATED
-@app.route('/search_result', methods=['GET', 'POST'])
-def search_result():
-    if 'filtered_datasets' not in session:
-        return redirect('/search_old')
-    filtered_ids = session['filtered_datasets']
-    
-    exclude = False
-    if request.method == 'POST':
-        exclude = request.form.get('exclude') == "on"
-
-    datasets = get_datasets(filtered_ids)
-
-    grp_size = 50
-    dataset_grps = []
-    cur_grp = []
-    total_count = 0
-    for d in datasets:
-        if exclude and d.get('spatial_extents') and len(d.get('spatial_extents')) > 0 and \
-            ((d.get('spatial_extents')[0].get('east') == 180 and d.get('spatial_extents')[0].get('west') == -180) or \
-            (d.get('spatial_extents')[0].get('east') == 360 and d.get('spatial_extents')[0].get('west') == 0)):
-            continue
-        if len(cur_grp) < grp_size:
-            cur_grp.append(d)
-        else:
-            dataset_grps.append(cur_grp)
-            cur_grp = []
-        total_count += 1
-    if len(cur_grp) > 0:
-        dataset_grps.append(cur_grp)
-    
-    return render_template('search_result.html',
-                                      total_count=total_count,
-                                      dataset_grps=dataset_grps,
-                                      exclude=exclude,
-                                      search_params=session['search_params'])
-
-
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'GET':
@@ -2252,12 +2104,12 @@ def contact():
         resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
         if resp.get('success'):
             sender = "%s <%s>" % (form['contactname'], form['contactemail'])
-            recipients = [app.config['USAP-DC_GMAIL_ACCT']] 
+            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']]) 
             message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['contactname'], form['msg'])
 
-            msg = MIMEText(message.encode('utf-8'))
+            msg = MIMEText(message)
             msg['Subject'] = form['subj']
-            msg['From'] = sender
+            msg['From'] = parse_email(sender)
             msg['To'] = ', '.join(recipients)
             smtp_details = config['SMTP']
             s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
@@ -2305,7 +2157,7 @@ def news():
     template_dict = {}
     # read in news
     news_dict = []
-    with open("inc/recent_news.txt") as csvfile:
+    with open("inc/recent_news.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 2:
@@ -2321,7 +2173,7 @@ def data():
     template_dict = {}
     # read in recent data
     data_dict = []
-    with open("inc/recent_data.txt") as csvfile:
+    with open("inc/recent_data.txt", 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter="\t")
         for row in reader:
             if row[0] == "#" or len(row) < 4:
@@ -2836,10 +2688,11 @@ def curator():
             error = None 
             try:
                 # run sql to import data into the database
-                sql_str = request.form.get('crossref_sql').encode('utf-8')   
+                sql_str = request.form.get('crossref_sql')
                 cur.execute(sql_str)
                 # rename crossref file once it has been ingested
-                os.rename(app.config['CROSSREF_FILE'], app.config['OLD_CROSSREF_FILE'])
+                if os.path.exists(app.config['CROSSREF_FILE']):
+                    os.rename(app.config['CROSSREF_FILE'], app.config['OLD_CROSSREF_FILE'])
 
                 message.append("Successfully imported to database")                        
             except Exception as err:
@@ -2847,7 +2700,7 @@ def curator():
             finally:
                 return render_template('curator.html', type='addCrossref', crossref_sql=sql_str, message=message, error=error)
             
-        if not request.args.get('uid'):    
+        if not request.args.get('uid'):
             # get list of json files in submission directory, ordered by date
             query = "SELECT * FROM submission ORDER BY submitted_date DESC"
             cur.execute(query)
@@ -2856,7 +2709,7 @@ def curator():
                 submissions = []
                 for sub in res:
                     uid = sub['uid']
-                    landing_page = cf.getLandingPage(uid)
+                    landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update']})
 
@@ -2940,7 +2793,7 @@ def curator():
 
                 # read in json and convert to sql
                 if request.form.get('submit') == 'make_sql':
-                    json_str = request.form.get('json').encode('utf-8')
+                    json_str = request.form.get('json')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
 
@@ -3015,10 +2868,13 @@ def curator():
                         json_data = json.loads(json_str)
                         timestamp = json_data.get('timestamp')
                         if timestamp:
-                            upload_dir = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp)
-                            uid_dir = os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid)
+                            upload_dir = os.path.normpath(os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'], timestamp))
+                            uid_dir = os.path.normpath(os.path.join(current_app.root_path, app.config['DATASET_FOLDER'], 'usap-dc', uid))
                             dest_dir = os.path.join(uid_dir, timestamp)
                             try:
+                                if not uid_dir.startswith(current_app.root_path) or not upload_dir.startswith(current_app.root_path):
+                                    raise Exception()
+
                                 if os.path.exists(dest_dir):
                                     shutil.rmtree(dest_dir)
                                 shutil.copytree(upload_dir, dest_dir)
@@ -3029,7 +2885,10 @@ def curator():
                                 # or the replaced dataset
                                 if json_data.get('related_dataset') and json_data.get('filenames'):
                                     old_ds = get_datasets([json_data['related_dataset']])[0]
-                                    old_dir = old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/')
+                                    old_dir = os.path.normpath(old_ds.get('url').replace(app.config['USAP_DOMAIN'], current_app.root_path + '/'))
+                                    if not old_dir.startswith(current_app.root_path):
+                                        raise Exception()
+
                                     for f in json_data['filenames']:
                                         if not os.path.exists(os.path.join(dest_dir, f)) and os.path.exists(os.path.join(old_dir, f)):
                                             shutil.copy(os.path.join(old_dir, f), dest_dir)
@@ -3057,10 +2916,12 @@ def curator():
                     template_dict.update(request.form.to_dict())
                     template_dict['tab'] = "readme"
                     readme_str = request.form.get('readme').encode('utf-8')
-                    filename = request.form.get('readme_file')
+                    filename = os.path.normpath(request.form.get('readme_file'))
                     try:
+                        if not filename.startswith(app.config['DOCS_FOLDER']):
+                            raise Exception()
                         with open(filename, 'w') as out_file:
-                            out_file.write(readme_str)
+                            out_file.write(readme_str.decode())
                         os.chmod(filename, 0o664)
                         template_dict['message'].append("Successfully updated Read Me file")
                     except:
@@ -3126,8 +2987,8 @@ def curator():
                         edit = True
                     datacite_file = cf.getDCXMLFileName(dc_uid)
                     try:
-                        with open(datacite_file, 'w') as out_file:
-                            out_file.write(xml_str)
+                        with open(datacite_file, 'w', encoding='utf-8') as out_file:
+                            out_file.write(xml_str.decode())
                         os.chmod(datacite_file, 0o664)
 
                         msg = cf.submitToDataCite(dc_uid, edit)
@@ -3195,8 +3056,8 @@ def curator():
                     xml_str = request.form.get('isoxml').encode('utf-8')
                     isoxml_file = cf.getISOXMLFileName(dc_uid)
                     try:
-                        with open(isoxml_file, 'w') as out_file:
-                            out_file.write(xml_str)
+                        with open(isoxml_file, 'w', encoding='utf-8') as out_file:
+                            out_file.write(xml_str.decode())
                             template_dict['message'].append("ISO XML file saved to watch directory.")
                         os.chmod(isoxml_file, 0o664)
                         if not edit:
@@ -3247,12 +3108,12 @@ def curator():
                     template_dict['tab'] = 'email'
                     try:
                         sender = app.config['USAP-DC_GMAIL_ACCT']
-                        recipients_text = request.form.get('email_recipients').encode('utf-8')
+                        recipients_text = request.form.get('email_recipients')
                         recipients = recipients_text.splitlines()
                         recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
                         msg_raw = create_gmail_message(sender, recipients, request.form.get('email_subject'), request.form.get('email_text'))
-                        msg_raw['threadId'] = get_threadid(uid)
- 
+                        # msg_raw['threadId'] = get_threadid(uid) - this slow down the process, and I don't know if it is necessary
+
                         service, error = connect_to_gmail()
                         if error:
                             template_dict['error'] = error
@@ -3298,7 +3159,7 @@ def curator():
 
                 # read in json and convert to sql
                 elif request.form.get('submit') == 'make_project_sql':
-                    json_str = request.form.get('proj_json').encode('utf-8')
+                    json_str = request.form.get('proj_json')
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
                     sql = cf.projectJson2sql(json_data, uid)
@@ -3307,7 +3168,7 @@ def curator():
    
                 # read in sql and submit to the database only
                 elif request.form.get('submit') == 'import_project_to_db':
-                    sql_str = request.form.get('proj_sql').encode('utf-8')
+                    sql_str = request.form.get('proj_sql')
                     template_dict['sql'] = sql_str
                     template_dict['tab'] = "project_sql"
                     problem = False
@@ -3339,7 +3200,6 @@ def curator():
                                                           + "become available. In the case that you archive your dataset(s) at the USAP-DC repository we will automatically link the dataset to the project." \
                                                           + "\n\nAny edits will be reviewed by a USAP-DC curator before they become live." \
                                                           + "\n\nBest regards,"
-
                         template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
                         template_dict['db_imported'] = True
                         template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid)
@@ -3354,16 +3214,25 @@ def curator():
                         json_data = json.loads(json_str)
                         if json_data.get('dmp_file') is not None and json_data['dmp_file'] != '' and \
                            json_data.get('upload_directory') is not None and json_data.get('award') is not None:
-                            
-                            src = os.path.join(json_data['upload_directory'], json_data['dmp_file'])
-                            dst_dir = os.path.join(app.config['AWARDS_FOLDER'], json_data['award'].split(' ')[0])
+                            src = os.path.normpath(os.path.join(json_data['upload_directory'], json_data['dmp_file']))
+                            dst_dir = os.path.normpath(os.path.join(app.config['AWARDS_FOLDER'], json_data['award'].split(' ')[0]))
                             try:
+                                # secutity check
+                                if not dst_dir.startswith(app.config['AWARDS_FOLDER']):
+                                    raise Exception()
+
                                 if not os.path.exists(dst_dir):
                                     os.mkdir(dst_dir)
-                                dst = os.path.join(dst_dir, json_data['dmp_file'])
+                                
+                                dst = os.path.normpath(os.path.join(dst_dir, json_data['dmp_file']))
+                                # secutity check
+                                upload_path = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'])
+                                if not dst.startswith(app.config['AWARDS_FOLDER']) or not src.startswith(upload_path):
+                                    raise Exception()
+
                                 shutil.copyfile(src, dst)
                             except Exception as e:
-                                return ("ERROR: unable to copy data management plan to award directory. \n" + str(e))
+                                template_dict['error'] = "ERROR: unable to copy data management plan to award directory. \n" + str(e)
                                 problem = True
 
                         # Update submission table
@@ -3397,22 +3266,22 @@ def curator():
 
                     # any award updates
                     update_awards = []
-                    for key in request.form.keys():
+                    for key in list(request.form.keys()):
                         if 'proj_award_' in key:
                             award_id = key.split('_')[-1]
                             update_awards.append({'award_id': award_id, 
-                                                 'is_main_award': data.get('proj_main_award') == [award_id], 
-                                                 'is_previous_award': data.get('proj_previous_award_'+award_id) == ['on'],
-                                                 'remove': data.get('remove_award_'+award_id) == ['on']
+                                                 'is_main_award': data.get('proj_main_award') == award_id, 
+                                                 'is_previous_award': data.get('proj_previous_award_'+award_id) == 'on',
+                                                 'remove': data.get('remove_award_'+award_id) == 'on'
                                                  })
 
                     # any new awards
                     new_award = None
-                    award = data.get('proj_award')[0]
+                    award = data.get('proj_award')
                     if award and award.strip() != '':
                         new_award = {'award_id': award,
-                                     'is_main_award': data.get('proj_main_award') == ['new_award'], 
-                                     'is_previous_award': data.get('proj_previous_award') == ['on']}
+                                     'is_main_award': data.get('proj_main_award') == 'new_award', 
+                                     'is_previous_award': data.get('proj_previous_award') == 'on'}
 
                     (msg, status) = cf.updateProjectAwards(uid, update_awards, new_award)
                     if status == 0:
@@ -3436,7 +3305,7 @@ def curator():
                         cur.execute(sql_str)
                         msg = "File Info successfully updated in database."
                         template_dict['message'].append(msg)
-                        template_dict['landing_page'] = cf.getLandingPage(uid)
+                        template_dict['landing_page'] = cf.getLandingPage(uid, cur)
                         template_dict['file_sql'] = ''
                     except Exception as err:
                         template_dict['error'] = "Error Updating File Info in database: " + str(err)                    
@@ -3458,8 +3327,8 @@ def curator():
                     xml_str = request.form.get('difxml').encode('utf-8')
                     difxml_file = cf.getDifXMLFileName(uid)
                     try:
-                        with open(difxml_file, 'w') as out_file:
-                            out_file.write(xml_str)
+                        with open(difxml_file, 'w', encoding='utf-8') as out_file:
+                            out_file.write(xml_str.decode())
                             template_dict['message'].append("DIF XML file saved to watch directory.")
                         os.chmod(difxml_file, 0o664)
                         # Update submission table
@@ -3513,6 +3382,9 @@ def curator():
             else:
                 # display submission json file
                 try:
+                    submission_file = os.path.normpath(submission_file)
+                    if not submission_file.startswith(submitted_dir):
+                        raise Exception()
                     with open(submission_file) as infile:
                         data = json.load(infile)
                         submission_data = json.dumps(data, sort_keys=True, indent=4)
@@ -3649,7 +3521,7 @@ def emails():
         thread['num_messages'] = len(thread['messages'])
         for message in thread['messages']:
             raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
-            msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
+            msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode()).decode()
             mime_msg = email.message_from_string(msg_str)
             subject = decode_header(mime_msg["Subject"])[0][0]
             if isinstance(subject, bytes):
@@ -3716,7 +3588,7 @@ def emails():
         if request.form.get('submit') == "send_email":
             try:
                 sender = app.config['USAP-DC_GMAIL_ACCT']
-                recipients_text = request.form.get('email_recipients').encode('utf-8')
+                recipients_text = request.form.get('email_recipients')
                 recipients = recipients_text.splitlines()
                 recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
                 msg_raw = create_gmail_message(sender, recipients, thread.get('subject'), request.form.get('email_text'))
@@ -3777,49 +3649,67 @@ def emails():
     return render_template('emails.html', **template_dict)
 
 
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
+
+
+def parse_email_list(recipients):
+    return [parse_email(r) for r in recipients]
+
+
+# remove any names with non-ascii characters
+def parse_email(r):
+    if is_ascii(r):
+        return r
+    else:
+        start = r.find('<')+1
+        end = r.find('>')
+        return r[start:end]
+
 def create_gmail_message(sender, recipients, subject, message_text):
-  """Create a message for an email.
+    """Create a message for an email.
 
-  Args:
-    sender: Email address of the sender.
-    to: Email address of the receiver.
-    subject: The subject of the email message.
-    message_text: The text of the email message.
+    Args:
+        sender: Email address of the sender.
+        to: Email address of the receiver.
+        subject: The subject of the email message.
+        message_text: The text of the email message.
 
-  Returns:
-    An object containing a base64url encoded email object.
-  """
-  message = MIMEText(message_text.encode('utf-8'))
-  message['To'] = ', '.join(recipients).encode('utf-8')
-  message['From'] = sender.encode('utf-8')
-  message['Subject'] = subject.encode('utf-8')
-  return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
+    Returns:
+        An object containing a base64url encoded email object.
+    """
+    message = MIMEText(message_text)
+    recipients = parse_email_list(recipients)
+    message['To'] = ', '.join(recipients)
+    message['From'] = parse_email(sender)
+    message['Subject'] = subject
+    return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
 
 
 def send_gmail(service, user_id, message):
-  """Send an email message.
+    """Send an email message.
 
-  Args:
-    service: Authorized Gmail API service instance.
-    user_id: User's email address. The special value "me"
-    can be used to indicate the authenticated user.
-    message: Message to be sent.
+    Args:
+        service: Authorized Gmail API service instance.
+        user_id: User's email address. The special value "me"
+        can be used to indicate the authenticated user.
+        message: Message to be sent.
 
-  Returns:
-    success and error messages.
-  """
-  success = None
-  error = None
-  try:
-    message = (service.users().messages().send(userId=user_id, body=message)
-               .execute())
-    print('Message Id: %s' % message['id'])
-    success = "Email sent"
-    return success, error
-  except Exception as error:
-    print('An error occurred: %s' % error)
-    err = "Error sending email: " + str(error)
-    return success, err
+    Returns:
+        success and error messages.
+    """
+    success = None
+    error = None
+    try:
+        message = (service.users().messages().send(userId=user_id, body=message)
+                    .execute())
+        print('Message Id: %s' % message['id'])
+        success = "Email sent"
+        return success, error
+    except Exception as error:
+        print('An error occurred: %s' % error)
+        err = "Error sending email: " + str(error)
+        return success, err
 
 
 def get_threadid(uid):
@@ -3835,13 +3725,14 @@ def get_threadid(uid):
         thread = service.users().threads().get(userId='me', id=t['id']).execute()
         message = thread['messages'][0]
         raw_message = service.users().messages().get(userId='me', id=message['id'], format='raw').execute()
-        msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII'))
-        mime_msg = email.message_from_string(msg_str)
+        msg_str = base64.urlsafe_b64decode(raw_message['raw'].encode('ASCII')).decode()
+        mime_msg = email.message_from_string(msg_str.decode())
         subject = decode_header(mime_msg["Subject"])[0][0]
+        if isinstance(subject, bytes):
+            subject = subject.decode()
         substr = '[uid:%s]' % uid
         if subject.find(substr) >=0:
             return t['id']
-    
     return None
 
 
@@ -3853,88 +3744,6 @@ def getFromDifTable(col, all_selected):
     query += "ORDER BY %s;" % col
     cur.execute(query)
     return cur.fetchall()
-
-
-@app.route('/catalog_browser', methods=['GET', 'POST'])
-def catalog_browser():
-    all_selected = False
-    template_dict = {'pi_name': '', 'title': '', 'award': '', 'dif_id': '', 'all_selected': all_selected}
-    (conn, cur) = connect_to_db()
-
-    query = "SELECT DISTINCT dif_test.*, ST_AsText(dsm.bounds_geometry) AS bounds_geometry FROM dif_test LEFT JOIN dif_spatial_map dsm ON dsm.dif_id = dif_test.dif_id WHERE dif_test.dif_id !=''"
-
-    if request.method == 'POST':
-
-        template_dict['pi_name'] = request.form.get('pi_name')
-        template_dict['title'] = request.form.get('title')
-        template_dict['summary'] = request.form.get('summary')
-        template_dict['award'] = request.form.get('award')
-        template_dict['dif_id'] = request.form.get('dif_id')
-        all_selected = bool(int(request.form.get('all_selected')))
-        template_dict['all_selected'] = all_selected
-
-        # print(bool(int(request.form.get('all_selected'))))
-        if (request.form.get('pi_name') != ""):
-            query += " AND dif_test.pi_name ~* '%s'" % request.form['pi_name']
-        if(request.form.get('title') != ""):
-            query += " AND dif_test.title ILIKE '%" + request.form['title'] + "%'"
-        if(request.form.get('summary') != ""):
-            query += " AND dif_test.summary ILIKE '%" + request.form['summary'] + "%'"
-        if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
-            query += " AND dif_test.award = '%s'" % request.form['award']
-        if (request.form.get('dif_id') != "" and request.form.get('dif_id') != "Any DIF ID"):
-            query += " AND dif_test.dif_id = '%s'" % request.form['dif_id']
-
-    if not all_selected:
-        query += " AND dif_test.is_usap_dc = true"
-
-    query += " ORDER BY dif_test.date_created DESC"
-
-    query_string = cur.mogrify(query)
-    cur.execute(query_string)
-    rows = cur.fetchall()
-
-    for row in rows:
-        authors = row['pi_name']
-        if row['co_pi'] != "":
-            authors += "; %s" % row['co_pi']
-        row['authors'] = authors
-        if row['award'] != "":
-            row['award'] = int(row['award'])
-            row['award_7d'] = "%07d" % row['award']
-        ds_query = "SELECT * FROM dif_data_url_map WHERE dif_id = '%s'" % row['dif_id']
-        ds_query_string = cur.mogrify(ds_query)
-        cur.execute(ds_query_string)
-        datasets = cur.fetchall()
-
-        # get the list of repositories
-        repos = []
-        for ds in datasets:
-            repo = ds['repository']
-            if repo not in repos:
-                repos.append(repo)
-        row['repositories'] = repos
-
-        if row['dif_id'] == "NSF-ANT05-37143":
-            datasets = [{'title': 'Studies of Antarctic Fungi', 'url': url_for('genBank_datasets')}]
-
-        row['datasets'] = datasets
-
-    template_dict['dif_records'] = rows
-
-    if template_dict['award'] == "":
-        template_dict['award'] = "Any award"
-
-    if template_dict['dif_id'] == "":
-        template_dict['dif_id'] = "Any DIF ID"
-
-    # get list of available options for drop downs and autocomplete
-    template_dict['awards'] = getFromDifTable('award', all_selected)
-    template_dict['dif_ids'] = getFromDifTable('dif_id', all_selected)
-    template_dict['titles'] = getFromDifTable('title', all_selected)
-    template_dict['pi_names'] = getFromDifTable('pi_name', all_selected)
-
-    return render_template('catalog_browser.html', **template_dict)
 
 
 @app.route('/filter_dif_menus', methods=['GET'])
@@ -4005,9 +3814,8 @@ def genBank_datasets():
 
 @app.route('/getfeatureinfo')
 def getfeatureinfo():
-    print('getfeatureinfo')
     if request.args.get('layers') != "":
-        url = urllib.unquote('https://api-upgrade.usap-dc.org:8443/wfs?' + urllib.urlencode(request.args))
+        url = unquote('https://api-upgrade.usap-dc.org:8443/wfs?' + urlencode(request.args))
         return requests.get(url).text
     return None
 
@@ -4129,7 +3937,7 @@ def crossref2ref_text(item):
 
     ref_text += "."
 
-    print("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text
+    print(("*****REF_TEXT GENERATED FROM CROSSREF:\n%s") % ref_text)
 
     return ref_text
 
@@ -4159,7 +3967,7 @@ def crossref_pubs():
                         r_bib = requests.get(bib_url)
                         if r_bib.status_code == 200 and r_bib.content:
                             # split off the DOI in the cite-as string, as we don't need in our ref_text
-                            ref_text = r_bib.content.rsplit(' doi', 1)[0]
+                            ref_text = r_bib.content.decode().rsplit(' doi', 1)[0]
                         else:
                             # if x-bibliography API doesn't return anything, generate ref_text from what we have in crossref
                             ref_text = crossref2ref_text(item)
@@ -4167,7 +3975,6 @@ def crossref_pubs():
                         # if no DOI, generate ref_text from what we have in crossref
                         ref_text = crossref2ref_text(item)
 
-                    ref_text = unicode(ref_text, 'utf-8')
                     pub = {'doi': ref_doi, 'ref_text': ref_text}
                     pubs.append(pub)
 
@@ -4248,8 +4055,7 @@ def stats():
     download_users_total = 0
     download_files_total = 0
     download_size_total = 0
-    months_list = downloads.keys()
-    months_list.sort()
+    months_list = sorted(downloads)
     for month in months_list:
         download_numfiles_bytes.append([month, downloads[month]['num_files'], downloads[month]['bytes']])
         download_files_total += downloads[month]['num_files']
@@ -4298,11 +4104,10 @@ def stats():
 
     num_project_views = []
     project_views_total = 0
-    months_list = proj_views.keys()
-    months_list.sort()
+    months_list = sorted(proj_views)
     for month in months_list:
         num_month_views = 0
-        for host in proj_views[month].keys():
+        for host in list(proj_views[month].keys()):
             if host not in blocked_hosts:
                 num_month_views += proj_views[month][host]
                 project_views_total += proj_views[month][host]
@@ -4344,11 +4149,10 @@ def stats():
 
     num_ext_clicks = []
     ext_clicks_total = 0
-    months_list = ext_clicks.keys()
-    months_list.sort()
+    months_list = sorted(ext_clicks)
     for month in months_list:
         num_month_views = 0
-        for host in ext_clicks[month].keys():
+        for host in list(ext_clicks[month].keys()):
             if host not in blocked_hosts:
                 num_month_views += ext_clicks[month][host]
                 ext_clicks_total += ext_clicks[month][host]
@@ -4369,7 +4173,7 @@ def stats():
             resource = row['resource_requested']
             search = parseSearch(resource)
 
-            for search_param, searches_param in params.items():
+            for search_param, searches_param in list(params.items()):
                 searches = binSearch(search, searches, search_param, searches_param)
 
         template_dict['searches'] = searches
@@ -4497,8 +4301,7 @@ def stats():
         submissions[qt]['submissions'].add(submission)
 
     submission_submissions = []
-    quarters_list = submissions.keys()
-    quarters_list.sort()
+    quarters_list = sorted(submissions)
     for qt in quarters_list:
         submission_submissions.append([qt, len(submissions[qt]['submissions'])])
         submissions_total += len(submissions[qt]['submissions'])
@@ -4524,8 +4327,7 @@ def stats():
         projects_total += 1
 
     projects_created = []
-    quarters_list = projects.keys()
-    quarters_list.sort()
+    quarters_list = sorted(projects)
     cumulative = 0
     for qt in quarters_list:
         cumulative += projects[qt]['before'] + projects[qt]['after']
@@ -4551,7 +4353,7 @@ def binSearch(search, searches, search_param, searches_param):
 
         if search_param == 'dp_title' or search_param == 'sci_program':
             # make binning case insensitive for sci prog and title
-            s_lower = {k.lower():k for k in searches[searches_param].keys()}
+            s_lower = {k.lower():k for k in list(searches[searches_param].keys())}
             param_lower = search[search_param].lower()
             if s_lower.get(param_lower):
                 searches[searches_param][s_lower[param_lower]] += 1
@@ -4642,11 +4444,12 @@ def data_management_plan():
     dmp_link = request.form.get('dmp_link')
     if dmp_link.startswith('/'):
         dmp_link = dmp_link[1:]
+    fullpath = os.path.normpath(os.path.join(current_app.root_path, dmp_link))
+
     try:
-        if not validate_dmp_link(dmp_link):
+        if not validate_dmp_link(dmp_link) or not fullpath.startswith(current_app.root_path):
             return redirect(url_for('not_found'))
-        return send_file(os.path.join(current_app.root_path, dmp_link),
-                         attachment_filename=os.path.basename(dmp_link))
+        return send_file(fullpath, attachment_filename=os.path.basename(dmp_link))
     except:
         return redirect(url_for('not_found'))
 
@@ -4772,93 +4575,6 @@ def get_project(project_id):
         return cur.fetchone()
 
 
-#DEPRECATED
-@app.route('/project_browser', methods=['GET', 'POST'])
-def project_browser():
-
-    if request.method == 'POST':
-        params = request.form.to_dict()
-        filtered = filter_datasets(**params)
-
-        del params['spatial_bounds_interpolated']
-        session['filtered_datasets'] = filtered
-        session['search_params'] = params
-
-    template_dict = {'pi_name': '', 'title': '', 'award': '', 'summary': ''}
-    (conn, cur) = connect_to_db()
-
-    query = "SELECT DISTINCT project.*, per.persons, a.awards, ST_AsText(psm.bounds_geometry) AS bounds_geometry " + \
-            "FROM project " + \
-            "LEFT JOIN project_spatial_map psm ON psm.proj_uid = project.proj_uid " + \
-            "LEFT JOIN (" + \
-            "SELECT pperm.proj_uid, string_agg(per.id, '; ') persons " + \
-            "FROM project_person_map pperm JOIN person per ON per.id=pperm.person_id " + \
-            "WHERE pperm.role ILIKE '%investigator%' " + \
-            "GROUP BY pperm.proj_uid) per ON per.proj_uid = project.proj_uid " + \
-            "LEFT JOIN ( " + \
-            "SELECT pam.proj_uid, string_agg(a.award,'; ') awards " + \
-            "FROM project_award_map pam JOIN award a ON a.award=pam.award_id " + \
-            "GROUP BY pam.proj_uid) a ON a.proj_uid = project.proj_uid " + \
-            "WHERE project.proj_uid !=''"
-
-    if request.method == 'POST':
-        template_dict['pi_name'] = request.form.get('pi_name')
-        template_dict['title'] = request.form.get('title')
-        template_dict['summary'] = request.form.get('summary')
-        template_dict['award'] = request.form.get('award')
-
-        if (request.form.get('pi_name') != ""):
-            query += " AND per.persons ~* '%s'" % request.form['pi_name']
-        if(request.form.get('title') != ""):
-            query += " AND project.title ILIKE '%" + request.form['title'] + "%'"
-        if(request.form.get('summary') != ""):
-            query += " AND project.description ILIKE '%" + request.form['summary'] + "%'"
-        if (request.form.get('award') != "" and request.form.get('award') != "Any award"):
-            query += " AND a.awards ~* '%s'" % request.form['award']
-
-    query += " ORDER BY project.date_created DESC"
-
-    query_string = cur.mogrify(query)
-    cur.execute(query_string)
-    rows = cur.fetchall()
-
-    for row in rows:
-        authors = row['persons']
-        row['authors'] = authors
-        if row['awards'] != "":
-            awards = row['awards'].split('; ')
-            row['awards_7d'] = []
-            for award in awards:
-                row['awards_7d'].append("%07d" % int(award))
-        ds_query = "SELECT * FROM project_dataset pd " + \
-                   "LEFT JOIN project_dataset_map pdm ON pdm.dataset_id = pd.dataset_id " + \
-                   "WHERE pdm.proj_uid = '%s'" % row['proj_uid']
-        ds_query_string = cur.mogrify(ds_query)
-        cur.execute(ds_query_string)
-        datasets = cur.fetchall()
-        row['datasets'] = datasets
-
-    template_dict['proj_records'] = rows
-
-    if template_dict['award'] == "":
-        template_dict['award'] = "Any award"
-
-    # get list of available options for drop downs and autocomplete
-    query = "SELECT DISTINCT award_id as award FROM project_award_map ORDER BY award_id;"
-    cur.execute(query)
-    template_dict['awards'] = cur.fetchall()
-    query = "SELECT DISTINCT title FROM project ORDER BY title;"
-    cur.execute(query)
-    template_dict['titles'] = cur.fetchall()
-    query = "SELECT DISTINCT person_id as pi_name FROM project_person_map pperm " + \
-            "WHERE pperm.role ILIKE '%investigator%' ORDER BY person_id;"
-    cur.execute(query)
-    template_dict['pi_names'] = cur.fetchall()
-    template_dict['dif_ids'] = getFromDifTable('dif_id', True)
-
-    return render_template('project_browser.html', **template_dict)
-
-
 @app.route('/search', methods=['GET'])
 def search():
     template_dict = {}
@@ -4941,15 +4657,18 @@ def filter_joint_menus():
     dp_titles = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'dp_title'})
     titles = set()
     for d in dp_titles:
-        titles.add(d['title'])
+        if d['title']:
+            titles.add(d['title'])
         if d.get('dataset_titles'):
             ds_titles = d['dataset_titles'].split(';')
             for ds in ds_titles:
-                titles.add(ds)
+                if ds:
+                    titles.add(ds)
         if d.get('project_titles'):
             p_titles = d['project_titles'].split(';')
             for p in p_titles:
-                titles.add(p)
+                if p:
+                    titles.add(p)
   
     dp_persons = filter_datasets_projects(**{k: params.get(k) for k in keys if k != 'person'})
     persons = set()
@@ -5047,7 +4766,6 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         conds.append(cur.mogrify('dpv.persons ~* %s', (person,)))
     if spatial_bounds_interpolated:
         conds.append(cur.mogrify("st_intersects(('srid=4326;'||replace(b,'\"',''))::geography,st_transform(st_geomfromewkt('srid=3031;'||%s),4326))", (spatial_bounds_interpolated,)))
-
         conds.append("b is not null and b!= 'null'")
     if exclude:
         conds.append(cur.mogrify("NOT ((dpv.east=180 AND dpv.west=-180) OR (dpv.east=360 AND dpv.west=0))"))
@@ -5069,9 +4787,13 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if repo:
         conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 
-    conds = ['(' + c + ')' for c in conds]
     if len(conds) > 0:
-        query_string += ' WHERE ' + ' AND '.join(conds)
+        q_conds = []
+        for c in conds:
+            if isinstance(c, bytes):
+                c = c.decode()
+            q_conds.append('(%s)' % c)
+        query_string += ' WHERE ' + ' AND '.join(q_conds)
     cur.execute(query_string)
     return cur.fetchall()
 
@@ -5089,7 +4811,6 @@ def escapeQuotes(string):
 
 def initcap(s):
     parts = re.split("( |_|-|>)+", s)
-    print(parts)
     name = ' '.join([p.lower().capitalize() for p in parts])
     # handle names with apostrophes
     if "'" in name:
@@ -5282,9 +5003,9 @@ def send_award_email(res):
     letter_type = submit_type[1]
     try:
         sender = app.config['USAP-DC_GMAIL_ACCT']
-        recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id)).encode('utf-8')
+        recipients_text = res.get('%s_email_recipients_%s' %(letter_type, award_id))
         # FOR TESTING - use curator's email
-        #recipients_text = session.get('user_info').get('email')
+        # recipients_text = session.get('user_info').get('email')
 
         recipients = recipients_text.splitlines()
         recipients.append(app.config['USAP-DC_GMAIL_ACCT'])
@@ -5342,6 +5063,11 @@ def tracker():
     return redirect(url_for('not_found'))
 
 
+@app.route('/favicon.ico', methods=['GET'])
+def favicon():
+    return redirect(url_for('static', filename='imgs/favicon.ico'))
+
+
 @app.errorhandler(500)
 def internal_error(error):
     return redirect(url_for('not_found'))
@@ -5364,8 +5090,3 @@ app.jinja_env.globals.update(ceil=math.ceil)
 app.jinja_env.globals.update(int=int)
 app.jinja_env.globals.update(filter_awards=lambda awards: [aw for aw in awards if aw['award'] != 'XXXXXXX'])
 app.jinja_env.globals.update(json_dumps=json.dumps)
-
-if __name__ == "__main__":
-    # SECRET_KEY = 'development key'
-    # app.secret_key = SECRET_KEY
-    app.run(host=app.config['SERVER_NAME'], debug=True, threaded=True)

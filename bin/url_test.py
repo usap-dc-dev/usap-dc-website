@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 """
 Program to test landing pages and edit pages 
@@ -48,17 +48,17 @@ def connect_to_db():
 def testUrl(url, verbose):
     r = requests.get(url)
     if r.url == LOGIN:
-        if verbose: print('%s: TEST ERROR - Login page. Please bypass authentication.' % url)
+        if verbose: print(('%s: TEST ERROR - Login page. Please bypass authentication.' % url))
         return('%s: TEST ERROR - Login page. Please bypass authentication.' % url)
         return('<li><a href="%s">%s</a> TEST ERROR - Login page. Please bypass authentication.</li>' % (url, url))
     if r.url == NOTFOUND or r.url != url:
-        if verbose: print('%s: ERROR - page not found' % url)
+        if verbose: print(('%s: ERROR - page not found' % url))
         return('<li><a href="%s">%s</a> ERROR - landing page not found</li>' % (url, url))
     if r.status_code == 200:
-        if verbose: print('%s: OK' % url)
+        if verbose: print(('%s: OK' % url))
         return("")
     else:
-        if verbose: print('%s: ERROR - status_code %s' % (url, r.status_code))
+        if verbose: print(('%s: ERROR - status_code %s' % (url, r.status_code)))
         return('<li><a href="%s">%s</a>: ERROR - problem loading landing page. Status code %s</li>' % (url, url, r.status_code))
 
 
@@ -69,23 +69,23 @@ def testUrlFromTable(url, bad_url_col, bad_url_count, uid_col, uid, table, cur, 
     try:
         r = requests.get(url, verify=False, timeout=30)
         if r.status_code != 404:
-            if verbose: print('%s: OK' % url)
+            if verbose: print(('%s: OK' % url))
 
             # if a previously broken url starts working again, update status in table
-            if bad_url_col and bad_url_count >=1:
+            if bad_url_col and bad_url_count and bad_url_count >= 1:
                 query = "UPDATE %s SET status='exist', %s=0 WHERE %s='%s';" % (table, bad_url_col, uid_col, uid)
                 cur.execute(query)
 
             return("")
         else:
-            if verbose: print('%s: ERROR in table %s - status_code: %s' % (url, table, r.status_code))
+            if verbose: print(('%s: ERROR in table %s - status_code: %s' % (url, table, r.status_code)))
             # if keeping count of how many times a URL is reported as broken, then update the database now
             if bad_url_col:
                 return(incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid))
             else:
                 return('<li><a href="%s">%s</a>: ERROR in table %s - broken link: %s</li>' % (url, url, table))
     except Exception as e:
-        if verbose: print('%s: ERROR in table %s- %s') % (url, table, str(e))
+        if verbose: print((('%s: ERROR in table %s- %s') % (url, table, str(e))))
         # if keeping count of how many times a URL is reported as broken, then update the database now
         if bad_url_col:
             return(incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid))
@@ -94,7 +94,7 @@ def testUrlFromTable(url, bad_url_col, bad_url_count, uid_col, uid, table, cur, 
 
 
 def incrementBadUrlCount(cur, table, url, bad_url_col, bad_url_count, uid_col, uid):
-    if bad_url_count >= 3:
+    if bad_url_count and bad_url_count >= 3:
         return("")
     if not bad_url_count:
         bad_url_count = 1
@@ -138,13 +138,13 @@ def testUrlsInFile(file, verbose):
         try:
             r = requests.get(url, verify=False, timeout=30)
             if r.status_code != 404:
-                if verbose: print('%s: OK' % url)
+                if verbose: print(('%s: OK' % url))
             else:
                 if '{{r.doi}}' in url: continue
-                if verbose: print('%s: ERROR in file %s - status_code: %s' % (url, file, r.status_code))
+                if verbose: print(('%s: ERROR in file %s - status_code: %s' % (url, file, r.status_code)))
                 output += '<li><a href="%s">%s</a>: ERROR in file %s - broken link: %s</li>' % (url, url, os.path.basename(file))
         except Exception as e:
-            if verbose: print('%s: ERROR in file %s- %s') % (url, file, str(e))
+            if verbose: print(('%s: ERROR in file %s- %s') % (url, file, str(e)))
             output += '<li><a href="%s">%s</a>: ERROR in file %s - broken link</li>' % (url, url, os.path.basename(file))
     return output
 
@@ -186,7 +186,7 @@ def testAllUrls(verbose=False):
     ]
 
     for entry in urls_to_test:
-        if verbose: print('\n******** TABLE: %s\n' %entry['table'])
+        if verbose: print(('\n******** TABLE: %s\n' %entry['table']))
         output += getUrlsFromTable(entry['table'], entry['url_col'], entry.get('bad_url_col'), entry.get('uid_col'), cur, verbose)
 
     

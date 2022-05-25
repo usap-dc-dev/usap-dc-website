@@ -278,7 +278,7 @@
 
   function addPubRow(publication) {
     if (publication && $('#publication').val() === "") {
-      $('#publication').html(publication.text);
+      $('#publication').text(publication.text);
       $('#pub_doi').val(publication.doi);
     }
     else {
@@ -289,7 +289,7 @@
         $(extraPub).find('#removePubRow').show();
         $(extraPub).find('#extraPubLine').show();
         if (typeof publication != 'undefined') {
-          $(extraPub).find('#publication'+pub_counter).html(publication.text);
+          $(extraPub).find('#publication'+pub_counter).text(publication.text);
           $(extraPub).find('#pub_doi'+pub_counter).attr('value', publication.doi);
         }
         $(pub_wrapper).append($('<div/>', {'class' : 'extraPub', html: extraPub.html()}));
@@ -441,7 +441,7 @@
             <label for="project">Science Project</label><br/>
             <select class="form-control selectpicker" name="project" data-width="225px">
               <option value="None" selected="selected">None</option>
-              {% for project in projects |sort %}
+              {% for project in projects %}
               {% set proj = project['id'] %}
               <option value="{{proj}}" {% if proj == dataset_metadata.get('project','') %} selected="selected" {% endif %}>{{proj}}</option>
               {% endfor %}

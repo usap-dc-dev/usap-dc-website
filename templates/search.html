@@ -302,7 +302,7 @@
               {% for a in val.awards.split('; ') %}
               {% set award = a.split(' ')[0] %}
               {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
-              <a target='_blank' href='{{award_url}}'>{{award}}</a><br />
+              <a target='_blank' href='{{award_url}}' rel="noopener noreferrer">{{award}}</a><br />
               {% endfor %}
             </td>
             {% else %}

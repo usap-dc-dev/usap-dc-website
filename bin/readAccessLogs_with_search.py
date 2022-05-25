@@ -1,4 +1,4 @@
-#!/opt/rh/python27/root/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
@@ -12,7 +12,7 @@ import socket
 import whois
 import geoip2.database
 import re
-from urlparse import unquote
+from urllib.parse import unquote
 
 
 LOGS_DIR = "/var/log/httpd/"
@@ -97,7 +97,7 @@ def getCountryFromIP(ip_line):
                     # print('COUNTRY FOUND USING WHOIS (country) %s: %s' % (ip_line, country))
                 elif w.get('nserver'):
                     ip = w['nserver']
-                    print('new ip ' + ip)
+                    print(('new ip ' + ip))
                     country = getCountryFromIP(ip)
                     #print('COUNTRY FOUND USING WHOIS (nserver) %s: %s' % (ip_line, country))
                 else:
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     # import previously saved ip_to_country table 
     if os.path.isfile(coutries_pickle):
-        print("IMPORTING %s" % coutries_pickle)
+        print(("IMPORTING %s" % coutries_pickle))
         with open(coutries_pickle, 'rb') as f:
             ip_to_country = pickle.load(f)
     else:
@@ -240,7 +240,7 @@ if __name__ == '__main__':
             if "/tracker?" in request_url:
                 if excludeEntry(log_line_data): continue
                 params = parseSearch(log_line_data['request_url'])
-                if config['USAP_DOMAIN'] in params['url']: continue #external datasets only 
+                if not params.get('url') or config['USAP_DOMAIN'] in params['url']: continue #external datasets only 
 
                 country = getCountryFromIP(log_line_data['remote_host'])
                 sql = '''INSERT INTO access_logs_external (remote_host, time, resource_requested, resource_size, referer, user_agent, country) 
@@ -255,4 +255,4 @@ if __name__ == '__main__':
                     pass
                 cur.execute("COMMIT;")             
 
-        print("%s entries added to the database" % num)
+        print(("%s entries added to the database" % num))

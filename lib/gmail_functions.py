@@ -3,15 +3,16 @@ import os
 from apiclient.discovery import build
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from email.MIMEImage import MIMEImage
+from email.mime.image import MIMEImage
+from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
 from google.auth.transport.requests import Request as gRequest
 import base64
 import pickle
 import mimetypes
 
 
-GMAIL_PICKLE="inc/token.pickle"
+GMAIL_PICKLE = "inc/token.pickle"
 
 
 def connect_to_gmail():
@@ -35,6 +36,24 @@ def connect_to_gmail():
     return service, None
 
 
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
+
+
+def parse_email_list(recipients):
+    return [parse_email(r) for r in recipients]
+
+
+# remove any names with non-ascii characters
+def parse_email(r):
+    if is_ascii(r):
+        return r
+    else:
+        start = r.find('<')+1
+        end = r.find('>')
+        return r[start:end]
+
+
 def create_gmail_message(sender, recipients, subject, message_text, file=None, image=None):
     """Create a message for an email.
 
@@ -49,9 +68,10 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None, i
         An object containing a base64url encoded email object.
     """
     message = MIMEMultipart('mixed')
-    message['To'] = ', '.join(recipients).encode('utf-8')
-    message['From'] = sender.encode('utf-8')
-    message['Subject'] = subject.encode('utf-8')
+    recipients = parse_email_list(recipients)
+    message['To'] = ', '.join(recipients)
+    message['From'] = parse_email(sender)
+    message['Subject'] = subject
     content = MIMEText(message_text, 'html', 'utf-8')
     message.attach(content)
 
@@ -62,7 +82,7 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None, i
         main_type, sub_type = content_type.split('/', 1)
         if main_type == 'text':
             fp = open(file, 'rb')
-            msg = MIMEText(fp.read(), _subtype=sub_type)
+            msg = MIMEText(fp.read().decode(), _subtype=sub_type)
             fp.close()
         elif main_type == 'image':
             fp = open(file, 'rb')
@@ -82,14 +102,13 @@ def create_gmail_message(sender, recipients, subject, message_text, file=None, i
         message.attach(msg)
 
     if image:
-        fp = open(image,'rb')
+        fp = open(image, 'rb')
         msgImage = MIMEImage(fp.read())
         fp.close()
         msgImage.add_header('Content-ID', '<image1>')
         message.attach(msgImage)
 
-
-    return {'raw': base64.urlsafe_b64encode(message.as_string().decode('utf-8'))}
+    return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
 
 
 def send(service, user_id, message):
@@ -113,7 +132,7 @@ def send(service, user_id, message):
         success = "Email sent"
         return success, error
     except Exception as error:
-        print('An error occurred: %s' % error)
+        print(('An error occurred: %s' % error))
         err = "Error sending email: " + str(error)
         return success, err
 

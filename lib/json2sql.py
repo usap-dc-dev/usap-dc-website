@@ -382,8 +382,24 @@ def make_sql(data, id):
         sql_out += "\n--NOTE: add file info\n"
         sql_out += sql_file_info
 
-    # if this dataset is replacing an old dataset, need to deprecate the old one
+    # if this dataset is replacing an old dataset, need to copy over any files and deprecate the old one
     if data.get('related_dataset'):
+        dir_name = url.replace(config['USAP_DOMAIN']+'dataset', '')
+        for f in data.get('filenames'):
+            query = "SELECT * FROM dataset_file WHERE file_name = %s AND dataset_id = %s;"
+            cur.execute(query,(f,data['related_dataset']))
+            res = cur.fetchone()
+            if res:
+                if "NOTE: add file info" not in sql_out:
+                    sql_out += "\n--NOTE: add file info\n"
+
+                sql_out += "INSERT INTO dataset_file "\
+                        "(dataset_id, dir_name, file_name, file_size, file_size_uncompressed, sha256_checksum, " \
+                        "md5_checksum, mime_types, document_types) VALUES " \
+                        "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % \
+                        (id, dir_name, f, res['file_size'], res['file_size_uncompressed'], res['sha256_checksum'], 
+                        res['md5_checksum'], res['mime_types'], res['document_types'])
+
         sql_out += "\n--NOTE: this dataset will replace dataset %s\n" % data['related_dataset']
         sql_out += "UPDATE dataset SET replaces = '%s' WHERE id = '%s';\n" % (data['related_dataset'], id)
         sql_out += "UPDATE dataset SET replaced_by = '%s' WHERE id = '%s';\n" % (id, data['related_dataset'])
@@ -415,7 +431,7 @@ def editDatasetJson2sql(data, uid):
 
     # compare original with edited json
     updates = set()
-    for k in orig.keys():
+    for k in list(orig.keys()):
         if orig[k] != data.get(k):
             print(k)
             print("orig:", orig.get(k))
@@ -800,7 +816,7 @@ def write_readme(data, id):
         text.append('\nDescription of data processing:\n')
         text.append(data["data_processing"] + '\n')
         text.append('\nDescription of data content:\n')
-        text.append(data["content"] + '\n\n')
+        text.append(data["content"] + '\n')
         text.append('\nLimitations and issues:\n')
         text.append(data["issues"] + '\n')
         text.append('\nCheckboxes:\n')
