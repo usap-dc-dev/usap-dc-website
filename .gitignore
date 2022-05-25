@@ -30,3 +30,8 @@ doc.dev
 archive/
 .DS_Store
 ._.*
+aws/
+config.json_old
+start_usapdc
+test_email.py
+api/
