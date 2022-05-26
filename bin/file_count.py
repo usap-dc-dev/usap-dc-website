@@ -16,6 +16,7 @@ import tarfile
 import gzip
 import zipfile
 import mimetypes
+import struct
 
 
 top_dir = '/web/usap-dc/htdocs/dataset'
@@ -35,13 +36,10 @@ def connect_to_db():
 
 
 # get uncompressed file size of gzipped file
-def get_uncompressed_size(file):
-    fileobj = open(file, 'r')
-    fileobj.seek(-8, 2)
-    crc32 = gzip.read32(fileobj)
-    isize = gzip.read32(fileobj)  # may exceed 2GB
-    fileobj.close()
-    return isize
+def get_uncompressed_size(filename):
+    with open(filename, 'rb') as f:
+        f.seek(-4, 2)
+        return struct.unpack('I', f.read(4))[0]
 
 
 def usap_get_url_list_test():
