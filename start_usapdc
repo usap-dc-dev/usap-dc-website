@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo -E LD_LIBRARY_PATH=usr/lib64 FLASK_APP=usap.py /usr/bin/python3 -m flask run --host=www-upgrade.usap-dc.org --port=80
+sudo -E LD_LIBRARY_PATH=usr/lib64 FLASK_APP=usap.py /usr/bin/python3 -m flask run --host=www.usap-dc.org --port=80
