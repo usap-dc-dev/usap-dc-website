@@ -2010,6 +2010,8 @@ def home():
     # get all spatial extents
     (conn, cur) = connect_to_db()
     template_dict['spatial_extents'] = get_spatial_extents(conn=conn, cur=cur)
+
+    template_dict['mapserver'] = app.config['MAPSERVER_URL']
     return render_template('home.html', **template_dict)
 
 
