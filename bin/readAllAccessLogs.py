@@ -10,7 +10,7 @@ for year in range(2018, 2023):
             month_str = '%s' % month
 
         try:
-            os.system("sudo /opt/rh/python27/root/usr/bin/python readAccessLogs_with_search.py %s %s" % (year, month_str))
+            os.system("sudo /usr/bin/python3 readAccessLogs_with_search.py %s %s" % (year, month_str))
         except:
             continue
         
