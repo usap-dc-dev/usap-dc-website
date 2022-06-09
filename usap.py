@@ -3738,61 +3738,6 @@ def get_threadid(uid):
     return None
 
 
-def getFromDifTable(col, all_selected):
-    (conn, cur) = connect_to_db()
-    query = "SELECT DISTINCT %s FROM dif_test " % col
-    if not all_selected:
-        query += "WHERE is_usap_dc = true "
-    query += "ORDER BY %s;" % col
-    cur.execute(query)
-    return cur.fetchall()
-
-
-@app.route('/filter_dif_menus', methods=['GET'])
-def filter_dif_menus():
-    args = request.args.to_dict()
-    # if reseting:
-    if args == {}:
-        session['search_params'] = {}
-
-    (conn, cur) = connect_to_db()
-
-    query_base = "SELECT award, dif_id FROM dif_test"
-
-    if args.get('dif_id') is not None and args['dif_id'] != 'Any DIF ID' and \
-       args['dif_id'] != '':
-        query_string = query_base + " WHERE dif_id = '%s'" % args['dif_id']
-        if args.get('all_selected') is not None and args['all_selected'] == '0':
-            query_string += " AND is_usap_dc = true"
-    else:
-        if args.get('all_selected') is not None and args['all_selected'] == '0':
-            query_string = query_base + " WHERE is_usap_dc = true"
-        else:
-            query_string = query_base
-    cur.execute(query_string)
-    dsets = cur.fetchall()
-    awards = set([d['award'] for d in dsets])
-
-    if args.get('award') is not None and args['award'] != 'Any award' and \
-       args['award'] != '':
-        query_string = query_base + " WHERE award = '%s'" % args['award']
-        if args.get('all_selected') is not None and args['all_selected'] == '0':
-            query_string += " AND is_usap_dc = true"
-    else:
-        if args.get('all_selected') is not None and args['all_selected'] == '0':
-            query_string = query_base + " WHERE is_usap_dc = true"
-        else:
-            query_string = query_base
-    cur.execute(query_string)
-    dsets = cur.fetchall()
-    dif_ids = set([d['dif_id'] for d in dsets])
-
-    return flask.jsonify({
-        'award': sorted(awards),
-        'dif_id': sorted(dif_ids)
-    })
-
-
 @app.route('/NSF-ANT05-37143_datasets')
 def genBank_datasets():
     genbank_url = "https://www.ncbi.nlm.nih.gov/nuccore/"
@@ -4260,9 +4205,9 @@ def stats():
        template_dict['referers'] = {}
     
     # get submission information from the database
-    query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dt.date_created::text AS dif_date FROM dataset_file_info dsf 
+    query = cur.mogrify('''SELECT dsf.*, d.date_created::text, dif.date_created::text AS dif_date FROM dataset_file_info dsf 
             JOIN dataset d ON d.id = dsf.dataset_id
-            LEFT JOIN dif_test dt ON d.id_orig = dt.dif_id;''') 
+            LEFT JOIN dif ON d.id_orig = dif.dif_id;''') 
     cur.execute(query)
     data = cur.fetchall()
 
