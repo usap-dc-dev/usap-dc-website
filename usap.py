@@ -11,6 +11,7 @@ from urllib.parse import urlparse, unquote, urlencode
 from werkzeug.utils import secure_filename
 import smtplib
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import psycopg2
 import psycopg2.extras
 import requests
@@ -1213,29 +1214,35 @@ def dataset2(dataset_id=None):
                 return render_template('dataset2.html', error=error, success=success, 
                                 dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
           
-            # email RT queue
-            if edit:
-                message = "Dataset Edit.\n\nDataset JSON: %scurator?uid=e%s\n" \
-                    % (request.url_root, dataset_id)
-            else:
-                message = "New dataset submission.\n\nDataset JSON: %scurator?uid=%s\n" \
-                    % (request.url_root, next_id)
-            message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message)
+            # email curators
             if msg_data.get('submitter_email'):
-                sender = msg_data.get('submitter_email')
+                submitter = msg_data.get('submitter_email')
             else:
-                sender = msg_data.get('email')
+                submitter = msg_data.get('email')
             if msg_data.get('submitter_name'):
-                sender = "%s <%s>" % (msg_data['submitter_name'], sender)
+                submitter = "%s <%s>" % (msg_data['submitter_name'], submitter)
+
+            if edit:
+                message = "Dataset Edit.<br><br>Dataset JSON: <a href='%scurator?uid=e%s'>%scurator?uid=e%s</a><br>" \
+                    % (request.url_root, dataset_id, request.url_root, dataset_id)
+            else:
+                message = "New dataset submission.<br><br>Dataset JSON: <a href='%scurator?uid=%s'>%scurator?uid=%s</a><br>" \
+                    % (request.url_root, next_id, request.url_root, next_id)
+            message += "<br>Submitter: <a href='mailto:%s'>%s</a><br>" % (msg_data['submitter_name'], submitter)
+            msg = MIMEMultipart('alternative')
+
             recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']])
+            sender = app.config['USAP-DC_GMAIL_ACCT']
 
             if edit:
                 msg['Subject'] = 'USAP-DC Dataset Edit [uid:%s]' % dataset_id
             else: 
                 msg['Subject'] = 'USAP-DC Dataset Submission [uid:%s]' % next_id
-            msg['From'] = parse_email(sender)
+            msg['From'] = sender
             msg['To'] = ', '.join(recipients)
+
+            content = MIMEText(message, 'html', 'utf-8')
+            msg.attach(content)
 
             smtp_details = config['SMTP']
             s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
@@ -1251,7 +1258,7 @@ def dataset2(dataset_id=None):
             
             
             # Send autoreply to user
-            send_autoreply(sender, msg['Subject'])
+            send_autoreply(submitter, msg['Subject'])
 
             # add to submission table
             conn, cur = connect_to_db()
@@ -1432,31 +1439,35 @@ def project(project_id=None):
             except:
                 raise BadSubmission('Unable to submit Project. Please contact info@usap-dc.org', '/submit/project')
 
-            # email RT queue
-            if edit:
-                message = "Project Edit.\n\nProject JSON: %scurator?uid=e%s\n" \
-                    % (request.url_root, project_id)
-            else:
-                message = "New project submission.\n\nProject JSON: %scurator?uid=%s\n" \
-                    % (request.url_root, next_id)
-            message += "\nSubmitter: %s\n" % msg_data['submitter_name']
-            msg = MIMEText(message)
-
+            # email curators
             # use submitter's email if available, otherwise the email given in the form
-            sender = msg_data.get('submitter_email')
-            if not sender: 
-                sender = msg_data.get('email')
+            submitter = msg_data.get('submitter_email')
+            if not submitter: 
+                submitter = msg_data.get('email')
             if msg_data.get('submitter_name'):
-                sender = "%s <%s>" % (msg_data['submitter_name'], sender)
+                submitter = "%s <%s>" % (msg_data['submitter_name'], submitter)
+
+            if edit:
+                message = "Project Edit.<br><br>Project JSON: <a href='%scurator?uid=e%s'>%scurator?uid=e%s</a><br>" \
+                    % (request.url_root, project_id, request.url_root, project_id)
+            else:
+                message = "New project submission.<br><br>Project JSON: <a href='%scurator?uid=%s'>%scurator?uid=%s</a><br>" \
+                    % (request.url_root, next_id, request.url_root, next_id)
+            message += "<br>Submitter: <a href='mailto:%s'>%s</a><br>" % (msg_data['submitter_name'], submitter)
+            msg = MIMEMultipart('alternative')
 
             recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']])
+            sender = app.config['USAP-DC_GMAIL_ACCT']
 
             if edit:
                 msg['Subject'] = 'USAP-DC Project Edit [uid:%s]' % project_id
             else: 
                 msg['Subject'] = 'USAP-DC Project Submission [uid:%s]' % next_id
-            msg['From'] = parse_email(sender)
+            msg['From'] = sender
             msg['To'] = ', '.join(recipients)
+
+            content = MIMEText(message, 'html', 'utf-8')
+            msg.attach(content)
 
             smtp_details = config['SMTP']
             
@@ -1472,7 +1483,7 @@ def project(project_id=None):
             s.quit()
 
             # Send autoreply to user
-            send_autoreply(sender, msg['Subject'])
+            send_autoreply(submitter, msg['Subject'])
 
 
             # add to submission table
@@ -2092,46 +2103,9 @@ def abstract_examples():
     return render_template('abstract_examples.html')
 
 
-@app.route('/contact', methods=['GET', 'POST'])
+@app.route('/contact', methods=['GET'])
 def contact():
-    if request.method == 'GET':
-        return render_template('contact.html',secret=app.config['RECAPTCHA_DATA_SITE_KEY'])
-    elif request.method == 'POST':
-        form = request.form.to_dict()
-        # check honeypot trap - these fields are only visible to bots, not humans
-        checkHoneypot(form, "<br/>There was a problem with your submission. Please try again. <br/>", url_for('contact'))
-
-        g_recaptcha_response = form.get('g-recaptcha-response')
-        remoteip = request.remote_addr
-        resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'response':g_recaptcha_response,'remoteip':remoteip,'secret': app.config['RECAPTCHA_SECRET_KEY']}).json()
-        if resp.get('success'):
-            sender = "%s <%s>" % (form['contactname'], form['contactemail'])
-            recipients = parse_email_list([app.config['USAP-DC_GMAIL_ACCT']]) 
-            message = "Message submitted on Contact Us page by %s:\n\n\n%s" %(form['contactname'], form['msg'])
-
-            msg = MIMEText(message)
-            msg['Subject'] = form['subj']
-            msg['From'] = parse_email(sender)
-            msg['To'] = ', '.join(recipients)
-            smtp_details = config['SMTP']
-            s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
-            # identify ourselves to smtp client
-            s.ehlo()
-            # secure our email with tls encryption
-            s.starttls()
-            # re-identify ourselves as an encrypted connection
-            s.ehlo()
-            s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-            s.sendmail(sender, recipients, msg.as_string())
-            s.quit()
-            
-            # Send autoreply to user
-            send_autoreply(sender, msg['Subject'])
-
-            return redirect('/thank_you/message')
-        else:
-            msg = "<br/>You failed to pass the reCAPTCHA test<br/>"
-            raise CaptchaException(msg, url_for('contact'))
+    return render_template('contact.html')
 
 
 def checkHoneypot(form, msg, redirect):
