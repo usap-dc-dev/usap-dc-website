@@ -2784,8 +2784,9 @@ def curator():
                         if 'Read-only file system' in readme_file:
                             template_dict['error'] += '\n---This is expected if you are running in DEV mode'
                     else:
+                        readme_text = ''
                         try:
-                            with open(readme_file) as infile:
+                            with open(readme_file, encoding='utf-8') as infile:
                                 readme_text = infile.read()
                         except:
                             template_dict['error'] = "Can't read Read Me file"

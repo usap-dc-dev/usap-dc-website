@@ -825,7 +825,7 @@ def write_readme(data, id):
         text.append('* Graphs and maps (if provided) have legends.\n')
           
         #--- write the text to output file
-        with open(out_filename, 'w') as out_file:
+        with open(out_filename, 'w', encoding='utf-8') as out_file:
             out_file.writelines(text)
         os.chmod(out_filename, 0o664)
         
