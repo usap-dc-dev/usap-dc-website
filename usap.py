@@ -38,7 +38,7 @@ import email
 from email.header import decode_header
 from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
-import time
+import lib.difHarvest as dh
 
 
 app = Flask(__name__)
@@ -4729,6 +4729,8 @@ def escapeChars(string) :
 
 
 def escapeQuotes(string):
+    if not string:
+        return ''
     return string.replace("'","''")
 
 def initcap(s):
@@ -4952,6 +4954,85 @@ def send_award_email(res):
     except Exception as err:
         return None, "Error sending email: " + str(err)
 
+
+@app.route('/curator/dif_harvest', methods=['GET', 'POST'])
+def dif_harvest():
+    template_dict = {}
+    template_dict['message'] = []
+    template_dict['errors'] = []
+
+    # login
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+    else:
+        template_dict['need_login'] = False
+
+    (conn, cur) = connect_to_db(curator=True)
+
+    print(request.method)
+    
+    if request.method == 'POST' and request.form.get('submit') == 'dif_to_db':
+        sql = request.form.get('sql')
+        template_dict['type'] = 'proj' 
+        proj_uid = request.args.get('proj_uid')
+        dif_id = request.args.get('dif_id')         
+        template_dict['proj_uid'] = proj_uid
+        template_dict['sql'] = sql
+        print("IMPORTING TO DB")
+        try:
+            # run sql to import data into the database
+            cur.execute(sql)
+
+            cmd = "UPDATE project_dif_map SET is_updated = true WHERE proj_uid = %s and dif_id = %s; COMMIT;"
+            cur.execute(cmd, (proj_uid, dif_id))
+
+            template_dict['message'].append("Successfully imported to database")
+        except Exception as err:
+            template_dict['error'] = "Error Importing to database: " + str(err)
+            print(err)
+
+
+    elif not request.args.get('proj_uid'):
+        query = "SELECT * from project_dif_map WHERE proj_uid ~* 'p00' ORDER BY is_updated, proj_uid desc"
+        cur.execute(query)
+        res = cur.fetchall()
+        template_dict['projects'] = res
+        template_dict['type'] = 'list'
+
+        query = "SELECT count(*) from project_dif_map WHERE proj_uid ~* 'p00' AND NOT is_updated"
+        cur.execute(query)
+        res = cur.fetchone()
+        template_dict['count'] = res['count']
+
+        if request.method == 'POST' and request.form.get('submit') == 'import_all':
+            for row in res:
+                try:
+                    sql = dh.getUpdateSQL(row['proj_uid'], row['dif_id'])
+                    cur.execute(sql)
+                    print("%s, %s - SUCCESS" % (row['proj_uid'], row['dif_id']))
+                    conn.rollback()
+                    # cmd = "UPDATE project_dif_map SET is_updated = true WHERE proj_uid = %s and dif_id = %s; COMMIT;"
+                    # cur.execute(cmd, (row['proj_uid'], row['dif_id']))
+                except Exception as err:
+                    print(str(err))
+                    if str(err) == "can't execute an empty query":
+                        # cmd = "UPDATE project_dif_map SET is_updated = true WHERE proj_uid = %s and dif_id = %s; COMMIT;"
+                        # cur.execute(cmd, (row['proj_uid'], row['dif_id']))
+                        continue
+                    template_dict['error'] = "%s, %s - ERROR: %s" % (row['proj_uid'], row['dif_id'], err)
+                    break
+
+    else:
+        template_dict['type'] = 'proj' 
+        proj_uid = request.args.get('proj_uid')
+        dif_id = request.args.get('dif_id')         
+        template_dict['proj_uid'] = proj_uid
+        template_dict['sql'] = dh.getUpdateSQL(proj_uid, dif_id)
+
+
+
+    return render_template('dif_harvest.html', **template_dict)
 
 @app.route('/view/dataset/sitemap.xml', methods=['GET'])
 def sitemap():

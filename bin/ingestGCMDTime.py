@@ -34,7 +34,7 @@ with open(in_file, 'r', encoding='utf-8') as csvfile:
         if rownum > 1:
         # generate ID
             id = row[0].upper()
-            for col in range(6):
+            for col in range(1,6):
                 if row[col] and row[col] != '':
                     id += ' > '+row[col].upper()
         

@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% set cur = "curator" %}
+{% block body %}
+
+    </div>
+
+    <div class="border">
+    <div class="content">
+
+    <h2 style="float:left;">Curator Page</h2>
+
+    <a target="_blank" style="float:right; margin-top: 20px;" href="{{url_for('curator_help')}}" class="btn btn-primary">Help</a>
+    <div style="clear:both"></div>
+
+    {% for msg in message %}
+        <div class="alert alert-success" style="width:800;">
+            <h4>{{msg}}</h4>
+        </div>
+    {% endfor %}
+
+    {% if error %}
+        <div class="alert alert-danger" style="width:800;">
+            <h4>{{error}}</h4>
+        </div>
+    {% endif %}
+
+    {% if need_login %}
+        
+        <div class="container">
+            
+        <h4>Curator Login </h4>
+
+        <div id="container">
+            <h5>
+            Sign in using an authorized curator account
+            </h5>
+            <div id="buttons">
+            <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+                Google
+            </a>
+            <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+                <span style="color:gray; font-weight:bolder">ORC</span>iD
+            </a>
+            </div>
+        </div>
+
+        
+    {% else %}
+
+        {% if type == 'proj' %}
+        <a onclick="waitCursor()" href="{{url_for('dif_harvest')}}">Back to list</a>
+        <h3>Updates from AMD DIF record for {{proj_uid}}</h3>
+        <form method="post" enctype="multipart/form-data">
+        <button type="submit" name="submit" value="dif_to_db" title="Import DIF updates" onclick="waitCursor()">Import to Database</button>
+        <table>
+        <tr>
+            <td>
+                <textarea id="sql" name="sql" cols="130" rows="50">{{ sql }}</textarea>
+            </td>
+        </tr>
+        </table>
+        </form>
+        {% else %}
+            <a href="{{url_for('logout', type='award_letters')}}" style="float:right">Log out</a>
+
+            <h3>AMD DIF Harvest</h3>
+            <p>Entries to be updated: {{count}}</p>
+            <form method="post" enctype="multipart/form-data" hidden>
+                <button type="submit" name="submit" value="import_all" title="Import All DIF updates" onclick="waitCursor()">Import All to Database</button>
+            </form>
+            <div id='dif-browser-table'>
+                <table >
+                    <thead class="w3-striped w3-bordered w3-hoverable">
+                    <tr>
+                        <th>Project</th>
+                        <th>DIF ID</th>
+                        <th>Updated</th>
+                        <th>Landing Page</th>
+                    </tr>
+                    </thead>
+        
+                    {% for proj in projects %}
+                        <tr {% if proj['is_updated'] == false %} style="font-weight: bold" {% endif %}>
+                            <td><a onclick="waitCursor()" href="{{url_for('dif_harvest',proj_uid=proj.proj_uid, dif_id=proj.dif_id)}}">{{proj.proj_uid}} </a></td>
+                            <td>{{proj.dif_id}}</td>
+                            <td>{{proj.is_updated}}</td>
+                            <td><a href="/view/project/{{proj.proj_uid}}">/view/project/{{proj.proj_uid}}</a></td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock body %}
