@@ -1207,7 +1207,7 @@ def editProjectJson2sql(data, uid):
             query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % usap.escapeQuotes(pi_id)
             cur.execute(query)
             res = cur.fetchone()
-            if res['count'] > 0:
+            if res['count'] > 0 and data.get('email'):
                 sql_out += "\n--NOTE: UPDATING EMAIL ADDRESS\n"
                 sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], usap.escapeQuotes(pi_id))
  
@@ -1267,8 +1267,10 @@ def editProjectJson2sql(data, uid):
                 sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','CONTINENT > ANTARCTICA');\n" % uid
             if 'OCEAN > SOUTHERN OCEAN' not in gcmd_locations:
                 sql_out += "--NOTE: Suggested gcmd_location. Remove if not appropriate for this project:\n"
-                sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','OCEAN > SOUTHERN OCEAN');\n" % uid   
-            elif k == 'orcid':
+                sql_out += "INSERT INTO project_gcmd_location_map(proj_uid,  loc_id) VALUES ('%s','OCEAN > SOUTHERN OCEAN');\n" % uid
+
+        elif k == 'orcid':
+            if data.get('submitter_orcid') and subm_id:
                 sql_out += "\n--NOTE: UPDATING ORCID\n"
                 sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], usap.escapeQuotes(subm_id))
 

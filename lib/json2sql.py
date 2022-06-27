@@ -589,7 +589,7 @@ def editDatasetJson2sql(data, uid):
             query = "SELECT COUNT(*) FROM person WHERE id = '%s'" % usap.escapeQuotes(pi_id)
             cur.execute(query)
             res = cur.fetchone()
-            if res['count'] > 0:
+            if res['count'] > 0 and data.get('email'):
                 sql_out += "\n--NOTE: UPDATING EMAIL ADDRESS\n"
                 sql_out += "UPDATE person SET email = '%s' WHERE id='%s';\n" % (data['email'], usap.escapeQuotes(pi_id))
 
@@ -642,8 +642,9 @@ def editDatasetJson2sql(data, uid):
             sql_out += "\n"
 
         if k == 'orcid':
-            sql_out += "\n--NOTE: UPDATING ORCID FOR SUBMITTER\n"
-            sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], usap.escapeQuotes(data['submitter_name']))
+            if data.get('submitter_orcid') and data.get('submitter_name'):
+                sql_out += "\n--NOTE: UPDATING ORCID FOR SUBMITTER\n"
+                sql_out += "UPDATE person SET id_orcid = '%s' WHERE id='%s';\n" % (data['submitter_orcid'], usap.escapeQuotes(data['submitter_name']))
 
         if k == 'procedures':
             sql_out += "\n--NOTE: UPDATING ACQUISITION PROCEDURES DESCRIPTION IN README FILE\n"
