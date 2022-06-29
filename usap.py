@@ -4470,6 +4470,27 @@ def get_project(project_id):
                             FROM project_gcmd_location_map pglm JOIN gcmd_location gl ON (gl.id=pglm.loc_id)
                             GROUP BY pglm.proj_uid
                         ) gcmd_locations ON (p.proj_uid = gcmd_locations.gcmd_loc_proj_uid)
+                        LEFT JOIN (
+                            SELECT gpi.proj_uid AS gcmd_plat_proj_uid, json_agg(gpi) gcmd_platforms
+                            FROM 
+                            (
+                                SELECT * FROM project_gcmd_platform_map pgpm
+                                JOIN gcmd_platform gp ON (gp.id=pgpm.platform_id)
+                                LEFT JOIN (
+                                    SELECT pgpim.proj_uid as gcmd_inst_proj_uid, pgpim.platform_id as gcmd_plat_proj_uid, json_agg(gi) gcmd_instruments
+                                    FROM project_gcmd_platform_instrument_map pgpim JOIN gcmd_instrument gi ON (gi.id=pgpim.instrument_id)
+                                    GROUP BY pgpim.proj_uid, pgpim.platform_id
+                                ) gcmd_instruments 
+                                ON pgpm.proj_uid = gcmd_instruments.gcmd_inst_proj_uid AND pgpm.platform_id = gcmd_instruments.gcmd_plat_proj_uid
+                            ) gpi
+                            GROUP BY gpi.proj_uid
+                        ) gcmd_platforms ON (p.proj_uid = gcmd_platforms.gcmd_plat_proj_uid)
+                        LEFT JOIN (
+                            SELECT pgptm.proj_uid AS gcmd_paleo_proj_uid, json_build_object('paleo_time',json_agg(gpt), 'paleo_start_date', paleo_start_date,
+                                'paleo_stop_date', paleo_stop_date) gcmd_paleo_time
+                                FROM project_gcmd_paleo_time_map pgptm JOIN gcmd_paleo_time gpt ON (gpt.id=pgptm.paleo_time_id)
+                                GROUP BY pgptm.proj_uid, paleo_start_date, paleo_stop_date
+                        ) gcmd_paleo_times ON (p.proj_uid = gcmd_paleo_times.gcmd_paleo_proj_uid)
                         LEFT JOIN ( 
                             SELECT k_1.proj_uid AS kw_proj_uid, string_agg(k_1.keywords, '; '::text) AS keywords
                             FROM (SELECT pskm.proj_uid, reverse(split_part(reverse(pskm.gcmd_key_id), ' >'::text, 1)) AS keywords
@@ -4492,6 +4513,10 @@ def get_project(project_id):
                                   ) k_1
                             GROUP BY k_1.proj_uid
                         ) keywords ON keywords.kw_proj_uid = p.proj_uid
+                        LEFT JOIN (
+                            SELECT pdm.proj_uid AS df_proj_uid, pd.data_format FROM project_dataset pd
+                            JOIN project_dataset_map pdm on pdm.dataset_id = pd.dataset_id
+                        ) data_format ON (p.proj_uid = data_format.df_proj_uid)
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
@@ -5000,10 +5025,10 @@ def dif_harvest():
         template_dict['projects'] = res
         template_dict['type'] = 'list'
 
-        query = "SELECT count(*) from project_dif_map WHERE proj_uid ~* 'p00' AND NOT is_updated"
-        cur.execute(query)
-        res = cur.fetchone()
-        template_dict['count'] = res['count']
+        query2 = "SELECT count(*) from project_dif_map WHERE proj_uid ~* 'p00' AND NOT is_updated"
+        cur.execute(query2)
+        res2 = cur.fetchone()
+        template_dict['count'] = res2['count']
 
         if request.method == 'POST' and request.form.get('submit') == 'import_all':
             for row in res:

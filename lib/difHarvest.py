@@ -120,8 +120,8 @@ def getPersonnel(root, ns, cur, proj_uid):
                 if not found:
                     sql += mult_sql
 
-            sql+= "\n"
-    
+            sql += "\n"
+
     return sql
 
 
@@ -145,19 +145,19 @@ def addToProjectPersonMap(cur, proj_uid, person_id, role):
     return sql
 
 
-
 def getFormat(root, ns, cur, proj_uid):
     sql = ''
     formats = []
     if root:
         for d in root.findall(ns+'Distribution'):
-            if not d.find(ns+'Distribution_Format'):
+            if d.find(ns+'Distribution_Format') == None:
                 continue
+
             format = d.find(ns+'Distribution_Format').text
-            sql += "-- HARVESTED DISTRIBUTION FORMAT: %s\n" %format
-            #search for keyword in gcmd_data_format table
+            sql += "-- HARVESTED DISTRIBUTION FORMAT: %s\n" % format
+            # search for keyword in gcmd_data_format table
             query = "SELECT * from gcmd_data_format WHERE lower(short_name) = lower(%s)"
-            cur.execute(query,(format,))
+            cur.execute(query, (format,))
             res = cur.fetchall()
             if len(res) == 0:
                 sql += "-- No entry found in gcmd_data_format that matches harvested type %s\n" % format
@@ -166,7 +166,7 @@ def getFormat(root, ns, cur, proj_uid):
             else:
                 sql += "-- ERROR - multiple entries found in gcmd_data_format for id %s\n" % format
         if len(formats) > 0:
-            sql += "UPDATE project_dataset SET data_format='%s' WHERE proj_uid='%s';\n" % (';'.join(formats), proj_uid)    
+            sql += "UPDATE project_dataset pd SET data_format='%s' FROM project_dataset_map pdm WHERE pdm.dataset_id = pd.dataset_id AND proj_uid='%s';\n" % ('; '.join(formats), proj_uid)    
             sql += "\n"
     return sql
 
@@ -189,10 +189,10 @@ def getAncillaryKeywords(root, ns, cur, proj_uid):
         keywords = list(itertools.chain.from_iterable(keywords))
 
         for keyword in keywords:
-            sql += "-- HARVESTED ANCILLARY KEYWORD: %s\n" %keyword
-            #search for keyword in keyword_usap table
+            sql += "-- HARVESTED ANCILLARY KEYWORD: %s\n" % keyword
+            # search for keyword in keyword_usap table
             query = "SELECT * from keyword_usap WHERE lower(keyword_label) = lower(%s)"
-            cur.execute(query,(keyword,))
+            cur.execute(query, (keyword,))
             res = cur.fetchall()
             if len(res) == 0:
                 sql += "-- New keyword (NB keyword_type will need to be added manually)\n" 
@@ -215,16 +215,15 @@ def getAncillaryKeywords(root, ns, cur, proj_uid):
     return sql        
 
 
-
 def getDataType(root, ns, cur, proj_uid):
     sql = ''
     if root:
         for dt in root.findall(ns+'Collection_Data_Type'):
             type = dt.text
-            sql += "-- HARVESTED COLLECTION DATA TYPE: %s\n" %type
-            #search for keyword in gcmd_collection_data_type table
+            sql += "-- HARVESTED COLLECTION DATA TYPE: %s\n" % type
+            # search for keyword in gcmd_collection_data_type table
             query = "SELECT * from gcmd_collection_data_type WHERE lower(id) = lower(%s)"
-            cur.execute(query,(type,))
+            cur.execute(query, (type,))
             res = cur.fetchall()
             if len(res) == 0:
                 sql += "-- No entry found in gcmd_collection_data_type that matches harvested type %s\n" % type
@@ -242,7 +241,7 @@ def getProductLevel(root, ns, cur, proj_uid):
         for pl in root.findall(ns+'Product_Level_Id'):
             level = pl.text
             sql += "-- HARVESTED PRODUCT LEVEL ID: %s\n" %level
-            #search for level in product_level table
+            # search for level in product_level table
             query = "SELECT * from product_level WHERE lower(id) = lower(%s)"
             cur.execute(query,(level,))
             res = cur.fetchall()
