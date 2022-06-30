@@ -1547,20 +1547,21 @@ def getDifXML(data, uid):
     # ---- personel
     if data.get('persons'):
         for person in data['persons']:
-            name_last, name_first = person.get('id').split(',', 1)
             xml_pi = ET.SubElement(root, "Personnel")
             xml_pi_role = ET.SubElement(xml_pi, "Role")
-            xml_pi_role.text = "INVESTIGATOR"
+            xml_pi_role.text = person['role'].upper()
             xml_pi_contact = ET.SubElement(xml_pi, "Contact_Person")
             xml_pi_contact_fname = ET.SubElement(xml_pi_contact, "First_Name")
-            xml_pi_contact_fname.text = name_first.strip()
+            xml_pi_contact_fname.text = person['name_first'].strip()
             xml_pi_contact_lname = ET.SubElement(xml_pi_contact, "Last_Name")
-            xml_pi_contact_lname.text = name_last.strip()
-            xml_pi_contact_address = ET.SubElement(xml_pi_contact, "Address")
-            xml_pi_contact_address1 = ET.SubElement(xml_pi_contact_address, "Street_Address")
-            xml_pi_contact_address1.text = person.get('org')
-            xml_pi_contact_email = ET.SubElement(xml_pi_contact, "Email")
-            xml_pi_contact_email.text = person.get('email')
+            xml_pi_contact_lname.text = person['name_last'].strip()
+            if person.get('org'):
+                xml_pi_contact_address = ET.SubElement(xml_pi_contact, "Address")
+                xml_pi_contact_address1 = ET.SubElement(xml_pi_contact_address, "Street_Address")
+                xml_pi_contact_address1.text = person.get('org')
+            if person.get('email'):
+                xml_pi_contact_email = ET.SubElement(xml_pi_contact, "Email")
+                xml_pi_contact_email.text = person.get('email')
 
     # --- science keywords
     if data.get('parameters'):
@@ -1588,18 +1589,41 @@ def getDifXML(data, uid):
     xml_iso.text = "BIOTA"
 
     # --- Ancillary_Keyword
-    xml_aux_key = ET.SubElement(root, "Ancillary_Keyword")
-    xml_aux_key.text = "USAP-DC"
+    if data.get('keywords'):
+        for keyword in data['keywords'].split('; '):
+            print(keyword)
+            xml_aux_key = ET.SubElement(root, "Ancillary_Keyword")
+            xml_aux_key.text = keyword
+    else:
+        xml_aux_key = ET.SubElement(root, "Ancillary_Keyword")
+        xml_aux_key.text = "USAP-DC"
 
     # --- platform
-    xml_platform = ET.SubElement(root, "Platform")
-    xml_platform_type = ET.SubElement(xml_platform, "Type")
-    xml_platform_type.text = "Not applicable"
-    xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
-    xml_platform_sname.text = "Not applicable"
-    xml_instrument = ET.SubElement(xml_platform, "Instrument")
-    xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
-    xml_instrument_sname.text = "Not applicable"
+    if data.get('gcmd_platforms'):
+        for platform in data['gcmd_platforms']:
+            xml_platform = ET.SubElement(root, "Platform")
+            xml_platform_type = ET.SubElement(xml_platform, "Type")
+            xml_platform_type.text = platform['type']
+            xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
+            xml_platform_sname.text = platform['short_name']
+            if platform.get('gcmd_instruments'):
+                for instrument in platform['gcmd_instruments']:
+                    xml_instrument = ET.SubElement(xml_platform, "Instrument")
+                    xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
+                    xml_instrument_sname.text = instrument['short_name']
+            else:
+                xml_instrument = ET.SubElement(xml_platform, "Instrument")
+                xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
+                xml_instrument_sname.text = "Not provided"
+    else:
+        xml_platform = ET.SubElement(root, "Platform")
+        xml_platform_type = ET.SubElement(xml_platform, "Type")
+        xml_platform_type.text = "Not provided"
+        xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
+        xml_platform_sname.text = "Not provided"
+        xml_instrument = ET.SubElement(xml_platform, "Instrument")
+        xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
+        xml_instrument_sname.text = "Not provided"
 
     # --- temporal coverage
     xml_time = ET.SubElement(root, "Temporal_Coverage")
@@ -1608,10 +1632,43 @@ def getDifXML(data, uid):
     xml_time_begin.text = str(data.get('start_date'))
     xml_time_end = ET.SubElement(xml_time_range, "Ending_Date_Time")
     xml_time_end.text = str(data.get('end_date'))
+    if data.get('gcmd_paleo_time'):
+        xml_time = ET.SubElement(root, "Temporal_Coverage")
+        pt = data['gcmd_paleo_time']
+        paleo_datetime = ET.SubElement(xml_time, "Paleo_DateTime")
+        if pt.get('paleo_start_date') and pt.get('paleo_stop_date') :
+            paleo_start = ET.SubElement(paleo_datetime, "Paleo_Start_Date")
+            paleo_start.text = pt['paleo_start_date']
+            paleo_stop = ET.SubElement(paleo_datetime, "Paleo_Stop_Date")
+            paleo_stop.text = pt['paleo_stop_date']
+        if pt.get('paleo_time'):
+            for cu in pt['paleo_time']:
+                chrono = ET.SubElement(paleo_datetime, "Chronostratigraphic_Unit")
+                if cu.get('eon'):
+                    eon = ET.SubElement(chrono, 'Eon')
+                    eon.text = cu['eon']
+                if cu.get('era'):
+                    era = ET.SubElement(chrono, 'Era')
+                    era.text = cu['era']
+                if cu.get('period'):
+                    period = ET.SubElement(chrono, 'Period')
+                    period.text = cu['period']
+                if cu.get('epoch'):
+                    epoch = ET.SubElement(chrono, 'Epoch')
+                    epoch.text = cu['epoch']
+                if cu.get('age'):
+                    age = ET.SubElement(chrono, 'Age')
+                    age.text = cu['age']
+                if cu.get('sub_age'):
+                    era = ET.SubElement(chrono, 'Sub_Age')
+                    era.text = cu['sub_age']
 
     # --- progress
     xml_progress = ET.SubElement(root, "Dataset_Progress")
-    xml_progress.text = "COMPLETE"
+    if data.get('project_progress'):
+        xml_progress.text = data['project_progress'].upper()
+    else:
+        xml_progress.text = "COMPLETE"
     
     # --- Spatial coverage
     if data.get('spatial_bounds'):
@@ -1697,6 +1754,13 @@ def getDifXML(data, uid):
     xml_org_pers_contact_email = ET.SubElement(xml_org_pers_contact, "Email")
     xml_org_pers_contact_email.text = "info@usap-dc.org"
 
+    # --- distribution
+    if data.get('data_format'):
+        for df in data['data_format'].split("; "):
+            dist = ET.SubElement(root, "Distribution")
+            format = ET.SubElement(dist, "Distribution_Format")
+            format.text = df
+
     # --- summary
     xml_sum = ET.SubElement(root, "Summary")
     xml_abstract = ET.SubElement(xml_sum, "Abstract")
@@ -1757,6 +1821,14 @@ def getDifXML(data, uid):
     xml_data_date_create.text = str(data['date_created'])
     xml_data_date_mod = ET.SubElement(xml_meta_date, "Data_Last_Revision")
     xml_data_date_mod.text = str(data['date_created'])
+
+    # --- product level ID
+    product_level = ET.SubElement(root, "Product_Level_Id")
+    product_level.text = data['product_level_id']
+
+    # --- collection data type
+    cdt = ET.SubElement(root, "Collection_Data_Type")
+    cdt.text = data['collection_data_type']
 
     # write XML to file
     file_name = getDifXMLFileName(uid)

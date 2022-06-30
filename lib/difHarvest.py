@@ -280,7 +280,7 @@ def getPaleoTime(root, ns, cur, proj_uid):
     sql = ''
     if root:
         for tc in root.findall(ns+'Temporal_Coverage'):
-            paleo_time = tc.findall(ns + 'Paleo_DateTime')
+            # paleo_time = tc.findall(ns + 'Paleo_DateTime')
             # if len(paleo_time) > 0 :
             #     sql += "-- FOUND PALEO TIME!!!\n"
             for pt in tc.findall(ns + 'Paleo_DateTime'):
