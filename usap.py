@@ -2612,7 +2612,7 @@ def map():
 
 def get_crossref_sql():
     try:
-        with open(app.config['CROSSREF_FILE']) as infile:
+        with open(app.config['CROSSREF_FILE'], encoding='utf-8') as infile:
             sql = infile.read()
     except:
         sql = "No Crossref SQL file to be ingested"
