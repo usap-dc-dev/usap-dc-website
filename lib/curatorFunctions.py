@@ -1019,6 +1019,16 @@ def projectJson2sql(data, uid):
     return sql_out
 
 
+def compare(s, t):
+    t = list(t)   # make a mutable copy
+    try:
+        for elem in s:
+            t.remove(elem)
+    except ValueError:
+        return False
+    return not t
+
+
 def editProjectJson2sql(data, uid):
     conn, cur = usap.connect_to_db(curator=True)
 
@@ -1039,6 +1049,9 @@ def editProjectJson2sql(data, uid):
     updates = set()
     for k in list(orig.keys()):
         if orig[k] != data.get(k) and not (orig[k] in ['None', None, ''] and data.get(k) in ['None', None, '']):
+            # need to do special compare for lists of dictionaries
+            if k == 'paleo_times' and compare(data.get(k), orig[k]):
+                continue
             print(k)
             print(("orig:", orig.get(k)))
             print(("new:", data.get(k)))

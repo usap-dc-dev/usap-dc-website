@@ -2047,7 +2047,6 @@ def project_db2form(uid):
                                            'instruments': instruments})
 
     if db_data.get('gcmd_paleo_time'):
-        print(db_data['gcmd_paleo_time'])
         for pt in db_data['gcmd_paleo_time']:
             form_data['paleo_times'].append({'id': pt['paleo_time']['id'],
                                            'start_date': pt['paleo_start_date'],
