@@ -980,7 +980,6 @@ def projectJson2sql(data, uid):
             sql_out += "INSERT INTO project_gcmd_science_key_map (proj_uid, gcmd_key_id) VALUES ('%s', '%s');\n" % (uid, param)
         sql_out += "\n"
 
-
     # Add platforms and instruments
     if data.get('platforms') and len(data['platforms']) > 0:
         sql_out += "--NOTE: adding platforms and instruments\n"
@@ -1201,9 +1200,18 @@ def editProjectJson2sql(data, uid):
                         if ds['url'] != res[0]['url']:
                             sql_out += "\n--NOTE: updating dataset\n"
                             sql_out += "UPDATE project_dataset SET url = '%s' WHERE dataset_id = '%s';\n" % (ds['url'], ds_id)
+                        if ds.get('formats') and ds['formats'] != '':
+                            formats = '; '.join(ds['formats'])
+                            if formats != res[0]['data_format']:
+                                sql_out += "\n--NOTE: updating dataset\n"
+                                sql_out += "UPDATE project_dataset SET data_format = '%s' WHERE dataset_id = '%s';\n" % (formats, ds_id)    
                     sql_out += "\n--NOTE: adding dataset %s to project_dataset_map\n" % ds_id
                     sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (uid, ds_id)
                 sql_out += "\n"
+        
+        elif k == 'data_type':
+            sql_out += "\n--NOTE: UPDATING COLLECTION DATA TYPE\n"
+            sql_out += "UPDATE project SET collection_data_type = '%s' WHERE proj_uid = '%s';\n" % (data['data_type'], uid)
 
         elif k == 'deployments':
             sql_out += "\n--NOTE: UPDATING DEPLOYMENTS\n"
@@ -1344,6 +1352,18 @@ def editProjectJson2sql(data, uid):
                 sql_out += "INSERT INTO project_award_map (proj_uid, award_id, is_main_award, is_previous_award) VALUES ('%s', '%s', 'False', %s);\n" % (uid, award, other_award['is_previous_award'])
             sql_out += "\n"
 
+        elif k == 'paleo_times':
+            sql_out += "\n--NOTE: UPDATING GCMD PALEO TIME\n"
+
+            # remove existing paleo times from project_gcmd_paleo_time_map
+            sql_out += "\n--NOTE: First remove all existing paleo times from project_gcmd_paleo_time_key_map\n"
+            sql_out += "DELETE FROM project_gcmd_paleo_time_map WHERE proj_uid = '%s';\n" % uid
+
+            sql_out += "\n--NOTE: adding paleo times\n"
+            for pt in data['paleo_times']:
+                sql_out += "INSERT INTO project_gcmd_paleo_time_map (proj_uid, paleo_time_id, paleo_start_date, paleo_stop_date) VALUES ('%s', '%s', '%s', '%s');\n" % (uid, pt['id'], pt['start_date'], pt['stop_date'])
+            sql_out += "\n"
+
         elif k == 'parameters':
             sql_out += "\n--NOTE: UPDATING GCMD SCIENCE KEYWORDS\n"
 
@@ -1401,6 +1421,27 @@ def editProjectJson2sql(data, uid):
             sql_out += "INSERT INTO project_person_map (proj_uid, person_id, role) VALUES ('%s', '%s', 'Investigator and contact');\n" % \
                        (uid, usap.escapeQuotes(pi_id))
 
+        elif k == 'platforms':
+            sql_out += "\n--NOTE: UPDATING GCMD PLATFORMS AND INSTRUMENTS\n"
+
+            # remove existing platforms and instruments from project_gcmd_platform_map and project_gcmd_platform_instrument_map
+            sql_out += "\n--NOTE: First remove all existing platforms and instruments from project_gcmd_platform_map and project_gcmd_platform_instrument_map\n"
+            sql_out += "DELETE FROM project_gcmd_platform_map WHERE proj_uid = '%s';\n" % uid
+            sql_out += "DELETE FROM project_gcmd_platform_instrument_map WHERE proj_uid = '%s';\n" % uid
+
+            sql_out += "\n--NOTE: adding platforms and instruments\n"
+            for p in data['platforms']:
+                sql_out += "INSERT INTO project_gcmd_platform_map (proj_uid, platform_id) VALUES ('%s', '%s');\n" % (uid, p['id'])
+                if p.get('instruments'):
+                    for instr in p['instruments']:
+                        sql_out += "INSERT INTO project_gcmd_platform_instrument_map (proj_uid, platform_id, instrument_id) VALUES ('%s', '%s', '%s');\n" % (uid, p['id'], instr)
+                    sql_out += "\n"
+            sql_out += "\n"
+
+        elif k == 'product_level':
+            sql_out += "\n--NOTE: UPDATING PRODUCT LEVEL\n"
+            sql_out += "UPDATE project SET product_level_id = '%s' WHERE proj_uid = '%s';\n" % (data['product_level'], uid)
+
         elif k == 'program':
             sql_out += "\n--NOTE: UPDATING INITIATIVE\n"
 
@@ -1413,6 +1454,10 @@ def editProjectJson2sql(data, uid):
                 sql_out += "\n--NOTE: adding initiative to project_initiative_map\n"
                 sql_out += "INSERT INTO project_initiative_map (proj_uid, initiative_id) VALUES ('%s', '%s');\n" % \
                     (uid, initiative)
+        
+        elif k == 'progress':
+            sql_out += "\n--NOTE: UPDATING PROJECT PROGRESS\n"
+            sql_out += "UPDATE project SET project_progress = '%s' WHERE proj_uid = '%s';\n" % (data['progress'], uid)
 
         elif k == 'publications':
             sql_out += "\n--NOTE: UPDATING PUBLICATIONS\n"

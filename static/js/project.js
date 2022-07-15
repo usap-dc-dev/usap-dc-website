@@ -228,18 +228,14 @@ $(document).ready(function() {
     if (paleo_times.length > 0) {
         for (var p in paleo_times) {
             var paleo_time = paleo_times[p];
-            console.log(paleo_time)
             var parts = paleo_time.id.split(' > ')
             var name = parts[parts.length -1]
             var nodes = $('#paleo_time_tree').treeview('search', [name, {exactMatch: false, revealResults:false}]);
-            console.log(nodes)
             for (var n in nodes) {
                 var node = nodes[n];
                 if (node.id == paleo_time.id) {
-                    console.log(node.id)
                     $('#paleo_time_tree').treeview('checkNode', [node.nodeId]);
                     if (paleo_time.start_date) {
-                        console.log(node.nodeId)
                         $('#paleo_start_date_'+node.nodeId).val(paleo_time.start_date);
                     }
                     if (paleo_time.stop_date) {
@@ -950,16 +946,18 @@ function selectInstrument(node) {
     var instr_tree = $('#instr_tree'+node);
     instr_tree.show();
 
-    // initialize the treeview if it doesn't already exist
-    if (instr_tree.treeview('getNode',0).nodes === undefined) {
-        instr_tree.treeview({
-            data: instr_data, 
-            multiSelect: true,
-            showCheckbox: true,
-            highlightSelected: false 
-        });
-        instr_tree.treeview('collapseAll', { silent: true });
+    // if tree view already exists, just show the appropriate element and return
+    if (instr_tree.treeview('getNode',0).nodes !== undefined) {
+        return;
     }
+
+    instr_tree.treeview({
+        data: instr_data, 
+        multiSelect: true,
+        showCheckbox: true,
+        highlightSelected: false 
+    });
+    instr_tree.treeview('collapseAll', { silent: true });
 
     $('#instr_text'+node).show();
 
@@ -980,6 +978,7 @@ function selectInstrument(node) {
     });
 
     instr_tree.on('nodeChecked', function(event, data) {
+        console.log(event)
         var new_div = $('<div>').attr({id: 'div_instr_'+node+'_'+data.nodeId});
         $('<input>').attr({type: 'hidden', id: 'instr_'+node+'_'+data.nodeId, name: 'instr_'+node+'_'+data.nodeId, value: data.id, class: 'selected_item'}).appendTo(new_div);
         $('<input>').attr({type: 'text', value: data.text, class: 'selected_item', disabled: true}).appendTo(new_div);

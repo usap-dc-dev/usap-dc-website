@@ -1937,6 +1937,9 @@ def project_db2form(uid):
         'short_title': db_data.get('short_name'),
         'start': str(db_data.get('start_date')),
         'end': str(db_data.get('end_date')),
+        'progress': db_data.get('project_progress'),
+        'product_level': db_data.get('product_level_id'),
+        'data_type': db_data.get('collection_data_type'),
         'websites': [],
         'copis': [],
         'deployments': [],
@@ -1944,6 +1947,8 @@ def project_db2form(uid):
         'parameters': [],
         'publications': [],
         'datasets': [],
+        'platforms': [],
+        'paleo_times': [],
         'program': None,
         'dmp_file': None
     }
@@ -2023,11 +2028,31 @@ def project_db2form(uid):
 
     if db_data.get('datasets'):
         for d in db_data['datasets']:
+            formats = None
+            if d.get('data_format'):
+                formats = d['data_format'].split('; ')
             form_data['datasets'].append({'repository': d.get('repository'),
                                           'title': d.get('title'),
                                           'url': d.get('url'),
-                                          'doi': d.get('doi')})
- 
+                                          'doi': d.get('doi'),
+                                          'formats': formats})
+
+    if db_data.get('gcmd_platforms'):
+        for p in db_data['gcmd_platforms']:
+            instruments = []
+            if p.get('gcmd_instruments'):
+                for i in p['gcmd_instruments']:
+                    instruments.append(i['id'])
+            form_data['platforms'].append({'id': p['id'],
+                                           'instruments': instruments})
+
+    if db_data.get('gcmd_paleo_time'):
+        print(db_data['gcmd_paleo_time'])
+        for pt in db_data['gcmd_paleo_time']:
+            form_data['paleo_times'].append({'id': pt['paleo_time']['id'],
+                                           'start_date': pt['paleo_start_date'],
+                                           'stop_date': pt['paleo_stop_date']})
+
     return form_data
 
 
@@ -4623,10 +4648,10 @@ def get_project(project_id):
                             GROUP BY gpi.proj_uid
                         ) gcmd_platforms ON (p.proj_uid = gcmd_platforms.gcmd_plat_proj_uid)
                         LEFT JOIN (
-                            SELECT pgptm.proj_uid AS gcmd_paleo_proj_uid, json_build_object('paleo_time',json_agg(gpt), 'paleo_start_date', paleo_start_date,
-                                'paleo_stop_date', paleo_stop_date) gcmd_paleo_time
+                            SELECT pgptm.proj_uid AS gcmd_paleo_proj_uid, json_agg(json_build_object('paleo_time', gpt, 'paleo_start_date', paleo_start_date,
+                                'paleo_stop_date', paleo_stop_date)) gcmd_paleo_time
                                 FROM project_gcmd_paleo_time_map pgptm JOIN gcmd_paleo_time gpt ON (gpt.id=pgptm.paleo_time_id)
-                                GROUP BY pgptm.proj_uid, paleo_start_date, paleo_stop_date
+                                GROUP BY pgptm.proj_uid
                         ) gcmd_paleo_times ON (p.proj_uid = gcmd_paleo_times.gcmd_paleo_proj_uid)
                         LEFT JOIN ( 
                             SELECT k_1.proj_uid AS kw_proj_uid, string_agg(k_1.keywords, '; '::text) AS keywords
