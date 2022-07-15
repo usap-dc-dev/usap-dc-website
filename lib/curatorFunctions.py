@@ -646,9 +646,9 @@ def projectJson2sql(data, uid):
 
     # project table
     sql_out += "--NOTE: populate project table\n"
-    sql_out += "INSERT INTO project (proj_uid, title, short_name, description, start_date, end_date, date_created, date_modified) " \
-               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], usap.escapeQuotes(data['sum']),  
-                                                                                 data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10])
+    sql_out += "INSERT INTO project (proj_uid, title, short_name, description, start_date, end_date, date_created, date_modified, project_progress, product_level_id, collection_data_type) " \
+               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], usap.escapeQuotes(data['sum']),  
+                        data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10], data['progress'], data['product_level'], data['data_type'])
 
     # generate the submitter's person id if we have their name
     subm_id = None
@@ -881,6 +881,10 @@ def projectJson2sql(data, uid):
             res = cur.fetchall()
             if len(res) == 0:
                 # sql_out += "--NOTE: adding dataset %s to project_dataset table\n" % ds['title']
+                formats = ""
+                if ds.get('formats'):
+                    formats = '; '.join([f for f in ds['formats']])
+
                 if ds.get('doi') is not None and ds['doi'] != '':
                     # first try and get the dataset id from the dataset table, using the DOI
                     query = "SELECT id FROM dataset WHERE doi = '%s';" % ds['doi']
@@ -894,8 +898,8 @@ def projectJson2sql(data, uid):
                 else:
                     dataset_id += 1
                     ds_id = dataset_id
-                sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, doi) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
-                    (ds_id, ds.get('repository'), ds.get('title'), ds.get('url'), ds.get('doi'))
+                sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, doi, data_format) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s', '%s');\n" % \
+                    (ds_id, ds.get('repository'), ds.get('title'), ds.get('url'), ds.get('doi'), formats)
             else:
                 ds_id = res[0]['dataset_id']
             # sql_out += "--NOTE: adding dataset %s to project_dataset_map\n" % ds_id
@@ -976,6 +980,17 @@ def projectJson2sql(data, uid):
             sql_out += "INSERT INTO project_gcmd_science_key_map (proj_uid, gcmd_key_id) VALUES ('%s', '%s');\n" % (uid, param)
         sql_out += "\n"
 
+
+    # Add platforms and instruments
+    if data.get('platforms') and len(data['platforms']) > 0:
+        sql_out += "--NOTE: adding platforms and instruments\n"
+        for platform in data['platforms']:
+            sql_out += "INSERT INTO project_gcmd_platform_map (proj_uid, platform_id) VALUES ('%s', '%s');\n" % (uid, platform['id'])
+            for instr in platform['instruments']:
+                sql_out += "INSERT INTO project_gcmd_platform_instrument_map (proj_uid, platform_id, instrument_id) VALUES ('%s', '%s', '%s');\n" % (uid, platform['id'], instr)
+            sql_out += "\n"
+        sql_out += "\n"
+
     # Add spatial bounds
     if (data["geo_w"] != '' and data["geo_e"] != '' and data["geo_s"] != '' and data["geo_n"] != '' and data["cross_dateline"] != ''):
 
@@ -988,8 +1003,17 @@ def projectJson2sql(data, uid):
         bounds_geometry = "ST_GeomFromText('%s', 4326)" % makeBoundsGeom(north, south, east, west, data["cross_dateline"])
 
         sql_out += "--NOTE: adding spatial bounds\n"
-        sql_out += "INSERT INTO project_spatial_map(proj_uid,west,east,south,north,cross_dateline,geometry,bounds_geometry) VALUES ('%s','%s','%s','%s','%s','%s',%s,%s);\n" % \
+        sql_out += "INSERT INTO project_spatial_map (proj_uid,west,east,south,north,cross_dateline,geometry,bounds_geometry) VALUES ('%s','%s','%s','%s','%s','%s',%s,%s);\n" % \
             (uid, west, east, south, north, data["cross_dateline"], geometry, bounds_geometry)
+        sql_out += "\n"
+
+    # Add paleo times
+    if data.get('paleo_times') and len(data['paleo_times']) > 0:
+        sql_out += "--NOTE: adding paleo times\n"
+        for pt in data['paleo_times']:
+            sql_out += "INSERT INTO project_gcmd_paleo_time_map (proj_uid, paleo_time_id, paleo_start_date, paleo_stop_date) VALUES ('%s', '%s', '%s', '%s');\n" % \
+                (uid, pt['id'], pt['start_date'], pt['stop_date'])
+        sql_out += "\n"
 
     sql_out += '\nCOMMIT;\n'
     
