@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet"/>
   <link rel="stylesheet" href="https://www.w3schools.com/lib/w3.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.css"/>  
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.css"/> 
 
   {% if cur=='home' or cur=='search' or cur=='map' or cur == 'landing_page'
      or cur == 'project_landing_page' or cur == 'project_browser' or cur == "search_old" or cur == "dataset" or cur == "project" %}
@@ -32,10 +32,11 @@
   <!-- InstanceEndEditable -->
   <script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery/dist/jquery.js') }}"></script>
   <script type="text/javascript" src="/static/js/oauth.js"></script>
-  <script src="https://code.jquery.com/jquery-1.12.4.js" integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU=" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-1.12.4.js" crossorigin="anonymous"></script>
   <script type="text/javascript" src="{{url_for ('static', filename='js/sorttable.js')}}"></script>
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.js"></script>
   <script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min.js" integrity="sha512-Hyk+1XSRfagqzuSHE8M856g295mX1i5rfSV5yRugcYFlvQiE3BKgg5oFRfX45s7I8qzMYFa8gbFy9xMFbX7Lqw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   
   {{ JSGlue.include() }}
 

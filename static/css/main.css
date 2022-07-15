@@ -875,3 +875,36 @@ textarea[disabled], input[disabled], textarea[readonly], input[readonly], div[di
   margin-left: auto;
   margin-right: auto;
 }
+
+element.style {
+    color: #FFFFFF;
+    background-color: #428bca;
+}
+
+.treeview .icon {
+    height:fit-content;
+    -webkit-text-stroke: 1px white;
+}
+
+.treeview .list-group-item {
+    padding: 4px;
+}
+
+  
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+    .active, .accordion:hover {
+    background-color: #ccc;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+.panel {
+    padding: 0 18px;
+    background-color: white;
+    display: none;
+    overflow: hidden;
+}
+
+.selected_item {
+    width: 500px;
+    margin-top: 0px;
+}

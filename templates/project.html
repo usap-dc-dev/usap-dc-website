@@ -11,8 +11,14 @@
 <div id="deployments_list" hidden>{% if project_metadata['deployments']|length > 0 %}{{project_metadata['deployments']|tojson}}{% endif %}</div>
 <div id="locations_list" hidden>{% if project_metadata['locations']|length > 0 %}{{project_metadata['locations']|tojson}}{% endif %}</div>
 <div id="parameters_list" hidden>{% if project_metadata['parameters']|length > 0 %}{{project_metadata['parameters']|tojson}}{% endif %}</div>
+<div id="platforms_list" hidden>{% if project_metadata['platforms']|length > 0 %}{{project_metadata['platforms']|tojson}}{% endif %}</div>
 <div id="publications_list" hidden>{% if project_metadata['publications']|length > 0 %}{{project_metadata['publications']|tojson}}{% endif %}</div>
 <div id="datasets_list" hidden>{% if project_metadata['datasets']|length > 0 %}{{project_metadata['datasets']|tojson}}{% endif %}</div>
+<div id="paleo_times_list" hidden>{% if project_metadata['paleo_times']|length > 0 %}{{project_metadata['paleo_times']|tojson}}{% endif %}</div>
+
+<div id="platforms_json" hidden>{% if platforms|length > 0 %}{{platforms|tojson}}{% endif %}</div>
+<div id="instruments_json" hidden>{% if instruments|length > 0 %}{{instruments|tojson}}{% endif %}</div>
+<div id="paleo_time_json" hidden>{% if paleo_time|length > 0 %}{{paleo_time|tojson}}{% endif %}</div>
 
 <div class="content fixed-width">
 
@@ -178,6 +184,43 @@
           </table>
 
           <br>
+          <b class="required">Project Progress:</b><br>
+          <select name="progress" id="progress">
+            <option value="">(Select Progress)</option>
+            {% for p in progresses %}
+              <option value="{{p.id}}" {% if project_metadata.progress and p.id == project_metadata.progress %}selected{% endif %}>{{p.id}}</option>
+            {% endfor %}
+          </select>
+          <br>
+
+          <br>
+          <b>Product Level:</b><br>
+          <select name="product_level" id="product_level">
+            <option value="Not Provided">Not Provided</option>
+            {% for p in product_levels %}
+              <option value="{{p.id}}" {% if project_metadata.product_level and p.id == project_metadata.product_level %}selected{% endif %}>
+                {{p.id}} {% if p.description %} ({{p.description}}) {% endif %}
+               </option>
+            {% endfor %}
+          </select>
+          <br>
+
+          <br>
+          <b>Collection Data Type:</b><br>
+          <select name="data_type" id="data_type">
+            {% for d in data_types %}
+              <option value="{{d.id}}" 
+              {% if project_metadata.data_type and d.id == project_metadata.data_type %}selected
+              {% elif not project_metadata.data_type and d.id == "SCIENCE_QUALITY" %}selected{% endif %}
+              >
+                {{d.id}}
+               </option>
+            {% endfor %}
+          </select>
+          <br>
+
+
+          <br>
           <b>Special Science Program:</b><br>
           <i>if not in list, please make a note in the comment box</i><br>
           <select name="program" id="program">
@@ -284,7 +327,7 @@
               </div>
             </div>
             <div id="more_locations"></div>
-            <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another locations</span></a>
+            <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another location</span></a>
           </div>
 
         <div class="form-group required">
@@ -299,6 +342,19 @@
           </div>
           <button type="button" id="add-parameter">Add Term</button>
         </div>
+        <br>
+
+        <div class="form-group">
+            <b>GCMD Platform(s) - select all that apply:</b> &nbsp;<i>(terms from the <a class="external" href="https://gcmd.earthdata.nasa.gov/static/kms/" target="_blank">GCMD</a> Platforms Keyword list)</i><br>
+            <div class="form-group" style="margin-bottom:0">
+                <input type="input" class="form-control" style="display:inline-block; width:75%" id="platform_search" placeholder="Type to search..." value="">
+                <button type="button" id="btn_search_plat">Search</button>
+                <button type="button" id="btn_clear_search_plat">Clear</button>
+            </div>
+            <div id="platform_tree"></div>
+            <label for="selected_platforms" style="margin-left:10px"><i>Selected Platforms</i></label>
+            <div id="selected_platforms" style="margin-left:10px"></div>
+        </div>    
         <br>
 
         <div>
@@ -334,8 +390,21 @@
             </div>
           </div>
         </div>
-
         <br>
+
+        <div class="form-group">
+            <b>GCMD Paleo Time(s) - select all that apply:</b> &nbsp;<i>(terms from the <a class="external" href="https://gcmd.earthdata.nasa.gov/static/kms/" target="_blank">GCMD</a> Chrono Units Keyword list)</i><br>
+            <div class="form-group" style="margin-bottom:0">
+                <input type="input" class="form-control" style="display:inline-block; width:75%" id="paleo_time_search" placeholder="Type to search..." value="">
+                <button type="button" id="btn_search_paleo">Search</button>
+                <button type="button" id="btn_clear_search_paleo">Clear</button>
+            </div>
+            <div id="paleo_time_tree"></div>
+            <label for="selected_paleo_times" style="margin-left:10px"><i>Selected Paleo Times</i></label>
+            <div id="selected_paleo_times" style="margin-left:10px"></div>
+        </div>    
+        <br>
+
         <div class="form-group" name="publicationsForm">
           <label for="publication">Project Publications</label>
           <span><i>Include DOI where known</i></span>
@@ -386,9 +455,40 @@
                 <td><i>DOI</i></td>
                 <td><input class="input-sm form-control removable" type="text" id="ds_doi" name="ds_doi" style="margin-bottom:2px"/></td>
               </tr>
+              <tr>
+                <td><i>Format(s)</i></td>
+                <td>
+                    <div class="formatTemplate" id="ds_formatTemplate">
+                        <div class="dropdown" id="format-dropdown">
+                            <input type="hidden" id="ds_format" name="ds_format" class="format_input" value="{{project_metadata.get('format','Not Provided')}}";"/>
+                            <button type="button" id="format_dropdown" data-toggle="dropdown" class="dropdown-toggle btn btn-default form-control format-removable" style="width:25%;padding:0;">
+                                {{project_metadata.get('format','Not Provided')}}
+                                <span class="caret"></span> 
+                            </button>
+                            
+                            <ul class="dropdown-menu">
+                                <li><a data-toggle="tooltip" data-placement="right">Not Provided</a></li>
+                                {% for f in formats %}
+                                    <li><a data-toggle="tooltip" title="{{f.long_name}}" data-placement="right">{{f.short_name}}</a></li>
+                                {% endfor %}
+                            </ul>
+                            
+                        </div>
+                    </div>
+                    <div id="more_formats" class="more_formats"></div>
+                    
+                    <a href="#formatForm" id="removeFormat" class="format-remover" onclick="removeFormat(this);"><i class="fa fa-remove"></i></a>
+
+                    <div class="add-format">
+                        <a href="#formatForm" class="addFormat" onclick="addFormatClicked(this);"><i class="fa fa-plus" style="margin-left:3px;">&nbsp;</i><span id="add_another_format">Add another format</span></a>
+                    </div>
+
+                </td>
+              </tr>
             </table>
             <div style="clear:both"></div>
           </div>
+          <br>
           <div id="more_datasets"></div>
           <a href="#datasetsForm" id="addDatasetRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_dataset">Add another dataset</span></a>
         </div>

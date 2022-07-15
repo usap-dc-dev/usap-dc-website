@@ -57,6 +57,11 @@ $(document).ready(function() {
       parameters = JSON.parse($("#parameters_list").text());
     }
 
+    var platforms = [];
+    if ($("#platforms_list").text().length > 0) {
+      platforms = JSON.parse($("#platforms_list").text());
+    }
+
     var publications = [];
     if ($("#publications_list").text().length > 0) {
       publications = JSON.parse($("#publications_list").text());
@@ -66,6 +71,187 @@ $(document).ready(function() {
     if ($("#datasets_list").text().length > 0) {
       datasets = JSON.parse($("#datasets_list").text());
     }
+
+    var paleo_times = [];
+    if ($("#paleo_times_list").text().length > 0) {
+      paleo_times = JSON.parse($("#paleo_times_list").text());
+    }
+
+    // Set up the platform tree
+    var platform_data = [];
+    if ($("#platforms_json").text().length > 0) {
+      platform_data = JSON.parse($("#platforms_json").text());
+    }
+
+    $('#platform_tree').treeview({
+        data: platform_data, 
+        multiSelect: true,
+        showCheckbox: true,
+        highlightSelected: false 
+    });
+    $('#platform_tree').treeview('collapseAll', { silent: true });
+
+    $('li[data-nodeid="0"').find($('.check-icon')).remove();
+
+    var search = function(e) {
+        var pattern = $('#platform_search').val();
+        var options = {
+          ignoreCase: true,
+          exactMatch: false,
+          revealResults: true
+        };
+        $('#platform_tree').treeview('search', [ pattern, options ]);
+    }
+    $('#btn_search_plat').on('click', search);
+
+    $('#btn_clear_search_plat').on('click', function (e) {
+        $('#platform_tree').treeview('clearSearch');
+        $('#platform_search').val('');
+    });
+
+    $('#platform_tree').on('nodeChecked', function(event, data) {
+        var new_div = $('<div>').attr({id: 'div_plat_'+data.nodeId});
+        $('<input>').attr({type: 'hidden', id: 'plat_'+data.nodeId, name: 'plat_'+data.nodeId, value: data.id, class: 'selected_item'}).appendTo(new_div);
+        $('<input>').attr({type: 'text', value: data.text, class: 'selected_item', disabled: true, style:"display:inline-block; width:75%"}).appendTo(new_div);
+        $('<button>').attr({type: 'button', id: 'instr_btn'+data.nodeId, onclick:'selectInstrument('+data.nodeId+');'}).html('Add Instrument(s)').appendTo(new_div);
+        $('<button>').attr({type: 'button', id: 'hide_instr_btn'+data.nodeId, onclick:'hideInstrumentTree('+data.nodeId+');'}).html('Hide Tree').hide().appendTo(new_div);
+        $('<p>').attr({id:'instr_text'+data.nodeId}).
+                html('<b>GCMD Instrument(s) - select all that apply:</b> &nbsp;<i>(terms from the <a class="external" href="https://gcmd.earthdata.nasa.gov/static/kms/" target="_blank">GCMD</a> Instruments Keyword list)</i><br>')
+                .hide().appendTo(new_div);
+
+        var search_div = $('<div>').attr({id: 'search_instr'+data.nodeId, class:'form-group', style:'margin-bottom:0'}).appendTo(new_div);
+        $('<input>').attr({type:"input", class:"form-control", style:"display:inline-block; width:75%;", id:"instr_search"+data.nodeId, placeholder:"Type to search..."}).appendTo(search_div);
+        $('<button>').attr({type: 'button', id:'btn_search_instr'+data.nodeId}).text('Search').appendTo(search_div);
+        $('<button>').attr({type: 'button', id:'btn_clear_search_instr'+data.nodeId}).text('Clear').appendTo(search_div);
+        search_div.hide().appendTo(new_div);
+
+        $('<div>').attr({id:'instr_tree'+data.nodeId}).appendTo(new_div);
+        // $('<br>').appendTo(new_div);
+        $('<label>').attr({for:'selected_instruments'+data.nodeId, style:"margin-left:20px"}).html('<i>Selected Instruments</i>').appendTo(new_div);
+        $('<div>').attr({id: 'selected_instruments'+data.nodeId, style:"margin-left:20px"}).appendTo(new_div);
+        $('<br>').attr({id: 'br_'+data.nodeId}).appendTo(new_div);
+        new_div.appendTo($('#selected_platforms'));
+    });
+
+    $('#platform_tree').on('nodeUnchecked', function(event, data) {
+        $('#div_plat_'+data.nodeId).remove();
+    });
+
+    // if editing, populate any added platform fields
+    if (platforms.length > 0) {
+        for (var p in platforms) {
+            var platform = platforms[p];
+            var parts = platform.id.split(' > ')
+            var name = parts[parts.length -1]
+            var nodes = $('#platform_tree').treeview('search', [name, {exactMatch: false, revealResults:false}]);
+            for (var n in nodes) {
+                var node = nodes[n];
+                if (node.id == platform.id) {
+                    $('#platform_tree').treeview('checkNode', [node.nodeId]);
+
+                    // add instruments
+                    var instruments = platform.instruments; 
+                    if (instruments.length > 0) {
+                        selectInstrument(node.nodeId);
+                    
+                        for (var i in instruments) {
+                            var instr = instruments[i];
+                            var instr_parts = instr.split(' > ')
+                            var instr_name = instr_parts[instr_parts.length -1]
+                            var instr_nodes = $('#instr_tree'+node.nodeId).treeview('search', [instr_name, {exactMatch: false, revealResults:false}]);
+                            for (var j in instr_nodes) {
+                                var instr_node = instr_nodes[j];
+                                if (instr_node.id == instr) {
+                                    $('#instr_tree'+node.nodeId).treeview('checkNode', [instr_node.nodeId]);
+                                    break;
+                                }
+                            }
+                        }
+                        $('#instr_tree'+node.nodeId).treeview('clearSearch');
+                        hideInstrumentTree(node.nodeId);
+                    }
+                    break;
+                }
+            }
+        }
+        $('#platform_tree').treeview('clearSearch');
+    }
+
+    //set up the paleo_time tree
+    var paleo_time_data = [];
+    if ($("#paleo_time_json").text().length > 0) {
+      paleo_time_data = JSON.parse($("#paleo_time_json").text());
+    }
+
+    $('#paleo_time_tree').treeview({
+        data: paleo_time_data, 
+        multiSelect: true,
+        showCheckbox: true,
+        highlightSelected: false 
+    });
+    $('#paleo_time_tree').treeview('collapseAll', { silent: true });
+
+    $('li[data-nodeid="0"').find($('.check-icon')).remove();
+
+    var paleo_time_search = function(e) {
+        var pattern = $('#paleo_time_search').val();
+        var options = {
+          ignoreCase: true,
+          exactMatch: false,
+          revealResults: true
+        };
+        $('#paleo_time_tree').treeview('search', [ pattern, options ]);
+    }
+    $('#btn_search_paleo').on('click', paleo_time_search);
+
+    $('#btn_clear_search_paleo').on('click', function (e) {
+        $('#paleo_time_tree').treeview('clearSearch');
+        $('#paleo_time_search').val('');
+    });
+
+    $('#paleo_time_tree').on('nodeChecked', function(event, data) {
+        var new_div = $('<div>').attr({id: 'div_paleo_time_'+data.nodeId});
+        $('<input>').attr({type: 'hidden', id: 'paleo_time_'+data.nodeId, name: 'paleo_time_'+data.nodeId, value: data.id, class: 'selected_item'}).appendTo(new_div);
+        $('<input>').attr({type: 'text', value: data.text, class: 'selected_item', disabled: true, style:"display:inline-block; width:70%"}).appendTo(new_div);
+        $('<input>').attr({type: 'text', style:"display:inline-block; width:15%", name:'paleo_start_date_'+data.nodeId, id:'paleo_start_date_'+data.nodeId, placeholder:'Start Date'}).appendTo(new_div);
+        $('<input>').attr({type: 'text', style:"display:inline-block; width:15%", name:'paleo_stop_date_'+data.nodeId, id:'paleo_stop_date_'+data.nodeId, placeholder:'Stop Date'}).appendTo(new_div);
+
+        $('<div>').attr({id:'paleo_time_tree'+data.nodeId}).appendTo(new_div);
+        new_div.appendTo($('#selected_paleo_times'));
+    });
+
+    $('#paleo_time_tree').on('nodeUnchecked', function(event, data) {
+        $('#div_paleo_time_'+data.nodeId).remove();
+    });
+
+    // if editing, populate any added paleo time fields
+    if (paleo_times.length > 0) {
+        for (var p in paleo_times) {
+            var paleo_time = paleo_times[p];
+            console.log(paleo_time)
+            var parts = paleo_time.id.split(' > ')
+            var name = parts[parts.length -1]
+            var nodes = $('#paleo_time_tree').treeview('search', [name, {exactMatch: false, revealResults:false}]);
+            console.log(nodes)
+            for (var n in nodes) {
+                var node = nodes[n];
+                if (node.id == paleo_time.id) {
+                    console.log(node.id)
+                    $('#paleo_time_tree').treeview('checkNode', [node.nodeId]);
+                    if (paleo_time.start_date) {
+                        console.log(node.nodeId)
+                        $('#paleo_start_date_'+node.nodeId).val(paleo_time.start_date);
+                    }
+                    if (paleo_time.stop_date) {
+                        $('#paleo_stop_date_'+node.nodeId).val(paleo_time.stop_date);
+                    }
+                    break;
+                }
+            }
+        }
+        $('#paleo_time_tree').treeview('clearSearch');
+    }
+ 
 
     /*initiate the autocomplete function on the "author" elements, and pass along the persons array as possible autocomplete values:*/
     autocomplete(document.getElementById("copi_name_last"), document.getElementById("copi_name_first"), persons);
@@ -87,6 +273,7 @@ $(document).ready(function() {
     var deployment_counter = 1;
     var location_wrapper = $('#more_locations');
     var location_counter = 1;
+    format_counter = 1;
 
 
     var check = $('input[name="entire_region"]');
@@ -390,7 +577,15 @@ $(document).ready(function() {
     $('#ds_title').val(dataset.title);
     $('#ds_url').val(dataset.url);
     $('#ds_doi').val(dataset.doi);
-  
+    for (var f in dataset.formats) {
+        var format = dataset.formats[f];
+        if (f == 0) {
+            $('#ds_format').val(format);
+        }
+        else {
+            addFormat($('#more_formats'), format);
+        }
+    }
     for (i=1; i < datasets.length; i++ ) {
       addDatasetRow(datasets[i]);
     }
@@ -415,6 +610,11 @@ $(document).ready(function() {
     $(extraDataset).find('#ds_title').attr('id', 'ds_title'+ds_counter).attr('name', 'ds_title'+ds_counter).html('');
     $(extraDataset).find('#ds_url').attr('id', 'ds_url'+ds_counter).attr('name', 'ds_url'+ds_counter).html('');
     $(extraDataset).find('#ds_doi').attr({'id': 'ds_doi'+ds_counter, 'name': 'ds_doi'+ds_counter, 'value': ''});
+    $(extraDataset).find('#more_formats').attr({'id': 'more_formats'+ds_counter}).empty();
+    $(extraDataset).find('#ds_formatTemplate').attr({'id': 'ds_formatTemplate'+ds_counter});
+    $(extraDataset).find('#ds_format').attr({'id': 'ds_format'+ds_counter, 'name': 'ds_format'+ds_counter, 'value': ''});
+    $(extraDataset).find('#format-dropdown').attr({'id': 'format-dropdown'+ds_counter});
+    $(extraDataset).find('#format_dropdown').attr({'id': 'format_dropdown'+ds_counter}).html('Not Provided <span class="caret"></span>');
     $(extraDataset).find('#removeDatasetRow').show();
     $(extraDataset).find('#extraDatasetLine').show();
     $(ds_wrapper).append($('<div/>', {'class' : 'extraDataset', html: extraDataset.html()}));
@@ -424,11 +624,24 @@ $(document).ready(function() {
       $('#ds_title'+ds_counter).val(dataset.title);
       $('#ds_url'+ds_counter).val(dataset.url);
       $('#ds_doi'+ds_counter).val(dataset.doi);
+      for (var f in dataset.formats) {
+        var format = dataset.formats[f];
+        if (f == 0) {
+            $('#ds_format'+ds_counter).val(format);
+        }
+        else {
+            addFormat($('#more_formats'+ds_counter), format);
+        }
+      }
     }
     ds_counter++;
+
+    $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+    $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+
   }
 
-  
+
   // if editing, populate any added publication fields
   if (publications.length > 0) {  
     for (i=0; i < publications.length; i++ ) {
@@ -722,4 +935,100 @@ function autocomplete(inp, inp2, arr) {
   document.addEventListener("click", function (e) {
       closeAllLists(e.target);
   });
+}
+
+//instrument tree
+function selectInstrument(node) {
+    $('#instr_btn'+node).hide();
+    $('#hide_instr_btn'+node).show();
+    $('#search_instr'+node).show();
+    var instr_data = [];
+    if ($("#instruments_json").text().length > 0) {
+      instr_data = JSON.parse($("#instruments_json").text());
+    }
+
+    var instr_tree = $('#instr_tree'+node);
+    instr_tree.show();
+
+    // initialize the treeview if it doesn't already exist
+    if (instr_tree.treeview('getNode',0).nodes === undefined) {
+        instr_tree.treeview({
+            data: instr_data, 
+            multiSelect: true,
+            showCheckbox: true,
+            highlightSelected: false 
+        });
+        instr_tree.treeview('collapseAll', { silent: true });
+    }
+
+    $('#instr_text'+node).show();
+
+    var search = function(e) {
+        var pattern = $('#instr_search'+node).val();
+        var options = {
+          ignoreCase: true,
+          exactMatch: false,
+          revealResults: true
+        };
+        instr_tree.treeview('search', [ pattern, options ]);
+    }
+    $('#btn_search_instr'+node).on('click', search);
+
+    $('#btn_clear_search_instr'+node).on('click', function (e) {
+        instr_tree.treeview('clearSearch');
+        $('#instr_search'+node).val('');
+    });
+
+    instr_tree.on('nodeChecked', function(event, data) {
+        var new_div = $('<div>').attr({id: 'div_instr_'+node+'_'+data.nodeId});
+        $('<input>').attr({type: 'hidden', id: 'instr_'+node+'_'+data.nodeId, name: 'instr_'+node+'_'+data.nodeId, value: data.id, class: 'selected_item'}).appendTo(new_div);
+        $('<input>').attr({type: 'text', value: data.text, class: 'selected_item', disabled: true}).appendTo(new_div);
+        $('<br>').attr({id: 'br_'+data.nodeId}).appendTo(new_div);
+        new_div.appendTo($('#selected_instruments'+node)); 
+    });
+
+    instr_tree.on('nodeUnchecked', function(event, data) {
+        $('#div_instr_'+node+'_'+data.nodeId).remove();
+    });
+}
+
+
+function hideInstrumentTree(node) {
+    $('#instr_btn'+node).show();
+    $('#hide_instr_btn'+node).hide();
+    $('#instr_tree'+node).hide();
+    $('#instr_text'+node).hide();
+    $('#search_instr'+node).hide();
+}
+
+
+function addFormatClicked(sel) {
+    var format_wrapper = $(sel).parent().parent().find(".more_formats");
+    addFormat(format_wrapper, null);
+};
+
+
+function removeFormat(sel) {
+    var format_wrapper = $(sel).parent().parent().find(".more_formats");
+    format_wrapper.find('.extraFormat').get(-1).remove();
+    format_counter--; 
+}
+
+
+function addFormat(format_wrapper, format) {
+    var extraFormat = $('.formatTemplate').clone();
+    var ds_count = format_wrapper.attr('id').replace('more_formats','');
+    $(extraFormat).find('#format-dropdown').attr({'id': 'format-dropdown'+ds_count+"-"+format_counter});
+    $(extraFormat).find('#ds_format').attr({'id': 'ds_format'+ds_count+"-"+format_counter, 'name': 'ds_format'+ds_count+"-"+format_counter, 'value': ''});
+    $(extraFormat).find('#format_dropdown').attr({'id': 'format_dropdown'+ds_count+"-"+format_counter}).html('Not Provided <span class="caret"></span>');
+    $('#removeFormat').show();
+    if (format !== null) {
+      $(extraFormat).find('#ds_format'+ds_count+"-"+format_counter).attr('value', format);
+    }
+    
+    format_wrapper.append($('<div/>', {'class' : 'extraFormat', html: extraFormat.html()}));
+
+    $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
+    $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+    format_counter++;
 }

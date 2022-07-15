@@ -453,6 +453,81 @@ def get_files(conn=None, cur=None, dataset_id=None):
     return cur.fetchall()
 
 
+def get_gcmd_platforms(conn=None, cur=None):
+    query = "SELECT id FROM gcmd_platform WHERE id != 'Not provided' ORDER BY id"
+    return gcmd_id_to_json(conn, cur, query, 'GCMD Platforms', 'Not Provided')
+
+
+def get_gcmd_instruments(conn=None, cur=None):
+    query = "SELECT id FROM gcmd_instrument WHERE id !~* 'NOT APPLICABLE' ORDER BY id"
+    return gcmd_id_to_json(conn, cur, query, 'GCMD Instruments', 'NOT APPLICABLE')
+
+
+def get_gcmd_paleo_time(conn=None, cur=None):
+    query = "SELECT id FROM gcmd_paleo_time WHERE id !~* 'NOT APPLICABLE' ORDER BY id"
+    return gcmd_id_to_json(conn, cur, query, 'GCMD Paleo Time', 'NOT APPLICABLE')
+
+
+def get_gcmd_progress():
+    (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM gcmd_collection_progress'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_product_levels():
+    (conn, cur) = connect_to_db()
+    query = "SELECT * FROM product_level WHERE id != 'Not Provided'"
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_gcmd_data_types():
+    (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM gcmd_collection_data_type'
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_gcmd_data_formats():
+    (conn, cur) = connect_to_db()
+    query = "SELECT * FROM gcmd_data_format WHERE short_name != 'Not Provided'"
+    cur.execute(query)
+    return cur.fetchall()  
+
+
+# function to convert gcmd ids from DB tables into json that can be used to populate bootstrap-treeviews
+def gcmd_id_to_json(conn=None, cur=None, query=None, base_node_text=None, none_option=None):
+
+    if not (query and base_node_text):
+        return[]
+
+    if not (conn and cur):
+        (conn, cur) = connect_to_db() 
+    cur.execute(query)
+    res = cur.fetchall()
+
+    json = [{'text': base_node_text, 'nodes': []}]
+    if none_option:
+        json[0]['nodes'].append({'text': none_option, 'id': none_option})
+
+    for r in res:
+        this_id = r['id']
+        parts = this_id.split(' > ')
+        parent_node = [p for p in json if p['text'] == base_node_text][0]
+        for idx, part in enumerate(parts):
+            if idx > 0:
+                parent_node = [p for p in parent_node['nodes'] if p['text'] == parts[idx-1]][0]
+            if idx == len(parts) - 1:
+                node = {'text': part, 'id': this_id}
+                if parent_node.get('nodes'):
+                    parent_node['nodes'].append(node)
+                else:
+                    parent_node['nodes'] = [node]
+
+    return json
+
+
 def check_user_permission(user_info, uid, project=False):
     # if user is a curator, always return true
     if cf.isCurator():
@@ -1070,6 +1145,7 @@ def check_project_registration(msg_data):
         # Validator(func=default_func('email'), msg='You must include a contact email address for the submission.'),
         Validator(func=check_valid_email, msg='You must a valid contact email address for the submission.'),
         Validator(func=default_func('start'), msg='You must include a start date for the project'),
+        Validator(func=default_func('progress'), msg='You must include the progress of the project'),
         Validator(func=default_func('end'), msg='You must include an end date for the project'),
         Validator(func=default_func('sum'), msg='You must include an abstract for the project'),
         # Validator(func=lambda data: 'repos' in data and (len(data['repos']) > 0 or data['repos'] == 'nodata'), msg="You must provide info about the repository where you submitted the dataset"),
@@ -1423,6 +1499,7 @@ def project(project_id=None):
 
             # save json file in submitted dir
             try:
+                session['project_metadata'] = {}
                 submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
                 if edit:
                     submitted_file = os.path.normpath(os.path.join(submitted_dir, "e" + project_id + ".json"))
@@ -1436,7 +1513,8 @@ def project(project_id=None):
                 with open(submitted_file, 'w') as file:
                     file.write(json.dumps(msg_data, indent=4, sort_keys=True))
                 os.chmod(submitted_file, 0o664)
-            except:
+            except Exception as e:
+                print(e)
                 raise BadSubmission('Unable to submit Project. Please contact info@usap-dc.org', '/submit/project')
 
             # email curators
@@ -1515,8 +1593,9 @@ def project(project_id=None):
             
             return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
                                    nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                                   locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
-                                   project_metadata=project_metadata, edit=edit, error=error, success=success)
+                                   locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
+                                   instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
+                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success)
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -1541,8 +1620,9 @@ def project(project_id=None):
                 error = "Unable to restore dataset."
             return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
                                    nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                                   locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
-                                   project_metadata=project_metadata, edit=edit, error=error, success=success)
+                                   locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
+                                   instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
+                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success)
 
     else:  
         # if returning after an unsuccessful submission, repopulate form with the existing metadata
@@ -1587,8 +1667,9 @@ def project(project_id=None):
 
         return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=get_projects(), persons=get_persons(),
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
-                               locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), 
-                               project_metadata=session.get('project_metadata'), edit=edit)
+                               locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
+                               instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
+                               data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=session.get('project_metadata'), edit=edit)
 
 
 def send_autoreply(recipient, subject):
@@ -1763,15 +1844,63 @@ def process_form_data(form):
             del msg_data[key]
     msg_data['locations'] = locations
 
+    platforms = []
+    del_keys = []
+    for key in msg_data.keys():
+        if 'plat' in key:
+            plat_id = key.split('_')[-1]
+            platform = {'id': msg_data[key], 'instruments': []}
+            for key2 in msg_data.keys():
+                if 'instr_'+plat_id in key2:
+                    platform['instruments'].append(msg_data[key2])
+                    del_keys.append(key2)
+            platforms.append(platform)
+            del_keys.append(key)
+
+    msg_data['platforms'] = platforms
+    for key in del_keys:
+        del msg_data[key]
+
+    paleo_times = []
+    del_keys = []
+    for key in msg_data.keys():
+        if 'paleo_time_' in key:
+            paleo_id = key.split('_')[-1]
+            paleo_time = {'id': msg_data[key]}
+            for key2 in msg_data.keys():
+                if 'paleo_start_date_'+paleo_id in key2:
+                    paleo_time['start_date'] = msg_data[key2]
+                    del_keys.append(key2)
+                if 'paleo_stop_date_'+paleo_id in key2:
+                    paleo_time['stop_date'] = msg_data[key2]
+                    del_keys.append(key2)
+            paleo_times.append(paleo_time)
+            del_keys.append(key)
+
+    msg_data['paleo_times'] = paleo_times
+    for key in del_keys:
+        del msg_data[key]
+
     datasets = []
     idx = 0
     key = 'ds_repo'
     while key in msg_data:
         if msg_data[key] != "":
+            del_keys = []
             repo = {'repository': msg_data[key],
                     'title': msg_data.get(key.replace('repo', 'title')),
                     'url': msg_data.get(key.replace('repo', 'url')),
-                    'doi': msg_data.get(key.replace('repo', 'doi'))}
+                    'doi': msg_data.get(key.replace('repo', 'doi')), 
+                    'formats': []}
+            format_key = key.replace('repo', 'format')
+            
+            for key2 in msg_data.keys():
+                if format_key == key2.split('-')[0]:
+                    repo['formats'].append(msg_data[key2])
+                    del_keys.append(key2)
+
+
+
             datasets.append(repo)
         del msg_data[key] 
         if msg_data.get(key.replace('repo', 'title')):
@@ -1780,6 +1909,9 @@ def process_form_data(form):
             del msg_data[key.replace('repo', 'url')]
         if msg_data.get(key.replace('repo', 'doi')):
             del msg_data[key.replace('repo', 'doi')]
+        for key3 in del_keys:
+            if key3 in msg_data:
+                del msg_data[key3]
         idx += 1
         key = 'ds_repo' + str(idx)
     msg_data['datasets'] = datasets
@@ -3802,6 +3934,11 @@ def dataset_json(dataset_id):
 @app.route('/project_json/<project_id>')
 def project_json(project_id):
     return flask.jsonify(get_project(project_id))
+
+
+@app.route('/platforms_json')
+def platforms_json():
+    return flask.jsonify(get_gcmd_platforms())
 
 
 def isNsfFunder(funders, award):

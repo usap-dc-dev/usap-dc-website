@@ -3,7 +3,7 @@ input, textarea {
 }
 
 .form-group {
-    width: 75%;
+    width: 87%;
 }
 
 .dropdown-menu {
@@ -33,6 +33,16 @@ input, textarea {
   float:right; 
   width:5%
 }
+
+.format-remover {
+    display: none;
+    width:5%
+}
+
+.format-removable {
+    float:left; 
+    width:95%
+  }
 
 .input-group-addon {
   padding:5px;
@@ -163,4 +173,10 @@ input[type=number] {
 
 .coord-element {
   width: 50px;
+}
+
+.add-format {
+    height: 34px;
+    padding: 5px;  
+    clear: both;     
 }
