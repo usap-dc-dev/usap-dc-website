@@ -980,6 +980,33 @@ def projectJson2sql(data, uid):
             sql_out += "INSERT INTO project_gcmd_science_key_map (proj_uid, gcmd_key_id) VALUES ('%s', '%s');\n" % (uid, param)
         sql_out += "\n"
 
+    # user keywords
+    if data.get("user_keywords") and data["user_keywords"] != "":
+        last_id = None
+        sql_out += "--NOTE: add user keywords\n"
+        for keyword in data["user_keywords"].split(','):
+            keyword = keyword.strip()
+            # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
+            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
+            cur.execute(query)
+            res = cur.fetchone()
+            if res is not None:
+                sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s', '%s'); -- %s\n" % (uid, res['keyword_id'], keyword)
+            else:
+                #if not found, add to keyword_usap
+                # first work out the last keyword_id used
+                query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                cur.execute(query)
+                res = cur.fetchone()
+                if not last_id:
+                    last_id = res['keyword_id'].replace('uk-', '')
+                next_id = int(last_id) + 1
+                sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
+                    (next_id, keyword)
+                sql_out += "--INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s', 'uk-%s');\n" %(uid, next_id)
+                last_id = next_id
+        sql_out += "\n"
+
     # Add platforms and instruments
     if data.get('platforms') and len(data['platforms']) > 0:
         sql_out += "--NOTE: adding platforms and instruments\n"
@@ -1537,6 +1564,38 @@ def editProjectJson2sql(data, uid):
         elif k == 'title':
             sql_out += "\n--NOTE: UPDATING TITLE\n"
             sql_out += "UPDATE project SET title = '%s' WHERE proj_uid = '%s';\n" % (data['title'], uid)
+
+        if k == 'user_keywords': 
+            sql_out += "\n--NOTE: UPDATING USER KEYWORDS\n"
+
+            # remove existing keywords from project_keyword_map
+            sql_out += "\n--NOTE: First remove all user keywords from project_keyword_map\n"
+            sql_out += "DELETE FROM project_keyword_map WHERE proj_uid = '%s' AND keyword_id ~ 'uk-' AND keyword_id NOT IN (SELECT keyword_id FROM vw_location);\n" % uid
+
+            if data["user_keywords"] != "":
+                last_id = None
+                sql_out += "\n--NOTE: add user keywords\n"
+                for keyword in data["user_keywords"].split(','):
+                    keyword = keyword.strip()
+                    # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
+                    query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
+                    cur.execute(query)
+                    res = cur.fetchone()
+                    if res is not None:
+                        sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s','%s'); -- %s\n" % (uid, res['keyword_id'], keyword)
+                    else:
+                        #if not found, add to keyword_usap
+                        # first work out the last keyword_id used
+                        query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                        cur.execute(query)
+                        res = cur.fetchone()
+                        if not last_id:
+                            last_id = res['keyword_id'].replace('uk-', '')
+                        next_id = int(last_id) + 1
+                        sql_out += "--INSERT INTO keyword_usap (keyword_id, keyword_label, keyword_type_id, source) VALUES ('uk-%s', '%s', 'REPLACE_ME', 'user');\n" % \
+                            (next_id, keyword)
+                        sql_out += "--INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s','uk-%s');\n" %(uid, next_id)
+                        last_id = next_id
 
         elif k == 'websites': 
             sql_out += "\n--NOTE: UPDATING WEBSITES\n"

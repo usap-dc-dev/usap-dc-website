@@ -1950,7 +1950,8 @@ def project_db2form(uid):
         'platforms': [],
         'paleo_times': [],
         'program': None,
-        'dmp_file': None
+        'dmp_file': None,
+        'user_keywords': ''
     }
 
     main_contact = None
@@ -2051,6 +2052,14 @@ def project_db2form(uid):
             form_data['paleo_times'].append({'id': pt['paleo_time']['id'],
                                            'start_date': pt['paleo_start_date'],
                                            'stop_date': pt['paleo_stop_date']})
+
+    if db_data.get('aux_keywords'):
+        for kw in db_data['aux_keywords'].split('; '):
+            if kw not in form_data['locations']:
+                print(kw)
+                if form_data['user_keywords'] != '':
+                    form_data['user_keywords'] += ', '
+                form_data['user_keywords'] += kw
 
     return form_data
 
@@ -4674,6 +4683,15 @@ def get_project(project_id):
                                   ) k_1
                             GROUP BY k_1.proj_uid
                         ) keywords ON keywords.kw_proj_uid = p.proj_uid
+                        LEFT JOIN ( 
+                            SELECT k_1.proj_uid AS kw_proj_uid, string_agg(k_1.keyword_label, '; '::text) AS aux_keywords
+                            FROM (
+                                  SELECT pkm.proj_uid, ku.keyword_label, ku.keyword_id
+                                  FROM project_keyword_map pkm JOIN keyword_usap ku ON (ku.keyword_id=pkm.keyword_id)
+                                  WHERE ku.keyword_id NOT IN (SELECT keyword_id FROM vw_location)
+                                  ) k_1
+                            GROUP BY k_1.proj_uid
+                        ) aux_keywords ON aux_keywords.kw_proj_uid = p.proj_uid
                         LEFT JOIN (
                             SELECT pdm.proj_uid AS df_proj_uid, pd.data_format FROM project_dataset pd
                             JOIN project_dataset_map pdm on pdm.dataset_id = pd.dataset_id
