@@ -291,6 +291,7 @@
             </div>
             <div class="value">
               {% for kw in data.keywords.split('; ')|sort %}
+              {% if kw not in data.excluded_keywords %}
                 <div id="kw_button_div" class="ck-button">
                   <label>
                     <a class="kw-btn" href="{{url_for('search',free_text=kw)}}">
@@ -298,6 +299,7 @@
                     </a>
                   </label>
                 </div>
+                {% endif %}
               {% endfor %}
             </div>
           </div>

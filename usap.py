@@ -4510,6 +4510,8 @@ def project_landing_page(project_id):
     if metadata is None:
         return redirect(url_for('not_found'))
 
+    metadata['excluded_keywords'] = ['AMD', 'AMD/US', 'USA/NSF', 'USAP-DC', 'NSIDC']
+
     # make a list of all the unique Data Management Plans
     dmps = set()
     if metadata.get('funding'):
