@@ -3534,7 +3534,8 @@ def curator():
                         # add contact and submitter to list of recipients
                         template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
                 except:
-                    template_dict['error'] = "Can't read submission file: %s" % submission_file
+                    # template_dict['error'] = "Can't read submission file: %s" % submission_file
+                    template_dict['json'] = "Submitted JSON data not available for this project"
 
     return render_template('curator.html', **template_dict)
 

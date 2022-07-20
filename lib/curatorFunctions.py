@@ -1691,6 +1691,11 @@ def getDifXML(data, uid):
     # ---- personel
     if data.get('persons'):
         for person in data['persons']:
+            if not person.get('name_last') or not person.get('name_first'):
+                if person.get('id'):
+                    person['name_last'], person['name_first'] = person['id'].split(',')
+                else:
+                    continue
             xml_pi = ET.SubElement(root, "Personnel")
             xml_pi_role = ET.SubElement(xml_pi, "Role")
             xml_pi_role.text = person['role'].upper()
