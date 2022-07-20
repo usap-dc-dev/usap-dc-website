@@ -1012,9 +1012,11 @@ def projectJson2sql(data, uid):
         sql_out += "--NOTE: adding platforms and instruments\n"
         for platform in data['platforms']:
             sql_out += "INSERT INTO project_gcmd_platform_map (proj_uid, platform_id) VALUES ('%s', '%s');\n" % (uid, platform['id'])
-            for instr in platform['instruments']:
-                sql_out += "INSERT INTO project_gcmd_platform_instrument_map (proj_uid, platform_id, instrument_id) VALUES ('%s', '%s', '%s');\n" % (uid, platform['id'], instr)
-            sql_out += "\n"
+            if platform.get('instruments'):
+                for instr in platform['instruments']:
+                    if instr != '':
+                        sql_out += "INSERT INTO project_gcmd_platform_instrument_map (proj_uid, platform_id, instrument_id) VALUES ('%s', '%s', '%s');\n" % (uid, platform['id'], instr)
+                sql_out += "\n"
         sql_out += "\n"
 
     # Add spatial bounds
@@ -1474,7 +1476,8 @@ def editProjectJson2sql(data, uid):
                 sql_out += "INSERT INTO project_gcmd_platform_map (proj_uid, platform_id) VALUES ('%s', '%s');\n" % (uid, p['id'])
                 if p.get('instruments'):
                     for instr in p['instruments']:
-                        sql_out += "INSERT INTO project_gcmd_platform_instrument_map (proj_uid, platform_id, instrument_id) VALUES ('%s', '%s', '%s');\n" % (uid, p['id'], instr)
+                        if instr != '':
+                            sql_out += "INSERT INTO project_gcmd_platform_instrument_map (proj_uid, platform_id, instrument_id) VALUES ('%s', '%s', '%s');\n" % (uid, p['id'], instr)
                     sql_out += "\n"
             sql_out += "\n"
 
