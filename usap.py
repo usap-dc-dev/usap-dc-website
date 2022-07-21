@@ -4510,7 +4510,31 @@ def project_landing_page(project_id):
     if metadata is None:
         return redirect(url_for('not_found'))
 
-    metadata['excluded_keywords'] = ['AMD', 'AMD/US', 'USA/NSF', 'USAP-DC', 'NSIDC']
+    metadata['excluded_keywords'] = ['AMD', 'AMD/US', 'USA/NSF', 'USAP-DC', 'NSIDC', 'Not provided', 'NOT APPLICABLE']
+
+    # add paleo times to keywords list
+    if metadata.get('gcmd_paleo_time'):
+        for pt in metadata['gcmd_paleo_time']:
+            metadata['keywords'] += '; ' + '; '.join(pt['paleo_time']['id'].split(' > '))
+
+    # get platform and instrument keywords
+    if metadata.get('gcmd_platforms'):
+        plat_inst_keywords = []
+        for platform in metadata['gcmd_platforms']:
+            if platform['short_name'] != 'Not provided':
+                print(platform['short_name'])
+                if platform['short_name'] != '':
+                    plat_inst_keywords.append(platform['short_name'])
+                else:
+                    plat_inst_keywords.append(platform['id'].split(' > ')[-1])
+            if platform.get('gcmd_instruments'):
+                for instr in platform['gcmd_instruments']:
+                    if instr['short_name'] != '':
+                        plat_inst_keywords.append(instr['short_name'])
+                    else:
+                        plat_inst_keywords.append(instr['id'].split(' > ')[-1])
+        metadata['plat_inst_keywords'] = plat_inst_keywords
+            
 
     # make a list of all the unique Data Management Plans
     dmps = set()
@@ -4675,9 +4699,9 @@ def get_project(project_id):
                                   SELECT pim.proj_uid, reverse(split_part(reverse(pim.gcmd_iso_id), ' >'::text, 1)) AS keywords
                                   FROM project_gcmd_isotopic_map pim
                                   UNION
-                                  SELECT ppm.proj_uid, reverse(split_part(reverse(ppm.platform_id), ' >'::text, 1)) AS keywords
-                                  FROM project_gcmd_platform_map ppm
-                                  UNION
+                                  -- SELECT ppm.proj_uid, reverse(split_part(reverse(ppm.platform_id), ' >'::text, 1)) AS keywords
+                                  -- FROM project_gcmd_platform_map ppm
+                                  -- UNION
                                   SELECT pkm.proj_uid, ku.keyword_label AS keywords
                                   FROM project_keyword_map pkm JOIN keyword_usap ku ON (ku.keyword_id=pkm.keyword_id)
                                   UNION
@@ -4699,6 +4723,9 @@ def get_project(project_id):
                             SELECT pdm.proj_uid AS df_proj_uid, pd.data_format FROM project_dataset pd
                             JOIN project_dataset_map pdm on pdm.dataset_id = pd.dataset_id
                         ) data_format ON (p.proj_uid = data_format.df_proj_uid)
+                        LEFT JOIN (
+                            SELECT pl.id AS product_level_id, pl.description AS product_level_description FROM product_level pl
+                        ) product_level ON p.product_level_id = product_level.product_level_id
                         WHERE p.proj_uid = '%s' ORDER BY p.title''' % project_id)
         cur.execute(query_string)
         return cur.fetchone()
@@ -4911,8 +4938,8 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         free_text = escapeChars(free_text) 
-        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR " + d_or_p + " ~* %s", 
-                                 (free_text, free_text, free_text, free_text, free_text)))
+        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR platforms ~* %s OR instruments ~* %s OR paleo_time ~* %s OR " + d_or_p + " ~* %s", 
+                                 (free_text, free_text, free_text, free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 

@@ -240,6 +240,17 @@
           </div>
         </div>
 
+        {% if data.product_level_id %}
+          <div class="lprow">
+            <div class="field">
+              Product Level:
+            </div>
+            <div class="value-inline">
+              {{data.product_level_id}} {% if data.product_level_description %} ({{data.product_level_description}}) {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
         {% if data.datasets %}
           <div class="lprow">
             <div class="field">
@@ -250,12 +261,14 @@
                 <tr>
                   <th>Repository</th>
                   <th>Title (link)</th>
+                  <th>Format(s)</th>
                   <th>Status</th>
                 </tr>
                 {% for d in data.datasets %}
                   <tr>
                     <td>{{d.repository}}</td>
                     <td><a target="_blank" href="{{url_for('tracker', type='dataset', url=d.url)}}">{{d.title}}</a></td>
+                    <td>{{d.data_format}}</td>
                     <td>{{d.status}}</td>
                   </tr>
                 {% endfor %}
@@ -290,7 +303,7 @@
               Keywords
             </div>
             <div class="value">
-              {% for kw in data.keywords.split('; ')|sort %}
+              {% for kw in data.keywords.split('; ')|sort|unique %}
               {% if kw not in data.excluded_keywords %}
                 <div id="kw_button_div" class="ck-button">
                   <label>
@@ -304,6 +317,28 @@
             </div>
           </div>
         {% endif %}
+
+
+        {% if data.gcmd_platforms %}
+        <div class="lprow">
+          <div class="field">
+            Platforms and Instruments
+          </div>
+          <div class="value">
+            {% for kw in data.plat_inst_keywords|sort|unique %}
+            {% if kw not in data.excluded_keywords %}
+              <div id="kw_button_div" class="ck-button">
+                <label>
+                  <a class="kw-btn" href="{{url_for('search',free_text=kw)}}">
+                    <span>{{kw}}</span>
+                  </a>
+                </label>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
 
       </td>
 
