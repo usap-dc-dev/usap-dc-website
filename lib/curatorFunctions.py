@@ -1783,15 +1783,16 @@ def getDifXML(data, uid):
     xml_time_end.text = str(data.get('end_date'))
     if data.get('gcmd_paleo_time'):
         xml_time = ET.SubElement(root, "Temporal_Coverage")
-        pt = data['gcmd_paleo_time']
-        paleo_datetime = ET.SubElement(xml_time, "Paleo_DateTime")
-        if pt.get('paleo_start_date') and pt.get('paleo_stop_date') :
-            paleo_start = ET.SubElement(paleo_datetime, "Paleo_Start_Date")
-            paleo_start.text = pt['paleo_start_date']
-            paleo_stop = ET.SubElement(paleo_datetime, "Paleo_Stop_Date")
-            paleo_stop.text = pt['paleo_stop_date']
-        if pt.get('paleo_time'):
-            for cu in pt['paleo_time']:
+        pts = data['gcmd_paleo_time']
+        for pt in pts:
+            paleo_datetime = ET.SubElement(xml_time, "Paleo_DateTime")
+            if pt.get('paleo_start_date') and pt.get('paleo_stop_date') :
+                paleo_start = ET.SubElement(paleo_datetime, "Paleo_Start_Date")
+                paleo_start.text = pt['paleo_start_date']
+                paleo_stop = ET.SubElement(paleo_datetime, "Paleo_Stop_Date")
+                paleo_stop.text = pt['paleo_stop_date']
+            if pt.get('paleo_time'):
+                cu = pt['paleo_time']
                 chrono = ET.SubElement(paleo_datetime, "Chronostratigraphic_Unit")
                 if cu.get('eon'):
                     eon = ET.SubElement(chrono, 'Eon')
