@@ -194,7 +194,14 @@
           <br>
 
           <br>
-          <b>Product Level:</b><br>
+          <b>Product Level <i class="question fa fa-info-circle" id='q_product_level'></i>:</b>
+          <br>
+          <p id='a_product_level' hidden>
+            <i>
+                Indicate the level of processing for the existing/planned data products here. If the project will produce data at multiple levels, 
+                indicated the highest level of product.
+            </i>
+          </p>
           <select name="product_level" id="product_level">
             <option value="Not Provided">Not Provided</option>
             {% for p in product_levels %}
@@ -206,7 +213,11 @@
           <br>
 
           <br>
-          <b>Collection Data Type:</b><br>
+          <b>Collection Data Type <i class="question fa fa-info-circle" id='q_data_type'></i>:</b>
+          <br>
+          <p id='a_data_type' hidden>
+            <i>Please <a target="_blank" href="{{url_for('contact')}}">contact us</a> if you believe your collection data type is OTHER</i>
+          </p>
           <select name="data_type" id="data_type">
             {% for d in data_types %}
               <option value="{{d.id}}" 

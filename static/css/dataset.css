@@ -180,3 +180,8 @@ input[type=number] {
     padding: 5px;  
     clear: both;     
 }
+
+.question {
+    font-size: 1em;
+    margin-left: 0;
+}

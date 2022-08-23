@@ -77,6 +77,13 @@ $(document).ready(function() {
       paleo_times = JSON.parse($("#paleo_times_list").text());
     }
 
+    $(".question").click(function(){
+		if (this.id) {
+			var ans_id = this.id.replace('q_','a_');
+			$("#"+ans_id).toggle('slow');
+		}
+	});
+
     // Set up the platform tree
     var platform_data = [];
     if ($("#platforms_json").text().length > 0) {
