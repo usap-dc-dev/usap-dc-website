@@ -198,6 +198,41 @@ $(document).ready(function() {
 			title: 'Ice Cores - (NSF ice core facility)',
 		});  
 		map.addLayer(ice_cores);
+
+        var amrcSource = new ol.source.Vector({
+            format: new ol.format.GeoJSON(),
+            loader: function(){
+                $.get({
+                    url: '/static/data/amrc_stations.csv' ,
+                    dataType: 'text'
+                }).done(function(response) {
+                    var csvString = response;
+                    csv2geojson.csv2geojson(csvString, {latfield:'y', lonfield:'x'}, function(err, data) {
+                        amrcSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+                    });
+                });
+            }
+        });
+        var amrc_stations =  new ol.layer.Vector({
+            visible: false,
+            source: amrcSource,
+            style: [
+                new ol.style.Style({
+                  image: new ol.style.Circle({
+                    radius: 5,
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(255, 0, 0, 0.6)',
+                        width: 1
+                      }),
+                    fill: new ol.style.Fill({
+                      color: 'rgba(255, 255, 255, 0.3)'
+                    })
+                  })
+                })
+            ],
+            title: 'AMRC Weather Stations',
+        });  
+        map.addLayer(amrc_stations);
 	
 		var vectorSource = new ol.source.Vector({
 			format: new ol.format.GeoJSON(),
