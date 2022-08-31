@@ -1,8 +1,8 @@
 # Creates a DataCite XML file from a uid and puts it in watch directory
 # To run in production environment for one dataset:
-# >sudo -E LD_LIBRARY_PATH=/usr/lib64 /usr/bin/python3 createDCXMLFiles.py <uid>
+# >/opt/rh/python27/root/usr/bin/python createDCXMLFiles.py <uid>
 # To run for all datasets in the database:
-# >sudo -E LD_LIBRARY_PATH=/usr/lib64 /usr/bin/python3 createDCXMLFiles.py all
+# >/opt/rh/python27/root/usr/bin/python createDCXMLFiles.py all
 
 import sys
 import os
