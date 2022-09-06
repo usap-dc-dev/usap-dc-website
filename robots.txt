@@ -7,6 +7,7 @@ Disallow: /templates/
 Disallow: /upload/
 Disallow: /search/
 Disallow: /dataset_search/
+Disallow: /tracker/
 
 User-agent: googlebot
 Disallow: *.csi
