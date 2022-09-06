@@ -1,0 +1,14 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of {{path}}</title>
+ </head>
+ <body>
+<h1>Index of {{path}}</h1>
+<pre> <a href="?C=N;O=D">Name</a>                    <a href="?C=M;O=A">Last modified</a>      <a href="?C=S;O=A">Size</a>  <a href="?C=D;O=A">Description</a><hr>
+{% for file in files %}
+    <a href="{{file.url}}">{{file.name}}</a>      {{file.mtime}}  {{file.size}}  
+{% endfor %}
+
+<hr></pre>
+</body></html>

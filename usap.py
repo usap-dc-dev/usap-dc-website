@@ -39,6 +39,7 @@ from email.header import decode_header
 from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
+from pathlib import Path
 
 
 app = Flask(__name__)
@@ -57,6 +58,7 @@ app.config.update(
     SAVE_FOLDER="saved",
     DOCS_FOLDER="doc",
     AWARDS_FOLDER="awards",
+    METADATA_FOLDER="watch",
     CROSSREF_FILE="inc/crossref_sql.txt",
     OLD_CROSSREF_FILE="inc/old_crossref_sql.txt",
     DOI_REF_FILE="inc/doi_ref",
@@ -2761,6 +2763,30 @@ def readme_download(dataset_id):
         url_extra = url_extra[1:]
     try:
         return send_from_directory(current_app.root_path, url_extra, as_attachment=True)
+    except:
+        return redirect(url_for('not_found'))
+
+
+@app.route('/metadata/<path>')
+def metadata(path):
+    metapath = os.path.join(app.config['METADATA_FOLDER'], path)
+
+    files = Path(metapath).iterdir()
+    files_dict = []
+    for file in files:
+        name = file.name
+        mtime = datetime.fromtimestamp(file.stat().st_mtime)
+        size = file.stat().st_size
+        url = '/metadata/'+path + '/' + name
+        files_dict.append({'name': name, 'mtime': mtime, 'size': size, 'url': url})
+    return render_template('metadata.html', files=files_dict, path=metapath)
+
+
+@app.route('/metadata/<path>/<filename>')
+def metadata_xml(path, filename):
+    url = os.path.join(app.config['METADATA_FOLDER'], path, filename)
+    try:
+        return send_from_directory(current_app.root_path, url, as_attachment=False)
     except:
         return redirect(url_for('not_found'))
 
