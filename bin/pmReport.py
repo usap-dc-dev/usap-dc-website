@@ -77,7 +77,9 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     today = today - relativedelta(days=10)
-    six_months_ago = "2021-10-01" #today - relativedelta(months=6)
+    # six_months_ago = "2021-10-01"
+    six_months_ago = today - relativedelta(months=6)
+    
     (conn, cur) = connect_to_db()
 
     # make tmp dir for csv files
