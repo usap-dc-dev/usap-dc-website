@@ -1841,6 +1841,7 @@ def getDifXML(data, uid):
         xml_progress.text = "COMPLETE"
     
     # --- Spatial coverage
+    #   CMR requires a spatial coverage entry even there is none, in that case we provide one without geometry
     if data.get('spatial_bounds'):
         for sb in data['spatial_bounds']:
             xml_space = ET.SubElement(root, "Spatial_Coverage")
@@ -1860,6 +1861,12 @@ def getDifXML(data, uid):
             xml_space_geom_south.text = str(sb['west'])
             xml_space_geom_south = ET.SubElement(xml_space_geom_bound, "Easternmost_Longitude")
             xml_space_geom_south.text = str(sb['east'])
+    else:
+        xml_space = ET.SubElement(root, "Spatial_Coverage")
+        xml_space_type = ET.SubElement(xml_space, "Spatial_Coverage_Type")
+        xml_space_type.text = "Horizontal"
+        xml_space_represent = ET.SubElement(xml_space, "Granule_Spatial_Representation")
+        xml_space_represent.text = "CARTESIAN"
 
     # --- location
     if data.get('gcmd_locations'):
