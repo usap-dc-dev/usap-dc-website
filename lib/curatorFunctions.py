@@ -1680,8 +1680,8 @@ def getDifXML(data, uid):
     root = ET.Element("DIF")
     root.set("xmlns", "http://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/")
     root.set("xmlns:dif", "http://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/")
-    root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-    root.set("xsi:schemaLocation", "http://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/ https://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/dif_v10.2.xsd")
+    # root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+    # root.set("xsi:schemaLocation", "http://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/ https://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/dif_v10.2.xsd")
 
     # --- entry and title
     xml_entry = ET.SubElement(root, "Entry_ID")
@@ -1702,7 +1702,11 @@ def getDifXML(data, uid):
                     continue
             xml_pi = ET.SubElement(root, "Personnel")
             xml_pi_role = ET.SubElement(xml_pi, "Role")
-            xml_pi_role.text = person['role'].upper()
+            # in database we have different option, but CMR only allows "INVESTIGATOR" or "Technical Contact"
+            if person['role'] == "Technical Contact":
+                xml_pi_role.text = "TECHNICAL CONTACT"
+            else:
+                xml_pi_role.text = "INVESTIGATOR"
             xml_pi_contact = ET.SubElement(xml_pi, "Contact_Person")
             xml_pi_contact_fname = ET.SubElement(xml_pi_contact, "First_Name")
             xml_pi_contact_fname.text = person['name_first'].strip()
@@ -1785,6 +1789,15 @@ def getDifXML(data, uid):
     xml_time_begin.text = str(data.get('start_date'))
     xml_time_end = ET.SubElement(xml_time_range, "Ending_Date_Time")
     xml_time_end.text = str(data.get('end_date'))
+ 
+    # CMR does not like end dates that are in the future, so change this to present if in future
+    #if data.get('end_date') < datetime.date(datetime.now()):
+    #    xml_time_end = ET.SubElement(xml_time_range, "Ending_Date_Time")
+    #    xml_time_end.text = str(data.get('end_date'))
+    #else:
+    #    xml_time_end = ET.SubElement(xml_time, "Ends_At_Present_Flag")
+    #    xml_time_end.text = "True"
+
     if data.get('gcmd_paleo_time'):
         xml_time = ET.SubElement(root, "Temporal_Coverage")
         pts = data['gcmd_paleo_time']
@@ -1986,11 +1999,14 @@ def getDifXML(data, uid):
 
     # write XML to file
     file_name = getDifXMLFileName(uid)
+    xmlstr = minidom.parseString(ET.tostring(root, encoding='utf8', method='xml')).toprettyxml(indent = "   ")
+    # the following line is not very elegant, but I couldn't get the output to include the encoding otherwise
+    xmlstr = xmlstr.replace('<?xml version="1.0" ?>','<?xml version="1.0" encoding="UTF-8"?>') 
     with open(file_name, 'w', encoding='utf-8') as out_file:
-        out_file.write(prettify(root))
+        out_file.write(xmlstr)
     os.chmod(file_name, 0o664)
 
-    return prettify(root)
+    return xmlstr
 
 
 def addDifToDB(uid):
