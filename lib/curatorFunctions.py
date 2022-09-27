@@ -44,7 +44,10 @@ def prettify(elem):
     """
     rough_string = ET.tostring(elem, 'utf-8')
     reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="    ")
+    xmlstr = reparsed.toprettyxml(indent="    ")
+    # the following line is not very elegant, but I couldn't get the output to include the encoding otherwise
+    xmlstr = xmlstr.replace('<?xml version="1.0" ?>','<?xml version="1.0" encoding="UTF-8"?>') 
+    return xmlstr
 
 
 def submitToDataCite(uid, edit=False):
@@ -1999,14 +2002,14 @@ def getDifXML(data, uid):
 
     # write XML to file
     file_name = getDifXMLFileName(uid)
-    xmlstr = minidom.parseString(ET.tostring(root, encoding='utf8', method='xml')).toprettyxml(indent = "   ")
+    #xmlstr = minidom.parseString(ET.tostring(root, encoding='utf8', method='xml')).toprettyxml(indent = "   ")
     # the following line is not very elegant, but I couldn't get the output to include the encoding otherwise
-    xmlstr = xmlstr.replace('<?xml version="1.0" ?>','<?xml version="1.0" encoding="UTF-8"?>') 
+    #xmlstr = xmlstr.replace('<?xml version="1.0" ?>','<?xml version="1.0" encoding="UTF-8"?>') 
     with open(file_name, 'w', encoding='utf-8') as out_file:
-        out_file.write(xmlstr)
+        out_file.write(prettify(root))
     os.chmod(file_name, 0o664)
 
-    return xmlstr
+    return prettify(root)
 
 
 def addDifToDB(uid):
