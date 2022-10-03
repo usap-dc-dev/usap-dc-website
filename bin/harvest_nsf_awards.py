@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from gmail_functions import send_gmail_message
 import csv
 
-nsf_file = "/web/usap-dc/htdocs/inc/nsf_table_mar2022.tsv" # This is a tsv export (copy and paste from the spreadsheet) of Part of PD-3PO-v1.3.2-USAPDC.xlsm 07-Mar-21 11-50-11.xlsx
+nsf_file = "/web/usap-dc/htdocs/inc/nsf_table_2022_08.tsv" # This is a tsv export (copy and paste from the spreadsheet) of Part of PD-3PO-v1.3.2-USAPDC.xlsm 07-Mar-21 11-50-11.xlsx
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
