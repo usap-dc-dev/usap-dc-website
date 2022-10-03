@@ -9,6 +9,8 @@ import sys
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+#import email.utils as utils
+from gmail_functions import send_gmail_message
 import csv
 
 nsf_file = "/web/usap-dc/htdocs/inc/nsf_table_mar2022.tsv" # This is a tsv export (copy and paste from the spreadsheet) of Part of PD-3PO-v1.3.2-USAPDC.xlsm 07-Mar-21 11-50-11.xlsx
@@ -56,11 +58,12 @@ def connect_to_db():
     return (conn, cur)
 
 
-def sendEmail(message, subject):
+def sendEmail_old(message, subject):
     sender = config['USAP-DC_GMAIL_ACCT']
     recipients = config['RECIPIENTS']
 
     msg = MIMEMultipart('alternative')
+    #msg['message-id'] = utils.make_msgid()
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
@@ -80,6 +83,14 @@ def sendEmail(message, subject):
     s.sendmail(sender, recipients, msg.as_string())
     s.quit()  
 
+def sendEmail(message_text, subject, file=None):
+    print(subject)
+    sender = config['USAP-DC_GMAIL_ACCT']
+    recipients = config['RECIPIENTS']
+    success, error = send_gmail_message(sender, recipients, subject, message_text, file)
+    if error:
+        print(error)
+        sys.exit()
 
 def getAwardsFromNSF(start_date):
     fields = [

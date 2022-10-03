@@ -9,6 +9,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from gmail_functions import send_gmail_message
 import crossref
 import url_test
 
@@ -39,7 +40,8 @@ def querySubmissionTable(cur, submission_type, status):
     return msg
 
 
-def sendEmail(message, subject):
+# this is the old sendmail function, which led to emails in the spma folder
+def sendEmail_old(message, subject):
     sender = config['USAP-DC_GMAIL_ACCT']
     recipients = config['RECIPIENTS']
 
@@ -63,6 +65,16 @@ def sendEmail(message, subject):
     s.sendmail(sender, recipients, msg.as_string())
     s.quit()  
 
+# send email using gmail link
+
+def sendEmail(message_text, subject, file=None):
+    print(subject)
+    sender = config['USAP-DC_GMAIL_ACCT']
+    recipients = config['RECIPIENTS']
+    success, error = send_gmail_message(sender, recipients, subject, message_text, file)
+    if error:
+        print(error)
+        sys.exit()
 
 if __name__ == '__main__':
     # get current date
