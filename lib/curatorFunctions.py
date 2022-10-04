@@ -1766,11 +1766,15 @@ def getDifXML(data, uid):
             xml_platform_type.text = platform['type']
             xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
             xml_platform_sname.text = platform['short_name']
+            xml_platform_sname = ET.SubElement(xml_platform, "Long_Name")
+            xml_platform_sname.text = platform['long_name']
             if platform.get('gcmd_instruments'):
                 for instrument in platform['gcmd_instruments']:
                     xml_instrument = ET.SubElement(xml_platform, "Instrument")
                     xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
                     xml_instrument_sname.text = instrument['short_name']
+                    xml_instrument_sname = ET.SubElement(xml_instrument, "Long_Name")
+                    xml_instrument_sname.text = instrument['long_name']
             else:
                 xml_instrument = ET.SubElement(xml_platform, "Instrument")
                 xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
