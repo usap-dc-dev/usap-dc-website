@@ -77,8 +77,8 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     today = today - relativedelta(days=10)
-    # six_months_ago = "2021-10-01"
-    six_months_ago = today - relativedelta(months=6)
+    six_months_ago = "2022-04-28"
+    #six_months_ago = today - relativedelta(months=6)
     
     (conn, cur) = connect_to_db()
 
@@ -141,8 +141,9 @@ if __name__ == '__main__':
             datasets = ""
             for a in p['awards']:
                 awards += """<br>&emsp;<b>%s</b> (PEC: %s, PI: %s)""" % (a['award'], a['pec'], a['name'])
-            for d in p['datasets']:
-                datasets += """<br>&emsp;<a href='%s'>%s</a> (%s)""" % (d['url'], d['title'], d['repository'])
+            if p['datasets']:
+                for d in p['datasets']:
+                    datasets += """<br>&emsp;<a href='%s'>%s</a> (%s)""" % (d['url'], d['title'], d['repository'])
             msg += """<b>Project Title:</b> %s<br>
                       <b>Award(s):</b> %s<br>
                       <b>Date Created:</b> %s<br>
@@ -227,8 +228,9 @@ if __name__ == '__main__':
                 awards += """<br>&emsp;<b>%s</b> (PEC: %s, PI: %s) - %s""" % (a['award'], a['pec'], a['name'], a['title'])
             for d in p['datasets']:
                 datasets += """<br>&emsp;<a href='%s'>%s</a> (%s)""" % (d['url'], d['title'], d['repository'])
-            for r in p['pubs']:
-                pubs += """<br>&emsp;<i>- %s</i>""" % (r['ref_text'])
+            if p['pubs']:
+                for r in p['pubs']:
+                    pubs += """<br>&emsp;<i>- %s</i>""" % (r['ref_text'])
 
             # use this output once we can show new datasets and new references
             # msg += """<b>Project Title:</b> %s<br>
