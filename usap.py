@@ -108,7 +108,6 @@ orcid = oauth.register('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
-
 def connect_to_prod_db(curator=False):
     info = config['PROD_DATABASE']
     if curator and cf.isCurator():
@@ -142,6 +141,51 @@ def connect_to_db(curator=False):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return (conn, cur)
 
+
+def get_email_template(editing, submissionType, uid, data, hasId, doi=None):
+    text = "Dear %s,\n\n" % data.get('submitter_name')
+    if editing:
+        url = url_for("project_landing_page", project_id=uid, _external=True) if submissionType == "project" else url_for("landing_page", dataset_id=uid, _external=True)
+        text += "This is to confirm that your %s, %s, has been successfully updated.\n" % (submissionType, data.get("title"))
+        text += "Please check the landing page %s and contact us if there are any issues." % url
+    else:
+        if submissionType == "project":
+            text += "This is to confirm that your project, %s, has been successfully registered at USAP-DC.\n" % data.get("title")
+            text += "Please check the landing page %s and contact us (info@usap-dc.org) if there are any issues." % url_for("project_landing_page", project_id=uid, _external=True)
+            if hasId:
+                text += "\n\nWe have also prepared and submitted a catalog entry (DIF) at the Antarctic Metadata Directory (AMD)."
+                text += "\nThe DIF ID will be %s." % cf.getDifID(uid)
+                text += "\nThe direct link to the AMD record will be %s." % cf.getDifUrl(uid)
+                text += "\n\nIt usually takes AMD staff a few business days to review the submission before it goes live."
+            else:
+                text += "\n\nIf everything looks fine, I will also prepare and submit an entry (DIF record) to the Antarctic Metadata Directory (AMD)."
+                text += "\n\nYou can update the project page in the future using the 'edit' function in the top right, e.g. when new datasets or publications become available. In the case that you archive your dataset(s) at the USAP-DC repository, we will automatically link the dataset to the project."
+                text += "\n\nAny edits will be reviewed by a USAP-DC curator before they become live."
+        else:
+            text += "We have processed your dataset %s, and added it to the USAP-DC repository.\nThe dataset ID is %s." % (data.get("title"), uid)
+            #print(data)
+            if len(data['awards']) > 0:
+                query = "SELECT proj_uid FROM project_dataset_map WHERE dataset_id = %s"
+                (conn, cur) = connect_to_db(curator=True)
+                query_str = cur.mogrify(query, (uid,))
+                cur.execute(query_str)
+                proj_uids_tuples = cur.fetchall()
+                print(proj_uids_tuples)
+                proj_uids = list(map(lambda x : x['proj_uid'], proj_uids_tuples))
+                print(proj_uids)
+                if len(proj_uids) == 1:
+                    text += "\n\nBased on the award number, we have linked the dataset to the project %s." % url_for("project_landing_page", project_id=proj_uids[0], _external=True)
+                else:
+                    text += "\n\nBased on the award numbers, we have linked the dataset to the following %s projects:" % len(proj_uids)
+                    for proj_uid in proj_uids:
+                        text += "\n%s" % url_for("project_landing_page", project_id=proj_uid, _external=True)
+            text += "\n\nPlease check the landing page %s and let us know if everything looks good or if there are any issues.\n\n" % url_for("landing_page", dataset_id=uid, _external=True)
+            if hasId:
+                text += "The DOI for the dataset is %s." % doi
+            else:
+                text += "If everything is fine, we will create a DOI for the dataset."
+    text += "\n\nBest regards,\n"
+    return text
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn, cur) = connect_to_db()
@@ -2797,7 +2841,7 @@ def mapserver_template():
 
 
 @app.route('/map')
-def map():
+def _map():
     return render_template('data_map.html')
 
 
@@ -3004,18 +3048,7 @@ def curator():
                         # add contact and submitter to list of recipients
                         template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
 
-                        if edit:
-                            template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('landing_page', dataset_id=uid, _external=True)
-                        else:
-                            template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
-                                                          + "\nWe have processed your dataset %s, and added the dataset to the USAP-DC repository." % data.get('title') \
-                                                          + "\nThe dataset ID is %s." % uid \
-                                                          + "\nThe DOI for the dataset is %s." % 'TBD' \
-                                                          + "\nPlease check the landing page %s and contact us if there are any issues." % url_for('landing_page', dataset_id=uid, _external=True) \
-                                                          + "\n\nBest regards,"  
+                        template_dict['email_text'] = get_email_template(edit, "dataset", uid, data, False) 
 
                         coords = cf.getCoordsFromDatabase(uid)
                         if coords is not None:
@@ -3174,18 +3207,7 @@ def curator():
                             # add contact and submitter to list of recipients
                             template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
 
-                            if edit:
-                                template_dict['email_text'] = "This is to confirm that your dataset, '%s', has been successfully updated.\n" \
-                                                              % data.get('title') + \
-                                                              "Please check the landing page %s and contact us if there are any issues." \
-                                                              % url_for('landing_page', dataset_id=uid, _external=True)
-                            else:
-                                template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
-                                                              + "\nWe have processed your dataset %s, and added the dataset to the USAP-DC repository." % data.get('title') \
-                                                              + "\nThe dataset ID is %s." % uid \
-                                                              + "\nThe DOI for the dataset is %s." % doi \
-                                                              + "\nPlease check the landing page %s and contact us if there are any issues." % url_for('landing_page', dataset_id=uid, _external=True) \
-                                                              + "\n\nBest regards," 
+                            template_dict['email_text'] = get_email_template(edit, "dataset", uid, data, True, doi)
                             # Update submission table
                             update_status(uid, 'ISO XML file missing')
                             template_dict['citation'] = getCitation(uid)
@@ -3354,20 +3376,8 @@ def curator():
                         # add contact and submitter to list of recipients
                         template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
 
-                        if edit:
-                            template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully updated.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('project_landing_page', project_id=uid, _external=True)
-                        else:
-                            template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
-                                                          + "\nThis is to confirm that your project, %s, has been successfully registered at USAP-DC." % data.get('title') \
-                                                          + "\nPlease check the landing page %s and contact us (info@usap-dc.org) if there are any issues." % url_for('project_landing_page', project_id=uid, _external=True) \
-                                                          + "\n\nIf everything looks fine, I will also prepare and submit and entry (DIF record) to the Antarctic Metadata Directory (AMD)." \
-                                                          + "\n\nYou can update the project page in the future using the 'edit' function in the top right, e.g. when new datasets or publications " \
-                                                          + "become available. In the case that you archive your dataset(s) at the USAP-DC repository we will automatically link the dataset to the project." \
-                                                          + "\n\nAny edits will be reviewed by a USAP-DC curator before they become live." \
-                                                          + "\n\nBest regards,"
+                        template_dict['email_text'] = get_email_template(edit, "project", uid, data, False)
+                        
                         template_dict['landing_page'] = url_for('project_landing_page', project_id=uid)
                         template_dict['db_imported'] = True
                         template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid)
@@ -3520,21 +3530,8 @@ def curator():
                         template_dict['email_recipients'] = cf.getCreatorEmails(uid)
                         # add contact and submitter to list of recipients
                         template_dict['email_recipients'] = getEmailsFromJson(data, template_dict['email_recipients'])
-
-                        if edit:
-                            template_dict['email_text'] = "This is to confirm that your project, '%s', has been successfully updated.\n" \
-                                                          % data.get('title') + \
-                                                          "Please check the landing page %s and contact us if there are any issues." \
-                                                          % url_for('project_landing_page', project_id=uid, _external=True)
-                        else:
-                            template_dict['email_text'] = "Dear %s,\n" % data.get('submitter_name') \
-                                                          + "\nThis is to confirm that your project, %s, has been successfully registered at USAP-DC." % data.get('title') \
-                                                          + "\nPlease check the landing page %s and contact us (info@usap-dc.org) if there are any issues." % url_for('project_landing_page', project_id=uid, _external=True) \
-                                                          + "\n\nWe have also prepared and submitted a catalog entry (DIF) at the Antarctic Metadata Directory (AMD)." \
-                                                          + "\nThe DIF ID will be %s." % cf.getDifID(uid) \
-                                                          + "\nThe direct link to the AMD record will be %s." % cf.getDifUrl(uid) \
-                                                          + "\n\nIt usually takes AMD staff a few business days to review the submission before it goes live." \
-                                                          + "\n\nBest regards,"
+                        
+                        template_dict['email_text'] = get_email_template(edit, "project", uid, data, True)
                 
                 # generate CMR Submission text for AMD
                 elif request.form.get('submit') == "generate_cmr_text":
