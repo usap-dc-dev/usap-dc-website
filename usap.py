@@ -170,9 +170,9 @@ def get_email_template(editing, submissionType, uid, data, hasId, doi=None):
                 query_str = cur.mogrify(query, (uid,))
                 cur.execute(query_str)
                 proj_uids_tuples = cur.fetchall()
-                print(proj_uids_tuples)
+                #print(proj_uids_tuples)
                 proj_uids = list(map(lambda x : x['proj_uid'], proj_uids_tuples))
-                print(proj_uids)
+                #print(proj_uids)
                 if len(proj_uids) == 1:
                     text += "\n\nBased on the award number, we have linked the dataset to the project %s." % url_for("project_landing_page", project_id=proj_uids[0], _external=True)
                 else:
@@ -523,7 +523,7 @@ def get_gcmd_progress():
 
 def get_product_levels():
     (conn, cur) = connect_to_db()
-    query = "SELECT * FROM product_level WHERE id != 'Not Provided'"
+    query = "SELECT * FROM product_level WHERE id != 'Not provided'"
     cur.execute(query)
     return cur.fetchall()
 
