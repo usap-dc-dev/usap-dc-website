@@ -203,7 +203,7 @@
             </i>
           </p>
           <select name="product_level" id="product_level">
-            <option value="Not Provided">Not Provided</option>
+            <option value="Not provided">Not provided</option>
             {% for p in product_levels %}
               <option value="{{p.id}}" {% if project_metadata.product_level and p.id == project_metadata.product_level %}selected{% endif %}>
                 {{p.id}} {% if p.description %} ({{p.description}}) {% endif %}

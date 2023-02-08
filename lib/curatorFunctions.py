@@ -655,7 +655,7 @@ def projectJson2sql(data, uid):
     sql_out += "--NOTE: populate project table\n"
     sql_out += "INSERT INTO project (proj_uid, title, short_name, description, start_date, end_date, date_created, date_modified, project_progress, product_level_id, collection_data_type) " \
                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, '%s', '%s');\n\n" % (uid, data['title'], data['short_title'], usap.escapeQuotes(data['sum']),  
-                        data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10], progress, data.get('product_level', 'Not Provided'), data.get('data_type', 'SCIENCE_QUALITY'))
+                        data['start'], data['end'], data['timestamp'][0:10], data['timestamp'][0:10], progress, data.get('product_level', 'Not provided'), data.get('data_type', 'SCIENCE_QUALITY'))
 
     # generate the submitter's person id if we have their name
     subm_id = None
