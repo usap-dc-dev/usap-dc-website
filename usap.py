@@ -3515,6 +3515,13 @@ def curator():
                     except Exception as err:
                         template_dict['error'] = "Error saving DIF XML file to watch directory: " + str(err)
 
+                #Validate the DIF XML
+                elif request.form.get('submit') == "validate_difxml":
+                    template_dict['tab'] = "difxml"
+                    print("Validate DIF XML not yet implemented")
+                    template_dict['validation_symbol'] = " ✓"
+                    
+
                 # add DIF to DB
                 elif request.form.get('submit') == "dif_to_db":
                     template_dict.update(request.form.to_dict())
