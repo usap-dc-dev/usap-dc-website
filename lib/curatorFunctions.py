@@ -1678,6 +1678,17 @@ def getDifUrl(uid):
 def getDifXMLFileName(uid):
     return os.path.join(DIFXML_FOLDER, "%s.xml" % getDifID(uid))
 
+def isXmlFileValid(uid):
+    filename = getDifXMLFileName(uid)
+    url = "https://cmr.earthdata.nasa.gov/ingest/providers/SCIOPS/validate/collection/test_usap_1"
+    header = "Content-Type: application/dif10+xml"
+    phial = open(filename, "rb")
+    content = phial.read()
+    phial.close()
+    response = requests.post(url, data=content, headers = header_map)
+    return (response.ok, prettify(response.text))
+    
+
 
 def getDifXML(data, uid):
     root = ET.Element("DIF")

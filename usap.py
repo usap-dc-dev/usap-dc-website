@@ -3517,9 +3517,16 @@ def curator():
 
                 #Validate the DIF XML
                 elif request.form.get('submit') == "validate_difxml":
+                    invalid_mark = " ✕"
+                    valid_mark = " ✓"
                     template_dict['tab'] = "difxml"
-                    print("Validate DIF XML not yet implemented")
-                    template_dict['validation_symbol'] = " ✓"
+                    #print("Validate DIF XML not yet implemented")
+                    validation = cf.isXmlFileValid(uid)
+                    if validation[0]:
+                        template_dict['validation_symbol'] = valid_mark
+                    else:
+                        template_dict['validation_symbol'] = invalid_mark
+                    template_dict['xml_validation_response'] = validation[1]
                     
 
                 # add DIF to DB
