@@ -1681,13 +1681,18 @@ def getDifXMLFileName(uid):
 def isXmlFileValid(uid):
     filename = getDifXMLFileName(uid)
     url = "https://cmr.earthdata.nasa.gov/ingest/providers/SCIOPS/validate/collection/test_usap_1"
-    header = "Content-Type: application/dif10+xml"
+    header = {"Content-Type" : "application/dif10+xml"}
     phial = open(filename, "rb")
     content = phial.read()
     phial.close()
-    response = requests.post(url, data=content, headers = header_map)
-    return (response.ok, prettify(response.text))
-    
+    response = requests.post(url, data=content, headers = header)
+    return (response.ok, response.text)
+
+def isXmlValid(xml):
+    url = "https://cmr.earthdata.nasa.gov/ingest/providers/SCIOPS/validate/collection/test_usap_1"
+    header = {"Content-Type" : "application/dif10+xml"}
+    response = requests.post(url, data=xml, headers=header)
+    return (response.ok, response.text)
 
 
 def getDifXML(data, uid):

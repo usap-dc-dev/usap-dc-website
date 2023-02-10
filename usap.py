@@ -40,7 +40,7 @@ from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
 from pathlib import Path
-
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -3520,12 +3520,32 @@ def curator():
                     invalid_mark = " ✕"
                     valid_mark = " ✓"
                     template_dict['tab'] = "difxml"
+                    xml_str = request.form.get("difxml").encode("utf-8")
                     #print("Validate DIF XML not yet implemented")
-                    validation = cf.isXmlFileValid(uid)
+                    validation = cf.isXmlValid(xml_str)
                     if validation[0]:
                         template_dict['validation_symbol'] = valid_mark
                     else:
                         template_dict['validation_symbol'] = invalid_mark
+                    root = ET.fromstring(validation[1])
+                    #print("XML: ", validation[1])
+                    #print("Now parsing the XML for user friendliness")
+                    #print(root)
+                    for child in root:
+                        #print(child.tag, child.text)
+                        if child.tag == "errors":
+                            for error in child:
+                                if 'xml_validation_errors' in template_dict:
+                                    template_dict['xml_validation_errors'] += "\n" + error.text
+                                else:
+                                    template_dict['xml_validation_errors'] = error.text
+                        elif child.tag == "error":
+                            if 'xml_validation_errors' in template_dict:
+                                template_dict['xml_validation_errors'] += "\n" + child.text
+                            else:
+                                template_dict['xml_validation_errors'] = child.text
+                        elif child.tag == "warnings":
+                            template_dict['xml_validation_warnings'] = child.text
                     template_dict['xml_validation_response'] = validation[1]
                     
 
