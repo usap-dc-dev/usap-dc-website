@@ -40,7 +40,7 @@ from dateutil.parser import parse
 from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
 from pathlib import Path
-
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -3514,6 +3514,40 @@ def curator():
 
                     except Exception as err:
                         template_dict['error'] = "Error saving DIF XML file to watch directory: " + str(err)
+
+                #Validate the DIF XML
+                elif request.form.get('submit') == "validate_difxml":
+                    invalid_mark = " ✕"
+                    valid_mark = " ✓"
+                    template_dict['tab'] = "difxml"
+                    xml_str = request.form.get("difxml").encode("utf-8")
+                    #print("Validate DIF XML not yet implemented")
+                    validation = cf.isXmlValid(xml_str)
+                    if validation[0]:
+                        template_dict['validation_symbol'] = valid_mark
+                    else:
+                        template_dict['validation_symbol'] = invalid_mark
+                    root = ET.fromstring(validation[1])
+                    #print("XML: ", validation[1])
+                    #print("Now parsing the XML for user friendliness")
+                    #print(root)
+                    for child in root:
+                        #print(child.tag, child.text)
+                        if child.tag == "errors":
+                            for error in child:
+                                if 'xml_validation_errors' in template_dict:
+                                    template_dict['xml_validation_errors'] += "<br>" + error.text
+                                else:
+                                    template_dict['xml_validation_errors'] = "Errors:<br>" + error.text
+                        elif child.tag == "error":
+                            if 'xml_validation_errors' in template_dict:
+                                template_dict['xml_validation_errors'] += "<br>" + child.text
+                            else:
+                                template_dict['xml_validation_errors'] = "Errors:<br>" + child.text
+                        elif child.tag == "warnings":
+                            template_dict['xml_validation_warnings'] = "Warnings:<br>" + child.text
+                    template_dict['xml_validation_response'] = validation[1]
+                    
 
                 # add DIF to DB
                 elif request.form.get('submit') == "dif_to_db":
