@@ -429,7 +429,9 @@
         <button type="submit" name="submit" value="save_difxml" onclick="waitCursor()">Save in Watch Directory</button>
         <button type="submit" name="submit" value="dif_to_db" onclick="waitCursor()">Add DIF to DB</button>
         <table>
+	  {% autoescape false %}
 	  <tr><td><p style="color:red">{{xml_validation_errors}}</p><p style="color:orange">{{xml_validation_warnings}}</p></td></tr>
+	  {% endautoescape %}
         <tr>
            <td>
                <textarea id="difxml" name="difxml" cols="130" rows="50" oninput="document.getElementById('difxml_validation_button').innerHTML = 'Validate DIF XML'">{{ difxml }}</textarea>

@@ -3536,16 +3536,16 @@ def curator():
                         if child.tag == "errors":
                             for error in child:
                                 if 'xml_validation_errors' in template_dict:
-                                    template_dict['xml_validation_errors'] += "\n" + error.text
+                                    template_dict['xml_validation_errors'] += "<br>" + error.text
                                 else:
-                                    template_dict['xml_validation_errors'] = error.text
+                                    template_dict['xml_validation_errors'] = "Errors:<br>" + error.text
                         elif child.tag == "error":
                             if 'xml_validation_errors' in template_dict:
-                                template_dict['xml_validation_errors'] += "\n" + child.text
+                                template_dict['xml_validation_errors'] += "<br>" + child.text
                             else:
-                                template_dict['xml_validation_errors'] = child.text
+                                template_dict['xml_validation_errors'] = "Errors:<br>" + child.text
                         elif child.tag == "warnings":
-                            template_dict['xml_validation_warnings'] = child.text
+                            template_dict['xml_validation_warnings'] = "Warnings:<br>" + child.text
                     template_dict['xml_validation_response'] = validation[1]
                     
 
