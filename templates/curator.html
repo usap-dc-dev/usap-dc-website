@@ -453,6 +453,14 @@
         </table>
       </div>
 
+      <div id="reviewTab" class="tabcontent">
+        <h4>Review Submission for FAIRness</h4>
+        {% for id, label in reviewer_dict %}
+        <input type="checkbox" id="{{id}}" value="{{id}}">
+        <label for="{{checkbox}}">{{label}}</label>
+        {% endfor %}
+      </div>
+
     </form>
 
   {% else %}

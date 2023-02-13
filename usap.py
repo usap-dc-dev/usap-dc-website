@@ -3593,6 +3593,20 @@ def curator():
                 except:
                     # template_dict['error'] = "Can't read submission file: %s" % submission_file
                     template_dict['json'] = "Submitted JSON data not available for this project"
+    reviewer_dict = {
+        "file_name_check": "The filenames are descriptive and consistent",
+        "file_format_check": "The file format is appropriate and can be opened",
+        "file_organization_check": "The file organization is consistent and appropriate",
+        "table_header_check": "Table header information is complete and consistent with documentation",
+        "data_content_check": "The data set and its contents are clearly described",
+        "data_process_check": "Processing information is adequate",
+        "data_acquisition_check": "The process used to get the data is clearly described and appropriate",
+        "data_spatial_check": "Geospatial and temporal informatioin are complete and described",
+        "data_variable_check": "Variables and units follow standards or are well-defined",
+        "data_issues_check": "Known issues and limitations are clearly described",
+        "data_ref_check": "Publication or manuscript describing the data is provided"
+    }
+    template_dict['reviewer_dict'] = reviewer_dict
 
     return render_template('curator.html', **template_dict)
 
