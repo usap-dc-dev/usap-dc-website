@@ -1678,6 +1678,9 @@ def getDifUrl(uid):
 def getDifXMLFileName(uid):
     return os.path.join(DIFXML_FOLDER, "%s.xml" % getDifID(uid))
 
+def getDifXMLAMDFileName(uid):
+    return os.path.join(DIFXML_FOLDER + "_amd", "%s.xml" % getDifID(uid))
+
 def isXmlFileValid(uid):
     filename = getDifXMLFileName(uid)
     url = "https://cmr.earthdata.nasa.gov/ingest/providers/SCIOPS/validate/collection/test_usap_1"
