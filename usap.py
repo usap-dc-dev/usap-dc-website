@@ -3531,23 +3531,46 @@ def curator():
                     #print("XML: ", validation[1])
                     #print("Now parsing the XML for user friendliness")
                     #print(root)
+                    has_errors = False
+                    has_warnings = False
                     for child in root:
                         #print(child.tag, child.text)
                         if child.tag == "errors":
                             for error in child:
+                                has_errors = True
                                 if 'xml_validation_errors' in template_dict:
                                     template_dict['xml_validation_errors'] += "<br>" + error.text
                                 else:
                                     template_dict['xml_validation_errors'] = "Errors:<br>" + error.text
                         elif child.tag == "error":
+                            has_errors = True
                             if 'xml_validation_errors' in template_dict:
                                 template_dict['xml_validation_errors'] += "<br>" + child.text
                             else:
                                 template_dict['xml_validation_errors'] = "Errors:<br>" + child.text
                         elif child.tag == "warnings":
+                            has_warnings = True
                             template_dict['xml_validation_warnings'] = "Warnings:<br>" + child.text
                     template_dict['xml_validation_response'] = validation[1]
-                    
+                    if has_errors:
+                        template_dict['error'] = ("This DIF XML could not be validated. Check below for details.")
+                    else:
+                        template_dict['message'].append("Successfully validated DIF XML.")
+                        if has_warnings:
+                            template_dict['message'].append(" Validation completed with warnings. See below for details.")
+                        difxml_file = cf.getDifXMLFileName(uid)
+                        difxml_file_amd = cf.getDifXMLAMDFileName(uid)
+                        try:
+                            with open(difxml_file, 'w', encoding='utf-8') as out_file:
+                                out_file.write(xml_str.decode())
+                                template_dict['message'].append("DIF XML file saved to watch directory.")
+                            os.chmod(difxml_file, 0o664)
+                            with open(difxml_file_amd, 'w', encoding='utf-8') as out_file:
+                                out_file.write(xml_str.decode())
+                                template_dict['message'].append("DIF XML file saved to AMD directory.")
+                            os.chmod(difxml_file_amd, 0o664)
+                        except Exception as err:
+                            template_dict['error'] = "Error saving validated DIF XML."
 
                 # add DIF to DB
                 elif request.form.get('submit') == "dif_to_db":
