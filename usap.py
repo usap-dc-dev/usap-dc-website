@@ -3553,7 +3553,7 @@ def curator():
                             template_dict['xml_validation_warnings'] = "Warnings:<br>" + child.text
                     template_dict['xml_validation_response'] = validation[1]
                     if has_errors:
-                        template_dict['error'].append("This DIF XML could not be validated. Check below for details.")
+                        template_dict['error'] = ("This DIF XML could not be validated. Check below for details.")
                     else:
                         template_dict['message'].append("Successfully validated DIF XML.")
                         if has_warnings:
