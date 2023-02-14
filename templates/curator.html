@@ -71,6 +71,7 @@
           <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Dataset Info</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
+	  <button class="tablinks" onclick="openTab(event, 'reviewTab')" {% if tab == 'review' %} id="defaultOpen" {% endif %}>Review FAIRness</button>
           {% if db_imported %}
             <button class="tablinks" onclick="openTab(event, 'archiveTab')"  {% if tab == 'archive' %} id="defaultOpen" {% endif %}>Archive</button>
           {% endif %}
@@ -455,11 +456,14 @@
 
       <div id="reviewTab" class="tabcontent">
         <h4>Review Submission for FAIRness</h4>
-        {% for id, label in reviewer_dict %}
+	<p>Check the box if the accompanying statement applies, and leave any comments in the accompanying text box.</p>
+        {% for id, label in reviewer_dict.items() %}
         <input type="checkbox" id="{{id}}_check" value="{{id}}_check">
         <label for="{{id}}_check">{{label}}</label>
-        <input type="text" id="{{id}}_text"></input>
+        <input type="text" id="{{id}}_text">
+	<br>
         {% endfor %}
+	<button type="submit" name="submit" value="submit_review_checklist" onclick="waitCursor()">Submit review checklist</button>
       </div>
 
     </form>

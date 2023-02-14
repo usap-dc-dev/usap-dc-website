@@ -3577,6 +3577,9 @@ def curator():
                         template_dict['error'] = "Error: Unable to generate CMR text: %s" % error
                     else:
                         template_dict['cmr_text'] = cmr_text
+                elif request.form.get('submit') == "submit_review_checklist":
+                    template_dict['tab'] = "review"
+                    # TODO get all the values
 
             else:
                 # display submission json file
