@@ -2867,7 +2867,7 @@ def curator():
         "data_content": "The data set and its contents are clearly described",
         "data_process": "Processing information is adequate",
         "data_acquisition": "The process used to get the data is clearly described and appropriate",
-        "data_spatial": "Geospatial and temporal informatioin are complete and described",
+        "data_spatial": "Geospatial and temporal information are complete and described",
         "data_variable": "Variables and units follow standards or are well-defined",
         "data_issues": "Known issues and limitations are clearly described",
         "data_ref": "Publication or manuscript describing the data is provided"
