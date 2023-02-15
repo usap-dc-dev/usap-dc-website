@@ -3616,24 +3616,36 @@ def curator():
                         template_dict['cmr_text'] = cmr_text
                 elif request.form.get('submit') == "submit_review_checklist":
                     template_dict['tab'] = "review"
+                    query = "INSERT INTO dataset_fairness (dataset_id"
+                    keys = ""
+                    keys_list = []
+                    values = ""
+                    values_list = []
+                    form_dict = {}
                     for item in reviewer_dict:
                         checkbox_id = item + "_check"
                         textarea_id = item + "_text"
                         checked = request.form.get(checkbox_id)
                         comment = request.form.get(textarea_id)
-                        msg_str = item + ":"
-                        if checked:
-                            msg_str += " checked; "
+                        keys += ", " + item + "_check, " + item + "_comment"
+                        values += ", " + str(not not checked) + ", %s"
+                        values_list.append(comment)
+                        form_dict[item + "_check"] = not not checked
+                        form_dict[item + "_comment"] = comment
+                    query += keys + (") VALUES (%s" % uid) + values + ") ON CONFLICT dataset_fairness_pkey DO UPDATE SET "
+                    init_query = query
+                    for it,em in form_dict.items():
+                        if query != init_query:
+                            query += ","
+                        if em == (not not em):
+                            query += " %s = %s" % (it,em)
                         else:
-                            msg_str += " unchecked; "
-                        if comment is not None:
-                            if comment:
-                                msg_str += comment
-                            else:
-                                msg_str += "no comment"
-                        else:
-                            msg_str += "error with comment"
-                        template_dict['message'].append(msg_str)
+                            query += " %s = '%s'" % (it,em)
+                    query += " WHERE dataset_id = '%s'" % uid
+                    (conn, cur) = connect_to_db(curator=True)
+                    mogrified = cur.mogrify(query, tuple(values_list))
+                    template_dict['message'].append(mogrified)
+                    
 
             else:
                 # display submission json file
