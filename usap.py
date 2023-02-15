@@ -3622,13 +3622,10 @@ def curator():
                         checked = request.form.get(checkbox_id)
                         comment = request.form.get(textarea_id)
                         msg_str = item + ":"
-                        if checked is not None:
-                            if checked:
-                                msg_str += " checked; "
-                            else:
-                                msg_str += " unchecked; "
+                        if checked:
+                            msg_str += " checked; "
                         else:
-                            msg_str += " error with checkbox; "
+                            msg_str += " unchecked; "
                         if comment is not None:
                             if comment:
                                 msg_str += comment
@@ -3636,6 +3633,7 @@ def curator():
                                 msg_str += "no comment"
                         else:
                             msg_str += "error with comment"
+                        template_dict['message'].append(msg_str)
 
             else:
                 # display submission json file
