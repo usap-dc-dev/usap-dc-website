@@ -2859,6 +2859,20 @@ def curator():
     template_dict = {}
     template_dict['message'] = []
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
+    reviewer_dict = {
+        "file_name": "The filenames are descriptive and consistent",
+        "file_format": "The file format is appropriate and can be opened",
+        "file_organization": "The file organization is consistent and appropriate",
+        "table_header": "Table header information is complete and consistent with documentation",
+        "data_content": "The data set and its contents are clearly described",
+        "data_process": "Processing information is adequate",
+        "data_acquisition": "The process used to get the data is clearly described and appropriate",
+        "data_spatial": "Geospatial and temporal informatioin are complete and described",
+        "data_variable": "Variables and units follow standards or are well-defined",
+        "data_issues": "Known issues and limitations are clearly described",
+        "data_ref": "Publication or manuscript describing the data is provided"
+    }
+    template_dict['reviewer_dict'] = reviewer_dict
     (conn, cur) = connect_to_db(curator=True)
 
     # login
@@ -3602,7 +3616,26 @@ def curator():
                         template_dict['cmr_text'] = cmr_text
                 elif request.form.get('submit') == "submit_review_checklist":
                     template_dict['tab'] = "review"
-                    # TODO get all the values
+                    for item in reviewer_dict:
+                        checkbox_id = item + "_check"
+                        textarea_id = item + "_text"
+                        checked = request.form.get(checkbox_id)
+                        comment = request.form.get(textarea_id)
+                        msg_str = item + ":"
+                        if checked is not None:
+                            if checked:
+                                msg_str += " checked; "
+                            else:
+                                msg_str += " unchecked; "
+                        else:
+                            msg_str += " error with checkbox; "
+                        if comment is not None:
+                            if comment:
+                                msg_str += comment
+                            else:
+                                msg_str += "no comment"
+                        else:
+                            msg_str += "error with comment"
 
             else:
                 # display submission json file
@@ -3619,20 +3652,7 @@ def curator():
                 except:
                     # template_dict['error'] = "Can't read submission file: %s" % submission_file
                     template_dict['json'] = "Submitted JSON data not available for this project"
-    reviewer_dict = {
-        "file_name": "The filenames are descriptive and consistent",
-        "file_format": "The file format is appropriate and can be opened",
-        "file_organization": "The file organization is consistent and appropriate",
-        "table_header": "Table header information is complete and consistent with documentation",
-        "data_content": "The data set and its contents are clearly described",
-        "data_process": "Processing information is adequate",
-        "data_acquisition": "The process used to get the data is clearly described and appropriate",
-        "data_spatial": "Geospatial and temporal informatioin are complete and described",
-        "data_variable": "Variables and units follow standards or are well-defined",
-        "data_issues": "Known issues and limitations are clearly described",
-        "data_ref": "Publication or manuscript describing the data is provided"
-    }
-    template_dict['reviewer_dict'] = reviewer_dict
+    
 
     return render_template('curator.html', **template_dict)
 
