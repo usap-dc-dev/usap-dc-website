@@ -2884,7 +2884,6 @@ def curator():
         template_dict['need_login'] = False
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
 
-
         # if Add User To Dataset / Project, or Ingest Crossref button pressed
         if request.args.get('fnc') is not None:
             return render_template('curator.html', type=request.args['fnc'], projects=filter_datasets_projects(dp_type='Project'),
@@ -2947,6 +2946,29 @@ def curator():
             uid = filename.replace('e', '')
             template_dict['uid'] = uid
             edit = filename[0] == 'e'
+
+            ds_id = uid[1::] if edit else uid
+
+            # get the values previously entered in the db for FAIRness review
+            findPrevFairnessEntryQuery = "SELECT count(dataset_id) from dataset_fairness where dataset_id = %s;"
+            findPrevFairnessEntryQuery_mogrified = cur.mogrify(findPrevFairnessEntryQuery, (ds_id,))
+            cur.execute(findPrevFairnessEntryQuery_mogrified)
+            prevFairnessEntryExists = cur.fetchone()['count'] > 0
+            #print(prevFairnessEntryExists)
+            template_dict['review_exists'] = prevFairnessEntryExists
+            if prevFairnessEntryExists:
+                getPrevFairnessEntryQuery = "SELECT * from dataset_fairness where dataset_id = %s;"
+                gpfeq_mogrified = cur.mogrify(getPrevFairnessEntryQuery, (ds_id,))
+                cur.execute(gpfeq_mogrified)
+                entry = cur.fetchone()
+                prev_review = {}
+                for item in reviewer_dict:
+                    checkbox_key = item + "_check"
+                    comment_key = item + "_comment"
+                    prev_review[checkbox_key] = entry[checkbox_key]
+                    prev_review[comment_key] = entry[comment_key]
+                template_dict['prev_review'] = prev_review
+                    
 
             query = "SELECT * FROM submission WHERE uid = '%s'" % filename
             cur.execute(query)
@@ -3617,7 +3639,7 @@ def curator():
                         template_dict['cmr_text'] = cmr_text
                 elif request.form.get('submit') == "submit_review_checklist":
                     template_dict['tab'] = "review"
-                    query = "INSERT INTO dataset_fairness (dataset_id, reviewer, reviewed_time"
+                    writeQuery = "INSERT INTO dataset_fairness (dataset_id, reviewer, reviewed_time"
                     keys = ""
                     keys_list = []
                     values = ""
@@ -3639,23 +3661,23 @@ def curator():
                         curator_id = session['user_info'].get('orcid')
                     ny_tz = zi("America/New_York")
                     dt_now = datetime.now(ny_tz)
-                    query += keys + (") VALUES ('%s', '%s', '%s'" % (uid, curator_id, dt_now)) + values + ") ON CONFLICT (dataset_id) DO UPDATE SET "
-                    query += "reviewer = '%s', reviewed_time = '%s', " % (curator_id, dt_now)
-                    init_query = query
+                    writeQuery += keys + (") VALUES ('%s', '%s', '%s'" % (uid, curator_id, dt_now)) + values + ") ON CONFLICT (dataset_id) DO UPDATE SET "
+                    writeQuery += "reviewer = '%s', reviewed_time = '%s', " % (curator_id, dt_now)
+                    init_writeQuery = writeQuery
                     for it,em in form_dict.items():
-                        if query != init_query:
-                            query += ","
+                        if writeQuery != init_writeQuery:
+                            writeQuery += ","
                         if em == (not not em):
-                            query += " %s = %s" % (it,em)
+                            writeQuery += " %s = %s" % (it,em)
                         else:
-                            query += " %s = '%s'" % (it,em)
-                    query += " WHERE dataset_fairness.dataset_id = '%s'; COMMIT;" % uid
+                            writeQuery += " %s = '%s'" % (it,em)
+                    writeQuery += " WHERE dataset_fairness.dataset_id = '%s'; COMMIT;" % uid
                     (conn, cur) = connect_to_db(curator=True)
-                    mogrified = cur.mogrify(query, tuple(values_list))
+                    mogrifiedWriteQuery = cur.mogrify(writeQuery, tuple(values_list))
                     try:
-                        cur.execute(mogrified)
+                        cur.execute(mogrifiedWriteQuery)
                         #for debugging only
-                        #template_dict['message'].append("Executed query: %s" % mogrified)
+                        #template_dict['message'].append("Executed writeQuery: %s" % mogrifiedWriteQuery)
                         template_dict['message'].append("Successfully added or updated FAIRness checklist for %s" % uid)
                     except Exception as e:
                         #for debugging only

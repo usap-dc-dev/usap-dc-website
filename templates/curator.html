@@ -71,7 +71,7 @@
           <button class="tablinks" onclick="openTab(event, 'spatialTab')"  {% if tab == 'spatial' %} id="defaultOpen" {% endif %}>Update Dataset Info</button>
           <button class="tablinks" onclick="openTab(event, 'dcxmlTab')"  {% if tab == 'dcxml' %} id="defaultOpen" {% endif %}>DataCite XML</button>
           <button class="tablinks" onclick="openTab(event, 'isoxmlTab')"  {% if tab == 'isoxml' %} id="defaultOpen" {% endif %}>ISO XML</button>
-	  <button class="tablinks" onclick="openTab(event, 'reviewTab')" {% if tab == 'review' %} id="defaultOpen" {% endif %}>Review FAIRness</button>
+	      <button class="tablinks" onclick="openTab(event, 'reviewTab')" {% if tab == 'review' %} id="defaultOpen" {% endif %}>Review FAIRness</button>
           {% if db_imported %}
             <button class="tablinks" onclick="openTab(event, 'archiveTab')"  {% if tab == 'archive' %} id="defaultOpen" {% endif %}>Archive</button>
           {% endif %}
@@ -458,9 +458,9 @@
         <h4>Review Submission for FAIRness</h4>
 	<p>Check the box if the accompanying statement applies, and leave any comments in the accompanying text box.</p>
         {% for id, label in reviewer_dict.items() %}
-        <input type="checkbox" {% if fair_form and fair_form[id ~ "_check"] %} checked {% endif %} name="{{id}}_check" id="{{id}}_check" value="{{id}}_check">
+        <input type="checkbox" {% if (fair_form and fair_form[id ~ "_check"]) or review_exists and prev_review[id ~ "_check"] %} checked {% endif %} name="{{id}}_check" id="{{id}}_check" value="{{id}}_check">
         <label name="{{id}}_label" for="{{id}}_check">{{label}}</label>
-        <input type="text" name="{{id}}_text" id="{{id}}_text" {% if fair_form %} value="{{fair_form[id ~ '_comment']}}" {% endif %}>
+        <input type="text" name="{{id}}_text" id="{{id}}_text" {% if fair_form %} value="{{fair_form[id ~ '_comment']}}" {% elif review_exists %} value="{{prev_review[id ~ '_comment']}}" {% endif %}>
 	<br>
         {% endfor %}
 	<button type="submit" name="submit" value="submit_review_checklist" onclick="waitCursor()">Submit review checklist</button>
@@ -711,6 +711,10 @@
     // Show the current tab, and add an "active" class to the button that opened the tab
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+
+    if(tabName === "reviewTab") {
+
+    }
   }
   // Get the element with id="defaultOpen" and click on it
   if (document.getElementById("defaultOpen")) document.getElementById("defaultOpen").click();
