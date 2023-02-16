@@ -3632,6 +3632,7 @@ def curator():
                         values_list.append(comment)
                         form_dict[item + "_check"] = not not checked
                         form_dict[item + "_comment"] = comment
+                    template_dict['fair_form'] = form_dict
                     query += keys + (") VALUES (%s" % uid) + values + ") ON CONFLICT dataset_fairness_pkey DO UPDATE SET "
                     init_query = query
                     for it,em in form_dict.items():

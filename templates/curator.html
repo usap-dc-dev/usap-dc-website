@@ -458,9 +458,9 @@
         <h4>Review Submission for FAIRness</h4>
 	<p>Check the box if the accompanying statement applies, and leave any comments in the accompanying text box.</p>
         {% for id, label in reviewer_dict.items() %}
-        <input type="checkbox" name="{{id}}_check" id="{{id}}_check" value="{{id}}_check">
+        <input type="checkbox" {% if fair_form and fair_form[id ~ "_check"] %} checked {% endif %} name="{{id}}_check" id="{{id}}_check" value="{{id}}_check">
         <label name="{{id}}_label" for="{{id}}_check">{{label}}</label>
-        <input type="text" name="{{id}}_text" id="{{id}}_text">
+        <input type="text" name="{{id}}_text" id="{{id}}_text" {% if fair_form %} value="{{fair_form[id ~ '_comment']}}" {% endif %}>
 	<br>
         {% endfor %}
 	<button type="submit" name="submit" value="submit_review_checklist" onclick="waitCursor()">Submit review checklist</button>
