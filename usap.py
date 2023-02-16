@@ -41,6 +41,7 @@ from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from zoneinfo import ZoneInfo as zi
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -3616,7 +3617,7 @@ def curator():
                         template_dict['cmr_text'] = cmr_text
                 elif request.form.get('submit') == "submit_review_checklist":
                     template_dict['tab'] = "review"
-                    query = "INSERT INTO dataset_fairness (dataset_id"
+                    query = "INSERT INTO dataset_fairness (dataset_id, reviewer, reviewed_time"
                     keys = ""
                     keys_list = []
                     values = ""
@@ -3633,7 +3634,13 @@ def curator():
                         form_dict[item + "_check"] = not not checked
                         form_dict[item + "_comment"] = comment
                     template_dict['fair_form'] = form_dict
-                    query += keys + (") VALUES (%s" % uid) + values + ") ON CONFLICT dataset_fairness_pkey DO UPDATE SET "
+                    curator_id = session['user_info'].get('sub')
+                    if curator_id is None:
+                        curator_id = session['user_info'].get('orcid')
+                    ny_tz = zi("America/New_York")
+                    dt_now = datetime.now(ny_tz)
+                    query += keys + (") VALUES ('%s', '%s', '%s'" % (uid, curator_id, dt_now)) + values + ") ON CONFLICT (dataset_id) DO UPDATE SET "
+                    query += "reviewer = '%s', reviewed_time = '%s', " % (curator_id, dt_now)
                     init_query = query
                     for it,em in form_dict.items():
                         if query != init_query:
@@ -3642,10 +3649,17 @@ def curator():
                             query += " %s = %s" % (it,em)
                         else:
                             query += " %s = '%s'" % (it,em)
-                    query += " WHERE dataset_id = '%s'" % uid
+                    query += " WHERE dataset_fairness.dataset_id = '%s'; COMMIT;" % uid
                     (conn, cur) = connect_to_db(curator=True)
                     mogrified = cur.mogrify(query, tuple(values_list))
-                    template_dict['message'].append(mogrified)
+                    try:
+                        cur.execute(mogrified)
+                        #for debugging only
+                        #template_dict['message'].append("Executed query: %s" % mogrified)
+                        template_dict['message'].append("Successfully added or updated FAIRness checklist for %s" % uid)
+                    except Exception as e:
+                        #for debugging only
+                        template_dict['error'] = "Error adding or updating FAIRness checklist for %s: %s" % (uid, traceback.format_exc())
                     
 
             else:
