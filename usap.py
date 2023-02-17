@@ -2966,7 +2966,6 @@ def curator():
                     prev_review[checkbox_key] = entry[checkbox_key]
                     prev_review[comment_key] = entry[comment_key]
                 template_dict['prev_review'] = prev_review
-                    
 
             query = "SELECT * FROM submission WHERE uid = '%s'" % filename
             cur.execute(query)
@@ -3682,7 +3681,6 @@ def curator():
                         template_dict['error'] = "Error adding or updating FAIRness checklist for %s: %s" % (uid, traceback.format_exc())
                         # for debugging only
                         #print(traceback.format_exc())
-                    
 
             else:
                 # display submission json file
@@ -3699,8 +3697,6 @@ def curator():
                 except:
                     # template_dict['error'] = "Can't read submission file: %s" % submission_file
                     template_dict['json'] = "Submitted JSON data not available for this project"
-    
-
     return render_template('curator.html', **template_dict)
 
 
