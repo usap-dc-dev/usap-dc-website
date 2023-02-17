@@ -2947,18 +2947,16 @@ def curator():
             template_dict['uid'] = uid
             edit = filename[0] == 'e'
 
-            ds_id = uid[1::] if edit else uid
-
             # get the values previously entered in the db for FAIRness review
             findPrevFairnessEntryQuery = "SELECT count(dataset_id) from dataset_fairness where dataset_id = %s;"
-            findPrevFairnessEntryQuery_mogrified = cur.mogrify(findPrevFairnessEntryQuery, (ds_id,))
+            findPrevFairnessEntryQuery_mogrified = cur.mogrify(findPrevFairnessEntryQuery, (uid,))
             cur.execute(findPrevFairnessEntryQuery_mogrified)
             prevFairnessEntryExists = cur.fetchone()['count'] > 0
             #print(prevFairnessEntryExists)
             template_dict['review_exists'] = prevFairnessEntryExists
             if prevFairnessEntryExists:
                 getPrevFairnessEntryQuery = "SELECT * from dataset_fairness where dataset_id = %s;"
-                gpfeq_mogrified = cur.mogrify(getPrevFairnessEntryQuery, (ds_id,))
+                gpfeq_mogrified = cur.mogrify(getPrevFairnessEntryQuery, (uid,))
                 cur.execute(gpfeq_mogrified)
                 entry = cur.fetchone()
                 prev_review = {}
@@ -3670,18 +3668,20 @@ def curator():
                         if em == (not not em):
                             writeQuery += " %s = %s" % (it,em)
                         else:
-                            writeQuery += " %s = '%s'" % (it,em)
+                            writeQuery += " %s = %s" % (it,"%s")
+                            values_list.append(em)
                     writeQuery += " WHERE dataset_fairness.dataset_id = '%s'; COMMIT;" % uid
                     (conn, cur) = connect_to_db(curator=True)
                     mogrifiedWriteQuery = cur.mogrify(writeQuery, tuple(values_list))
+                    # for debugging only
+                    #print(mogrifiedWriteQuery)
                     try:
                         cur.execute(mogrifiedWriteQuery)
-                        #for debugging only
-                        #template_dict['message'].append("Executed writeQuery: %s" % mogrifiedWriteQuery)
                         template_dict['message'].append("Successfully added or updated FAIRness checklist for %s" % uid)
                     except Exception as e:
-                        #for debugging only
                         template_dict['error'] = "Error adding or updating FAIRness checklist for %s: %s" % (uid, traceback.format_exc())
+                        # for debugging only
+                        #print(traceback.format_exc())
                     
 
             else:
