@@ -41,6 +41,7 @@ from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from zoneinfo import ZoneInfo as zi
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -2859,6 +2860,20 @@ def curator():
     template_dict = {}
     template_dict['message'] = []
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
+    reviewer_dict = {
+        "file_name": "The filenames are descriptive and consistent",
+        "file_format": "The file format is appropriate and can be opened",
+        "file_organization": "The file organization is consistent and appropriate",
+        "table_header": "Table header information is complete and consistent with documentation",
+        "data_content": "The data set and its contents are clearly described",
+        "data_process": "Processing information is adequate",
+        "data_acquisition": "The process used to get the data is clearly described and appropriate",
+        "data_spatial": "Geospatial and temporal information are complete and described",
+        "data_variable": "Variables and units follow standards or are well-defined",
+        "data_issues": "Known issues and limitations are clearly described",
+        "data_ref": "Publication or manuscript describing the data is provided"
+    }
+    template_dict['reviewer_dict'] = reviewer_dict
     (conn, cur) = connect_to_db(curator=True)
 
     # login
@@ -2868,7 +2883,6 @@ def curator():
     else:
         template_dict['need_login'] = False
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
-
 
         # if Add User To Dataset / Project, or Ingest Crossref button pressed
         if request.args.get('fnc') is not None:
@@ -2932,6 +2946,26 @@ def curator():
             uid = filename.replace('e', '')
             template_dict['uid'] = uid
             edit = filename[0] == 'e'
+
+            # get the values previously entered in the db for FAIRness review
+            findPrevFairnessEntryQuery = "SELECT count(dataset_id) from dataset_fairness where dataset_id = %s;"
+            findPrevFairnessEntryQuery_mogrified = cur.mogrify(findPrevFairnessEntryQuery, (uid,))
+            cur.execute(findPrevFairnessEntryQuery_mogrified)
+            prevFairnessEntryExists = cur.fetchone()['count'] > 0
+            #print(prevFairnessEntryExists)
+            template_dict['review_exists'] = prevFairnessEntryExists
+            if prevFairnessEntryExists:
+                getPrevFairnessEntryQuery = "SELECT * from dataset_fairness where dataset_id = %s;"
+                gpfeq_mogrified = cur.mogrify(getPrevFairnessEntryQuery, (uid,))
+                cur.execute(gpfeq_mogrified)
+                entry = cur.fetchone()
+                prev_review = {}
+                for item in reviewer_dict:
+                    checkbox_key = item + "_check"
+                    comment_key = item + "_comment"
+                    prev_review[checkbox_key] = entry[checkbox_key]
+                    prev_review[comment_key] = entry[comment_key]
+                template_dict['prev_review'] = prev_review
 
             query = "SELECT * FROM submission WHERE uid = '%s'" % filename
             cur.execute(query)
@@ -3600,6 +3634,53 @@ def curator():
                         template_dict['error'] = "Error: Unable to generate CMR text: %s" % error
                     else:
                         template_dict['cmr_text'] = cmr_text
+                elif request.form.get('submit') == "submit_review_checklist":
+                    template_dict['tab'] = "review"
+                    writeQuery = "INSERT INTO dataset_fairness (dataset_id, reviewer, reviewed_time"
+                    keys = ""
+                    keys_list = []
+                    values = ""
+                    values_list = []
+                    form_dict = {}
+                    for item in reviewer_dict:
+                        checkbox_id = item + "_check"
+                        textarea_id = item + "_text"
+                        checked = request.form.get(checkbox_id)
+                        comment = request.form.get(textarea_id)
+                        keys += ", " + item + "_check, " + item + "_comment"
+                        values += ", " + str(not not checked) + ", %s"
+                        values_list.append(comment)
+                        form_dict[item + "_check"] = not not checked
+                        form_dict[item + "_comment"] = comment
+                    template_dict['fair_form'] = form_dict
+                    curator_id = session['user_info'].get('sub')
+                    if curator_id is None:
+                        curator_id = session['user_info'].get('orcid')
+                    ny_tz = zi("America/New_York")
+                    dt_now = datetime.now(ny_tz)
+                    writeQuery += keys + (") VALUES ('%s', '%s', '%s'" % (uid, curator_id, dt_now)) + values + ") ON CONFLICT (dataset_id) DO UPDATE SET "
+                    writeQuery += "reviewer = '%s', reviewed_time = '%s', " % (curator_id, dt_now)
+                    init_writeQuery = writeQuery
+                    for it,em in form_dict.items():
+                        if writeQuery != init_writeQuery:
+                            writeQuery += ","
+                        if em == (not not em):
+                            writeQuery += " %s = %s" % (it,em)
+                        else:
+                            writeQuery += " %s = %s" % (it,"%s")
+                            values_list.append(em)
+                    writeQuery += " WHERE dataset_fairness.dataset_id = '%s'; COMMIT;" % uid
+                    (conn, cur) = connect_to_db(curator=True)
+                    mogrifiedWriteQuery = cur.mogrify(writeQuery, tuple(values_list))
+                    # for debugging only
+                    #print(mogrifiedWriteQuery)
+                    try:
+                        cur.execute(mogrifiedWriteQuery)
+                        template_dict['message'].append("Successfully added or updated FAIRness checklist for %s" % uid)
+                    except Exception as e:
+                        template_dict['error'] = "Error adding or updating FAIRness checklist for %s: %s" % (uid, traceback.format_exc())
+                        # for debugging only
+                        #print(traceback.format_exc())
 
             else:
                 # display submission json file
@@ -3616,7 +3697,6 @@ def curator():
                 except:
                     # template_dict['error'] = "Can't read submission file: %s" % submission_file
                     template_dict['json'] = "Submitted JSON data not available for this project"
-
     return render_template('curator.html', **template_dict)
 
 
