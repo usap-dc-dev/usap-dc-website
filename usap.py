@@ -599,6 +599,7 @@ def sortNumerically(val, replace_str, replace_str2=''):
     return int(val.replace(replace_str, '0').replace(replace_str2, ''))
 
 
+#for page 1 of dataset submission/editing
 @app.route('/edit/dataset/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset', methods=['GET', 'POST'])
 def dataset(dataset_id=None):
@@ -1213,6 +1214,7 @@ def format_time():
     return s[:-5] + 'Z'
    
 
+#For page 2 of dataset submission/editing
 @app.route('/edit/dataset2/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset2', methods=['GET', 'POST'])
 def dataset2(dataset_id=None):
