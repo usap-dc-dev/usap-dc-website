@@ -456,12 +456,13 @@
 
       <div id="reviewTab" class="tabcontent">
         <h4>Review Submission for FAIRness</h4>
-	<p>Check the box if the accompanying statement applies, and leave any comments in the accompanying text box.</p>
+	    <p>Check the box if the accompanying statement applies, and leave any comments in the accompanying text box.</p>
         {% for id, label in reviewer_dict.items() %}
         <input type="checkbox" {% if (fair_form and fair_form[id ~ "_check"]) or review_exists and prev_review[id ~ "_check"] %} checked {% endif %} name="{{id}}_check" id="{{id}}_check" value="{{id}}_check">
         <label name="{{id}}_label" for="{{id}}_check">{{label}}</label>
-        <input type="text" name="{{id}}_text" id="{{id}}_text" {% if fair_form %} value="{{fair_form[id ~ '_comment']}}" {% elif review_exists %} value="{{prev_review[id ~ '_comment']}}" {% endif %}>
-	<br>
+        <br>
+        <input type="text" size="70" name="{{id}}_text" id="{{id}}_text" {% if fair_form %} value="{{fair_form[id ~ '_comment']}}" {% elif review_exists %} value="{{prev_review[id ~ '_comment']}}" {% endif %}>
+	    <br><br>
         {% endfor %}
 	<button type="submit" name="submit" value="submit_review_checklist" onclick="waitCursor()">Submit review checklist</button>
       </div>
