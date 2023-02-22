@@ -79,7 +79,7 @@ def make_sql(data, id, curatorId=None):
     (conn, cur) = usap.connect_to_db(curator=True)
     curator = None
     if curatorId == None:
-        curator = "Nitsche"
+        curator = "Not_Provided"
     else:
         curator_query = "SELECT last_name FROM person WHERE id_orcid = %s"
         cq_mogrified = cur.mogrify(curator_query, (curatorId,))
