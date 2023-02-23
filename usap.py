@@ -2863,18 +2863,19 @@ def curator():
     template_dict['message'] = []
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
     reviewer_dict = {
-        "file_name": "The filenames are descriptive and consistent",
-        "file_format": "The file format is appropriate and can be opened",
-        "file_organization": "The file organization is consistent and appropriate",
-        "table_header": "Table header information is complete and consistent with documentation",
-        "data_content": "The data set and its contents are clearly described",
-        "data_process": "Processing information is adequate",
-        "data_acquisition": "The process used to get the data is clearly described and appropriate",
-        "data_spatial": "Geospatial and temporal information are complete and described",
-        "data_variable": "Variables and units follow standards or are well-defined",
-        "data_issues": "Known issues and limitations are clearly described",
-        "data_ref": "Publication or manuscript describing the data is provided",
-        "abstract": "The abstract exists and is descriptive and accurate"
+        "file_name": "The filenames are descriptive and consistent.",
+        "file_format": "The file format is appropriate and can be opened.",
+        "file_organization": "The file organization is consistent and appropriate.",
+        "table_header": "Table header information is complete and consistent with documentation.",
+        "abstract": "The abstract exists and is descriptive and accurate.",
+        "data_content": "The data set and its contents are clearly described.",
+        "data_process": "Processing information is adequate.",
+        "data_acquisition": "The process used to get the data is clearly described and appropriate.",
+        "data_spatial": "Geospatial information is complete and described.",
+        "data_temporal": "Temporal information is complete and described.",
+        "data_variable": "Variables and units follow standards or are well-defined.",
+        "data_issues": "Known issues and limitations are clearly described.",
+        "data_ref": "Publication or manuscript describing the data is provided."
     }
     template_dict['reviewer_dict'] = reviewer_dict
     (conn, cur) = connect_to_db(curator=True)
