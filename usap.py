@@ -599,6 +599,7 @@ def sortNumerically(val, replace_str, replace_str2=''):
     return int(val.replace(replace_str, '0').replace(replace_str2, ''))
 
 
+#for page 1 of dataset submission/editing
 @app.route('/edit/dataset/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset', methods=['GET', 'POST'])
 def dataset(dataset_id=None):
@@ -1213,6 +1214,7 @@ def format_time():
     return s[:-5] + 'Z'
    
 
+#For page 2 of dataset submission/editing
 @app.route('/edit/dataset2/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset2', methods=['GET', 'POST'])
 def dataset2(dataset_id=None):
@@ -2881,6 +2883,9 @@ def curator():
         session['next'] = request.url
         template_dict['need_login'] = True
     else:
+        curator_id = session['user_info'].get('sub')
+        if curator_id is None:
+            curator_id = session['user_info'].get('orcid')
         template_dict['need_login'] = False
         submitted_dir = os.path.join(current_app.root_path, app.config['SUBMITTED_FOLDER'])
 
@@ -3042,7 +3047,7 @@ def curator():
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
 
-                    sql, readme_file = json2sql.json2sql(json_data, uid)
+                    sql, readme_file = json2sql.json2sql(json_data, uid, curator_id)
 
                     template_dict['sql'] = sql
                     template_dict['readme_file'] = readme_file
@@ -3653,9 +3658,6 @@ def curator():
                         form_dict[item + "_check"] = not not checked
                         form_dict[item + "_comment"] = comment
                     template_dict['fair_form'] = form_dict
-                    curator_id = session['user_info'].get('sub')
-                    if curator_id is None:
-                        curator_id = session['user_info'].get('orcid')
                     ny_tz = zi("America/New_York")
                     dt_now = datetime.now(ny_tz)
                     writeQuery += keys + (") VALUES ('%s', '%s', '%s'" % (uid, curator_id, dt_now)) + values + ") ON CONFLICT (dataset_id) DO UPDATE SET "

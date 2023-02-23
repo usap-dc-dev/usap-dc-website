@@ -62,7 +62,7 @@ def parse_json(data):
     return data
 
 
-def make_sql(data, id):
+def make_sql(data, id, curatorId=None):
     # --- prepare some parameter
     if data.get('release_date'):
         release_date = data['release_date']
@@ -71,14 +71,20 @@ def make_sql(data, id):
     date_created = data["timestamp"][0:10]
 
     url = config['USAP_DOMAIN'] + 'dataset/usap-dc/' + id + '/' + data["timestamp"] + '/'
-    
-    curator = "Nitsche"
 
     sql_out = ""
     sql_out += 'START TRANSACTION;\n\n'
     sql_out += '--NOTE: include NSF PI(s), submitter, and author(s); email+orcid optional\n'
 
-    conn, cur = usap.connect_to_db(curator=True)
+    (conn, cur) = usap.connect_to_db(curator=True)
+    curator = None
+    if curatorId == None:
+        curator = "Not_Provided"
+    else:
+        curator_query = "SELECT last_name FROM person WHERE id_orcid = %s"
+        cq_mogrified = cur.mogrify(curator_query, (curatorId,))
+        cur.execute(cq_mogrified)
+        curator = cur.fetchone()['last_name']
 
     person_ids = []
     for author in data["authors"]:
@@ -835,14 +841,14 @@ def write_readme(data, id):
         return "Error writing README file: \n%s" % str(e)
 
 
-def json2sql(data, id):
+def json2sql(data, id, curator=None):
     if data:
         # check if we are editing an existing project
         if data.get('edit') and data['edit'] == 'True':
             sql = editDatasetJson2sql(data, id)
         else:
             data = parse_json(data)
-            sql = make_sql(data, id)
+            sql = make_sql(data, id, curator)
         readme_file = write_readme(data, id)
         return sql, readme_file
     else:
