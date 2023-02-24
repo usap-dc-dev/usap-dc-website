@@ -461,7 +461,7 @@
         <input type="checkbox" {% if (fair_form and fair_form[id ~ "_check"]) or review_exists and prev_review[id ~ "_check"] %} checked {% endif %} name="{{id}}_check" id="{{id}}_check" value="{{id}}_check">
         <label name="{{id}}_label" for="{{id}}_check">{{label}}</label>
         <br>
-        <textarea rows="1" cols="70" name="{{id}}_text" id="{{id}}_text">{% if fair_form %} {{fair_form[id ~ '_comment']}} {% elif review_exists %} {{prev_review[id ~ '_comment']}} {% endif %}</textarea>
+        <textarea rows="1" cols="70" name="{{id}}_text" id="{{id}}_text">{% if fair_form %}{{fair_form[id ~ '_comment']}}{% elif review_exists %}{{prev_review[id ~ '_comment']}}{% endif %}</textarea>
 	    <br><br>
         {% endfor %}
 	<button type="submit" name="submit" value="submit_review_checklist" onclick="waitCursor()">Submit review checklist</button>
