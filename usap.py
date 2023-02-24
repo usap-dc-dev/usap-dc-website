@@ -2959,7 +2959,7 @@ def curator():
             findPrevFairnessEntryQuery_mogrified = cur.mogrify(findPrevFairnessEntryQuery, (uid,))
             cur.execute(findPrevFairnessEntryQuery_mogrified)
             prevFairnessEntryExists = cur.fetchone()['count'] > 0
-            #print(prevFairnessEntryExists)
+            #if the previous entry exists, load the contents into the web form
             template_dict['review_exists'] = prevFairnessEntryExists
             if prevFairnessEntryExists:
                 getPrevFairnessEntryQuery = "SELECT * from dataset_fairness where dataset_id = %s;"
@@ -3562,20 +3562,15 @@ def curator():
                     valid_mark = " ✓"
                     template_dict['tab'] = "difxml"
                     xml_str = request.form.get("difxml").encode("utf-8")
-                    #print("Validate DIF XML not yet implemented")
                     validation = cf.isXmlValid(xml_str)
                     if validation[0]:
                         template_dict['validation_symbol'] = valid_mark
                     else:
                         template_dict['validation_symbol'] = invalid_mark
                     root = ET.fromstring(validation[1])
-                    #print("XML: ", validation[1])
-                    #print("Now parsing the XML for user friendliness")
-                    #print(root)
                     has_errors = False
                     has_warnings = False
                     for child in root:
-                        #print(child.tag, child.text)
                         if child.tag == "errors":
                             for error in child:
                                 has_errors = True
@@ -3641,6 +3636,8 @@ def curator():
                         template_dict['error'] = "Error: Unable to generate CMR text: %s" % error
                     else:
                         template_dict['cmr_text'] = cmr_text
+                
+                # Checklist for FAIRness score
                 elif request.form.get('submit') == "submit_review_checklist":
                     template_dict['tab'] = "review"
                     writeQuery = "INSERT INTO dataset_fairness (dataset_id, reviewer, reviewed_time"
