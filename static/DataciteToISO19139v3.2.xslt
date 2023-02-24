@@ -58,7 +58,7 @@
     <xsl:variable name="datacentre">
         <xsl:choose>
             <!-- USAP -->
-            <xsl:when test="//*[local-name()='alternateIdentifier' and contains(text(),'www.usap-dc.org')]">
+            <xsl:when test="//*[local-name()='alternateIdentifier' and contains(text(),'.usap-dc.org')]">
                 <xsl:value-of select="string('US Antarctic Program Data Center (USAP-DC)')"/>
             </xsl:when>
             
@@ -88,7 +88,8 @@
         <gmd:contact>
             <gmd:CI_ResponsibleParty>
                 <gmd:organisationName>
-                    <gco:CharacterString>Interdisciplinary Earth Data Alliance</gco:CharacterString>
+                    <!-- <gco:CharacterString>Interdisciplinary Earth Data Alliance</gco:CharacterString> -->
+                    <gco:CharacterString>United States Antarctic Program Data Center (USAP-DC)</gco:CharacterString>
                 </gmd:organisationName>
                 <gmd:contactInfo>
                     <gmd:CI_Contact>
@@ -99,7 +100,7 @@
                                     <gco:CharacterString>
                                         <xsl:choose>
                                             <xsl:when test="$datacentre='US Antarctic Program Data Center (USAP-DC)'"> 
-                                                <xsl:value-of select="string('web@usap-dc.org')"/>
+                                                <xsl:value-of select="string('info@usap-dc.org')"/>
                                             </xsl:when>
                                             <xsl:when test="$datacentre='EarthChem Library (ECL)'"> 
                                                 <xsl:value-of select="string('info@EarthChem.org')"/>
@@ -185,7 +186,7 @@
     <xsl:variable name="maintenanceContactID"
         select="string('http://orcid.org/0000-0001-6041-5302')"/>
     <xsl:variable name="maintenanceContactName" select="string('metadata curator')"/>
-    <xsl:variable name="maintenanceContactEmail" select="string('info@iedadata.org')"/>
+    <xsl:variable name="maintenanceContactEmail" select="string('info@usap-dc.org')"/>
 
     <xsl:variable name="currentDateTime">
         <xsl:value-of select="datetime:date-time()"/>
