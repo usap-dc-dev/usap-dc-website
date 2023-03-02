@@ -35,6 +35,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import math
+from lib.gmail_functions import send_gmail_message
 
 
 config = json.loads(open('../config.json', 'r').read())
@@ -109,17 +110,9 @@ def sendEmail(message, subject):
     content = MIMEText(message, 'html', 'utf-8')
     msg.attach(content)
 
-    smtp_details = config['SMTP']
-    s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
-    # identify ourselves to smtp client
-    s.ehlo()
-    # secure our email with tls encryption
-    s.starttls()
-    # re-identify ourselves as an encrypted connection
-    s.ehlo()
-    s.login(smtp_details["USER"], smtp_details["PASSWORD"])
-    s.sendmail(sender, recipients, msg.as_string())
-    s.quit()  
+    success, error = send_gmail_message(sender, recipients, subject, msg.as_string(), None, None)
+
+    return success, error
 
 
 # Get dataset information from database
