@@ -1369,7 +1369,7 @@ def dataset2(dataset_id=None):
             content = MIMEText(message, 'html', 'utf-8')
             msg.attach(content)
 
-            success, error = send_gmail_message(sender, recipients, msg['Subject'], msg.as_string(), None, None)   
+            success, error = send_gmail_message(sender, recipients, msg['Subject'], message, None, None)   
             
             
             # Send autoreply to user
@@ -1586,7 +1586,7 @@ def project(project_id=None):
             content = MIMEText(message, 'html', 'utf-8')
             msg.attach(content)
 
-            success, error = send_gmail_message(sender, recipients, msg['Subject'], msg.as_string(), None, None)   
+            success, error = send_gmail_message(sender, recipients, msg['Subject'], message, None, None)   
 
             # Send autoreply to user
             send_autoreply(submitter, msg['Subject'])

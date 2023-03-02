@@ -35,7 +35,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import math
-from lib.gmail_functions import send_gmail_message
+from gmail_functions import send_gmail_message
 
 
 config = json.loads(open('../config.json', 'r').read())
@@ -110,7 +110,7 @@ def sendEmail(message, subject):
     content = MIMEText(message, 'html', 'utf-8')
     msg.attach(content)
 
-    success, error = send_gmail_message(sender, recipients, subject, msg.as_string(), None, None)
+    success, error = send_gmail_message(sender, recipients, subject, message, None)
 
     return success, error
 
