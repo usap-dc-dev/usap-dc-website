@@ -71,7 +71,17 @@ def sendEmail_old(message, subject):
     content = MIMEText(message, 'html', 'utf-8')
     msg.attach(content)
 
-    success, error = send_gmail_message(sender, recipients, msg['Subject'], msg.as_string(), None, None)     
+    smtp_details = config['SMTP']
+    s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
+    # identify ourselves to smtp client
+    s.ehlo()
+    # secure our email with tls encryption
+    s.starttls()
+    # re-identify ourselves as an encrypted connection
+    s.ehlo()
+    s.login(smtp_details["USER"], smtp_details["PASSWORD"])
+    s.sendmail(sender, recipients, msg.as_string())
+    s.quit()    
 
 def sendEmail(message_text, subject, file=None):
     print(subject)
