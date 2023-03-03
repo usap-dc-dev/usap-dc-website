@@ -81,7 +81,7 @@ def sendEmail_old(message, subject):
     s.ehlo()
     s.login(smtp_details["USER"], smtp_details["PASSWORD"])
     s.sendmail(sender, recipients, msg.as_string())
-    s.quit()  
+    s.quit()    
 
 def sendEmail(message_text, subject, file=None):
     print(subject)

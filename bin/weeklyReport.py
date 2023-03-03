@@ -52,7 +52,7 @@ def sendEmail_old(message, subject):
 
     content = MIMEText(message, 'html', 'utf-8')
     msg.attach(content)
-
+    
     smtp_details = config['SMTP']
     s = smtplib.SMTP(smtp_details["SERVER"], smtp_details['PORT'].encode('utf-8'))
     # identify ourselves to smtp client
