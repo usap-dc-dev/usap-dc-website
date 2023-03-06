@@ -363,8 +363,8 @@ def make_sql(data, id, curatorId=None):
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
             # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-            cur.execute(query)
+            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER(%s) UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
+            cur.execute(query, (keyword, keyword))
             res = cur.fetchone()
             if res is not None:
                 sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(id, res['keyword_id'], keyword)
@@ -776,8 +776,8 @@ def editDatasetJson2sql(data, uid):
                 for keyword in data["user_keywords"].split(','):
                     keyword = keyword.strip()
                     # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-                    query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-                    cur.execute(query)
+                    query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER(%s) UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
+                    cur.execute(query, (keyword, keyword))
                     res = cur.fetchone()
                     if res is not None:
                         sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(uid, res['keyword_id'], keyword)
