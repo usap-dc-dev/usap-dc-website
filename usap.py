@@ -3141,12 +3141,12 @@ def curator():
                     try:
                         if not filename.startswith(app.config['DOCS_FOLDER']):
                             raise Exception()
-                        with open(filename, 'w') as out_file:
-                            out_file.write(readme_str.decode())
+                        with open(filename, 'w', encoding='utf-8') as out_file:
+                            out_file.write(readme_str.decode('utf-8'))
                         os.chmod(filename, 0o664)
                         template_dict['message'].append("Successfully updated Read Me file")
                     except:
-                        template_dict['error'] = "Error updating Read Me file"
+                        template_dict['error'] = "Error updating Read Me file: %s" % traceback.format_exc()
 
                 # assign keywords in database
                 elif request.form.get('submit') == "assign_keywords":
