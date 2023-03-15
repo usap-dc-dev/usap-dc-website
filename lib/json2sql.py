@@ -368,9 +368,7 @@ def make_sql(data, id, curatorId=None):
             cur.execute(query, (keyword,))
             res = cur.fetchone()
             if res is not None:
-                query2 = "INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES (%s, %s); "
-                mogrified_query2 = cur.mogrify(query2, (id, res['keyword_id']))
-                sql_out += mogrified_query2 + ("--%s" % keyword) #"INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES "
+                sql_out += "INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES (%s, %s); --%s" % (id, res['keyword_id'], keyword)
             else:
                 # figure out the highest keyword_id used so far
                 query = "SELECT keyword_id FROM keyword_usap WHERE keyword_id LIKE 'uk%' ORDER BY keyword_id DESC LIMIT 1;"
