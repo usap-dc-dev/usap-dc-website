@@ -363,16 +363,17 @@ def make_sql(data, id, curatorId=None):
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
             # TODO change this bit to only check the keyword_usap table, since we are making keyword_ieda obsolete
-            # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-            cur.execute(query)
+            # first check if the keyword is already in the database - check keyword_usap table
+            query = "SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
+            cur.execute(query, (keyword,))
             res = cur.fetchone()
             if res is not None:
-                sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(id, res['keyword_id'], keyword)
+                query2 = "INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES (%s, %s); "
+                mogrified_query2 = cur.mogrify(query2, (id, res['keyword_id']))
+                sql_out += mogrified_query2 + ("--%s" % keyword) #"INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES "
             else:
-                #if not found, add to keyword_usap
-                # first work out the last keyword_id used
-                query = "SELECT keyword_id FROM keyword_usap ORDER BY keyword_id DESC"
+                # figure out the highest keyword_id used so far
+                query = "SELECT keyword_id FROM keyword_usap WHERE keyword_id LIKE 'uk%' ORDER BY keyword_id DESC LIMIT 1;"
                 cur.execute(query)
                 res = cur.fetchone()
                 if not last_id:

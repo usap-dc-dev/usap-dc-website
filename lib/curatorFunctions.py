@@ -993,9 +993,9 @@ def projectJson2sql(data, uid):
         sql_out += "--NOTE: add user keywords\n"
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
-            # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-            cur.execute(query)
+            # First check if the keyword is already in the database
+            query = "SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
+            cur.execute(query, (keyword,))
             res = cur.fetchone()
             if res is not None:
                 sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s', '%s'); -- %s\n" % (uid, res['keyword_id'], keyword)
