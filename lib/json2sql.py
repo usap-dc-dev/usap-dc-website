@@ -349,7 +349,7 @@ def make_sql(data, id, curatorId=None):
         sql_out += "\n"
 
     sql_out += "--NOTE: add keywords\n"
-    sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0001'); -- Antarctica\n".format(id)
+    sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','uk-2556'); -- Antarctica\n".format(id)
     sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0052'); -- Cryosphere\n".format(id)
     sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0009'); -- Glaciers and Ice sheets\n".format(id)
     sql_out += "--INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','ik-0067'); -- Snow Ice\n".format(id)
@@ -362,6 +362,7 @@ def make_sql(data, id, curatorId=None):
         sql_out += "--NOTE: add user keywords\n"
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
+            # TODO change this bit to only check the keyword_usap table, since we are making keyword_ieda obsolete
             # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
             query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
             cur.execute(query)
