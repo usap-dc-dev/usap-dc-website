@@ -362,7 +362,6 @@ def make_sql(data, id, curatorId=None):
         sql_out += "--NOTE: add user keywords\n"
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
-            # TODO change this bit to only check the keyword_usap table, since we are making keyword_ieda obsolete
             # first check if the keyword is already in the database - check keyword_usap table
             query = "SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
             cur.execute(query, (keyword,))
@@ -775,9 +774,9 @@ def editDatasetJson2sql(data, uid):
                 sql_out += "\n--NOTE: add user keywords\n"
                 for keyword in data["user_keywords"].split(','):
                     keyword = keyword.strip()
-                    # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-                    query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-                    cur.execute(query)
+                    # first check if the keyword is already in the database
+                    query = "SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
+                    cur.execute(query, (keyword,))
                     res = cur.fetchone()
                     if res is not None:
                         sql_out += "INSERT INTO dataset_keyword_map(dataset_id,  keyword_id) VALUES ('{}','{}'); -- {}\n".format(uid, res['keyword_id'], keyword)

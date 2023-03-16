@@ -236,9 +236,6 @@ def get_datasets(dataset_ids):
                             SELECT kw.dataset_id, json_agg(kw) keywords FROM (
                                 SELECT dkm.dataset_id, ku.keyword_label AS keyword_label, ku.keyword_description AS keyword_description
                                 FROM dataset_keyword_map dkm JOIN keyword_usap ku ON (ku.keyword_id=dkm.keyword_id)
-                                UNION
-                                SELECT dkm.dataset_id, ki.keyword_label AS keyword_label, ki.keyword_description AS keyword_description
-                                FROM dataset_keyword_map dkm JOIN keyword_ieda ki ON (ki.keyword_id=dkm.keyword_id)   
                             ) kw
                             GROUP BY kw.dataset_id
                         ) k ON (d.id = k.dataset_id)
@@ -4844,9 +4841,6 @@ def get_project(project_id):
                                   -- UNION
                                   SELECT pkm.proj_uid, ku.keyword_label AS keywords
                                   FROM project_keyword_map pkm JOIN keyword_usap ku ON (ku.keyword_id=pkm.keyword_id)
-                                  UNION
-                                  SELECT pkm.proj_uid, ki.keyword_label AS keywords
-                                  FROM project_keyword_map pkm JOIN keyword_ieda ki ON (ki.keyword_id=pkm.keyword_id) 
                                   ) k_1
                             GROUP BY k_1.proj_uid
                         ) keywords ON keywords.kw_proj_uid = p.proj_uid
