@@ -5072,8 +5072,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         free_text = escapeChars(free_text) 
-        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR platforms ~* %s OR instruments ~* %s OR paleo_time ~* %s OR " + d_or_p + " ~* %s", 
-                                 (free_text, free_text, free_text, free_text, free_text, free_text, free_text, free_text)))
+        inc_platforms = " OR platforms ~* '%s' OR instruments ~* '%s' OR paleo_time ~* '%s'" % (free_text, free_text, free_text) if dp_type == 'Project' else ""
+        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s" + inc_platforms + " OR " + d_or_p + " ~* %s", 
+                                 (free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 
@@ -5084,6 +5085,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
                 c = c.decode()
             q_conds.append('(%s)' % c)
         query_string += ' WHERE ' + ' AND '.join(q_conds)
+    print(query_string)
     cur.execute(query_string)
     return cur.fetchall()
 
