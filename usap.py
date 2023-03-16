@@ -5085,7 +5085,6 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
                 c = c.decode()
             q_conds.append('(%s)' % c)
         query_string += ' WHERE ' + ' AND '.join(q_conds)
-    print(query_string)
     cur.execute(query_string)
     return cur.fetchall()
 
