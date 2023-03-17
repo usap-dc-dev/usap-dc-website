@@ -587,10 +587,7 @@ def getKeywordsFromDatabase():
     cur.execute(query)
     keyword_types = cur.fetchall()
     for kw_type in keyword_types:
-        query = "SELECT keyword_id, keyword_label, keyword_description FROM keyword_ieda " + \
-            "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id']) + \
-            "UNION " + \
-            "SELECT keyword_id, keyword_label, keyword_description FROM keyword_usap " + \
+        query = "SELECT keyword_id, keyword_label, keyword_description FROM keyword_usap " + \
             "WHERE keyword_type_id = '%s' " % (kw_type['keyword_type_id'])
         cur.execute(query)
         keywords = cur.fetchall()
@@ -603,10 +600,6 @@ def getDatasetKeywords(uid):
     (conn, cur) = usap.connect_to_db()
     query = "SELECT dkm.keyword_id, ku.keyword_label FROM dataset_keyword_map dkm " + \
             "JOIN keyword_usap ku ON ku.keyword_id = dkm.keyword_id " + \
-            "WHERE dkm.dataset_id = '%s' " % uid + \
-            "UNION " +\
-            "SELECT dkm.keyword_id, ki.keyword_label FROM dataset_keyword_map dkm " + \
-            "JOIN keyword_ieda ki ON ki.keyword_id = dkm.keyword_id " + \
             "WHERE dkm.dataset_id = '%s' " % uid + \
             "ORDER BY keyword_label;"
     cur.execute(query)
@@ -993,9 +986,9 @@ def projectJson2sql(data, uid):
         sql_out += "--NOTE: add user keywords\n"
         for keyword in data["user_keywords"].split(','):
             keyword = keyword.strip()
-            # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-            query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
-            cur.execute(query)
+            # First check if the keyword is already in the database
+            query = "SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER(%s)"
+            cur.execute(query, (keyword,))
             res = cur.fetchone()
             if res is not None:
                 sql_out += "INSERT INTO project_keyword_map(proj_uid,  keyword_id) VALUES ('%s', '%s'); -- %s\n" % (uid, res['keyword_id'], keyword)
@@ -1587,8 +1580,8 @@ def editProjectJson2sql(data, uid):
                 sql_out += "\n--NOTE: add user keywords\n"
                 for keyword in data["user_keywords"].split(','):
                     keyword = keyword.strip()
-                    # first check if the keyword is already in the database - check keyword_usap and keyword_ieda tables
-                    query = "SELECT keyword_id FROM keyword_ieda WHERE UPPER(keyword_label) = UPPER('%s') UNION SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % (keyword, keyword)
+                    # first check if the keyword is already in the database - check keyword_usap table
+                    query = "SELECT keyword_id FROM keyword_usap WHERE UPPER(keyword_label) = UPPER('%s')" % keyword
                     cur.execute(query)
                     res = cur.fetchone()
                     if res is not None:

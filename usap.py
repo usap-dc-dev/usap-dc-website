@@ -236,9 +236,6 @@ def get_datasets(dataset_ids):
                             SELECT kw.dataset_id, json_agg(kw) keywords FROM (
                                 SELECT dkm.dataset_id, ku.keyword_label AS keyword_label, ku.keyword_description AS keyword_description
                                 FROM dataset_keyword_map dkm JOIN keyword_usap ku ON (ku.keyword_id=dkm.keyword_id)
-                                UNION
-                                SELECT dkm.dataset_id, ki.keyword_label AS keyword_label, ki.keyword_description AS keyword_description
-                                FROM dataset_keyword_map dkm JOIN keyword_ieda ki ON (ki.keyword_id=dkm.keyword_id)   
                             ) kw
                             GROUP BY kw.dataset_id
                         ) k ON (d.id = k.dataset_id)
@@ -4844,9 +4841,6 @@ def get_project(project_id):
                                   -- UNION
                                   SELECT pkm.proj_uid, ku.keyword_label AS keywords
                                   FROM project_keyword_map pkm JOIN keyword_usap ku ON (ku.keyword_id=pkm.keyword_id)
-                                  UNION
-                                  SELECT pkm.proj_uid, ki.keyword_label AS keywords
-                                  FROM project_keyword_map pkm JOIN keyword_ieda ki ON (ki.keyword_id=pkm.keyword_id) 
                                   ) k_1
                             GROUP BY k_1.proj_uid
                         ) keywords ON keywords.kw_proj_uid = p.proj_uid
@@ -5078,8 +5072,9 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         free_text = escapeChars(free_text) 
-        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s OR platforms ~* %s OR instruments ~* %s OR paleo_time ~* %s OR " + d_or_p + " ~* %s", 
-                                 (free_text, free_text, free_text, free_text, free_text, free_text, free_text, free_text)))
+        inc_platforms = " OR platforms ~* '%s' OR instruments ~* '%s' OR paleo_time ~* '%s'" % (free_text, free_text, free_text) if dp_type == 'Project' else ""
+        conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s" + inc_platforms + " OR " + d_or_p + " ~* %s", 
+                                 (free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
 
