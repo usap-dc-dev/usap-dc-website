@@ -624,10 +624,6 @@ def checkAltIds(person_id, first_name, last_name, field, id_orcid=None, email=No
 
 def projectJson2sql(data, uid):
 
-    # check if we are editing an existing project
-    if data.get('edit') and data['edit'] == 'True':
-        return editProjectJson2sql(data, uid)
-
     conn, cur = usap.connect_to_db(curator=True)
 
     # --- fix award fields (throw out PI name)
@@ -636,6 +632,10 @@ def projectJson2sql(data, uid):
     for i in range(len(data["other_awards"])):
         if data["other_awards"][i]['id'] not in ["None", "Not In This List"] and len(data["other_awards"][i]['id'].split(" ", 1)) > 1:
             (data["other_awards"][i]['id']) = data["other_awards"][i]['id'].split(" ")[0]  # throw away the rest of the award string
+
+    # check if we are editing an existing project
+    if data.get('edit') and data['edit'] == 'True':
+        return editProjectJson2sql(data, uid)
 
     sql_out = ""
     sql_out += "START TRANSACTION;\n\n"
@@ -1274,7 +1274,7 @@ def editProjectJson2sql(data, uid):
                and data.get('award') is not None and data['award'] != '':
                 dst = os.path.join(AWARDS_FOLDER, data['award'], data['dmp_file'])
                 sql_out += "\n--NOTE: UPDATING DMP_LINK FOR AWARD %s\n" % data['award']
-                sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n" % (dst, data['award_num'])
+                sql_out += "UPDATE award SET dmp_link = '%s' WHERE award = '%s';\n" % (dst, data['award'])
 
         elif k == 'email':
             # first check if pi is already in person DB table - if not, email will get added when pi is created later in the code
