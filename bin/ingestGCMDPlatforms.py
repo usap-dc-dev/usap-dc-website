@@ -12,36 +12,39 @@ csv_url = "https://gcmd.earthdata.nasa.gov/kms/concepts/concept_scheme/platforms
 
 conn, cur = util.connect_to_db()
 
-if util.download_to_file(csv_url, platforms_file):
-    # read in csv file
-    rownum = 0
-    rows_added = 0
-    with open(platforms_file, 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile, delimiter=",")
-        for row in reader:
-            if rownum > 1:
-            # generate ID
-                platform_id = row[0].upper()
-                if row[1] and row[1] != '':
-                    platform_id += ' > '+row[1].upper()
-                if row[2] and row[2] != '':
-                    platform_id += ' > '+row[2].upper()
-                if row[3] and row[3] != '':
-                    platform_id += ' > '+row[3].upper()
-                check_sql = "select count(id) as c from gcmd_platform where id = %s"
-                cur.execute(check_sql, (platform_id,))
-                count = cur.fetchone()['c']
-                if count == 0:
-                    # add to database
-                    sql = "INSERT INTO gcmd_platform (id, basis, category, sub_category, short_name, long_name) VALUES (%s, %s, %s, %s, %s, %s);"
-                    cur.execute(sql, (platform_id, row[0], row[1], row[2], row[3], row[4]))
-                    #print(sql % (platform_id, row[0], row[1], row[2], row[3], row[4]))
-                    rows_added += 1
-            rownum += 1
-    cur.execute('COMMIT;')
-    if rows_added == 1:
-        print("Added 1 entry to gcmd_platform")
+def update_db():
+    if util.download_to_file(csv_url, platforms_file):
+        # read in csv file
+        rownum = 0
+        rows_added = 0
+        with open(platforms_file, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile, delimiter=",")
+            for row in reader:
+                if rownum > 1:
+                # generate ID
+                    platform_id = row[0].upper()
+                    if row[1] and row[1] != '':
+                        platform_id += ' > '+row[1].upper()
+                    if row[2] and row[2] != '':
+                        platform_id += ' > '+row[2].upper()
+                    if row[3] and row[3] != '':
+                        platform_id += ' > '+row[3].upper()
+                    check_sql = "select count(id) as c from gcmd_platform where id = %s"
+                    cur.execute(check_sql, (platform_id,))
+                    count = cur.fetchone()['c']
+                    if count == 0:
+                        # add to database
+                        sql = "INSERT INTO gcmd_platform (id, basis, category, sub_category, short_name, long_name) VALUES (%s, %s, %s, %s, %s, %s);"
+                        cur.execute(sql, (platform_id, row[0], row[1], row[2], row[3], row[4]))
+                        #print(sql % (platform_id, row[0], row[1], row[2], row[3], row[4]))
+                        rows_added += 1
+                rownum += 1
+        cur.execute('COMMIT;')
+        if rows_added == 1:
+            return "Added 1 entry to gcmd_platform."
+        else:
+            return "Added %d entries to gcmd_platform." % rows_added
     else:
-        print("Added %d entries to gcmd_platform" % rows_added)
-else:
-    print("Error downloading %s from %s" % (platforms_file, csv_url))
+        return "Error downloading %s from %s" % (platforms_file, csv_url)
+
+#print(update_db())
