@@ -2855,6 +2855,7 @@ def curator():
     }
     template_dict['reviewer_dict'] = reviewer_dict
     template_dict["eval_map"] = {"0":"Bad", "1":"Could be improved", "2":"Good"}
+    template_dict["eval_colors"] = {"0":"red", "1":"orange", "2":"green"}
     (conn, cur) = connect_to_db(curator=True)
 
     # login
