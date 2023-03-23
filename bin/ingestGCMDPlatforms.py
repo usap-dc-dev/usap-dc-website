@@ -44,7 +44,7 @@ def update_db():
         if rows_added == 1:
             return "Added 1 entry to gcmd_platform. Please update the \"type\" column manually for the new entry, which has ID %s." % ids[0]
         else:
-            note = "" if rows_added == 0 else " Please update the \"type\" column manually for the new entries, with the following IDs:" % "<br>".join(ids)
+            note = "" if rows_added == 0 else " Please update the \"type\" column manually for the new entries, which have the following IDs:<br>%s" % "<br>".join(ids)
             return "Added %d entries to gcmd_platform.%s" % (rows_added, note)
     else:
         return "Error downloading %s from %s" % (platforms_file, csv_url)

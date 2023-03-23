@@ -43,9 +43,10 @@ def update_db():
                 rownum += 1
         cur.execute('COMMIT;')
         if rows_added == 1:
-            return "Added 1 entry to gcmd_instrument. Its ID is %s."
+            return "Added 1 entry to gcmd_instrument. Its ID is %s." % ids[0]
         else:
-            return "Added %d entries to gcmd_instrument, with the following IDs:<br>%s" % (rows_added, "<br>".join(ids)
+            note = "." if rows_added == 0 else ", with the following IDs:<br>%s" % "<br>".join(ids)
+            return "Added %d entries to gcmd_instrument%s" % (rows_added, note)
     else:
         return "Error downloading %s from %s", in_file, csv_url
 

@@ -42,7 +42,8 @@ def update_db():
         if rows_added == 1:
             return "Added 1 new entry to gcmd_data_format. Its short_name is %s." % ids[0]
         else:
-            return "Added %d new entries to gcmd_data_format, with the following short_names:<br>" % (rows_added, "<br>".join(ids))
+            note = "." if rows_added == 0 else ", with the following short_names:<br>%s" % "<br>".join(ids)
+            return "Added %d new entries to gcmd_data_format%s" % (rows_added, note)
     else:
         return "Error downloading file from \"%s\" to \"%s\"" % (csv_url, in_file)
 
