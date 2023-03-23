@@ -2854,6 +2854,8 @@ def curator():
         "data_ref": "Publication or manuscript describing the data is provided."
     }
     template_dict['reviewer_dict'] = reviewer_dict
+    template_dict["eval_map"] = {"0":"Bad", "1":"Could be improved", "2":"Good"}
+    template_dict["eval_colors"] = {"0":"red", "1":"orange", "2":"green"}
     (conn, cur) = connect_to_db(curator=True)
 
     # login
@@ -3628,9 +3630,9 @@ def curator():
                         checked = request.form.get(checkbox_id)
                         comment = request.form.get(textarea_id)
                         keys += ", " + item + "_check, " + item + "_comment"
-                        values += ", " + str(not not checked) + ", %s"
+                        values += ", " + str(checked) + ", %s"
                         values_list.append(comment)
-                        form_dict[item + "_check"] = not not checked
+                        form_dict[item + "_check"] = checked
                         form_dict[item + "_comment"] = comment
                     template_dict['fair_form'] = form_dict
                     ny_tz = zi("America/New_York")
