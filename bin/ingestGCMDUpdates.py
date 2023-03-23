@@ -17,6 +17,6 @@ plat_msg = plat.update_db()
 time_msg = time.update_db()
 #print(time_msg)
 
-msg_text = "<br>".join([df_msg, inst_msg, plat_msg, time_msg])
+msg_text = "<br><br>".join([df_msg, inst_msg, plat_msg, time_msg])
 
 msg_sent = gmail.send_gmail_message("info@usap-dc.org", ["info@usap-dc.org"], msg_subject, msg_text, None)
