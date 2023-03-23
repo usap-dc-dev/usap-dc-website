@@ -46,3 +46,4 @@ chronounits_with_dates.csv
 DataFormat.csv
 instruments.csv
 platforms.csv
+deploy.sh
