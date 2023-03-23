@@ -38,3 +38,11 @@ api/
 start_usapdc
 submitted_prod/
 *_old
+bin/chronounits_with_dates.csv
+bin/DataFormat.csv
+bin/instruments.csv
+bin/platforms.csv
+chronounits_with_dates.csv
+DataFormat.csv
+instruments.csv
+platforms.csv
