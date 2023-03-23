@@ -32,7 +32,6 @@ def update_db():
                     count = int(cur.fetchone()['c'])
                     if count == 0:
                         rows_added += 1
-                        print("Adding (short_name, long_name) ('%s', '%s') to gcmd_data_format" % (row[0], row[1]))
                         # if not, add to database
                         sql = "INSERT INTO gcmd_data_format (short_name, long_name) VALUES (%s, %s);"
                         cur.execute(sql, (row[0], row[1]))
