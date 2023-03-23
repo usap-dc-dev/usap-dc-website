@@ -17,6 +17,7 @@ def update_db():
         # read in csv file
         rownum = 0
         rows_added = 0
+        ids = []
         with open(platforms_file, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile, delimiter=",")
             for row in reader:
@@ -36,14 +37,15 @@ def update_db():
                         # add to database
                         sql = "INSERT INTO gcmd_platform (id, basis, category, sub_category, short_name, long_name) VALUES (%s, %s, %s, %s, %s, %s);"
                         cur.execute(sql, (platform_id, row[0], row[1], row[2], row[3], row[4]))
-                        #print(sql % (platform_id, row[0], row[1], row[2], row[3], row[4]))
+                        ids.append("\'%s\'" % platform_id)
                         rows_added += 1
                 rownum += 1
         cur.execute('COMMIT;')
         if rows_added == 1:
-            return "Added 1 entry to gcmd_platform."
+            return "Added 1 entry to gcmd_platform. Please update the \"type\" column manually for the new entry, which has ID %s." % ids[0]
         else:
-            return "Added %d entries to gcmd_platform." % rows_added
+            note = "" if rows_added == 0 else " Please update the \"type\" column manually for the new entries, with the following IDs:" % "<br>".join(ids)
+            return "Added %d entries to gcmd_platform.%s" % (rows_added, note)
     else:
         return "Error downloading %s from %s" % (platforms_file, csv_url)
 

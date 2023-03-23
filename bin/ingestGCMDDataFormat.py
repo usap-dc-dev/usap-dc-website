@@ -20,6 +20,7 @@ def update_db():
     if util.download_to_file(csv_url, in_file):
         rownum = 0
         rows_added = 0
+        ids = []
         with open(in_file, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile, delimiter=",")
             for row in reader:
@@ -35,12 +36,13 @@ def update_db():
                         # if not, add to database
                         sql = "INSERT INTO gcmd_data_format (short_name, long_name) VALUES (%s, %s);"
                         cur.execute(sql, (row[0], row[1]))
+                        ids.append("\'%s\'" % row[0])
                 rownum += 1
         cur.execute('COMMIT;')
         if rows_added == 1:
-            return "Added 1 new entry to gcmd_data_format."
+            return "Added 1 new entry to gcmd_data_format. Its short_name is %s." % ids[0]
         else:
-            return "Added %d new entries to gcmd_data_format." % (rows_added,)
+            return "Added %d new entries to gcmd_data_format, with the following short_names:<br>" % (rows_added, "<br>".join(ids))
     else:
         return "Error downloading file from \"%s\" to \"%s\"" % (csv_url, in_file)
 
