@@ -92,6 +92,40 @@
   });
 </script>
 
+<script type="text/javascript">
+    function toggleFairEval() {
+        div = document.getElementById("fair_display");
+        button = document.getElementById("fair_button");
+        if(!div.style.display || div.style.display === "none") {
+            const e = window.event;
+            const mouseX = e.clientX, mouseY = e.clientY;
+            const windowWidth = window.innerWidth;
+            var rightX = windowWidth - mouseX - 300, topY = 205 + (mouseY - 164)/4;
+            const maxRightX = windowWidth - 2;
+            div.style.display = "block";
+            div.style.top = `${topY}px`;
+            div.style.right = `${(maxRightX < rightX)?(maxRightX):(rightX)}px`;
+            div.style.minWidth = "700px";
+            button.innerHTML = "Hide FAIRness Details";
+        }
+        else {
+            div.style.display = "none";
+            button.innerHTML = "View FAIRness Details"
+        }
+    }
+</script>
+<style type="text/css">
+    .popup {
+        display: none;
+        position: fixed;
+        width: 30%;
+        height: 30%;
+        z-index: 99;
+        background-color:whitesmoke;
+        border: thin solid black;
+    }
+</style>
+
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
 <div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])}}</div>
 
@@ -101,9 +135,25 @@
   <div class="header">
     Dataset Information
     <div style="float:right">
+      <button class="download" onclick="toggleFairEval()" id="fair_button">View FAIRness Details</button>
       <button class="download" onclick="location.href='mailto: {{contact_email}}?subject=Reporting Issue with dataset {{data.id}}'">Report Issue</button>
       <button class="download" onclick="window.location.href='/edit/dataset/{{data.id}}'">Edit</button>
     </div>
+  </div>
+  <div class="popup" id="fair_display">
+    <div class="header small" id="fair_display_header">FAIRness Evaluation</div>
+    <table style="margin-left:15px;margin-right:15px;margin-bottom:5px;width:calc(100% - 30px);">
+        <tr>
+            <th style="text-align:center">Criteria</th>
+            <th style="text-align:center">Evaluation</th>
+            <th style="text-align:center">Comment</th>
+        </tr>
+        <tr>
+            <td style="text-align:left">Placeholder</td>
+            <td style="text-align:center">Placeholder</td>
+            <td style="text-align:right">Placeholder</td>
+        </tr>
+    </table>
   </div>
   <table class="borderless-table">
     <tr>
