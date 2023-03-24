@@ -2396,6 +2396,8 @@ def json_serial(obj):
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
+    prev_review = None
+    fair_fields = []
     datasets = get_datasets([dataset_id])
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
@@ -2427,6 +2429,25 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
+        fairness_query = "".join(["SELECT reviewed_time, file_name_check, file_name_comment, file_format_check, file_format_comment, ",
+            "file_organization_check, file_organization_comment, table_header_check, table_header_comment, ",
+            "data_content_check, data_content_comment, data_process_check, data_process_comment, data_acquisition_check, ",
+            "data_acquisition_comment, data_spatial_check, data_spatial_comment, data_variable_check, data_variable_comment, ",
+            "data_issues_check, data_issues_comment, data_ref_check, data_ref_comment, abstract_check, abstract_comment, ",
+            "data_temporal_check, data_temporal_comment FROM dataset_fairness WHERE dataset_id=%s"])
+        cur.execute(fairness_query, (dataset_id,))
+        fair_checks = cur.fetchone()
+        reviewed = fair_checks is not None
+        if reviewed:
+            prev_review = {}
+            for key in fair_checks:
+                if key[-5:] == "check":
+                    fair_fields.append(key[:-6])
+                val = fair_checks[key]
+                if key == "reviewed_time":
+                    prev_review['date'] = dt_date.fromisoformat(str(val).split(" ")[0]).strftime("%B %d, %Y")
+                else:
+                    prev_review[key] = val
     else:
         metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
 
@@ -2451,7 +2472,7 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'])
+    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields)
 
 
 def getCMRUrls(dif_records):

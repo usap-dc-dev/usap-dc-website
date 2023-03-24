@@ -123,6 +123,7 @@
         z-index: 99;
         background-color:whitesmoke;
         border: thin solid black;
+        overflow-y:auto;
     }
 </style>
 
@@ -143,16 +144,19 @@
   <div class="popup" id="fair_display">
     <div class="header small" id="fair_display_header">FAIRness Evaluation</div>
     <table style="margin-left:15px;margin-right:15px;margin-bottom:5px;width:calc(100% - 30px);">
+        {% if review_exists %}
+        Last evaluated: {{review['date']}}
         <tr>
             <th style="text-align:center">Criteria</th>
             <th style="text-align:center">Evaluation</th>
             <th style="text-align:center">Comment</th>
         </tr>
-        <tr>
-            <td style="text-align:left">Placeholder</td>
-            <td style="text-align:center">Placeholder</td>
-            <td style="text-align:right">Placeholder</td>
-        </tr>
+        {% for item in fairFields %}
+        <p>{{item}}: {{review[item ~ '_check']}} {{review[item ~ '_comment']}}</p>
+        {% endfor %}
+        {% else %}
+        <h3 style="margin-left:15px; margin-right:15px;text-align:center">This dataset has not been evaluated yet.</h3>
+        {% endif %}
     </table>
   </div>
   <table class="borderless-table">
