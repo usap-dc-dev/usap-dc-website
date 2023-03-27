@@ -109,6 +109,23 @@ orcid = oauth.register('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
+fair_eval_map = {"0":"Bad", "1":"Could be improved", "2":"Good"}
+fair_review_dict = {
+    "file_name": "The filenames are descriptive and consistent.",
+    "file_format": "The file format is appropriate and can be opened.",
+    "file_organization": "The file organization is consistent and appropriate.",
+    "table_header": "Table header information is complete and consistent with documentation.",
+    "abstract": "The abstract exists and is descriptive and accurate.",
+    "data_content": "The data set and its contents are clearly described.",
+    "data_process": "Processing information is adequate.",
+    "data_acquisition": "The process used to get the data is clearly described and appropriate.",
+    "data_spatial": "Geospatial information is complete and described.",
+    "data_temporal": "Temporal information is complete and described.",
+    "data_variable": "Variables and units follow standards or are well-defined.",
+    "data_issues": "Known issues and limitations are clearly described.",
+    "data_ref": "Publication or manuscript describing the data is provided."
+}
+
 def connect_to_prod_db(curator=False):
     info = config['PROD_DATABASE']
     if curator and cf.isCurator():
@@ -2472,7 +2489,7 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields)
+    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
 
 
 def getCMRUrls(dif_records):
@@ -2859,23 +2876,8 @@ def curator():
     template_dict = {}
     template_dict['message'] = []
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
-    reviewer_dict = {
-        "file_name": "The filenames are descriptive and consistent.",
-        "file_format": "The file format is appropriate and can be opened.",
-        "file_organization": "The file organization is consistent and appropriate.",
-        "table_header": "Table header information is complete and consistent with documentation.",
-        "abstract": "The abstract exists and is descriptive and accurate.",
-        "data_content": "The data set and its contents are clearly described.",
-        "data_process": "Processing information is adequate.",
-        "data_acquisition": "The process used to get the data is clearly described and appropriate.",
-        "data_spatial": "Geospatial information is complete and described.",
-        "data_temporal": "Temporal information is complete and described.",
-        "data_variable": "Variables and units follow standards or are well-defined.",
-        "data_issues": "Known issues and limitations are clearly described.",
-        "data_ref": "Publication or manuscript describing the data is provided."
-    }
-    template_dict['reviewer_dict'] = reviewer_dict
-    template_dict["eval_map"] = {"0":"Bad", "1":"Could be improved", "2":"Good"}
+    template_dict['reviewer_dict'] = fair_review_dict
+    template_dict["eval_map"] = fair_eval_map
     template_dict["eval_colors"] = {"0":"red", "1":"orange", "2":"green"}
     (conn, cur) = connect_to_db(curator=True)
 
@@ -2966,7 +2968,7 @@ def curator():
                 cur.execute(gpfeq_mogrified)
                 entry = cur.fetchone()
                 prev_review = {}
-                for item in reviewer_dict:
+                for item in fair_review_dict:
                     checkbox_key = item + "_check"
                     comment_key = item + "_comment"
                     prev_review[checkbox_key] = entry[checkbox_key]
@@ -3645,7 +3647,7 @@ def curator():
                     values = ""
                     values_list = []
                     form_dict = {}
-                    for item in reviewer_dict:
+                    for item in fair_review_dict:
                         checkbox_id = item + "_check"
                         textarea_id = item + "_text"
                         checked = request.form.get(checkbox_id)

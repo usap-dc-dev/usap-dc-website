@@ -100,7 +100,7 @@
             const e = window.event;
             const mouseX = e.clientX, mouseY = e.clientY;
             const windowWidth = window.innerWidth;
-            var rightX = windowWidth - mouseX - 300, topY = 205 + (mouseY - 164)/4;
+            var rightX = windowWidth - mouseX - 300, topY = 205 + (mouseY + document.querySelector("html").scrollTop - 164)/4 - document.querySelector("html").scrollTop;
             const maxRightX = windowWidth - 2;
             div.style.display = "block";
             div.style.top = `${topY}px`;
@@ -122,7 +122,7 @@
         height: 30%;
         z-index: 99;
         background-color:whitesmoke;
-        border: thin solid black;
+        border-radius:15px;
         overflow-y:auto;
     }
 </style>
@@ -141,18 +141,32 @@
       <button class="download" onclick="window.location.href='/edit/dataset/{{data.id}}'">Edit</button>
     </div>
   </div>
-  <div class="popup" id="fair_display">
-    <div class="header small" id="fair_display_header">FAIRness Evaluation</div>
+  <div class="popup" style="width:50%;height:{% if review_exists %}50%{% else %}135px{% endif %}" id="fair_display">
+    <div class="header small" id="fair_display_header" style="position:sticky;position:-webkit-sticky">FAIRness Evaluation</div>
     <table style="margin-left:15px;margin-right:15px;margin-bottom:5px;width:calc(100% - 30px);">
         {% if review_exists %}
-        Last evaluated: {{review['date']}}
+        <p style="text-align:center">Last evaluated: {{review['date']}}</p>
         <tr>
             <th style="text-align:center">Criteria</th>
             <th style="text-align:center">Evaluation</th>
             <th style="text-align:center">Comment</th>
         </tr>
         {% for item in fairFields %}
-        <p>{{item}}: {{review[item ~ '_check']}} {{review[item ~ '_comment']}}</p>
+        <tr style="border:1px solid;">
+            <td style="text-align:center">{{reviewer_dict[item]}}</td>
+            {% if review[item ~ '_check'] == 0 %}
+            <td style="text-align:center;min-width:122px;background-color:red">
+            {% elif review[item ~ '_check'] == 1 %}
+            <td style="text-align:center;min-width:122px;background-color:orange">
+            {% elif review[item ~ '_check'] == 2 %}
+            <td style="text-align:center;min-width:122px;background-color:lightgreen">
+            {% else %}
+            <td style="text-align:center;min-width:122px">
+            {% endif %}
+                {{eval_map[str(review[item ~ '_check'])]}}
+            </td>
+            <td style="text-align:center">{{review[item ~ '_comment']}}</td>
+        </tr>
         {% endfor %}
         {% else %}
         <h3 style="margin-left:15px; margin-right:15px;text-align:center">This dataset has not been evaluated yet.</h3>
