@@ -125,6 +125,18 @@
         border-radius:15px;
         overflow-y:auto;
     }
+    .sticky {
+        position: sticky;
+        top: 0;
+    }
+    .sticky-th {
+        position: sticky;
+        text-align: center;
+        top: 30px;
+        background-color:whitesmoke;
+        border:none;
+        border-bottom:1px solid black;
+    }
 </style>
 
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
@@ -142,17 +154,17 @@
     </div>
   </div>
   <div class="popup" style="width:50%;height:{% if review_exists %}50%{% else %}135px{% endif %}" id="fair_display">
-    <div class="header small" id="fair_display_header" style="position:sticky;position:-webkit-sticky">FAIRness Evaluation</div>
-    <table style="margin-left:15px;margin-right:15px;margin-bottom:5px;width:calc(100% - 30px);">
+    <div class="header small sticky" id="fair_display_header" style="position:sticky;position:-webkit-sticky">FAIRness Evaluation</div>
+    <table style="margin-left:0.72em;margin-right:0.72em;margin-bottom:5px;border:none">
         {% if review_exists %}
-        <p style="text-align:center">Last evaluated: {{review['date']}}</p>
+        <p style="text-align:center;margin:0px">Last evaluated: {{review['date']}}</p>
         <tr>
-            <th style="text-align:center">Criteria</th>
-            <th style="text-align:center">Evaluation</th>
-            <th style="text-align:center">Comment</th>
+            <th class="sticky-th">Criteria</th>
+            <th class="sticky-th">Evaluation</th>
+            <th class="sticky-th">Comment</th>
         </tr>
         {% for item in fairFields %}
-        <tr style="border:1px solid;">
+        <tr style="border-bottom:1px solid black">
             <td style="text-align:center">{{reviewer_dict[item]}}</td>
             {% if review[item ~ '_check'] == 0 %}
             <td style="text-align:center;background-color:red">
