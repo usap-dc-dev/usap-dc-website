@@ -109,7 +109,7 @@ orcid = oauth.register('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
-fair_eval_map = {"0":"Bad", "1":"Could be improved", "2":"Good"}
+fair_eval_map = {"0":"Poor", "1":"Fair", "2":"Good"}
 fair_review_dict = {
     "file_name": "The filenames are descriptive and consistent.",
     "file_format": "The file format is appropriate and can be opened.",

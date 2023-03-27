@@ -155,13 +155,13 @@
         <tr style="border:1px solid;">
             <td style="text-align:center">{{reviewer_dict[item]}}</td>
             {% if review[item ~ '_check'] == 0 %}
-            <td style="text-align:center;min-width:122px;background-color:red">
+            <td style="text-align:center;background-color:red">
             {% elif review[item ~ '_check'] == 1 %}
-            <td style="text-align:center;min-width:122px;background-color:orange">
+            <td style="text-align:center;background-color:orange">
             {% elif review[item ~ '_check'] == 2 %}
-            <td style="text-align:center;min-width:122px;background-color:lightgreen">
+            <td style="text-align:center;background-color:lightgreen">
             {% else %}
-            <td style="text-align:center;min-width:122px">
+            <td style="text-align:center">
             {% endif %}
                 {{eval_map[str(review[item ~ '_check'])]}}
             </td>
