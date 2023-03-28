@@ -101,10 +101,10 @@
             const mouseX = e.clientX, mouseY = e.clientY;
             const windowWidth = window.innerWidth;
             var rightX = windowWidth - mouseX - 300, topY = 205 + (mouseY + document.querySelector("html").scrollTop - 164)/4 - document.querySelector("html").scrollTop;
-            const maxRightX = windowWidth - 2;
+            const minRightX = 2;
             div.style.display = "block";
             div.style.top = `${topY}px`;
-            div.style.right = `${(maxRightX < rightX)?(maxRightX):(rightX)}px`;
+            div.style.right = `${(minRightX > rightX)?(minRightX):(rightX)}px`;
             div.style.minWidth = "700px";
             button.innerHTML = "Hide FAIRness Details";
         }
@@ -120,7 +120,7 @@
         position: fixed;
         width: 30%;
         height: 30%;
-        z-index: 99;
+        z-index: 1000;
         background-color:whitesmoke;
         border-radius:15px;
         overflow-y:auto;
@@ -132,7 +132,7 @@
     .sticky-th {
         position: sticky;
         text-align: center;
-        top: 30px;
+        top: 40px;
         background-color:whitesmoke;
         border:none;
         border-bottom:1px solid black;
@@ -154,8 +154,8 @@
     </div>
   </div>
   <div class="popup" style="width:50%;height:{% if review_exists %}50%{% else %}135px{% endif %}" id="fair_display">
-    <div class="header small sticky" id="fair_display_header" style="position:sticky;position:-webkit-sticky">FAIRness Evaluation</div>
-    <table style="margin-left:0.72em;margin-right:0.72em;margin-bottom:5px;border:none">
+    <div class="header small sticky" id="fair_display_header" style="position:sticky;position:-webkit-sticky"><table style="border:none;width:100%"><tr><td>FAIRness Evaluation</td><td style="text-align:right"><button style="background-color:transparent;border-color:transparent" onclick="toggleFairEval()">✕</button></td></tr></table></div>
+    <table style="margin:0.72em;border:none">
         {% if review_exists %}
         <p style="text-align:center;margin:0px">Last evaluated: {{review['date']}}</p>
         <tr>
