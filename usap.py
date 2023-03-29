@@ -5186,8 +5186,31 @@ def dashboard():
             date = data['response']['award'][0].get('date')
             # change date format
             a['date_created'] = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
+    
+    checks = list(map(lambda x : "_".join([x, "check"]), list(fair_review_dict.keys())))
+    fairness_query = " ".join(["select %s" % ", ".join(checks), "from dataset_fairness where dataset_id=%s"])
+    fair_map = {}
+    for dataset in datasets:
+        dataset_id = dataset['id']
+        cur.execute(fairness_query, (dataset_id,))
+        rslt = cur.fetchone()
+        if rslt:
+            temp = {}
+            poorCount = 0
+            fairCount = 0
+            goodCount = 0
+            for check in checks:
+                if rslt[check] == 0:
+                    poorCount += 1
+                elif rslt[check] == 1:
+                    fairCount += 1
+                elif rslt[check] == 2:
+                    goodCount += 1
+            fair_map[dataset_id] = [poorCount, fairCount, goodCount]
+        else:
+            fair_map[dataset_id] = None
 
-    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
+    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards, fair_eval=fair_map)
 
 
 @app.route('/curator/award_letters', methods=['GET', 'POST'])
