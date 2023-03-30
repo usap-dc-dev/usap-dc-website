@@ -111,21 +111,21 @@ config = json.loads(open('config.json', 'r').read())
 
 fair_eval_map = {"-2":"TBD", "-1":"N/A", "0":"Poor", "1":"Fair", "2":"Good"}
 fair_review_dict = {
+    "title": "The title is descriptive.",
+    "abstract": "The abstract exists and is descriptive and accurate.",
+    "keywords": "Useful keywords are assigned.",
+    "data_spatial": "Geospatial information is complete and described.",
+    "data_temporal": "Temporal information is complete and described.",
     "file_name": "The filenames are descriptive and consistent.",
     "file_format": "The file format is appropriate and can be opened.",
     "file_organization": "The file organization is consistent and appropriate.",
     "table_header": "Table header information is complete and consistent with documentation.",
-    "abstract": "The abstract exists and is descriptive and accurate.",
-    "data_content": "The data set and its contents are clearly described.",
-    "data_process": "Processing information is adequate.",
     "data_acquisition": "The process used to get the data is clearly described and appropriate.",
-    "data_spatial": "Geospatial information is complete and described.",
-    "data_temporal": "Temporal information is complete and described.",
+    "data_process": "Processing information is adequate.",
+    "data_content": "The data set and its contents are clearly described.",
     "data_variable": "Variables and units follow standards or are well-defined.",
     "data_issues": "Known issues and limitations are clearly described.",
     "data_ref": "Publication or manuscript describing the data is provided.",
-    "title": "The title is descriptive.",
-    "keywords": "Useful keywords are assigned."
 }
 
 def connect_to_prod_db(curator=False):
