@@ -459,7 +459,7 @@
 	    <p>Adjust each slider to reflect how well the submission follows the corresponding guideline.</p>
         {% for id, label in reviewer_dict.items() %}
         <label name="{{id}}_label" for="{{id}}_check">{{label}}</label>
-        <input type="range" oninput="showFairScore('{{id}}', {{eval_map}}, {{eval_colors}})" min="0" max="2" {% if fair_form %} value="{{fair_form[id ~ '_check']}}" {% elif review_exists %} value="{{prev_review[id ~ '_check']}}" {% else %} value="0" {% endif %} name="{{id}}_check" id="{{id}}_check" style="width:80px">
+        <input type="range" oninput="showFairScore('{{id}}', {{eval_map}}, {{eval_colors}})" min="-2" max="2" value="-2" {% if fair_form %} value="{{fair_form[id ~ '_check']}}" {% elif review_exists %} value="{{prev_review[id ~ '_check']}}" {% else %} value="0" {% endif %} name="{{id}}_check" id="{{id}}_check" style="width:80px">
         <div id="{{id}}_eval" {% if fair_form or review_exists %} style="color:{{eval_colors[str(fair_form[id ~ '_check'] if fair_form else prev_review[id ~ '_check'])]}}" {% endif %}>{% if fair_form %}{{eval_map[str(fair_form[id ~ '_check'])]}}{% elif review_exists %}{{eval_map[str(prev_review[id ~ '_check'])]}}{% else %}Not yet evaluated{% endif %}</div>
         <br>
         <textarea rows="1" cols="70" name="{{id}}_text" id="{{id}}_text">{% if fair_form %}{{fair_form[id ~ '_comment']}}{% elif review_exists %}{{prev_review[id ~ '_comment']}}{% endif %}</textarea>

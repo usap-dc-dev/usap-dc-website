@@ -109,7 +109,7 @@ orcid = oauth.register('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
-fair_eval_map = {"0":"Poor", "1":"Fair", "2":"Good"}
+fair_eval_map = {"-2":"TBD", "-1":"N/A", "0":"Poor", "1":"Fair", "2":"Good"}
 fair_review_dict = {
     "file_name": "The filenames are descriptive and consistent.",
     "file_format": "The file format is appropriate and can be opened.",
@@ -123,7 +123,9 @@ fair_review_dict = {
     "data_temporal": "Temporal information is complete and described.",
     "data_variable": "Variables and units follow standards or are well-defined.",
     "data_issues": "Known issues and limitations are clearly described.",
-    "data_ref": "Publication or manuscript describing the data is provided."
+    "data_ref": "Publication or manuscript describing the data is provided.",
+    "title": "The title is descriptive.",
+    "keywords": "Useful keywords are assigned."
 }
 
 def connect_to_prod_db(curator=False):
@@ -2446,16 +2448,11 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
-        fairness_query = "".join(["SELECT reviewed_time, file_name_check, file_name_comment, file_format_check, file_format_comment, ",
-            "file_organization_check, file_organization_comment, table_header_check, table_header_comment, ",
-            "data_content_check, data_content_comment, data_process_check, data_process_comment, data_acquisition_check, ",
-            "data_acquisition_comment, data_spatial_check, data_spatial_comment, data_variable_check, data_variable_comment, ",
-            "data_issues_check, data_issues_comment, data_ref_check, data_ref_comment, abstract_check, abstract_comment, ",
-            "data_temporal_check, data_temporal_comment FROM dataset_fairness WHERE dataset_id=%s"])
+        fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
+            " FROM dataset_fairness WHERE dataset_id=%s"])
         cur.execute(fairness_query, (dataset_id,))
         fair_checks = cur.fetchone()
-        reviewed = fair_checks is not None
-        if reviewed:
+        if fair_checks:
             prev_review = {}
             for key in fair_checks:
                 if key[-5:] == "check":
@@ -2878,7 +2875,7 @@ def curator():
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
     template_dict['reviewer_dict'] = fair_review_dict
     template_dict["eval_map"] = fair_eval_map
-    template_dict["eval_colors"] = {"0":"red", "1":"orange", "2":"green"}
+    template_dict["eval_colors"] = {"-2":"black", "-1":"black", "0":"red", "1":"orange", "2":"green"}
     (conn, cur) = connect_to_db(curator=True)
 
     # login
