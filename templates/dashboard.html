@@ -38,7 +38,7 @@
         <th style="width:30em;">Title</th>
         <th style="width:6em;">Date Created</th>
         <th style="width:6em;">Last Modified</th>
-        <th style="width:6em;">FAIR Evaluation</th>
+        <!--<th style="width:6em;">FAIR Evaluation</th>-->
         <th style="width:17em;">Actions</th>
       </tr>
       {% for d in datasets %}
@@ -46,6 +46,7 @@
           <td>{{d.title}}</td>
           <td>{{d.date_created}}</td>
           <td>{{d.date_modified}}</td>
+          <!--
           <td>{% if fair_eval[d.id] %}
             <table style="border:none;text-align:center;width:100%">
                 <tr>
@@ -55,7 +56,7 @@
                 </tr>
             </table>
             {% else %}TBD{% endif %}
-          </td>
+          </td>-->
           <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a> / <a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a> / <a href="{{url_for('dataset', template_id=d.id)}}">Create New Submission From This One</a></td>
         </tr>
       {% endfor %}
