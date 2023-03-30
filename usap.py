@@ -109,6 +109,25 @@ orcid = oauth.register('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
+fair_eval_map = {"-2":"TBD", "-1":"N/A", "0":"Poor", "1":"Fair", "2":"Good"}
+fair_review_dict = {
+    "title": "The title accurately and succinctly describes the dataset.",
+    "abstract": "The abstract exists and is descriptive and accurate.",
+    "keywords": "Useful keywords are assigned.",
+    "data_spatial": "Geospatial information is complete and described.",
+    "data_temporal": "Temporal information is complete and described.",
+    "file_name": "The filenames are descriptive and consistent.",
+    "file_format": "The file format is appropriate and can be opened.",
+    "file_organization": "The file organization is consistent and appropriate.",
+    "table_header": "Table header information is complete and consistent with documentation.",
+    "data_acquisition": "The process used to get the data is clearly described and appropriate.",
+    "data_process": "Processing information is adequate.",
+    "data_content": "The data set and its contents are clearly described.",
+    "data_variable": "Variables and units follow standards or are well-defined.",
+    "data_issues": "Known issues and limitations are clearly described.",
+    "data_ref": "Publication or manuscript describing the data is provided.",
+}
+
 def connect_to_prod_db(curator=False):
     info = config['PROD_DATABASE']
     if curator and cf.isCurator():
@@ -2396,6 +2415,8 @@ def json_serial(obj):
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
+    prev_review = None
+    fair_fields = []
     datasets = get_datasets([dataset_id])
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
@@ -2427,6 +2448,20 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
+        fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
+            " FROM dataset_fairness WHERE dataset_id=%s"])
+        cur.execute(fairness_query, (dataset_id,))
+        fair_checks = cur.fetchone()
+        if fair_checks:
+            prev_review = {}
+            for key in fair_checks:
+                if key[-5:] == "check":
+                    fair_fields.append(key[:-6])
+                val = fair_checks[key]
+                if key == "reviewed_time":
+                    prev_review['date'] = dt_date.fromisoformat(str(val).split(" ")[0]).strftime("%B %d, %Y")
+                else:
+                    prev_review[key] = val
     else:
         metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
 
@@ -2451,7 +2486,7 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'])
+    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
 
 
 def getCMRUrls(dif_records):
@@ -2838,24 +2873,9 @@ def curator():
     template_dict = {}
     template_dict['message'] = []
     template_dict['no_action_status'] = ['Completed', 'Edit completed', 'Rejected', 'No Action Required']
-    reviewer_dict = {
-        "file_name": "The filenames are descriptive and consistent.",
-        "file_format": "The file format is appropriate and can be opened.",
-        "file_organization": "The file organization is consistent and appropriate.",
-        "table_header": "Table header information is complete and consistent with documentation.",
-        "abstract": "The abstract exists and is descriptive and accurate.",
-        "data_content": "The data set and its contents are clearly described.",
-        "data_process": "Processing information is adequate.",
-        "data_acquisition": "The process used to get the data is clearly described and appropriate.",
-        "data_spatial": "Geospatial information is complete and described.",
-        "data_temporal": "Temporal information is complete and described.",
-        "data_variable": "Variables and units follow standards or are well-defined.",
-        "data_issues": "Known issues and limitations are clearly described.",
-        "data_ref": "Publication or manuscript describing the data is provided."
-    }
-    template_dict['reviewer_dict'] = reviewer_dict
-    template_dict["eval_map"] = {"0":"Bad", "1":"Could be improved", "2":"Good"}
-    template_dict["eval_colors"] = {"0":"red", "1":"orange", "2":"green"}
+    template_dict['reviewer_dict'] = fair_review_dict
+    template_dict["eval_map"] = fair_eval_map
+    template_dict["eval_colors"] = {"-2":"black", "-1":"black", "0":"red", "1":"orange", "2":"green"}
     (conn, cur) = connect_to_db(curator=True)
 
     # login
@@ -2945,7 +2965,7 @@ def curator():
                 cur.execute(gpfeq_mogrified)
                 entry = cur.fetchone()
                 prev_review = {}
-                for item in reviewer_dict:
+                for item in fair_review_dict:
                     checkbox_key = item + "_check"
                     comment_key = item + "_comment"
                     prev_review[checkbox_key] = entry[checkbox_key]
@@ -3624,7 +3644,7 @@ def curator():
                     values = ""
                     values_list = []
                     form_dict = {}
-                    for item in reviewer_dict:
+                    for item in fair_review_dict:
                         checkbox_id = item + "_check"
                         textarea_id = item + "_text"
                         checked = request.form.get(checkbox_id)
@@ -5163,8 +5183,31 @@ def dashboard():
             date = data['response']['award'][0].get('date')
             # change date format
             a['date_created'] = datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d')
+    
+    checks = list(map(lambda x : "_".join([x, "check"]), list(fair_review_dict.keys())))
+    fairness_query = " ".join(["select %s" % ", ".join(checks), "from dataset_fairness where dataset_id=%s"])
+    fair_map = {}
+    for dataset in datasets:
+        dataset_id = dataset['id']
+        cur.execute(fairness_query, (dataset_id,))
+        rslt = cur.fetchone()
+        if rslt:
+            temp = {}
+            poorCount = 0
+            fairCount = 0
+            goodCount = 0
+            for check in checks:
+                if rslt[check] == 0:
+                    poorCount += 1
+                elif rslt[check] == 1:
+                    fairCount += 1
+                elif rslt[check] == 2:
+                    goodCount += 1
+            fair_map[dataset_id] = [poorCount, fairCount, goodCount]
+        else:
+            fair_map[dataset_id] = None
 
-    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards) 
+    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards, fair_eval=fair_map)
 
 
 @app.route('/curator/award_letters', methods=['GET', 'POST'])

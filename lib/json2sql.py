@@ -367,7 +367,7 @@ def make_sql(data, id, curatorId=None):
             cur.execute(query, (keyword,))
             res = cur.fetchone()
             if res is not None:
-                sql_out += "INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES (%s, %s); --%s" % (id, res['keyword_id'], keyword)
+                sql_out += "INSERT INTO dataset_keyword_map(dataset_id, keyword_id) VALUES ('%s', '%s'); --%s\n" % (id, res['keyword_id'], keyword)
             else:
                 # figure out the highest keyword_id used so far
                 query = "SELECT keyword_id FROM keyword_usap WHERE keyword_id LIKE 'uk%' ORDER BY keyword_id DESC LIMIT 1;"
