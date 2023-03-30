@@ -111,7 +111,7 @@ config = json.loads(open('config.json', 'r').read())
 
 fair_eval_map = {"-2":"TBD", "-1":"N/A", "0":"Poor", "1":"Fair", "2":"Good"}
 fair_review_dict = {
-    "title": "The title is descriptive.",
+    "title": "The title accurately and succinctly describes the dataset.",
     "abstract": "The abstract exists and is descriptive and accurate.",
     "keywords": "Useful keywords are assigned.",
     "data_spatial": "Geospatial information is complete and described.",
