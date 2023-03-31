@@ -7,17 +7,12 @@
      margin-left: auto;
      margin-right: auto;
      margin-top: 30px;
-     width: 320px;
+     width: 299px;
      position: relative;
-     height: 120px;
+     height: 150px;
      text-align: center;
  }
  
- #buttons {
-     display: flex;
-     flex-direction: row;
-     justify-content: space-between;
- }
 </style>
 
 <div class="border">
@@ -50,11 +45,12 @@
       Sign in with
     </h3>
     <div id="buttons">
-      <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
-        Google
-      </a>
-      <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+      <a id="login-orcid" href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow" style="height:60px; width: 260px; font-size:25px">
         <span style="color:gray; font-weight:bolder">ORC</span>iD
+      </a>
+      <p id="dislike-orcid" style="cursor:pointer;" onclick="document.getElementById('login-google').style.visibility = 'visible'; thisbtn = document.getElementById('dislike-orcid'); thisbtn.style.visibility = 'hidden'; thisbtn.style.display = 'none';">Click here to sign in with Google instead.</p>
+      <a id="login-google" href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow" style="visibility:hidden; width:130px; height:30px; font-size:13px">
+        Google
       </a>
     </div>
   </div>
