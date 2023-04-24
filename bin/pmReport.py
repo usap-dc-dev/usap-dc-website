@@ -82,7 +82,8 @@ if __name__ == '__main__':
     
     # -- this should not be hard coded, maybe include in report.json file?
     # six_months_ago = "2022-10-17"
-    # six_months_ago = today - relativedelta(months=6)
+    
+    # git addsix_months_ago = today - relativedelta(months=6)
     today = datetime.datetime.strptime(config['PM_REPORT_END'], '%Y-%m-%d')
     six_months_ago = datetime.datetime.strptime(config['PM_REPORT_START'], '%Y-%m-%d')
     
