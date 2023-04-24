@@ -74,11 +74,17 @@ def getCMRUrl(dif_id):
 
 if __name__ == '__main__':
     # get current date
-    today = datetime.date.today()
+    
+    # today = datetime.date.today()
 
-    today = today - relativedelta(days=10)
-    six_months_ago = "2022-04-28"
-    #six_months_ago = today - relativedelta(months=6)
+    # -- I am not sure why the next line is included
+    # today = today - relativedelta(days=1)
+    
+    # -- this should not be hard coded, maybe include in report.json file?
+    # six_months_ago = "2022-10-17"
+    # six_months_ago = today - relativedelta(months=6)
+    today = datetime.datetime.strptime(config['PM_REPORT_END'], '%Y-%m-%d')
+    six_months_ago = datetime.datetime.strptime(config['PM_REPORT_START'], '%Y-%m-%d')
     
     (conn, cur) = connect_to_db()
 
