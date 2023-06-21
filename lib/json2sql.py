@@ -86,8 +86,8 @@ def make_sql(data, id, curatorId=None):
         cur.execute(cq_mogrified)
         try:
             curator = cur.fetchone()['last_name']
-        except TypeError:
-            raise TypeError("Invalid curatorId %s" % curatorId)
+        except TypeError as e:
+            raise RuntimeError("Invalid curatorId %s" % curatorId) from e
 
     person_ids = []
     for author in data["authors"]:
