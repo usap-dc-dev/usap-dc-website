@@ -84,7 +84,10 @@ def make_sql(data, id, curatorId=None):
         curator_query = "SELECT last_name FROM person WHERE id_orcid = %s"
         cq_mogrified = cur.mogrify(curator_query, (curatorId,))
         cur.execute(cq_mogrified)
-        curator = cur.fetchone()['last_name']
+        try:
+            curator = cur.fetchone()['last_name']
+        except TypeError:
+            raise TypeError("Invalid curatorId %s" % curatorId)
 
     person_ids = []
     for author in data["authors"]:
@@ -125,7 +128,7 @@ def make_sql(data, id, curatorId=None):
         res = cur.fetchone()
         if not res:
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
-            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'], data.get('submitter_email'))           
+            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'] if 'submitter_orcid' in data.keys() else None, data.get('submitter_email'))           
 
             line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(usap.escapeQuotes(data["submitter_name"]), usap.escapeQuotes(data["submitter_first"]), usap.escapeQuotes(data["submitter_last"]), data.get("submitter_email", ''), data.get("submitter_orcid", ''))
             sql_out += line
