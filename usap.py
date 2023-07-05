@@ -5099,7 +5099,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s" + inc_platforms + " OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
-        conds.append(cur.mogrify('repositories ~* %s ', (escapeChars(repo),)))
+        conds.append(cur.mogrify("%s = ANY(string_to_array(repositories, '; '))", (escapeChars(repo),)))
 
     if len(conds) > 0:
         q_conds = []
