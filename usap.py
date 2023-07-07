@@ -2117,7 +2117,19 @@ def projectinfo():
             LEFT JOIN project_award_map pam ON pam.award_id = a.award        
             WHERE a.award = '%s'""" % award_id
         cur.execute(query_string)
-        return flask.jsonify(cur.fetchall()[0])
+        projs = flask.jsonify(cur.fetchall()[0])
+        query_string2 = """select proj_uid from project_award_map where award_id in 
+        (select award from award where title=(select title from award where award='%s') and award != '%s');""" % (award_id, award_id)
+        cur.execute(query_string2)
+        sameAwardTitle = cur.fetchAll()
+        if len(sameAwardTitle) > 0:
+            sameAwardTitleProjs = []
+            for proj in sameAwardTitle:
+                sameAwardTitleProjs.append(proj['proj_uid'])
+            projs['sameAwardTitle'] = sameAwardTitleProjs
+        else:
+            projs['sameAwardTitle'] = None
+        return projs
     return flask.jsonify({})
 
 
