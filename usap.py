@@ -2115,15 +2115,20 @@ def projectinfo():
         (conn, cur) = connect_to_db()
         query_string = """SELECT a.*, pam.proj_uid FROM award a 
             LEFT JOIN project_award_map pam ON pam.award_id = a.award        
-            WHERE a.award = '%s' and pam.proj_uid is not NULL""" % award_id
+            WHERE a.award = '%s'""" % award_id
         cur.execute(query_string)
         projs = cur.fetchall()
-        if len(projs) == 0:
-            query_string2 = """select a.*, pam.proj_uid as same_title
+        query_string2 = """SELECT pam.proj_uid FROM project_award_map pam WHERE pam.award_id = '%s' AND pam.proj_uid is not NULL""" % award_id
+        cur.execute(query_string2)
+        proj_ids = cur.fetchall()
+        if len(proj_ids) == 0:
+            query_string3 = """select a.*, pam.proj_uid as same_title
             from award a left join project_award_map pam on pam.award_id = a.award where pam.award_id in 
             (select award from award where title=(select title from award where award='%s') and award != '%s' and pam.proj_uid is not NULL);""" % (award_id, award_id)
-            cur.execute(query_string2)
-            projs = cur.fetchall()
+            cur.execute(query_string3)
+            proj_ids = cur.fetchall()
+            if len(proj_ids) > 0:
+                projs = proj_ids
         return flask.jsonify(projs)
     return flask.jsonify({})
 
