@@ -2637,7 +2637,7 @@ def makeJsonLD(data, uid):
                 "additionalType": "http://www.w3.org/ns/dcat#DataCatalog",
                 "encodingFormat": "text/xml",
                 "name": "ISO Metadata Document",
-                "url": "http://get.iedadata.org/metadata/iso/usap/%siso.xml" % uid,
+                "url": "https://www.usap-dc.org/metadata/isoxml/%siso.xml" % uid,
                 "contentUrl": url_for('file_download', filename='filename')
             },
             {
