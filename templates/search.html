@@ -323,9 +323,9 @@
                       {% if ds['url'] == '' %}
                       No project link provided
                       {% elif ds['title'] == '' %}
-                      <a target='_blank' href="{{url_for('tracker', type='dataset', url=ds.url)}}">Access to data</a><br />
+                      <a target='_blank' href="{{ds.url}}">Access to data</a><br />
                       {% else %}
-                      <a target='_blank' href="{{url_for('tracker', type='dataset', url=ds.url)}}">{{ds.title}}</a><br />
+                      <a target='_blank' href="{{ds.url}}">{{ds.title}}</a><br />
                       {% endif %}
                     </td>
                     <td width="20%" align="center">

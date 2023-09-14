@@ -5485,11 +5485,13 @@ def sitemap():
 @app.route('/tracker', methods=['GET'])
 def tracker():
     # use to track clicks to external websites - will show up in Apache logs
+    '''
     params = request.args.to_dict()
     url = params.get('url')
     print(url)
     if url:
         return redirect(url)
+        '''
     return redirect(url_for('not_found'))
 
 
