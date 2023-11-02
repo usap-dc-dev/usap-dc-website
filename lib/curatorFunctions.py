@@ -5,7 +5,7 @@ import os
 import sys
 import requests
 from flask import session, url_for, current_app, request
-from subprocess import Popen, PIPE, check_output
+from subprocess import Popen, PIPE, check_output, run as sp_run
 import base64
 from datetime import datetime
 from dateutil.parser import parse
@@ -2651,12 +2651,9 @@ def getCMRText(data, uid):
 
 # get uncompressed file size of gzipped file
 def get_uncompressed_size(file):
-    fileobj = open(file, 'r')
-    fileobj.seek(-8, 2)
-    crc32 = gzip.read32(fileobj)
-    isize = gzip.read32(fileobj)  # may exceed 2GB
-    fileobj.close()
-    return isize
+    cmd = ("tar -tvzf '%s' | awk '{sum += $5}END{print sum}'" % file) if (file.endswith(".tar.gz") or file.endswith(".tar.z")) else ("gzip --list %s | awk 'NR>1 {print $2}'" % file)
+    size_bytes = sp_run(cmd, shell=True, capture_output=True)
+    return int(size_bytes.stdout)
 
 
 def get_file_info(ds_id, url, dataset_dir, replace):
