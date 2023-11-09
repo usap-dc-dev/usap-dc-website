@@ -461,7 +461,13 @@
     {% endif %}
 
     <div id="file-rows">
-    
+        <div class="lprow2">
+            <div class="col1">
+                <div class="download data_download" {% if data.hold %} disabled {% endif %}>Download Selected</div>
+            </div>
+            <div class="col2"></div>
+            <div class="col3"></div>
+        </div>
       {% for f in data.files | sort(attribute='file_name') %}
         <div class="lprow2">
           <div class="col1">
@@ -494,7 +500,7 @@
           {% if f['url'] == 'archive' %}
             Large dataset. Contact us to arrange download.
           {% else %}
-            {{f['file_name']}}
+            {% if '.usap-dc.org/' in f['url'] %} <input type="checkbox" {% if data.hold %} disabled {% endif %} id="cbx_{{f['file_name']}}" name="dl_checkbox" value="{{f['file_name']}}"> {% else %} &nbsp; {% endif %}&nbsp;<label for="{{f['file_name']}}">{{f['file_name']}}</label>
           {% endif %}
           <br>
           {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
