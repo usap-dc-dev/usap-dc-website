@@ -2951,9 +2951,35 @@ def curator():
                 submissions = []
                 for sub in res:
                     uid = sub['uid']
+                    fairStatus = ""
+                    if 'p' == uid[0] or 'p' == uid[1]:
+                        fairStatus = "N/A"
+                    else:
+                        dataset_id = uid[1:] if 'e' == uid[0] else uid
+                        fairCountQuery = "SELECT count(*) as ct from dataset_fairness where dataset_id='%s'" % dataset_id
+                        cur.execute(fairCountQuery)
+                        numEntries = int(cur.fetchall()[0]['ct'])
+                        if 0 == numEntries:
+                            fairStatus = "Never evaluated"
+                        else:
+                            fairQuery = "SELECT * from dataset_fairness where dataset_id='%s'" % dataset_id
+                            cur.execute(fairQuery)
+                            fairRes = cur.fetchall()[0]
+                            numFields = 0
+                            numEvaluated = 0
+                            for field in fairRes:
+                                if field.endswith("check"):
+                                    if fairRes[field] != -1:
+                                        numFields += 1
+                                    if fairRes[field] >= 0:
+                                        numEvaluated += 1
+                            fairStatus = "%d/%d" % (numEvaluated, numFields)
+                            if str(fairRes['reviewed_time']) < str(sub['submitted_date']):
+                                fairStatus = "(Needs update) " + fairStatus
                     landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
-                                        'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update']})
+                                        'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update'],
+                                        'fairStatus': fairStatus})
 
             template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
