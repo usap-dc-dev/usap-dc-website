@@ -1312,8 +1312,6 @@ def dataset2(dataset_id=None):
 
             msg_data['filenames'] += list(fnames.keys())
 
-            editing = edit
-
             # if files have been added or deleted during an edit, we will create a new dataset
             if edit and (len(fnames) > 0 or msg_data.get('file_deleted') == 'true'):
                 msg_data['related_dataset'] = dataset_id
@@ -1407,18 +1405,6 @@ def dataset2(dataset_id=None):
             else:
                 submission_type = 'dataset submission'
                 uid = next_id
-                if editing:
-                    query = "select * from dataset_fairness where dataset_id='%s'" % dataset_id
-                    cur.execute(query)
-                    res = cur.fetchone()
-                    if res:
-                        res['dataset_id'] = uid
-                        cur.fetchall()
-                        fields = ", ".join(res.keys())
-                        vals = ", ".join(map(lambda s: "'" + str(s) + "'", res.values()))
-                        query = "INSERT INTO dataset_fairness (%s) VALUES (%s)" % (fields, vals)
-                        cur.execute(query)
-                        cur.execute("COMMIT")
             query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update) VALUES ('%s', '%s', 'Pending', '%s', '%s')" \
                     % (uid, submission_type, timestamp, timestamp[0:10])
 

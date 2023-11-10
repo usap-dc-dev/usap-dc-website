@@ -413,6 +413,17 @@ def make_sql(data, id, curatorId=None):
         sql_out += "UPDATE dataset SET replaced_by = '%s' WHERE id = '%s';\n" % (id, data['related_dataset'])
         sql_out += "UPDATE project_dataset SET status = 'deprecated' WHERE dataset_id = '%s';\n" % data['related_dataset']
 
+        query = "select * from dataset_fairness where dataset_id='%s';" % data['related_dataset']
+        cur.execute(query)
+        res = cur.fetchone()
+        if res:
+            sql_out += "\n--NOTE: this will copy the FAIR evaluation from dataset %s to this one" % data['related_dataset']
+            res['dataset_id'] = id
+            cur.fetchall()
+            fields = ", ".join(res.keys())
+            vals = ", ".join(map(lambda s: "'" + str(s) + "'", res.values()))
+            sql_out += "\nINSERT INTO dataset_fairness (%s) VALUES (%s);\n" % (fields, vals)
+
     sql_out += '\nCOMMIT;\n'
 
     return sql_out
@@ -844,11 +855,14 @@ def write_readme(data, id):
 
 
 def json2sql(data, id, curator=None):
+    print("json2sql", id, curator)
     if data:
         # check if we are editing an existing project
         if data.get('edit') and data['edit'] == 'True':
+            print("editing")
             sql = editDatasetJson2sql(data, id)
         else:
+            print("not editing")
             data = parse_json(data)
             sql = make_sql(data, id, curator)
         readme_file = write_readme(data, id)
