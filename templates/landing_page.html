@@ -4,6 +4,14 @@
 
 <script type="text/javascript">
 
+var multifile;
+
+function setMultifile(isMultifile) {
+    multifile = isMultifile;
+    document.getElementById("complete_download").hidden = !!multifile;
+    document.getElementById("complete_multifile_download").hidden = !multifile;
+}
+
   $(document).ready(function() {
 
 
@@ -39,6 +47,7 @@
 
 
     $('#complete_download').click(function() {
+        setMultifile(false);
       var response = grecaptcha.getResponse();
       var data_url = $(this).attr('data-url');
       var data_id = $(this).attr('data-id');
@@ -82,6 +91,7 @@
     $("#modal_close").click(function() {
       $("#recaptcha_alert").hide();
       $("#recaptcha_modal").hide();
+      setMultifile(false);
     });
 
     // add schema.org json_ld for google searches
@@ -460,57 +470,56 @@
       </div>
     {% endif %}
 
-    <div id="file-rows">
-        <div class="lprow2">
-            <div class="col1">
-                <div class="download data_download" {% if data.hold %} disabled {% endif %}>Download Selected</div>
+    <form action="/zip/usapdc_{{data.id}}_download_{{getnow().strftime('%Y%m%d_%H%M%S')}}.zip" method="post" name="multifile_download" id="multifile_download">
+        <div id="file-rows">
+            <div class="lprow2">
+                <div class="col1" onclick="setMultifile(true)">
+                    <div class="download data_download" {% if data.hold %} disabled {% endif %}>
+                        Download Selected
+                    </div>
+                </div>
+                <div class="col2"></div>
+                <div class="col3"></div>
             </div>
-            <div class="col2"></div>
-            <div class="col3"></div>
-        </div>
-      {% for f in data.files | sort(attribute='file_name') %}
-        <div class="lprow2">
-          <div class="col1">
-            <div class="download data_download" 
-                {% if data.hold %} 
-                    disabled 
-                {% else %} 
-                    data-url="{{f['url']}}" 
-                    {% if '.usap-dc.org/' in f['url'] %} 
-                        data-id="{{data.id}}" 
-                    {% endif %} 
-                {% endif %}
-            >
-              {% if '.usap-dc.org/' in f['url'] %}
-                Download
-              {% elif f['url'] == 'archive' %}
-                Contact Us
-              {% else %}
-                External
-              {% endif %}
+            {% for f in data.files | sort(attribute='file_name') %}
+            <div class="lprow2">
+                <div class="col1">
+                    <div class="download data_download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" {%
+                        if '.usap-dc.org/' in f['url'] %} data-id="{{data.id}}" {% endif %} {% endif %}>
+                        {% if '.usap-dc.org/' in f['url'] %}
+                        Download
+                        {% elif f['url'] == 'archive' %}
+                        Contact Us
+                        {% else %}
+                        External
+                        {% endif %}
+                    </div>
+                </div>
+    
+    
+                <div class="col2">
+                    {{f['size']}}
+                </div>
+    
+                <div class="col3">
+                    {% if f['url'] == 'archive' %}
+                    Large dataset. Contact us to arrange download.
+                    {% else %}
+                    {% if '.usap-dc.org/' in f['url'] %} <input type="checkbox" {% if data.hold %} disabled {% endif %}
+                        id="cbx_{{f['file_name']}}" name="dl_checkbox" value="{{f['url']}}"> {% else %} &nbsp;
+                        {% endif %}&nbsp;<label for="cbx_{{f['file_name']}}">{{f['file_name']}}</label> {% endif %}
+                    <br>
+                    {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
+                    <p class="file_info"><b>MD5 Checksum:</b> {{f['md5_checksum']}} <b>File Type:</b>
+                        {{f['document_types']}}
+                    </p>
+                    {% endif %}
+                </div>
             </div>
+    
+            {% endfor %}
         </div>
-
-  
-        <div class="col2">
-          {{f['size']}}
-        </div>
-
-        <div class="col3">
-          {% if f['url'] == 'archive' %}
-            Large dataset. Contact us to arrange download.
-          {% else %}
-            {% if '.usap-dc.org/' in f['url'] %} <input type="checkbox" {% if data.hold %} disabled {% endif %} id="cbx_{{f['file_name']}}" name="dl_checkbox" value="{{f['file_name']}}"> {% else %} &nbsp; {% endif %}&nbsp;<label for="{{f['file_name']}}">{{f['file_name']}}</label>
-          {% endif %}
-          <br>
-          {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
-            <p class="file_info"><b>MD5 Checksum:</b> {{f['md5_checksum']}} <b>File Type:</b> {{f['document_types']}}</p>
-          {% endif %}
-        </div>
-      </div>
-
-    {% endfor %}
-  </div>
+    </form>
   
  </div>
  <div id="recaptcha_modal" class="modal">
@@ -521,6 +530,7 @@
     <div id="recaptcha_alert" hidden><br><p style="color:red">Please complete the reCAPTCHA check</p></div>
     <br>
     <button id="complete_download" type="btn" class="download" data-attr="" data-id="">Complete Download</button>
+    <input id="complete_multifile_download" type="submit" class="download" hidden value="Complete Multifile Download" form="multifile_download"></input>
     <br><br>
   </div>
  </div>
