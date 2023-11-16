@@ -475,7 +475,7 @@ function setMultifile(isMultifile) {
             <div class="lprow2">
                 <div class="col1" onclick="setMultifile(true)">
                     <div class="download data_download" {% if data.hold %} disabled {% endif %}>
-                        Download Selected
+                        Download Selected (ZIP)
                     </div>
                 </div>
                 <div class="col2"></div>
@@ -530,7 +530,7 @@ function setMultifile(isMultifile) {
     <div id="recaptcha_alert" hidden><br><p style="color:red">Please complete the reCAPTCHA check</p></div>
     <br>
     <button id="complete_download" type="btn" class="download" data-attr="" data-id="">Complete Download</button>
-    <input id="complete_multifile_download" type="submit" class="download" hidden value="Complete Multifile Download" form="multifile_download"></input>
+    <button id="complete_multifile_download" type="submit" class="download"  data-attr="" data-id="" hidden form="multifile_download">Complete Download</button>
     <br><br>
   </div>
  </div>

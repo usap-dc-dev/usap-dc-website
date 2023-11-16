@@ -237,7 +237,7 @@ font-size: 1.3em;
   cursor: pointer;
 }
 
-#complete_download {
+#complete_download, #complete_multifile_download {
   margin:0 53px;
   width: 190px;
   font-size:medium;
