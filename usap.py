@@ -2780,11 +2780,11 @@ def makeCitation(metadata, dataset_id):
 def zip_and_dl(dataset_id, dl_time):
     if request.method == "POST":
 
-        files_to_zip = list(map(lambda str : str.replace(app.config["USAP_DOMAIN"], ""), request.form.getlist("dl_checkbox"))
+        files_to_zip = list(map(lambda str : str.replace(app.config["USAP_DOMAIN"], ""), request.form.getlist("dl_checkbox")))
         my_zip = BytesIO()
         with zf.ZipFile(my_zip, mode="w", compression=zf.ZIP_DEFLATED) as zip:
             for f in files_to_zip:
-                file = open(f, "r", encoding="ISO-8859-1")
+                file = open(f, "rb")
                 contents = file.read()
                 path_within_zip = os.path.join("usapdc_%s" % (dataset_id), os.path.basename(f))
                 zip.writestr(path_within_zip, contents)
