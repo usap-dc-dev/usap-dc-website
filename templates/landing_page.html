@@ -12,6 +12,34 @@ function setMultifile(isMultifile) {
     document.getElementById("complete_multifile_download").hidden = !multifile;
 }
 
+function checkboxToggle() {
+    let checkboxes = Array.from(document.getElementsByName("dl_checkbox")),
+        selectAllBtn = document.getElementById("select_all");
+    if(checkboxes.length > 0) {
+        let checked = checkboxes.filter(x => x.checked);
+        let unchecked = checkboxes.filter(x => !(x.checked));
+        if(0 === unchecked.length) {
+            selectAllBtn.innerHTML = "Deselect All";
+        }
+        else {
+            selectAllBtn.innerHTML = "Select All";
+        }
+    }
+}
+
+function toggleSelectAll() {
+    let checkboxes = Array.from(document.getElementsByName("dl_checkbox")),
+        selectAllBtn = document.getElementById("select_all");
+    if(selectAllBtn.innerHTML === "Deselect All") {
+        checkboxes.forEach(x => x.checked = false);
+        selectAllBtn.innerHTML = "Select All";
+    }
+    else {
+        checkboxes.forEach(x => x.checked = true);
+        selectAllBtn.innerHTML = "Deselect All";
+    }
+}
+
   $(document).ready(function() {
 
 
@@ -479,7 +507,7 @@ function setMultifile(isMultifile) {
                     </div>
                 </div>
                 <div class="col2"></div>
-                <div class="col3"></div>
+                <div class="col3"><div id="select_all" class="download" type="button" onclick="toggleSelectAll()">Select All</div></div>
             </div>
             {% for f in data.files | sort(attribute='file_name') %}
             <div class="lprow2">
@@ -506,7 +534,7 @@ function setMultifile(isMultifile) {
                     Large dataset. Contact us to arrange download.
                     {% else %}
                     {% if '.usap-dc.org/' in f['url'] %} <input type="checkbox" {% if data.hold %} disabled {% endif %}
-                        id="cbx_{{f['file_name']}}" name="dl_checkbox" value="{{f['url']}}"> {% else %} &nbsp;
+                        id="cbx_{{f['file_name']}}" name="dl_checkbox" value="{{f['url']}}" onchange="checkboxToggle()"> {% else %} &nbsp;
                         {% endif %}&nbsp;<label for="cbx_{{f['file_name']}}">{{f['file_name']}}</label> {% endif %}
                     <br>
                     {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
