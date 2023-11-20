@@ -64,10 +64,12 @@ function showSelectedComboSize() {
     }, 0);
     let str = ""
     if(Math.round(sum/prefixes['M']*1000)/1000 >= 1) {
-        str = `${Math.round(sum/prefixes['M']*1000)/1000} M`;
+        let precision = Math.floor(Math.log10(sum/prefixes['M']))+2
+        str = `${(sum/prefixes['M']).toPrecision(precision)} M`;
     }
     else if(Math.round(sum/prefixes['k']*1000)/1000 >= 1) {
-        str = `${Math.round(sum/prefixes['k']*1000)/1000} k`;
+        let precision = Math.floor(Math.log10(sum/prefixes['k']))+2
+        str = `${((sum/prefixes['k']).toPrecision(precision))} k`;
     }
     else {
         str = `${sum} `;
