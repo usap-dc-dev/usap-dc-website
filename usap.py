@@ -41,7 +41,9 @@ from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import zipfile as zf
 from zoneinfo import ZoneInfo as zi
+from io import BytesIO
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -2498,7 +2500,8 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
+
+    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
 
 
 def getCMRUrls(dif_records):
@@ -2772,6 +2775,22 @@ def makeCitation(metadata, dataset_id):
     except:
         return None
 
+
+@app.route('/zip/usapdc_<dataset_id>_download_<dl_time>.zip', methods=["GET", "POST"])
+def zip_and_dl(dataset_id, dl_time):
+    if request.method == "POST":
+
+        files_to_zip = list(map(lambda str : str.replace(app.config["USAP_DOMAIN"], ""), request.form.getlist("dl_checkbox")))
+        my_zip = BytesIO()
+        with zf.ZipFile(my_zip, mode="w", compression=zf.ZIP_DEFLATED) as zip:
+            for f in files_to_zip:
+                file = open(f, "rb")
+                contents = file.read()
+                path_within_zip = os.path.join("usapdc_%s" % (dataset_id), os.path.basename(f))
+                zip.writestr(path_within_zip, contents)
+        return my_zip.getvalue(), {"Content-Type":"application/zip"}
+
+    return "Nothing to compress."
 
 @app.route('/dataset/<path:filename>', methods=['GET','POST'])
 def file_download(filename):
