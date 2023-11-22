@@ -61,6 +61,26 @@ def parse_json(data):
 
     return data
 
+def getFileFormat(filename):
+    index = filename.rfind(".")
+    if 1 > index:
+        return "Unknown"
+    ext = filename[index:].lower()
+    (conn, cur) = usap.connect_to_db()
+    query = "select document_type from file_type where extension=%s"
+    mquery = cur.mogrify(query, (ext,))
+    cur.execute(mquery)
+    formats = cur.fetchall()
+    if 0 == len(formats):
+        return ext[1:].upper() + " File"
+    return formats[0]['document_type']
+
+def getFileFormats(filenames):
+    formats = set()
+    for file in filenames:
+        formats.add(getFileFormat(file))
+    return "; ".join(formats)
+
 
 def make_sql(data, id, curatorId=None):
     # --- prepare some parameter
@@ -174,7 +194,7 @@ def make_sql(data, id, curatorId=None):
 
     sql_out += '\n--NOTE: add to project_dataset table\n'
     sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, data_format) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
-        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True), "CHANGEME")
+        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True), getFileFormats(data["filenames"]))
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
