@@ -173,8 +173,8 @@ def make_sql(data, id, curatorId=None):
     sql_out += sql_line
 
     sql_out += '\n--NOTE: add to project_dataset table\n'
-    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status) VALUES ('%s', '%s', '%s', '%s', 'exists');\n" % \
-        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True))
+    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, data_format) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
+        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True), "CHANGEME")
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
