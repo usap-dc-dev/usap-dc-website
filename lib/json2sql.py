@@ -497,6 +497,10 @@ def editDatasetJson2sql(data, uid):
     sql_out = ""
     sql_out += "START TRANSACTION;\n"
     for k in updates:
+        if k == 'title':
+            sql_out += "\n--NOTE: UPDATING TITLE"
+            sql_out += "UPDATE dataset SET title='%s' WHERE id='%s';\n" % (usap.escapeQuotes(data['title']), uid)
+
         if k == 'abstract':
             sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
             sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (usap.escapeQuotes(data['abstract']), uid)
