@@ -162,7 +162,7 @@ function showSelectedComboSize() {
     // add schema.org json_ld for google searches
     var el = document.createElement('script');
     el.type = 'application/ld+json';
-    el.text = $("#div_jsonld").text().replace("&#34;", '"');
+    el.text = $("#div_jsonld").text();
     document.querySelector('head').appendChild(el);
   });
 </script>
@@ -215,7 +215,7 @@ function showSelectedComboSize() {
 </style>
 
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
-<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])}}</div>
+<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])|safe}}</div>
 
 
 
