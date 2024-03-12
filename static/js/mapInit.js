@@ -99,14 +99,14 @@ function MapClient(zoom) {
 
 
     var arffsu_core = new ol.layer.Tile({
-        title: 'Former FSU sediment core map',
+        title: 'OSU sediment core map',
         visible: false,
         source: new ol.source.TileWMS({
           url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
         //   crossOrigin: 'anonymous',
           projection: 'EPSG:3031',
           params: {
-              layers: "ARFFSU"
+              layers: "OSU"
           }
         })
     });
