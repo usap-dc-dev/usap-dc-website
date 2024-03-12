@@ -162,7 +162,7 @@ function showSelectedComboSize() {
     // add schema.org json_ld for google searches
     var el = document.createElement('script');
     el.type = 'application/ld+json';
-    el.text = $("#div_jsonld").text();
+    el.text = $("#div_jsonld").text().replace("&#34;", '"');
     document.querySelector('head').appendChild(el);
   });
 </script>
