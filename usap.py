@@ -2622,6 +2622,8 @@ def makeJsonLD(data, uid):
     description = data.get('abstract')
     if not description or description == '':
         description = data.get('title')
+    
+    full_dataset_url = config['USAP_DOMAIN'] + url_for('landing_page', dataset_id=uid).replace("/", "", 1)
 
     json_ld = {
         "@context": "https://schema.org/",
@@ -2645,9 +2647,9 @@ def makeJsonLD(data, uid):
             },
             {
                 "@type": "DataDownload",
-                "@id": "http://dx.doi.org/%s" % doi,
+                "@id": full_dataset_url if doi == "TBD" else ("http://dx.doi.org/%s" % doi),
                 "additionalType": "dcat:distribution",
-                "url": "http://dx.doi.org/%s" % doi,
+                "url": full_dataset_url if doi == "TBD" else ("http://dx.doi.org/%s" % doi),
                 "name": "landing page",
                 "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
@@ -2655,9 +2657,9 @@ def makeJsonLD(data, uid):
             },
             {
                 "@type": "DataDownload",
-                "@id": url_for('landing_page', dataset_id=uid),
+                "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
-                "url": url_for('landing_page', dataset_id=uid),
+                "url": full_dataset_url,
                 "name": "landing page",
                 "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
