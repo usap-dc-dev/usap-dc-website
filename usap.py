@@ -2646,10 +2646,26 @@ def makeJsonLD(data, uid):
                 "contentUrl": url_for('file_download', filename='filename')
             },
             {
-                "@type": "DataDownload",
-                "@id": full_dataset_url if doi == "TBD" else ("http://dx.doi.org/%s" % doi),
+                "@type": "",
+                "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
-                "url": full_dataset_url if doi == "TBD" else ("http://dx.doi.org/%s" % doi),
+                "url": full_dataset_url,
+                "name": "landing page",
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
+                "contentUrl": url_for('file_download', filename='filename'),
+                "encodingFormat": "text/html"
+            }
+            if doi == "TBD" else {
+                "@type": "DataDownload",
+                "@id": "http://dx.doi.org/%s" % doi,
+                "identifier": {
+                    "@type": "PropertyValue",
+                    "propertyID": "https://registry.identifiers.org/registry/doi",
+                    "value": doi,
+                    "url": "https://doi.org/%s" & doi
+                },
+                "additionalType": "dcat:distribution",
+                "url": "http://dx.doi.org/%s" % doi,
                 "name": "landing page",
                 "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
