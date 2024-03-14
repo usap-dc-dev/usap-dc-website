@@ -2628,7 +2628,7 @@ def makeJsonLD(data, uid):
     json_ld = {
         "@context": "https://schema.org/",
         "@type": "Dataset",
-        "@id": "doi:" + doi,
+        "@id": full_dataset_url if doi == "TBD" else ("doi:" + doi),
         "additionalType": ["geolink:Dataset", "vivo:Dataset"],
         "name": data.get('title'),
         "description": description,
@@ -2646,7 +2646,7 @@ def makeJsonLD(data, uid):
                 "contentUrl": url_for('file_download', filename='filename')
             },
             {
-                "@type": "",
+                "@type": "DataDownload",
                 "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
                 "url": full_dataset_url,
