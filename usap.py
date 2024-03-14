@@ -2662,7 +2662,7 @@ def makeJsonLD(data, uid):
                     "@type": "PropertyValue",
                     "propertyID": "https://registry.identifiers.org/registry/doi",
                     "value": doi,
-                    "url": "https://doi.org/%s" & doi
+                    "url": "https://doi.org/%s" % doi
                 },
                 "additionalType": "dcat:distribution",
                 "url": "http://dx.doi.org/%s" % doi,
