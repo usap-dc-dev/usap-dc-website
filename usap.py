@@ -2622,11 +2622,13 @@ def makeJsonLD(data, uid):
     description = data.get('abstract')
     if not description or description == '':
         description = data.get('title')
+    
+    full_dataset_url = config['USAP_DOMAIN'] + url_for('landing_page', dataset_id=uid).replace("/", "", 1)
 
     json_ld = {
         "@context": "https://schema.org/",
         "@type": "Dataset",
-        "@id": "doi:" + doi,
+        "@id": full_dataset_url if doi == "TBD" else ("doi:" + doi),
         "additionalType": ["geolink:Dataset", "vivo:Dataset"],
         "name": data.get('title'),
         "description": description,
@@ -2645,7 +2647,23 @@ def makeJsonLD(data, uid):
             },
             {
                 "@type": "DataDownload",
+                "@id": full_dataset_url,
+                "additionalType": "dcat:distribution",
+                "url": full_dataset_url,
+                "name": "landing page",
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
+                "contentUrl": url_for('file_download', filename='filename'),
+                "encodingFormat": "text/html"
+            }
+            if doi == "TBD" else {
+                "@type": "DataDownload",
                 "@id": "http://dx.doi.org/%s" % doi,
+                "identifier": {
+                    "@type": "PropertyValue",
+                    "propertyID": "https://registry.identifiers.org/registry/doi",
+                    "value": doi,
+                    "url": "https://doi.org/%s" & doi
+                },
                 "additionalType": "dcat:distribution",
                 "url": "http://dx.doi.org/%s" % doi,
                 "name": "landing page",
@@ -2655,9 +2673,9 @@ def makeJsonLD(data, uid):
             },
             {
                 "@type": "DataDownload",
-                "@id": url_for('landing_page', dataset_id=uid),
+                "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
-                "url": url_for('landing_page', dataset_id=uid),
+                "url": full_dataset_url,
                 "name": "landing page",
                 "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),

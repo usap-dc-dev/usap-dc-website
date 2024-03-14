@@ -215,7 +215,7 @@ function showSelectedComboSize() {
 </style>
 
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
-<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])}}</div>
+<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])|safe}}</div>
 
 
 
