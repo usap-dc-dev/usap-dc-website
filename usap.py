@@ -2658,12 +2658,6 @@ def makeJsonLD(data, uid):
             if doi == "TBD" else {
                 "@type": "DataDownload",
                 "@id": "http://dx.doi.org/%s" % doi,
-                "identifier": {
-                    "@type": "PropertyValue",
-                    "propertyID": "https://registry.identifiers.org/registry/doi",
-                    "value": doi,
-                    "url": "https://doi.org/%s" % doi
-                },
                 "additionalType": "dcat:distribution",
                 "url": "http://dx.doi.org/%s" % doi,
                 "name": "landing page",
@@ -2687,6 +2681,11 @@ def makeJsonLD(data, uid):
             "@type": "PropertyValue",
             "propertyID": "dataset identifier",
             "value": "doi:" + doi
+        } if doi == "TBD" else {
+            "@type": "PropertyValue",
+            "propertyID": "dataset identifier",
+            "value": "doi:" + doi,
+            "url": "https://doi.org/%s" % doi
         },
         "contributor": awards,
         "license": [
