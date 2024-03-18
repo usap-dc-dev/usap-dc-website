@@ -101,13 +101,11 @@ function MapClient(zoom) {
     var arffsu_core = new ol.layer.Tile({
         title: 'OSU sediment core map',
         visible: false,
-        source: new ol.source.TileWMS({
-          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
-        //   crossOrigin: 'anonymous',
-          projection: 'EPSG:3031',
-          params: {
-              layers: "OSU"
-          }
+        source: new ol.source.TileJSON({
+          //url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+          url: 'https://services1.arcgis.com/CD5mKowwN6nIaqd8/ArcGIS/rest/services/MGR_core_collection_2023/FeatureServer/0/query?f=json&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&where=1%3D1&orderByFields=FID&outFields=FID&outSR=102100&spatialRel=esriSpatialRelIntersects',
+          //crossOrigin: 'anonymous',
+          
         })
     });
     map.addLayer(arffsu_core);
