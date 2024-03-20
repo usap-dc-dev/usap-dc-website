@@ -2679,11 +2679,12 @@ def makeJsonLD(data, uid):
         ],
         "identifier": {
             "@type": "PropertyValue",
-            "propertyID": "dataset identifier",
-            "value": "doi:" + doi
+            #"propertyID": "dataset identifier",
+            "value": full_dataset_url,
+            "url": full_dataset_url
         } if doi == "TBD" else {
             "@type": "PropertyValue",
-            "propertyID": "dataset identifier",
+            "propertyID": "https://registry.identifiers.org/registry/doi",
             "value": "doi:" + doi,
             "url": "https://doi.org/%s" % doi
         },
