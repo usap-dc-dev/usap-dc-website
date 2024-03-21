@@ -2492,7 +2492,7 @@ def landing_page(dataset_id):
 
     if not metadata['citation'] or metadata['citation'] == '':
         metadata['citation'] = makeCitation(metadata, dataset_id)
-    metadata['json_ld'] = flask.jsonify(makeJsonLD(metadata, dataset_id))
+    metadata['json_ld'] = makeJsonLD(metadata, dataset_id)
 
     # get count of how many times this dataset has been downloaded
     metadata['downloads'] = getDownloadsCount(dataset_id)
