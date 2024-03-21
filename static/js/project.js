@@ -330,62 +330,92 @@ $(document).ready(function() {
         method: 'GET',
         url: window.location.protocol + '//' + window.location.hostname + '/submit/projectinfo?award='+award_num,
         success: function(msg) {
-            pi = msg.name.split(',');
-            //reset co-pis
-            $('#copi_name_last').attr('value', '');
-            $('#copi_name_first').attr('value', '');
-            $('#more_authors').empty();
-            author_counter = 1;
+            if(msg.length > 0) {
+                pi = msg[0].name.split(',');
+                //reset co-pis
+                $('#copi_name_last').attr('value', '');
+                $('#copi_name_first').attr('value', '');
+                $('#more_authors').empty();
+                author_counter = 1;
 
 
-            // add co-pis
-            if (msg.copi != null && msg.copi !== ''){
-                var copis = msg.copi.split(';');
-                if (copis.length > 0) {
-                    delim = copis[0].includes(',') ? ',' : ' ';
+                // add co-pis
+                if (msg[0].copi != null && msg[0].copi !== ''){
+                    var copis = msg[0].copi.split(';');
+                    if (copis.length > 0) {
+                        delim = copis[0].includes(',') ? ',' : ' ';
+                        if (delim == ',') {
+                        copi = copis[0].split(delim);
+                        $('#copi_name_last').attr('value', copi[0].trim());
+                        $('#copi_name_first').attr('value', copi[1].trim());
+                        }
+                        else {
+                        var lastIndex = copis[0].lastIndexOf(' ');
+                        $('#copi_name_last').attr('value', copis[0].substr(lastIndex+1).trim());
+                        $('#copi_name_first').attr('value', copis[0].substr(0, lastIndex).trim());
+                        }
                     
-                    if (delim == ',') {
-                      copi = copis[0].split(delim);
-                      $('#copi_name_last').attr('value', copi[0].trim());
-                      $('#copi_name_first').attr('value', copi[1].trim());
-                    }
-                    else {
-                      var lastIndex = copis[0].lastIndexOf(' ');
-                      $('#copi_name_last').attr('value', copis[0].substr(lastIndex+1).trim());
-                      $('#copi_name_first').attr('value', copis[0].substr(0, lastIndex).trim());
-                    }
-                
-                    for (var i=1; i < copis.length; i++ ) {
-                      if (delim == ',') {
-                        copi = copis[i].split(delim);
-                        var author = {'name_last': copi[0].trim(), 'name_first': copi[1].trim()};
-                      }
-                      else {
-                        var lastIndex = copis[i].lastIndexOf(' ');
-                        var author = {'name_last': copis[i].substr(lastIndex+1).trim(), 'name_first': copis[i].substr(0, lastIndex).trim()};
-                      }
-                      addAuthorRow(author);
+                        for (var i=1; i < copis.length; i++ ) {
+                        if (delim == ',') {
+                            copi = copis[i].split(delim);
+                            var author = {'name_last': copi[0].trim(), 'name_first': copi[1].trim()};
+                        }
+                        else {
+                            var lastIndex = copis[i].lastIndexOf(' ');
+                            var author = {'name_last': copis[i].substr(lastIndex+1).trim(), 'name_first': copis[i].substr(0, lastIndex).trim()};
+                        }
+                        addAuthorRow(author);
+                        }
                     }
                 }
-            }
-            $("#entry textarea[name='title']").val(msg.title);
-            $("#entry input[name='pi_name_last']").val(pi[0]);
-            $("#entry input[name='pi_name_first']").val(pi[1].trim());
-            $("#entry input[name='org']").val(msg.org);
-            if (msg.email) $("#entry input[name='email']").val(msg.email);
-            $("#entry input[name='copi']").val(msg.copi);
-            $("#entry input[name='start']").val(to_yyyymmdd(msg.start));
-            $("#entry input[name='end']").val(to_yyyymmdd(msg.expiry));
-            $("#entry input[name='iscr']").prop('checked',msg.iscr);
-            $("#entry input[name='isipy']").prop('checked',msg.isipy);
-            $("#entry textarea[name='sum']").val(msg.sum);
+                $("#entry textarea[name='title']").val(msg[0].title);
+                $("#entry input[name='pi_name_last']").val(pi[0]);
+                $("#entry input[name='pi_name_first']").val(pi[1].trim());
+                $("#entry input[name='org']").val(msg[0].org);
+                if (msg[0].email) $("#entry input[name='email']").val(msg[0].email);
+                $("#entry input[name='copi']").val(msg[0].copi);
+                $("#entry input[name='start']").val(to_yyyymmdd(msg[0].start));
+                $("#entry input[name='end']").val(to_yyyymmdd(msg[0].expiry));
+                $("#entry input[name='iscr']").prop('checked',msg[0].iscr);
+                $("#entry input[name='isipy']").prop('checked',msg[0].isipy);
+                $("#entry textarea[name='sum']").val(msg[0].sum);
 
-            if (msg.proj_uid) {
-              var proj_url = window.location.protocol + '//' + window.location.hostname + '/view/project/' + msg.proj_uid;
-              var alert = "A project already exists for this award at<br><a href='" + proj_url + "' target='_blank'>" + proj_url + "</a>.<br>You can edit this project if necessary."
-              $("#proj_alert_msg").html(alert);
-              $("#proj_alert").show();
-
+                if (msg[0].proj_uid) {
+                    let proj_urls = new Set();
+                    for(let i = 0; i < msg.length; i++) {
+                        proj_urls.add(window.location.protocol + "//" + window.location.hostname + "/view/project/" + msg[i].proj_uid)
+                    }
+                    let proj_urls_arr = [...proj_urls];
+                    var alert;
+                    if(proj_urls.size == 1) {
+                        alert = "A project already exists for this award at<br><a href='" + proj_urls_arr[0] + "' target='_blank'>" + proj_urls_arr[0] + "</a>.<br>You can edit this project if necessary."
+                    }
+                    else {
+                        alert = `${proj_urls.size} projects already exist for this award:<br>${proj_urls_arr.map(url => `<a href="${url}" target="_blank">${url}</a>`).join('<br>')}<br>You can edit them if necessary.`
+                    }
+                    let newHeight = $("#proj_alert").height() + 25 * (proj_urls_arr.length - 1);
+                    $("#proj_alert").height(newHeight);
+                    $("#proj_alert_msg").html(alert);
+                    $("#proj_alert").show();
+                }
+                else if(msg[0].same_title) {
+                    let proj_urls = new Set()
+                    for(let i = 0; i < msg.length; i++) {
+                        proj_urls.add(window.location.protocol + "//" + window.location.hostname + "/view/project/" + msg[i].same_title);
+                    }
+                    let proj_urls_arr = [...proj_urls];
+                    var alert;
+                    if(1 == proj_urls_arr.length) {
+                        alert = `A pre-existing project has an award with the same title:<br><a href="${proj_urls_arr[0]}" target="_blank">${proj_urls_arr[0]}</a><br>You can edit it if necessary.`;
+                    }
+                    else {
+                        alert = `${proj_urls_arr.length} projects have an award with the same title:<br>${proj_urls_arr.map(url => `<a href=${url} target="_blank">${url}</a>`).join("<br>")}<br>You can edit them if necessary.`
+                    }
+                    let newHeight = $("#proj_alert").height() + 25 * (proj_urls_arr.length - 1);
+                    $("#proj_alert").height(newHeight);
+                    $("#proj_alert_msg").html(alert);
+                    $("#proj_alert").show();
+                }
             }
         }
         });
@@ -408,6 +438,7 @@ $(document).ready(function() {
 
     $('.close_proj_alert_btn').click(function() {
       $("#proj_alert").hide();
+      $("#proj_alert").css("height", "");
     });
 
     //Make the DIV element draggagle:

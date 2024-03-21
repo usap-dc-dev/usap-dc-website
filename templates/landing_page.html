@@ -4,6 +4,79 @@
 
 <script type="text/javascript">
 
+var multifile;
+
+function setMultifile(isMultifile) {
+    multifile = isMultifile;
+    document.getElementById("complete_download").hidden = !!multifile;
+    document.getElementById("complete_multifile_download").hidden = !multifile;
+}
+
+function checkboxToggle() {
+    let checkboxes = Array.from(document.getElementsByName("dl_checkbox")),
+        selectAllBtn = document.getElementById("select_all"),
+        dlZipBtn = document.getElementById("dl_zip_btn");
+    if(checkboxes.length > 0) {
+        let checked = checkboxes.filter(x => x.checked);
+        let unchecked = checkboxes.filter(x => !(x.checked));
+        if(0 === unchecked.length) {
+            selectAllBtn.innerHTML = "Deselect All";
+        }
+        else {
+            selectAllBtn.innerHTML = "Select All";
+        }
+    }
+    showSelectedComboSize();
+}
+
+function toggleSelectAll() {
+    let checkboxes = Array.from(document.getElementsByName("dl_checkbox")),
+        selectAllBtn = document.getElementById("select_all");
+    if(selectAllBtn.innerHTML === "Deselect All") {
+        checkboxes.forEach(x => x.checked = false);
+        selectAllBtn.innerHTML = "Select All";
+    }
+    else {
+        checkboxes.forEach(x => x.checked = true);
+        selectAllBtn.innerHTML = "Deselect All";
+    }
+    showSelectedComboSize();
+}
+
+function showSelectedComboSize() {
+    const prefixes = {'k': 1000, 'M': 1000000};
+    let dlZipBtn = document.getElementById("dl_zip_btn");
+    let selected = Array.from(document.getElementsByName("dl_checkbox")).filter(x=>x.checked);
+    if(dlZipBtn) {
+            dlZipBtn.disabled = (0 === selected.length);
+        }
+    let sizes = selected.map(function(x) {
+        let filename = x.id.slice(4);
+        let row = document.getElementById(`row_${filename}`);
+        let sizeCell = row.getElementsByClassName("col2")[0];
+        return sizeCell.innerHTML.slice(0, sizeCell.innerHTML.search("B"));
+    });
+    let sum = sizes.reduce(function(acc, x) {
+        let w = x.trim().split(" ");
+        let mantissa = parseFloat(w[0]), magnitude = prefixes[w[1]];
+        //alert(`${mantissa} * ${magnitude}`);
+        return acc + mantissa * magnitude;
+    }, 0);
+    let str = ""
+    if(Math.round(sum/prefixes['M']*1000)/1000 >= 1) {
+        let precision = Math.floor(Math.log10(sum/prefixes['M']))+2
+        str = `${(sum/prefixes['M']).toPrecision(precision)} M`;
+    }
+    else if(Math.round(sum/prefixes['k']*1000)/1000 >= 1) {
+        let precision = Math.floor(Math.log10(sum/prefixes['k']))+2
+        str = `${((sum/prefixes['k']).toPrecision(precision))} k`;
+    }
+    else {
+        str = `${sum} `;
+    }
+    document.getElementById("selected_size").innerHTML = `Selected:<br>${str}B`;
+}
+
   $(document).ready(function() {
 
 
@@ -39,6 +112,7 @@
 
 
     $('#complete_download').click(function() {
+        setMultifile(false);
       var response = grecaptcha.getResponse();
       var data_url = $(this).attr('data-url');
       var data_id = $(this).attr('data-id');
@@ -82,6 +156,7 @@
     $("#modal_close").click(function() {
       $("#recaptcha_alert").hide();
       $("#recaptcha_modal").hide();
+      setMultifile(false);
     });
 
     // add schema.org json_ld for google searches
@@ -140,7 +215,7 @@
 </style>
 
 <div id="div_extents" hidden>{{json_dumps(data['spatial_extents'])}}</div>
-<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])}}</div>
+<div id="div_jsonld" hidden >{{json_dumps(data['json_ld'])|safe}}</div>
 
 
 
@@ -458,51 +533,58 @@
       </div>
     {% endif %}
 
-    <div id="file-rows">
-    
-      {% for f in data.files | sort(attribute='file_name') %}
-        <div class="lprow2">
-          <div class="col1">
-            <div class="download data_download" 
-                {% if data.hold %} 
-                    disabled 
-                {% else %} 
-                    data-url="{{f['url']}}" 
-                    {% if '.usap-dc.org/' in f['url'] %} 
-                        data-id="{{data.id}}" 
-                    {% endif %} 
-                {% endif %}
-            >
-              {% if '.usap-dc.org/' in f['url'] %}
-                Download
-              {% elif f['url'] == 'archive' %}
-                Contact Us
-              {% else %}
-                External
-              {% endif %}
+    <form action="/zip/usapdc_{{data.id}}_download_{{getnow().strftime('%Y%m%d_%H%M%S')}}.zip" method="post" name="multifile_download" id="multifile_download">
+        <div id="file-rows">
+            {% if not data.hold %}
+            <div class="lprow2" style="height:60px">
+                <div class="col1" onclick="setMultifile(true)">
+                    <button type="button" style="border:none" class="download data_download" id="dl_zip_btn" disabled>
+                        Download Selected (ZIP)
+                    </button><br>
+                </div>
+                <div class="col2"><p id="selected_size">Selected:<br>0 B</p></div>
+                <div class="col3"><div id="select_all" class="download" type="button" onclick="toggleSelectAll()">Select All</div></div>
             </div>
+            {% endif %}
+            {% for f in data.files | sort(attribute='file_name') %}
+            <div class="lprow2" id="row_{{f['file_name']}}">
+                <div class="col1">
+                    <div class="download data_download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" {%
+                        if '.usap-dc.org/' in f['url'] %} data-id="{{data.id}}" {% endif %} {% endif %}>
+                        {% if '.usap-dc.org/' in f['url'] %}
+                        Download
+                        {% elif f['url'] == 'archive' %}
+                        Contact Us
+                        {% else %}
+                        External
+                        {% endif %}
+                    </div>
+                </div>
+    
+    
+                <div class="col2">
+                    {{f['size']}}
+                </div>
+    
+                <div class="col3">
+                    {% if f['url'] == 'archive' %}
+                    Large dataset. Contact us to arrange download.
+                    {% else %}
+                    {% if '.usap-dc.org/' in f['url'] %} <input type="checkbox" {% if data.hold %} disabled {% endif %}
+                        id="cbx_{{f['file_name']}}" name="dl_checkbox" value="{{f['url']}}" onchange="checkboxToggle()"> {% else %} &nbsp;
+                        {% endif %}&nbsp;<label for="cbx_{{f['file_name']}}">{{f['file_name']}}</label> {% endif %}
+                    <br>
+                    {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
+                    <p class="file_info"><b>MD5 Checksum:</b> {{f['md5_checksum']}} <b>File Type:</b>
+                        {{f['document_types']}}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+    
+            {% endfor %}
         </div>
-
-  
-        <div class="col2">
-          {{f['size']}}
-        </div>
-
-        <div class="col3">
-          {% if f['url'] == 'archive' %}
-            Large dataset. Contact us to arrange download.
-          {% else %}
-            {{f['file_name']}}
-          {% endif %}
-          <br>
-          {% if '.usap-dc.org/' in f['url'] or f['url'] == 'archive' %}
-            <p class="file_info"><b>MD5 Checksum:</b> {{f['md5_checksum']}} <b>File Type:</b> {{f['document_types']}}</p>
-          {% endif %}
-        </div>
-      </div>
-
-    {% endfor %}
-  </div>
+    </form>
   
  </div>
  <div id="recaptcha_modal" class="modal">
@@ -513,6 +595,7 @@
     <div id="recaptcha_alert" hidden><br><p style="color:red">Please complete the reCAPTCHA check</p></div>
     <br>
     <button id="complete_download" type="btn" class="download" data-attr="" data-id="">Complete Download</button>
+    <button id="complete_multifile_download" type="submit" class="download"  data-attr="" data-id="" hidden form="multifile_download">Complete Download</button>
     <br><br>
   </div>
  </div>

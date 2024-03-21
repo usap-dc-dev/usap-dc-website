@@ -61,6 +61,26 @@ def parse_json(data):
 
     return data
 
+def getFileFormat(filename):
+    index = filename.rfind(".")
+    if 1 > index:
+        return "Unknown"
+    ext = filename[index:].lower()
+    (conn, cur) = usap.connect_to_db()
+    query = "select document_type from file_type where extension=%s"
+    mquery = cur.mogrify(query, (ext,))
+    cur.execute(mquery)
+    formats = cur.fetchall()
+    if 0 == len(formats):
+        return ext[1:].upper() + " File"
+    return formats[0]['document_type']
+
+def getFileFormats(filenames):
+    formats = set()
+    for file in filenames:
+        formats.add(getFileFormat(file))
+    return "; ".join(formats)
+
 
 def make_sql(data, id, curatorId=None):
     # --- prepare some parameter
@@ -84,7 +104,10 @@ def make_sql(data, id, curatorId=None):
         curator_query = "SELECT last_name FROM person WHERE id_orcid = %s"
         cq_mogrified = cur.mogrify(curator_query, (curatorId,))
         cur.execute(cq_mogrified)
-        curator = cur.fetchone()['last_name']
+        try:
+            curator = cur.fetchone()['last_name']
+        except TypeError as e:
+            raise RuntimeError("Invalid curatorId %s" % curatorId) from e
 
     person_ids = []
     for author in data["authors"]:
@@ -125,7 +148,7 @@ def make_sql(data, id, curatorId=None):
         res = cur.fetchone()
         if not res:
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial, or same orcid or email)
-            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'], data.get('submitter_email'))           
+            sql_out += checkAltIds(data['submitter_name'], data['submitter_first'], data['submitter_last'], 'SUBMITTER_NAME', data['submitter_orcid'] if 'submitter_orcid' in data.keys() else None, data.get('submitter_email'))           
 
             line = "INSERT INTO person(id, first_name, last_name, email,id_orcid) VALUES ('{}','{}','{}','{}','{}');\n".format(usap.escapeQuotes(data["submitter_name"]), usap.escapeQuotes(data["submitter_first"]), usap.escapeQuotes(data["submitter_last"]), data.get("submitter_email", ''), data.get("submitter_orcid", ''))
             sql_out += line
@@ -170,8 +193,8 @@ def make_sql(data, id, curatorId=None):
     sql_out += sql_line
 
     sql_out += '\n--NOTE: add to project_dataset table\n'
-    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status) VALUES ('%s', '%s', '%s', '%s', 'exists');\n" % \
-        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True))
+    sql_out += "INSERT INTO project_dataset (dataset_id, repository, title, url, status, data_format) VALUES ('%s', '%s', '%s', '%s', 'exists', '%s');\n" % \
+        (id, 'USAP-DC', data.get('title'), url_for('landing_page', dataset_id=id, _external=True), getFileFormats(data["filenames"]))
 
     sql_out += '\n--NOTE: same set of persons from above (check name and spelling)\n'
     for person_id in person_ids:
@@ -410,6 +433,17 @@ def make_sql(data, id, curatorId=None):
         sql_out += "UPDATE dataset SET replaced_by = '%s' WHERE id = '%s';\n" % (id, data['related_dataset'])
         sql_out += "UPDATE project_dataset SET status = 'deprecated' WHERE dataset_id = '%s';\n" % data['related_dataset']
 
+        query = "select * from dataset_fairness where dataset_id='%s';" % data['related_dataset']
+        cur.execute(query)
+        res = cur.fetchone()
+        if res:
+            sql_out += "\n--NOTE: this will copy the FAIR evaluation from dataset %s to this one" % data['related_dataset']
+            res['dataset_id'] = id
+            cur.fetchall()
+            fields = ", ".join(res.keys())
+            vals = ", ".join(map(lambda s: "'" + str(s) + "'", res.values()))
+            sql_out += "\nINSERT INTO dataset_fairness (%s) VALUES (%s);\n" % (fields, vals)
+
     sql_out += '\nCOMMIT;\n'
 
     return sql_out
@@ -463,6 +497,7 @@ def editDatasetJson2sql(data, uid):
     sql_out = ""
     sql_out += "START TRANSACTION;\n"
     for k in updates:
+
         if k == 'abstract':
             sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
             sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (usap.escapeQuotes(data['abstract']), uid)
@@ -760,7 +795,8 @@ def editDatasetJson2sql(data, uid):
 
         if k == 'title':      
             sql_out += "\n--NOTE: UPDATING TITLE\n"
-            sql_out += "UPDATE dataset SET title = '%s' WHERE id = '%s';\n" % (data['title'], uid)
+            sql_out += "UPDATE dataset SET title = '%s' WHERE id = '%s';\n" % (usap.escapeQuotes(data['title']), uid)
+            sql_out += "UPDATE project_dataset SET title='%s' WHERE dataset_id='%s';\n" % (usap.escapeQuotes(data['title']), uid)
 
         if k == 'user_keywords': 
             sql_out += "\n--NOTE: UPDATING USER KEYWORDS\n"
@@ -841,11 +877,14 @@ def write_readme(data, id):
 
 
 def json2sql(data, id, curator=None):
+    print("json2sql", id, curator)
     if data:
         # check if we are editing an existing project
         if data.get('edit') and data['edit'] == 'True':
+            print("editing")
             sql = editDatasetJson2sql(data, id)
         else:
+            print("not editing")
             data = parse_json(data)
             sql = make_sql(data, id, curator)
         readme_file = write_readme(data, id)

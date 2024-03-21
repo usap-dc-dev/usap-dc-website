@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from gmail_functions import send_gmail_message
 import csv
 
-nsf_file = "/web/usap-dc/htdocs/inc/nsf_table_2022_08.tsv" # This is a tsv export (copy and paste from the spreadsheet) of Part of PD-3PO-v1.3.2-USAPDC.xlsm 07-Mar-21 11-50-11.xlsx
+#nsf_file = "/web/usap-dc/htdocs/inc/nsf_table_2022_08.tsv" # This is a tsv export (copy and paste from the spreadsheet) of Part of PD-3PO-v1.3.2-USAPDC.xlsm 07-Mar-21 11-50-11.xlsx
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
 
@@ -42,8 +42,10 @@ ant_program_dict = {'ANTARCTIC GLACIOLOGY':'Antarctic Glaciology',
                           'Polar Cyberinfrastructure': 'Polar Cyberinfrastructure'}
 
 # read in tsv version of NSF spreadsheet
-with open(nsf_file) as csvfile:
-    reader = csv.DictReader(csvfile, delimiter='\t')
+# the file name is in the report_cofig.json file
+with open(config['NSF_AWARD_FILE']) as csvfile:
+    # reader = csv.DictReader(csvfile, delimiter='\t') # changed from tab to real csv
+    reader = csv.DictReader(csvfile)
     nsf_dict = {row['prop_id']:row for row in reader}
 
 
@@ -176,6 +178,9 @@ def update_award(awards):
             copi = escapeQuotes(copi)
         else:
             copi = None
+            
+        if not 'piEmail' in item:
+            item['piEmail'] = ''
 
         # check if dataset_id already exist in table
         sql_line = "Select * " \
@@ -202,7 +207,7 @@ def update_award(awards):
          
                 cur.execute(sql_line, (item['id'], escapeQuotes(item.get('title','')), 
                                 collab, copi, item.get('startDate',''), item.get('expDate',''),
-                                escapeQuotes(item.get('abstractText','')).encode('ascii','ignore'), pi, item.get('piEmail',''),
+                                escapeQuotes(item.get('abstractText','')), pi, item.get('piEmail',''),
                                 escapeQuotes(item.get('awardeeName','')), item.get('awardeeAddress',''),
                                 item.get('awardeeCity',''),item.get('awardeeState',''),item.get('awardeeZip',''),
                                 escapeQuotes(item.get('poName', '')), item.get('poEmail',''), lead, lead_id))

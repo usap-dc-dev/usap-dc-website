@@ -41,7 +41,9 @@ from lib.gmail_functions import send_gmail_message
 import lib.difHarvest as dh
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import zipfile as zf
 from zoneinfo import ZoneInfo as zi
+from io import BytesIO
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -2117,7 +2119,19 @@ def projectinfo():
             LEFT JOIN project_award_map pam ON pam.award_id = a.award        
             WHERE a.award = '%s'""" % award_id
         cur.execute(query_string)
-        return flask.jsonify(cur.fetchall()[0])
+        projs = cur.fetchall()
+        query_string2 = """SELECT pam.proj_uid FROM project_award_map pam WHERE pam.award_id = '%s' AND pam.proj_uid is not NULL""" % award_id
+        cur.execute(query_string2)
+        proj_ids = cur.fetchall()
+        if len(proj_ids) == 0:
+            query_string3 = """select a.*, pam.proj_uid as same_title
+            from award a left join project_award_map pam on pam.award_id = a.award where pam.award_id in 
+            (select award from award where title=(select title from award where award='%s') and award != '%s' and pam.proj_uid is not NULL);""" % (award_id, award_id)
+            cur.execute(query_string3)
+            proj_ids = cur.fetchall()
+            if len(proj_ids) > 0:
+                projs = proj_ids
+        return flask.jsonify(projs)
     return flask.jsonify({})
 
 
@@ -2486,7 +2500,8 @@ def landing_page(dataset_id):
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
 
-    return render_template('landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
+
+    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
 
 
 def getCMRUrls(dif_records):
@@ -2607,11 +2622,13 @@ def makeJsonLD(data, uid):
     description = data.get('abstract')
     if not description or description == '':
         description = data.get('title')
+    
+    full_dataset_url = config['USAP_DOMAIN'] + url_for('landing_page', dataset_id=uid).replace("/", "", 1)
 
     json_ld = {
         "@context": "https://schema.org/",
         "@type": "Dataset",
-        "@id": "doi:" + doi,
+        "@id": full_dataset_url if doi == "TBD" else ("doi:" + doi),
         "additionalType": ["geolink:Dataset", "vivo:Dataset"],
         "name": data.get('title'),
         "description": description,
@@ -2625,10 +2642,20 @@ def makeJsonLD(data, uid):
                 "additionalType": "http://www.w3.org/ns/dcat#DataCatalog",
                 "encodingFormat": "text/xml",
                 "name": "ISO Metadata Document",
-                "url": "http://get.iedadata.org/metadata/iso/usap/%siso.xml" % uid,
+                "url": "https://www.usap-dc.org/metadata/isoxml/%siso.xml" % uid,
                 "contentUrl": url_for('file_download', filename='filename')
             },
             {
+                "@type": "DataDownload",
+                "@id": full_dataset_url,
+                "additionalType": "dcat:distribution",
+                "url": full_dataset_url,
+                "name": "landing page",
+                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
+                "contentUrl": url_for('file_download', filename='filename'),
+                "encodingFormat": "text/html"
+            }
+            if doi == "TBD" else {
                 "@type": "DataDownload",
                 "@id": "http://dx.doi.org/%s" % doi,
                 "additionalType": "dcat:distribution",
@@ -2640,9 +2667,9 @@ def makeJsonLD(data, uid):
             },
             {
                 "@type": "DataDownload",
-                "@id": url_for('landing_page', dataset_id=uid),
+                "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
-                "url": url_for('landing_page', dataset_id=uid),
+                "url": full_dataset_url,
                 "name": "landing page",
                 "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
@@ -2654,6 +2681,11 @@ def makeJsonLD(data, uid):
             "@type": "PropertyValue",
             "propertyID": "dataset identifier",
             "value": "doi:" + doi
+        } if doi == "TBD" else {
+            "@type": "PropertyValue",
+            "propertyID": "dataset identifier",
+            "value": "doi:" + doi,
+            "url": "https://doi.org/%s" % doi
         },
         "contributor": awards,
         "license": [
@@ -2760,6 +2792,22 @@ def makeCitation(metadata, dataset_id):
     except:
         return None
 
+
+@app.route('/zip/usapdc_<dataset_id>_download_<dl_time>.zip', methods=["GET", "POST"])
+def zip_and_dl(dataset_id, dl_time):
+    if request.method == "POST":
+
+        files_to_zip = list(map(lambda str : str.replace(app.config["USAP_DOMAIN"], ""), request.form.getlist("dl_checkbox")))
+        my_zip = BytesIO()
+        with zf.ZipFile(my_zip, mode="w", compression=zf.ZIP_DEFLATED) as zip:
+            for f in files_to_zip:
+                file = open(f, "rb")
+                contents = file.read()
+                path_within_zip = os.path.join("usapdc_%s" % (dataset_id), os.path.basename(f))
+                zip.writestr(path_within_zip, contents)
+        return my_zip.getvalue(), {"Content-Type":"application/zip"}
+
+    return "Nothing to compress."
 
 @app.route('/dataset/<path:filename>', methods=['GET','POST'])
 def file_download(filename):
@@ -2939,9 +2987,35 @@ def curator():
                 submissions = []
                 for sub in res:
                     uid = sub['uid']
+                    fairStatus = ""
+                    if 'p' == uid[0] or 'p' == uid[1]:
+                        fairStatus = "N/A"
+                    else:
+                        dataset_id = uid[1:] if 'e' == uid[0] else uid
+                        fairCountQuery = "SELECT count(*) as ct from dataset_fairness where dataset_id='%s'" % dataset_id
+                        cur.execute(fairCountQuery)
+                        numEntries = int(cur.fetchall()[0]['ct'])
+                        if 0 == numEntries:
+                            fairStatus = "Never evaluated"
+                        else:
+                            fairQuery = "SELECT * from dataset_fairness where dataset_id='%s'" % dataset_id
+                            cur.execute(fairQuery)
+                            fairRes = cur.fetchall()[0]
+                            numFields = 0
+                            numEvaluated = 0
+                            for field in fairRes:
+                                if field.endswith("check"):
+                                    if fairRes[field] != -1:
+                                        numFields += 1
+                                    if fairRes[field] >= 0:
+                                        numEvaluated += 1
+                            fairStatus = "%d/%d" % (numEvaluated, numFields)
+                            if str(fairRes['reviewed_time']) < str(sub['submitted_date']):
+                                fairStatus = "(Needs update) " + fairStatus
                     landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
-                                        'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update']})
+                                        'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update'],
+                                        'fairStatus': fairStatus})
 
             template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
@@ -4917,7 +4991,8 @@ def search():
                 row['repo'] = items['repository']
                 row['datasets'] = [items]
             elif type(items) is list and len(items) > 0:
-                row['repo'] = items[0]['repository']                         
+                row['repo'] = items[0]['repository']
+
     template_dict['records'] = rows
 
     template_dict['search_params'] = session.get('search_params')
@@ -5098,7 +5173,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s" + inc_platforms + " OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
-        conds.append(cur.mogrify('repositories = %s ', (escapeChars(repo),)))
+        conds.append(cur.mogrify("%s = ANY(string_to_array(repositories, '; '))", (escapeChars(repo),)))
 
     if len(conds) > 0:
         q_conds = []
@@ -5472,11 +5547,13 @@ def sitemap():
 @app.route('/tracker', methods=['GET'])
 def tracker():
     # use to track clicks to external websites - will show up in Apache logs
+    '''
     params = request.args.to_dict()
     url = params.get('url')
     print(url)
     if url:
         return redirect(url)
+        '''
     return redirect(url_for('not_found'))
 
 
