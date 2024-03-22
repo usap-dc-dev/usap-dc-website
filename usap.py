@@ -2679,11 +2679,11 @@ def makeJsonLD(data, uid):
         ],
         "identifier": {
             "@type": "PropertyValue",
-            "propertyID": "dataset identifier",
-            "value": "doi:" + doi
+            "url": full_dataset_url,
+            "value": full_dataset_url
         } if doi == "TBD" else {
             "@type": "PropertyValue",
-            "propertyID": "dataset identifier",
+            "propertyID": "https://registry.identifiers.org/registry/doi",
             "value": "doi:" + doi,
             "url": "https://doi.org/%s" % doi
         },
@@ -2691,14 +2691,14 @@ def makeJsonLD(data, uid):
         "license": [
             {
                 "@type": "CreativeWork", 
-                "URL": "https://creativecommons.org/licenses/by-nc-sa/3.0/us/",
+                "URL": data['license_url'],
                 "name": "MD_Constraints",
-                "description": "useLimitation: Creative Commons Attribution-NonCommercial-Share Alike 3.0 United States [CC BY-NC-SA 3.0].   "
+                "description": "useLimitation: %s." % data['license_label']
             },
             {
                 "@type": "CreativeWork", 
                 "name": "MD_LegalConstraints",
-                "description": "accessConstraints: license.    otherConstraints: Creative Commons Attribution-NonCommercial-Share Alike 3.0 United States [CC BY-NC-SA 3.0].   "
+                "description": "accessConstraints: license.    otherConstraints: %s." % data['license_label']
             },
             {
                 "@type": "CreativeWork",
