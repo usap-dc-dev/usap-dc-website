@@ -2467,6 +2467,9 @@ def landing_page(dataset_id):
         cur.execute(fairness_query, (dataset_id,))
         fair_checks = cur.fetchone()
         if fair_checks:
+            fair_score_query = "select score, max_score, case when max_score>0 then 100*score/max_score else -1 end as score_pct from dataset_fairness_score where dataset_id=%s;"
+            cur.execute(fair_score_query, (dataset_id,))
+            fair_score_rslt = cur.fetchone()
             prev_review = {}
             for key in fair_checks:
                 if key[-5:] == "check":
@@ -2476,6 +2479,8 @@ def landing_page(dataset_id):
                     prev_review['date'] = dt_date.fromisoformat(str(val).split(" ")[0]).strftime("%B %d, %Y")
                 else:
                     prev_review[key] = val
+            prev_review['score_frac'] = "/".join(fair_score_rslt['score'], fair_score_rslt['max_score'])
+            prev_review['score_pct'] = fair_score_rslt['score_pct']
     else:
         metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
 
