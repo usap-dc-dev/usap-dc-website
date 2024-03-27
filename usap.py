@@ -2479,7 +2479,7 @@ def landing_page(dataset_id):
                     prev_review['date'] = dt_date.fromisoformat(str(val).split(" ")[0]).strftime("%B %d, %Y")
                 else:
                     prev_review[key] = val
-            prev_review['score_frac'] = "/".join(fair_score_rslt['score'], fair_score_rslt['max_score'])
+            prev_review['score_frac'] = "/".join([str(fair_score_rslt['score']), str(fair_score_rslt['max_score'])])
             prev_review['score_pct'] = fair_score_rslt['score_pct']
     else:
         metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
