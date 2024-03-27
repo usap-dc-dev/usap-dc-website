@@ -167,6 +167,7 @@ function showSelectedComboSize() {
   });
 </script>
 
+{% if see_review %}
 <script type="text/javascript">
     function toggleFairEval() {
         div = document.getElementById("fair_display");
@@ -189,6 +190,7 @@ function showSelectedComboSize() {
         }
     }
 </script>
+{% endif %}
 <style type="text/css">
     .popup {
         display: none;
@@ -223,11 +225,12 @@ function showSelectedComboSize() {
   <div class="header">
     Dataset Information
     <div style="float:right">
-      <button class="download" onclick="toggleFairEval()" id="fair_button">View FAIRness Details</button>
+      {% if see_review %}<button class="download" onclick="toggleFairEval()" id="fair_button">View FAIRness Details</button>{% endif %}
       <button class="download" onclick="location.href='mailto: {{contact_email}}?subject=Reporting Issue with dataset {{data.id}}'">Report Issue</button>
       <button class="download" onclick="window.location.href='/edit/dataset/{{data.id}}'">Edit</button>
     </div>
   </div>
+  {% if see_review %}
   <div class="popup" style="width:50%;height:{% if review_exists %}50%{% else %}135px{% endif %}" id="fair_display">
     <div class="header small sticky" id="fair_display_header" style="position:sticky;position:-webkit-sticky"><table style="border:none;width:100%"><tr><td>FAIRness Evaluation</td><td style="text-align:right"><button style="background-color:transparent;border-color:transparent" onclick="toggleFairEval()">✕</button></td></tr></table></div>
     <table style="margin:0.95em;border:none">
@@ -263,6 +266,7 @@ function showSelectedComboSize() {
         {% endif %}
     </table>
   </div>
+  {% endif %}
   <table class="borderless-table">
     <tr>
       <td width="75%">
