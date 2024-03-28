@@ -2429,6 +2429,7 @@ def json_serial(obj):
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
+    review_privilege = False
     prev_review = None
     fair_fields = []
     datasets = get_datasets([dataset_id])
@@ -2462,20 +2463,27 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
-        fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
-            " FROM dataset_fairness WHERE dataset_id=%s"])
-        cur.execute(fairness_query, (dataset_id,))
-        fair_checks = cur.fetchone()
-        if fair_checks:
-            prev_review = {}
-            for key in fair_checks:
-                if key[-5:] == "check":
-                    fair_fields.append(key[:-6])
-                val = fair_checks[key]
-                if key == "reviewed_time":
-                    prev_review['date'] = dt_date.fromisoformat(str(val).split(" ")[0]).strftime("%B %d, %Y")
-                else:
-                    prev_review[key] = val
+        if cf.isCurator():
+            review_privilege = True
+            fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
+                " FROM dataset_fairness WHERE dataset_id=%s"])
+            cur.execute(fairness_query, (dataset_id,))
+            fair_checks = cur.fetchone()
+            if fair_checks:
+                fair_score_query = "select score, max_score, case when max_score>0 then 100*score/max_score else -1 end as score_pct from dataset_fairness_score where dataset_id=%s;"
+                cur.execute(fair_score_query, (dataset_id,))
+                fair_score_rslt = cur.fetchone()
+                prev_review = {}
+                for key in fair_checks:
+                    if key[-5:] == "check":
+                        fair_fields.append(key[:-6])
+                    val = fair_checks[key]
+                    if key == "reviewed_time":
+                        prev_review['date'] = dt_date.fromisoformat(str(val).split(" ")[0]).strftime("%B %d, %Y")
+                    else:
+                        prev_review[key] = val
+                prev_review['score_frac'] = "/".join([str(fair_score_rslt['score']), str(fair_score_rslt['max_score'])])
+                prev_review['score_pct'] = fair_score_rslt['score_pct']
     else:
         metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
 
@@ -2501,7 +2509,7 @@ def landing_page(dataset_id):
     getCMRUrls(metadata['dif_records'])
 
 
-    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
+    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
 
 
 def getCMRUrls(dif_records):
