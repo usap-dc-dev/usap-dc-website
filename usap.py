@@ -2429,6 +2429,7 @@ def json_serial(obj):
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
+    review_privilege = False
     prev_review = None
     fair_fields = []
     datasets = get_datasets([dataset_id])
@@ -2483,8 +2484,6 @@ def landing_page(dataset_id):
                         prev_review[key] = val
                 prev_review['score_frac'] = "/".join([str(fair_score_rslt['score']), str(fair_score_rslt['max_score'])])
                 prev_review['score_pct'] = fair_score_rslt['score_pct']
-        else:
-            review_privilege = False
     else:
         metadata['files'] = [{'url': url, 'file_name': os.path.basename(os.path.normpath(url))}]
 
