@@ -47,13 +47,15 @@
           <td>{{d.date_created}}</td>
           <td>{{d.date_modified}}</td>
           <td>{% if fair_eval[d.id] %}
-            <table style="border:none;text-align:center;width:90%">
-                <tr>
-                    <td style="border-radius:50px;background-color:rgba(255, 0, 0, 0.483)" title="{{fair_eval[d.id][0]}} items rated as Poor">{{fair_eval[d.id][0]}}</td>
-                    <td style="border-radius:50px;background-color:orange" title="{{fair_eval[d.id][1]}} items rated as Fair">{{fair_eval[d.id][1]}}</td>
-                    <td style="border-radius:50px;background-color:lightgreen" title="{{fair_eval[d.id][2]}} items rated as Good">{{fair_eval[d.id][2]}}</td>
-                </tr>
-            </table>
+            <a href="{{url_for('landing_page', dataset_id=d.id)}}?showFair=True" target="_blank">
+                <table style="border:none;text-align:center;width:90%;color:black">
+                    <tr>
+                        <td style="border-radius:50px;background-color:rgba(255, 0, 0, 0.483)" title="{{fair_eval[d.id][0]}} aspects rated as Poor">{{fair_eval[d.id][0]}}</td>
+                        <td style="border-radius:50px;background-color:orange" title="{{fair_eval[d.id][1]}} aspects rated as Fair">{{fair_eval[d.id][1]}}</td>
+                        <td style="border-radius:50px;background-color:lightgreen" title="{{fair_eval[d.id][2]}} aspects rated as Good">{{fair_eval[d.id][2]}}</td>
+                    </tr>
+                </table>
+            </a>
             {% else %}TBD{% endif %}
           </td>
           <td><a href="{{url_for('landing_page', dataset_id=d.id)}}">View</a> / <a href="{{url_for('dataset', dataset_id=d.id)}}">Edit</a> / <a href="{{url_for('dataset', template_id=d.id)}}">Create New Submission From This One</a></td>
