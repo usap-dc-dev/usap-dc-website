@@ -248,7 +248,7 @@ function showSelectedComboSize() {
         <tr style="border-bottom:1px solid black">
             <td style="text-align:center">{{reviewer_dict[item]}}</td>
             {% if review[item ~ '_check'] == 0 %}
-            <td style="text-align:center;background-color:red">
+            <td style="text-align:center;background-color:rgba(255, 0, 0, 0.483)">
             {% elif review[item ~ '_check'] == 1 %}
             <td style="text-align:center;background-color:orange">
             {% elif review[item ~ '_check'] == 2 %}
