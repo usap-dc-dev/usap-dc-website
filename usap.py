@@ -2429,6 +2429,7 @@ def json_serial(obj):
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
+    show_fair_initially = request.args.get("showFair") is not None and request.args.get("showFair").lower() == "true"
     review_privilege = False
     prev_review = None
     fair_fields = []
@@ -2509,7 +2510,7 @@ def landing_page(dataset_id):
     getCMRUrls(metadata['dif_records'])
 
 
-    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
+    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, showFair = show_fair_initially, reviewer_dict = fair_review_dict)
 
 
 def getCMRUrls(dif_records):

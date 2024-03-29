@@ -49,9 +49,9 @@
           <td>{% if fair_eval[d.id] %}
             <table style="border:none;text-align:center;width:90%">
                 <tr>
-                    <td style="border-radius:50px;background-color:rgba(255, 0, 0, 0.483)">{{fair_eval[d.id][0]}}</td>
-                    <td style="border-radius:50px;background-color:orange">{{fair_eval[d.id][1]}}</td>
-                    <td style="border-radius:50px;background-color:lightgreen">{{fair_eval[d.id][2]}}</td>
+                    <td style="border-radius:50px;background-color:rgba(255, 0, 0, 0.483)" title="{{fair_eval[d.id][0]}} items rated as Poor">{{fair_eval[d.id][0]}}</td>
+                    <td style="border-radius:50px;background-color:orange" title="{{fair_eval[d.id][1]}} items rated as Fair">{{fair_eval[d.id][1]}}</td>
+                    <td style="border-radius:50px;background-color:lightgreen" title="{{fair_eval[d.id][2]}} items rated as Good">{{fair_eval[d.id][2]}}</td>
                 </tr>
             </table>
             {% else %}TBD{% endif %}
