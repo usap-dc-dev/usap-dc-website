@@ -2430,7 +2430,8 @@ def json_serial(obj):
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
     show_fair_initially = request.args.get("showFair") is not None and request.args.get("showFair").lower() == "true"
-    review_privilege = False
+    user_info = session.get("user_info")
+    review_privilege = (user_info is not None) and (check_user_permission(user_info, dataset_id))
     prev_review = None
     fair_fields = []
     datasets = get_datasets([dataset_id])
@@ -2464,8 +2465,7 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
-        if cf.isCurator():
-            review_privilege = True
+        if review_privilege:
             fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
                 " FROM dataset_fairness WHERE dataset_id=%s"])
             cur.execute(fairness_query, (dataset_id,))
