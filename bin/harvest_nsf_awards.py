@@ -41,12 +41,18 @@ ant_program_dict = {'ANTARCTIC GLACIOLOGY':'Antarctic Glaciology',
                           'POST DOC/TRAVEL': 'Post Doc/Travel',
                           'Polar Cyberinfrastructure': 'Polar Cyberinfrastructure'}
 
+# map tying award id to lead award id
+lead_ids = {}
+count_leads = {}
+# set keeping track of the award titles found so far
+titles = {}
+
 # read in tsv version of NSF spreadsheet
 # the file name is in the report_cofig.json file
-with open(config['NSF_AWARD_FILE']) as csvfile:
+#with open(config['NSF_AWARD_FILE']) as csvfile:
     # reader = csv.DictReader(csvfile, delimiter='\t') # changed from tab to real csv
-    reader = csv.DictReader(csvfile)
-    nsf_dict = {row['prop_id']:row for row in reader}
+#    reader = csv.DictReader(csvfile)
+#    nsf_dict = {row['prop_id']:row for row in reader}
 
 
 def connect_to_db():
@@ -138,7 +144,13 @@ def getAwardsFromNSF(start_date):
             offset += 25
             if len(data['response']['award']) < 25:
                 not_done = False
-
+    for award in awards:
+        if award["title"] in titles:
+            lead_ids[award["id"]] = titles[award["title"]]
+            count_leads[titles[award["title"]]] = 1 + count_leads[titles[award["title"]]]
+        else:
+            titles[award["title"]] = award["id"]
+            count_leads[award["id"]] = 1
     print("Total Awards: %s" % num_records)
     return awards
 
@@ -148,14 +160,18 @@ def escapeQuotes(string):
         return None
     return string.replace("'", "''")
 
-
+# TODO rewrite this whole method
 def isLead(award_id):
-    iln_dict = {'I':'Standard', 'L':'Lead', 'N':'Non-Lead'}
-    if nsf_dict.get(award_id):
-        iln = nsf_dict[award_id]['ILN']
-        lead = iln_dict.get(iln, 'Standard')
-        lead_id = nsf_dict[award_id]['lead']
-        return lead, lead_id
+    lead_id = lead_ids[award_id]
+    if 1 < count_leads[lead_id]:
+        lead_text = "Lead" if lead_id == award_id else "Non-Lead"
+        return lead_text, lead_id
+    # iln_dict = {'I':'Standard', 'L':'Lead', 'N':'Non-Lead'}
+    # if nsf_dict.get(award_id):
+    #     iln = nsf_dict[award_id]['ILN']
+    #     lead = iln_dict.get(iln, 'Standard')
+    #     lead_id = nsf_dict[award_id]['lead']
+    #     return lead, lead_id
     return 'Standard', ''
 
 
