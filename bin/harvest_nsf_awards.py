@@ -172,6 +172,11 @@ def isLead(award_id):
         return lead, lead_id
     else:
         lead_id = lead_ids[award_id]
+        if nsf_dict.get(lead_id):
+            iln = nsf_dict[lead_id]['ILN']
+            lead = iln_dict.get(iln, 'Standard')
+            lead_id = nsf_dict[lead_id]['lead']
+            return lead, lead_id
         if 1 < count_leads[lead_id]:
             lead_text = "Lead" if lead_id == award_id else "Non-Lead"
             return lead_text, lead_id
