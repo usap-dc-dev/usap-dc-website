@@ -95,7 +95,7 @@ def sendEmail(message_text, subject, file=None):
     print(subject)
     sender = config['USAP-DC_GMAIL_ACCT']
     recipients = config['RECIPIENTS']
-    success, error = send_gmail_message(sender, recipients, "DEV: " + subject, message_text, file)
+    success, error = send_gmail_message(sender, recipients, subject, message_text, file)
     if error:
         print(error)
         sys.exit()
