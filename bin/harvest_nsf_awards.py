@@ -41,12 +41,18 @@ ant_program_dict = {'ANTARCTIC GLACIOLOGY':'Antarctic Glaciology',
                           'POST DOC/TRAVEL': 'Post Doc/Travel',
                           'Polar Cyberinfrastructure': 'Polar Cyberinfrastructure'}
 
+# map tying award id to lead award id
+lead_ids = {}
+count_leads = {}
+# set keeping track of the award titles found so far
+titles = {}
+
 # read in tsv version of NSF spreadsheet
 # the file name is in the report_cofig.json file
 with open(config['NSF_AWARD_FILE']) as csvfile:
     # reader = csv.DictReader(csvfile, delimiter='\t') # changed from tab to real csv
-    reader = csv.DictReader(csvfile)
-    nsf_dict = {row['prop_id']:row for row in reader}
+   reader = csv.DictReader(csvfile)
+   nsf_dict = {row['prop_id']:row for row in reader}
 
 
 def connect_to_db():
@@ -138,7 +144,16 @@ def getAwardsFromNSF(start_date):
             offset += 25
             if len(data['response']['award']) < 25:
                 not_done = False
-
+    for award in awards:
+        if award["title"] in titles:
+            titles[award["title"]].add(award["id"])
+        else:
+            titles[award["title"]] = {award["id"]}
+    for title in titles:
+        awardIds = sorted(titles[title])
+        count_leads[awardIds[0]] = len(awardIds)
+        for id in awardIds:
+            lead_ids[id] = awardIds[0]
     print("Total Awards: %s" % num_records)
     return awards
 
@@ -148,7 +163,6 @@ def escapeQuotes(string):
         return None
     return string.replace("'", "''")
 
-
 def isLead(award_id):
     iln_dict = {'I':'Standard', 'L':'Lead', 'N':'Non-Lead'}
     if nsf_dict.get(award_id):
@@ -156,6 +170,16 @@ def isLead(award_id):
         lead = iln_dict.get(iln, 'Standard')
         lead_id = nsf_dict[award_id]['lead']
         return lead, lead_id
+    else:
+        lead_id = lead_ids[award_id]
+        if nsf_dict.get(lead_id):
+            iln = nsf_dict[lead_id]['ILN']
+            lead = iln_dict.get(iln, 'Standard')
+            lead_id = nsf_dict[lead_id]['lead']
+            return lead, lead_id
+        if 1 < count_leads[lead_id]:
+            lead_text = "Lead" if lead_id == award_id else "Non-Lead"
+            return lead_text, lead_id
     return 'Standard', ''
 
 
