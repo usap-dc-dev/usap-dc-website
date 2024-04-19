@@ -6,7 +6,7 @@ import psycopg2.extras
 from gmail_functions import send_gmail_message
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
-config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
+config.update(json.loads(open('/web/usap-dc/htdocs/inc/poreport_config.json', 'r').read()))
 baseURL = config['USAP_DOMAIN']
 dataset_baseURL = baseURL + "view/dataset/"
 project_baseURL = baseURL + "view/project/"
