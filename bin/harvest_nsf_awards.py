@@ -343,13 +343,15 @@ def update_award_program(award_list, out_text):
                 sql_line = "INSERT INTO award_program_map(award_id, program_id)"\
                             "VALUES ('{0}', '{1}'); "\
                             .format(item['id'], prg2)
-                try:
-                    cur.execute(sql_line)
-                except:
-                    text = "Database Error. %s<br>" % sys.exc_info()[1]
-                    print(text)
-                    sendEmail(text,'Unsuccessul Awards Harvest')
-                    sys.exit(1)
+            else:
+                sql_line = "UPDATE award_program_map SET program_id='{1}' where award_id='{0}'".format(item['id'], prg2)
+            try:
+                cur.execute(sql_line)
+            except:
+                text = "Database Error. %s<br>" % sys.exc_info()[1]
+                print(text)
+                sendEmail(text,'Unsuccessul Awards Harvest')
+                sys.exit(1)
         else:
             out_text += '%s is not in dict<br>' % prg
 
