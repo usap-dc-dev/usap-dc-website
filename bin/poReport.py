@@ -48,11 +48,11 @@ def today():
 def getProjectsByPOEmail(poEmail, conn, cur):
     if not conn:
         conn, cur = connect_to_db()
-    awards_query = "SELECT DISTINCT award FROM award WHERE po_email=%s AND project_needed=true AND expiry>=%s"
-    count_projects_query = "SELECT COUNT(DISTINCT proj_uid) AS proj_count FROM project_award_map WHERE award_id IN (SELECT award FROM award WHERE po_email=%s AND project_needed=true AND expiry>=%s)"
+    awards_query = "SELECT DISTINCT award FROM award WHERE po_email=%s AND (project_needed=true OR award IN (SELECT DISTINCT award_id FROM project_award_map)) AND expiry>=%s"
+    count_projects_query = "SELECT COUNT(DISTINCT proj_uid) AS proj_count FROM project_award_map WHERE award_id IN (SELECT award FROM award WHERE po_email=%s AND (project_needed=true OR award IN (SELECT DISTINCT award_id FROM project_award_map)) AND expiry>=%s)"
     projects_query = "SELECT DISTINCT proj_uid FROM project_award_map WHERE award_id=%s"
     datasets_query = "SELECT DISTINCT dataset_id FROM project_dataset_map WHERE proj_uid=%s"
-    count_datasets_query = "SELECT COUNT(DISTINCT dataset_id) AS ds_count FROM project_dataset_map WHERE proj_uid IN (SELECT DISTINCT proj_uid FROM project_award_map WHERE award_id IN (SELECT award FROM award WHERE po_email=%s AND project_needed=true AND expiry>=%s))"
+    count_datasets_query = "SELECT COUNT(DISTINCT dataset_id) AS ds_count FROM project_dataset_map WHERE proj_uid IN (SELECT DISTINCT proj_uid FROM project_award_map WHERE award_id IN (SELECT award FROM award WHERE po_email=%s  AND (project_needed=true OR award IN (SELECT DISTINCT award_id FROM project_award_map)) AND expiry>=%s))"
     awards = {}
     cur.execute(awards_query, (poEmail, today()))
     awards_rows = cur.fetchall()
