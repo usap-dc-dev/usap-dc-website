@@ -126,8 +126,29 @@ def getNewProjects(poEmail, conn, cur):
 def getNewDatasets(poEmail, conn, cur):
     if not conn:
         (conn, cur) = connect_to_db()
-    
-    return ""
+    query = """SELECT dataset.id, dataset.title AS ds_title, dataset.date_created, json_agg(a.*) AS awards 
+                    FROM dataset
+                    JOIN dataset_award_map dam ON dam.dataset_id = dataset.id
+                    JOIN (
+                    	SELECT * FROM award
+                    	JOIN award_program_map apm ON apm.award_id = award.award
+                    	JOIN program ON program.id = apm.program_id
+                    	) a ON a.award = dam.award_id
+                    WHERE dataset.date_created >= %s
+                    AND a.po_email=%s
+                    GROUP by dataset.id, dataset.title, dataset.date_created
+                    ORDER BY dataset.date_created;"""
+    cur.execute(query, (lastReportDate, poEmail))
+    rows = cur.fetchall()
+    datasets = []
+    for row in rows:
+        ds = {}
+        ds["title"] = row["ds_title"]
+        ds["awards"] = row["awards"]
+        ds["date_created"] = row["date_created"]
+        ds["id"] = row["id"]
+        datasets.append(ds)
+    return datasets
 
 
 def draftEmail(poEmail, conn, cur):
@@ -139,12 +160,13 @@ def draftEmail(poEmail, conn, cur):
     name = rows[0]['po_name'] if len(rows)>0 else "Unknown Program Officer"
     awards, numProjects, numDatasets, numAwardsWithProjects = getProjectsByPOEmail(poEmail, conn, cur)
     newProjectsText = ""
+    newDatasetsText = ""
     if len(awards) > 0:
         newProjects = getNewProjects(poEmail, conn, cur)
         if len(newProjects) > 0:
             newProjectsText = functools.reduce(lambda prevText, project:\
                                                """{0}<br><b>Project Title:</b> {1}<br>
-                                               <b>Awards:</b> {2}<br>
+                                               <b>Award(s):</b> {2}<br>
                                                <b>Date Created:</b> {3}<br>
                                                <b>Number of Datasets:</b> {4}<br>
                                                <b>Dataset Links:</b> {5}<br>
@@ -161,6 +183,18 @@ def draftEmail(poEmail, conn, cur):
                                                                                           project["datasets"], "<ul style=\"list-style-type: none;margin-top:-10px\">")\
                                                                             if project["datasets"] is not None and len(project["datasets"]) > 0 else "<br>", project_baseURL + project["uid"]),\
                                                newProjects, "<h2>Projects added since %s</h2>" % (lastReportDate,))
+        newDatasets = getNewDatasets(poEmail, conn, cur)
+        if len(newDatasets) > 0:
+            newDatasetsText = functools.reduce(lambda prevText, dataset:\
+                                              """{0}<b>Dataset Title:</b> {1}<br>
+                                              <b>Award(s):</b> {2}<br>
+                                              <b>Dataset Landing Page:</b> {3}<br><br>"""\
+                                                .format(prevText, dataset["title"],\
+                                                        functools.reduce(lambda prevAwdTxt, award:\
+                                                                         "{0}<br>&emsp;<b>{1}</b> (PEC: {2}, PI: {3})"\
+                                                                            .format(prevAwdTxt, award["award"], award["pec"], award["name"]), dataset["awards"], ""),\
+                                                        dataset_baseURL + dataset["id"])\
+                                                , newDatasets, "<h2>Datasets added since %s</h2>" % (lastReportDate,))
         awards_indenter = Indenter()
         empty_awards_indenter = Indenter()
         award_text = "<table width=\"100%\" style=\"max-width:800px\"><tr><th>Award Number</th><th>Project Count</th><th>Project</th><th>Dataset</th></tr>"
@@ -220,9 +254,11 @@ def draftEmail(poEmail, conn, cur):
         \n\t<p>%s%s%s</p>
         %s
         %s
+        <h2>Summary of All Active Awards</h2>
+        %s
         %s
         <p>Sincerely,<br>
-        The USAP-DC Team</p></body></html>""" % (style, name, newProjectsText, activeAwardsTxt, awardsWithProjectsTxt, projectDatasetTxt, award_text, empty_awards_text)
+        The USAP-DC Team</p></body></html>""" % (style, name, activeAwardsTxt, awardsWithProjectsTxt, projectDatasetTxt, newProjectsText, newDatasetsText, award_text, empty_awards_text)
     return msg_text
 
 conn, cur = connect_to_db()
