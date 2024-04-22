@@ -181,7 +181,7 @@ def draftEmail(poEmail, conn, cur):
                                                                         functools.reduce(lambda prevDsText, curDs : "{0}<br>&emsp;<a href=\"{1}\">{2}</a> ({3})"\
                                                                                           .format(prevDsText, curDs["url"], curDs["title"], curDs["repository"]),\
                                                                                           project["datasets"], "<ul style=\"list-style-type: none;margin-top:-10px\">")\
-                                                                            if project["datasets"] is not None and len(project["datasets"]) > 0 else "<br>", project_baseURL + project["uid"]),\
+                                                                            if project["datasets"] is not None and len(project["datasets"]) > 0 else "", project_baseURL + project["uid"]),\
                                                newProjects, "<h2>Projects added since %s</h2>" % (lastReportDate,))
         newDatasets = getNewDatasets(poEmail, conn, cur)
         if len(newDatasets) > 0:
