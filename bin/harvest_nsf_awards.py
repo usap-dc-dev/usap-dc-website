@@ -338,20 +338,18 @@ def update_award_program(award_list, out_text):
                         .format(item['id'], prg2)
             cur.execute(sql_line)
             data = cur.fetchall()
-            # if no data returned use insert otherwise update
+            # if not, put it in
             if not data:
                 sql_line = "INSERT INTO award_program_map(award_id, program_id)"\
                             "VALUES ('{0}', '{1}'); "\
                             .format(item['id'], prg2)
-            else:
-                sql_line = "UPDATE award_program_map SET program_id='{1}' where award_id='{0}'".format(item['id'], prg2)
-            try:
-                cur.execute(sql_line)
-            except:
-                text = "Database Error. %s<br>" % sys.exc_info()[1]
-                print(text)
-                sendEmail(text,'Unsuccessul Awards Harvest')
-                sys.exit(1)
+                try:
+                    cur.execute(sql_line)
+                except:
+                    text = "Database Error. %s<br>Query: <code>%s</code>" % (sys.exc_info()[1], sql_line)
+                    print(text)
+                    sendEmail(text,'Unsuccessful Awards Harvest')
+                    sys.exit(1)
         else:
             out_text += '%s is not in dict<br>' % prg
 
@@ -368,6 +366,7 @@ if __name__ == '__main__':
     # Get awards from NSF API for last 5 years
     start_date = (datetime.datetime.now() - datetime.timedelta(days=5*365)).strftime('%m/%d/%Y')
     awards = getAwardsFromNSF(start_date)
+    print(awards)
     
     # Update award table
     out_text = update_award(awards)
