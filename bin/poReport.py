@@ -180,7 +180,7 @@ def draftEmail(poEmail, conn, cur):
                                                                     project["date_created"], len(project["datasets"]) if project["datasets"] is not None else 0,\
                                                                         functools.reduce(lambda prevDsText, curDs : "{0}<br>&emsp;<a href=\"{1}\">{2}</a> ({3})"\
                                                                                           .format(prevDsText, curDs["url"], curDs["title"], curDs["repository"]),\
-                                                                                          project["datasets"], "<ul style=\"list-style-type: none;margin-top:-10px\">")\
+                                                                                          project["datasets"], "")\
                                                                             if project["datasets"] is not None and len(project["datasets"]) > 0 else "", project_baseURL + project["uid"]),\
                                                newProjects, "<h2>Projects added since %s</h2>" % (lastReportDate,))
         newDatasets = getNewDatasets(poEmail, conn, cur)
@@ -197,7 +197,7 @@ def draftEmail(poEmail, conn, cur):
                                                 , newDatasets, "<h2>Datasets added since %s</h2>" % (lastReportDate,))
         awards_indenter = Indenter()
         empty_awards_indenter = Indenter()
-        award_text = "<table width=\"100%\" style=\"max-width:800px\"><tr><th>Award Number</th><th>Project Count</th><th>Project</th><th>Dataset</th></tr>"
+        award_text = "<table width=\"100%\"><tr><th>Award Number</th><th>Project Count</th><th>Project</th><th>Dataset</th></tr>"
         empty_awards_text = "<p>Active awards with no projects:</p>\n<ul>"
         awards_indenter.indent()
         empty_awards_indenter.indent()
