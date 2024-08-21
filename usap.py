@@ -2596,12 +2596,19 @@ def makeJsonLD(data, uid):
     spatial_coverage = []
     for s in data.get('spatial_extents'):
         if s['west'] == s['east'] and s['south'] == s['north']:
-            ex = {
+            """ex = {
                 "@type": "Place",
                 "geo": {
                     "@type": "GeoCoordinates",
                     "longitude": s.get('east'),
                     "latitude": s.get('north')
+                }
+            }"""
+            ex = {
+                "@type": "Place",
+                "geo": {
+                    "@type": "GeoShape",
+                    "box": "%s %s %s %s" % (s.get('north'), s.get('east'), s.get('north'), s.get('east'))
                 }
             }
         else:   
@@ -2609,7 +2616,7 @@ def makeJsonLD(data, uid):
                 "@type": "Place",
                 "geo": {
                     "@type": "GeoShape",
-                    "box": "%s, %s, %s, %s" % (s.get('west'), s.get('south'), s.get('east'), s.get('north'))
+                    "box": "%s, %s, %s, %s" % (s.get('south'), s.get('west'), s.get('north'), s.get('east'))
                 }
             }
         spatial_coverage.append(ex)
