@@ -158,13 +158,10 @@ function showSelectedComboSize() {
       $("#recaptcha_modal").hide();
       setMultifile(false);
     });
-
-    // add schema.org json_ld for google searches
-    var el = document.createElement('script');
-    el.type = 'application/ld+json';
-    el.text = $("#div_jsonld").text();
-    document.querySelector('head').appendChild(el);
   });
+</script>
+<script type="application/ld+json">
+    {{json_dumps(data['json_ld'], indent=2)|safe}}
 </script>
 
 <script type="text/javascript">
