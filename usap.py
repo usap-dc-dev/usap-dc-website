@@ -2665,8 +2665,6 @@ def makeJsonLD(data, uid):
                 "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
                 "url": full_dataset_url,
-                "name": "landing page",
-                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
                 "encodingFormat": "text/html"
             }
@@ -2675,8 +2673,6 @@ def makeJsonLD(data, uid):
                 "@id": "http://dx.doi.org/%s" % doi,
                 "additionalType": "dcat:distribution",
                 "url": "http://dx.doi.org/%s" % doi,
-                "name": "landing page",
-                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
                 "encodingFormat": "text/html"
             },
@@ -2685,8 +2681,6 @@ def makeJsonLD(data, uid):
                 "@id": full_dataset_url,
                 "additionalType": "dcat:distribution",
                 "url": full_dataset_url,
-                "name": "landing page",
-                "description": "Link to a web page related to the resource.. Service Protocol: Link to a web page related to the resource.. Link Function: information",
                 "contentUrl": url_for('file_download', filename='filename'),
                 "encodingFormat": "text/html"
             }
