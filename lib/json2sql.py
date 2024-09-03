@@ -449,7 +449,7 @@ def make_sql(data, id, curatorId=None):
     return sql_out
 
 
-def editDatasetJson2sql(data, uid):
+def editDatasetJson2sql(data, uid, isCurator):
     conn, cur = usap.connect_to_db(curator=True)
 
     # get existing values from the database and compare them with the JSON file
@@ -788,9 +788,12 @@ def editDatasetJson2sql(data, uid):
                 cur.execute(query)
                 res = cur.fetchone()
                 if res['count'] == 0:
+                    if isCurator:
+                        sql_out += "--NOTE: The submitter of this request is a USAP-DC curator. If you truly wish to add them as a contributor, uncomment the following lines.\n--"
                     line = "INSERT INTO dataset_person_map (dataset_id, person_id) VALUES ('%s','%s');\n" % (uid, usap.escapeQuotes(data["submitter_name"]))
                     sql_out += line
-
+                if isCurator:
+                    sql_out += "--"
                 sql_out += "UPDATE dataset SET submitter_id = '%s' WHERE id= '%s';\n" % (usap.escapeQuotes(data['submitter_name']), uid)
 
         if k == 'title':      
@@ -876,13 +879,13 @@ def write_readme(data, id):
         return "Error writing README file: \n%s" % str(e)
 
 
-def json2sql(data, id, curator=None):
+def json2sql(data, id, curator=None, isCurator=False):
     print("json2sql", id, curator)
     if data:
         # check if we are editing an existing project
         if data.get('edit') and data['edit'] == 'True':
             print("editing")
-            sql = editDatasetJson2sql(data, id)
+            sql = editDatasetJson2sql(data, id, isCurator)
         else:
             print("not editing")
             data = parse_json(data)

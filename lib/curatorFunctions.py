@@ -243,22 +243,22 @@ def ISOXMLExists(uid):
 #         os.remove(isoxml_file)
 
 
-def isCurator():
+def isCurator(userid=None):
     # Store ORCID or GOOGLE IDs of curators as sha256 hashed values in CURATORS_LIST.
     # Use `hashlib.sha256("<ORCID or GOOGLE ID>").hexdigest()` in python, or
     # `echo -n "<ORCID or GOOGLE ID>" | openssl sha256` on the command line
     if session.get('user_info') is None:
         return False
-    userid = session['user_info'].get('sub')
-    if userid is None:
-        userid = session['user_info'].get('orcid')
-    if userid is None:
-        return False
+    if userid == None:
+        userid = session['user_info'].get('sub')
+        if userid is None:
+            userid = session['user_info'].get('orcid')
+        if userid is None:
+            return False
     userid_sha256 = hashlib.sha256(userid.encode()).hexdigest()
     curator_file = open(CURATORS_LIST, 'r')
     curators = curator_file.read().split('\n')
     return userid_sha256 in curators
-
 
 def addKeywordsToDatabase(uid, keywords):
     (conn, cur) = usap.connect_to_db(curator=True)
@@ -596,7 +596,7 @@ def getKeywordsFromDatabase():
     return sorted(keyword_types, key=lambda k: k['keyword_type_label'].upper())
 
 
-def getDatasetKeywords(uid):
+def  getDatasetKeywords(uid):
     (conn, cur) = usap.connect_to_db()
     query = "SELECT dkm.keyword_id, ku.keyword_label FROM dataset_keyword_map dkm " + \
             "JOIN keyword_usap ku ON ku.keyword_id = dkm.keyword_id " + \
@@ -1060,6 +1060,7 @@ def compare(s, t):
 
 def editProjectJson2sql(data, uid):
     conn, cur = usap.connect_to_db(curator=True)
+    isSubmitterCurator = isCurator(data.get('submitter_orcid'))
 
     # generate the submitter's person id if we have their name
     subm_id = None
