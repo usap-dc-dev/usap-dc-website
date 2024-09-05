@@ -330,7 +330,9 @@ function showSelectedComboSize() {
             Abstract
           </div>
           <div class="value">
+            {% autoescape false %}
             {{data['abstract']}}
+            {% endautoescape %}
           </div>
         </div>
         {% endif %}

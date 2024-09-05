@@ -179,7 +179,7 @@ def make_sql(data, id, curatorId=None):
                     usap.escapeQuotes(data["submitter_name"]), 
                     usap.escapeQuotes('; '.join(person_ids)), 
                     release_date, 
-                    usap.escapeQuotes(data["abstract"]), 
+                    usap.escapeQuotes(data["abstract"].replace('\n', '<br/>')), 
                     version, 
                     url, 
                     'usap-dc', 
@@ -500,7 +500,7 @@ def editDatasetJson2sql(data, uid, isCurator):
 
         if k == 'abstract':
             sql_out += "\n--NOTE: UPDATING ABSTRACT\n"
-            sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (usap.escapeQuotes(data['abstract']), uid)
+            sql_out += "UPDATE dataset SET abstract = '%s' WHERE id = '%s';\n" % (usap.escapeQuotes(data['abstract'].replace('\n', '<br/>')), uid)
         
         if k == 'authors':
             sql_out += "\n--NOTE: UPDATING AUTHORS\n"

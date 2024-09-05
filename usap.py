@@ -2436,7 +2436,7 @@ def landing_page(dataset_id):
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
-   
+
     url = metadata['url']
     if not url:
         return redirect(url_for('not_found'))
