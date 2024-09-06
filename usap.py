@@ -2426,16 +2426,30 @@ def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     return str(obj)
 
+# determines if the currently logged in user is a creator of the given dataset
+def isCreator(dataset_content):
+    if session.get('user_info') is None:
+        return False
+    userid = session['user_info'].get('sub')
+    if userid is None:
+        userid = session['user_info'].get('orcid')
+    if userid is None:
+        return False
+    if dataset_content.get('creator'):
+        creator_ids = map(lambda x: x.id, dataset_content['creator_orcids'])
+        return userid in creator_ids
+    return False
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
-    review_privilege = False
+    #review_privilege = False
     prev_review = None
     fair_fields = []
     datasets = get_datasets([dataset_id])
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
+    review_privilege = isCreator(metadata)
 
     url = metadata['url']
     if not url:
