@@ -111,7 +111,7 @@ orcid = oauth.register('orcid',
 
 config = json.loads(open('config.json', 'r').read())
 
-fair_eval_map = {"-2":"TBD", "-1":"N/A", "0":"Poor", "1":"Fair", "2":"Good"}
+fair_eval_map = {"-2":"TBD", "-1":"N/A", "0":"Poor", "1":"Okay", "2":"Good"}
 fair_review_dict = {
     "title": "The title accurately and succinctly describes the dataset.",
     "abstract": "The abstract exists and is descriptive and accurate.",
