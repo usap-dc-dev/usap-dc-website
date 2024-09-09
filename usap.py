@@ -2428,6 +2428,7 @@ def json_serial(obj):
 
 # determines if the currently logged in user is a creator of the given dataset
 def isCreator(dataset_content):
+    print(dataset_content)
     if session.get('user_info') is None:
         return False
     userid = session['user_info'].get('sub')
@@ -2449,7 +2450,7 @@ def landing_page(dataset_id):
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
-    review_privilege = isCreator(metadata)
+    review_privilege = False
 
     url = metadata['url']
     if not url:
@@ -2511,6 +2512,9 @@ def landing_page(dataset_id):
             metadata['creator_orcids'].append({'id': p.get('id'), 'orcid': p.get('id_orcid')}) 
         else:
             metadata['creator_orcids'].append({'id': c, 'orcid': None})
+    
+    if not review_privilege:
+        review_privilege = isCreator(metadata)
 
     if not metadata['citation'] or metadata['citation'] == '':
         metadata['citation'] = makeCitation(metadata, dataset_id)
