@@ -9,9 +9,34 @@
     
     <h3>Overview</h3>
     <p>
-        <a target="_blank" href="https://www.nsf.gov/pubs/2022/nsf22106/nsf22106.jsp">NSF Antarctic Research Program</a> 
-        require that metadata files, full data sets, and derived data products, must be deposited in a long-lived and publicly 
-        accessible archive.
+        The dataset submission and ingestion process is very straightforward. You (the submitter) will fill out the Dataset Deposit Form with all the required information.
+        Throughout the process, you may save your current submission and return to it at any point. Once submitted you will receive an email notification of a completed submission.
+        The submitted dataset will be reviewed by USAP-DC Curators, who will check the data integrity and necessary metadata information. This review process usually takes 1-2 business days.
+        Curators may contact you directly if we have any questions regarding your submission. Once the process is finished, you will be notified by the USAP-DC Curators via email.
+    </p>
+    <h3>Why submit your data?</h3>
+    <p>
+        <a target="_blank" href="https://www.nsf.gov/pubs/2022/nsf22106/nsf22106.jsp">NSF guidelines</a> 
+        require full datasets, metadata files, and derived data products to be deposited in a long-term and publicly accessible archive. 
+        USAP-DC accepts all data submissions resulting from Antarctic NSF award funding. We provide repository services for these data
+        including publication in the DOI<span>&#174;</span> system and long-term archiving.
+        
+    </p>
+
+    <h3>I am submitting this data for a publication that is currently in-review. Does this change anything?</h3>
+    <p>
+        YES! Please let us know these data are potentially subject to change. Officially registered DataCite DOIs are reserved for final data products.
+        There are two (2) options available to you: (1) register this data as a final product and create a new version with a new DOI should the data files
+        change during the review process. (2) place the files under embargo, or postpone the DOI registration until the review process is complete.
+        During the proof stage of your publication, you may work with a USAP-DC Curator to ensure your DOI is up-to-date and functional.
+    </p>
+
+    <h3>My data is already in another archive! What should I do?</h3>
+    <p>
+        Please do not archive a duplicate dataset. We encourage you to use a discipline specific repository for your data type (e.g. IRIS, Genbank, R2R).
+        However, we ask that you provide the dataset link of that archive for the associated Project Page within the USAP-DC Project Catalog. You may add
+        this link yourself, or request assistance from a Curator. This prevents duplicate copies within archives, but ensures the proper footprint
+        for external datasets and the USAP-DC.
     </p>
 
     <p>
@@ -22,52 +47,65 @@
         Catalog entry. 
     </p>
 
-    <h3>Data Submission</h3>
+    <h3>Submitting Data Files</h3>
     <p>
-        To submit data to USAP-DC, please use our <a target="_blank" href="{{url_for('dataset')}}">“Deposit Dataset”</a> webform.   
+        You can upload one (1) or more data files as part of a single submission. If the dataset is large (>5GB), please contact us directly to arrange a data transfer.
+        <!-- To submit data to USAP-DC, please use our <a target="_blank" href="{{url_for('dataset')}}">“Deposit Dataset”</a> webform.   -->
     </p>
-
     <p>
-        After login, the submitter is asked to provide key information (metadata) about the dataset which will support the 
-        curation and long-term archiving of the data, search and discovery by others, as well as the context and background 
-        information necessary for future researchers to make use of your data.
+        Dataset files submitted to USAP-DC <strong>should be final data products</strong>.
+        If you anticipate changes to these files, please contact <a target="_blank" href="{{url_for('contact')}}">info@usap-dc.org</a> to discuss your options.
     </p>
-
-    <h4>Data Files</h4>
     <p>
-        You can upload one or many data files as part of your submission. The data should be submitted using a common, open 
-        format to maximize later reuse, and descriptive filenames. 
-        See the <a target="_blank" href="{{url_for('faq', _anchor='qd6')}}">FAQ</a> for information on data formats.
-        If you have a large dataset ( > 250 Mbytes), please 
-        <a target="_blank" href="{{url_for('contact')}}">contact us</a> directly to arrange for separate data transfer.
+        Dataset files should adhere to the following guidelines:
+        <ul style="list-style-type:none">
+            <li>Clear and descriptive file names, open or common file format, follow standard units of measurement, and geolocation (if applicable)</li>
+            <li>Headers and Tabular data should have clear names and definitions. For guidance on tabular data organization, please see
+                <a href="https://doi.org/10.1080/00031305.2017.1375989">Data Organization in spreadsheets</a> by Broman and Woo (2018).</li>
+        </ul>
     </p>
     
-    <h4>Dataset Title</h4>
+    <h4>Dataset Title & Abstract</h4>
     <p>
-        A dataset title and abstract are required with each data submission and are used to help others find data of interest 
-        in searches and browsers. A good dataset title is short but with enough specific details to help others understand 
-        and uniquely identify the nature of the dataset such as data type, location, temporal range, and field program. The 
-        dataset title will be a key part of the data DOI record which will be registered by USAP-DC for the dataset. This DOI 
-        record can be used to reference the dataset in publications. 
+        Each dataset is required to have a title and abstract, which appear on the landing page and are used to help others find data of interest.
+        A good dataset title is concise, but with enough specific detail to express the unique nature of the dataset. This title will be associated with the DOI record.
+    </p>
+    <p>
+        Titles may include the following:<br>
+        Data type, location, temporal range, field program, and sensor information.<br>
+        Example: “Firn-temperatures 1999-2001 Dronning Maud Land, East Antarctica”
+    </p>
+    <p>
+        The abstract (or summary) is a requirement for dataset submission. A good abstract contains ample information specific to the associated dataset.
+        This summary will inform users about the data in question and help them work with your dataset should they choose to reuse it.
+        This abstract should not be a copy of the award abstract, only a manuscript citation, pointing to the ReadMe, or use vague language.
+    </p>
+    <p>
+        Abstracts should include the following where possible:
+        Data type, location, acquisition information, temporal range, date of generation, processing steps, processed product level, file format, and/or non-NSF funding.
     </p>
 
     <h4>NSF Award Number</h4>
     <p>
-        The dataset will be linked to an NSF award, if one exists. We will also use the award number to link the dataset to the 
-        existing USAP-DC Project catalog page for the award.
+        If an NSF award exists, the dataset will be linked to it. Using this award number, the dataset will automatically link to any existing
+        USAP-DC Project Page connected to the award number.Multiple award numbers are allowed, with one selected as the “main award.”
     </p>
 
-    <h4>Related Publications</h4>
+    <h4>Related Publications/References</h4>
     <p>
-        If there are relevant publications (e.g. that describe details of the dataset) their citations should be included. If 
-        available, please provide the publication DOI, so we can link directly to the publication. 
+        If there are relevant publications (e.g. a manuscript that describes the details of the dataset), the citation should be included.
+        This publication should not be included in lieu of an abstract/summary, but in support.
+        Please provide the publication DOI and full citation, so we can link to it directly.
     </p>
 
-    <h4>Readme Files</h4>
+    <h4>ReadMe Files</h4>
     <p>
-        The submission form includes free-text fields for providing details regarding instruments, acquisition and processing 
-        procedures that will allow future users to understand and use the data. In preparing your descriptions, please consider 
-        what detailed information you like to see, if you were reusing the data. 
+        The submission form includes several free-text fields, with prompts, for providing details regarding the dataset.
+        Information to include would be: instruments, acquisition, processing procedures, and data use guidelines.
+        This file will allow future users to understand and use the data easily and quickly.
+        An alternative is to include additional documentation as a downloadable file with your dataset.
+        We do not recommend leaving any ReadMe fields blank, despite the additional file.<br>
+        Consider what you would want in a dataset ReadMe if you were reusing the data. 
     </p>
 
     <h4>License</h4>
@@ -75,28 +113,28 @@
         Choosing a license for dataset use provides a clear framework for future reuse of the data. We make use of <a target="_blank" 
         href="https://creativecommons.org/choose">Creative Commons</a> licenses for assigning terms of acceptable reuse. The 
         default choice is CC BY 4.0, which allows reusers to distribute, remix, adapt, and build upon the material in any medium 
-        or format, so long as attribution is given to the creator.
-        <br>An alternative option is CC 0, which allows any reuse without conditions.  Some journal publishers request either a 
-        CC BY 4.0 or CC 0 license for datasets supporting publications but other licenses options are available (for example, 
-        ones that limit commerical use).
+        or format, provided attribution is given to the creator.
+        <br>An alternative option is CC 0, which allows any reuse without conditions.
     </p>
 
-    <h3>After Submission</h3>
+    <h4>Embargos</h4>
     <p>
-        Submitted datasets will be reviewed by USAP-DC curators to check for data integrity and that the necessary metadata 
-        information is submitted. Usually, this takes 1-2 business days. Staff may contact you if we have any questions regarding 
-        your submission.
+        USAP-DC provides the ability to embargo data until a specific date. During this time, changes to the submitted files may occur,
+        but are not encouraged. Please <a href="/contact">contact USAP-DC staff</a> to inquire further about this feature.
     </p>
 
-    <h4>Updates</h4>
+    <h4>Revisions & Updates</h4>
     <p>
-        Using the “Edit” function, users associated with the dataset will be able to update dataset information, including adding 
-        a publication or publication DOI linked to the dataset. If a new version of the dataset itself is being submitted, it will 
-        be stored as a new dataset with a link to the previous version.
+        Co-PIs associated (linked) to the dataset will be able to use the “Edit” function – located in the top-right corner of the dataset landing page.
+        Use this feature to update dataset information, publication information, co-PI association, etc.
+        These revisions will be assessed by USAP-DC Curators, and then published.<br>
+        Replacing dataset files will automatically generate a new version of the dataset, with a link to the previous version.
+
     </p>
 
+    <h3>Frequently Asked Questions</h3>
     <p>
-        If you run into problems or have questions, please  <a href="{{url_for('contact')}}">contact us.</a>
+        Did not see an answer to your question on this list? Check out the <a href="{{url_for('faq')}}">FAQ page</a>, or contact us at <a href="mailto:info@usap-dc.org">info@usap-dc.org</a>.
     </p>
 </div>
 {% endblock body %}

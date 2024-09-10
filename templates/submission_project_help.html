@@ -9,90 +9,118 @@
 
     <h3>Overview</h3>
     <p>
-        The USAP-DC Project Catalog is a catalog of projects (awards or collaborative research awards) funded by the NSF US Antarctic 
-        Program with links to project related information, citations and  research datasets generated during each  project.
+        Registering your project with the USAP-DC Project Catalog is a very straightforward process.
+        You (the submitter) will fill out the Project Registration Form with the required information.
+        Throughout the process you may save your progress and return to it at any point.
+        You may even make edits to the page after it has been processed.
+        Once submitted you will receive an email notification of a completed form submission.
+        This will then be reviewed by USAP-DC Curators, who will check over the Award Numbers, listed Investigators and Collaborators, and more.
+        This review process usually takes 1-2 business days. Curators may contact you directly with questions regarding your submission.
+        Once the process is finished, you will be notified by the USAP-DC Curators via email.
     </p>
-
+    <p>
+        The USAP-DC Project Landing Page will host all project related information, citations, datasets, metadata, and more.
+        PIs and Collaborators will have the option to Edit the page throughout its lifetime with updates and modifications.
+        The USAP-DC Curators will process all of those changes as stewards of the archive.
+        The goal is long-term project and research data preservation.
+    </p>
+    <h3>Why register your project?</h3>
     <p>
         <a target="_blank" href="https://www.nsf.gov/publications/pub_summ.jsp?ods_key=nsf22106">NSF guidelines</a> 
-        require that PIs who receive an award from the NSF US Antarctic Program register their project with the USAP-DC Project Catalog 
-        using their award number as well as any related award numbers for collaborative research projects. New projects should be 
-        registered soon after NSF has made an award (note that awards made in or after 2020 need to include links to their project page 
-        in their year-one annual reports). The project page is intended to be updated throughout the lifetime of the project as new 
-        research data are submitted for preservation and as publications become available.
+        require that PIs who receive an award from the NSF U.S. Antarctic Program register their project with the USAP-DC Project Catalog 
+        using their award number. Related award numbers for collaborative research projects are also required. Projects awarded during 2020
+        and later are required to include USAP-DC Project Catalog links in their Year-One Annual Reports.
+        Full datasets, metadata files, and derived data products must be deposited in a long-term and publicly accessible archive. 
+        
     </p>
 
-    <h3>Project Registration</h3>
+    <h3>Registering Your Project</h3>
     <p>
-        Project registration is completed using a simple web form that asks for project information including co-Investigators, location 
-        and project summary and, once available, field programs, resulting datasets and publications  
-        (<a target="_blank" href="{{url_for('project_landing_page',project_id='p0010018')}}">see example</a>). To start the registration 
-        process, after login, you will be asked to select your NSF award from a pull-down menu. The award number will be used to pre-populate 
-        the submission form with information available from the NSF fastlane award database.
+        USAP-DC provides a simple web form which asks you to fill out basic project information including co-Investigators, Data Managers, Project Summary, field location, external datasets, publications, and more.
     </p>
+    <p>
+        Once you’ve logged into <a href="/submit/project">www.usap-dc.org/submit/project</a>, you may select the associated NSF Award from a dropdown menu at the top of the form. Once selected, the Award will pre-populate the submission form with the information available from the NSF Fastlane Award Database.
+    </p>
+    <p>For <strong>Collaborative Research Projects</strong>, use the “Add additional award linked to project” feature
+        to add the Award Numbers for the different institutions. This feature is located beneath the dropdown menu
+        and does not have a limit to how many award numbers that can be included.
+        We strongly recommend the primary institution fill out the Project Registration form. 
 
-    <h4>Collaborative Research</h4>
-    <p>
-        If this is a collaborative research award that includes multiple award numbers, e.g. to different institutions, you can use the 
-        “Add additional award linked to project” option to add these additional awards. Likewise, you can add additional people using the 
-        “add another person” option.  
-    </p>
+        Before moving on, make sure that all individuals associated with the award are included in the registration form.
+        To include anyone not automatically added via the Award Number auto-population, use the “Add another person” option
+        beneath the “Additional Personnel” field. Type the person’s first and last name into the field.
+        This input also functions as a search to see if the individual is already registered within the USAP-DC system.
+        If the individual’s name pops up, click on the name and it will auto-populate the rest of the name field with what is currently on file.
+        </p>
 
     <h4>Large Programs</h4>
     <p>
-        If your project/award is part of an overarching science project (e.g. ANDRILL, WAIS Divide Ice Core, Thwaites-ITGC), 
-        please select the initiative from the drop-down menu for selecting a Special Science Program. This will enable users 
-        to search and filter for projects that are part of these initiatives.
-        If your overarching science project or initiative is not listed, please add this in the comment box at the end of the 
-        webform and we will add it to the menu of options.
+        If your project/award is part of a larger, overarching science program (e.g. ANDRILL, COLDEX, Thwaites-ITGC, etc.),
+        please select the program from the Special Science Program dropdown menu. If it is not listed, please make a note of this
+        for the USAP-DC Staff in the comment box at the end of the webform. This label will allow users to search and filter for
+        projects that are flagged as part of these larger initiatives.
     </p>
 
     <h4>Keywords</h4>
     <p>
-        Location and GCMD keywords are selected from pre-populated lists. The latter is based on the GCMD/AMD keyword vocabulary 
-        and will be used to prepare your project entry for the Antarctic Metadata Directory.  
+        You can select Location and GCMD keywords from pre-populated lists.
+        These keywords are based on the <a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/scheme/all?gtm_scheme=all">GCMD</a> keyword vocabulary
+        and will be used to enter your project in the <a href="{{url_for('amd')}}">Antarctic Metadata Directory</a>.
     </p>
 
-    <h4>Adding Links to Data and Publications</h4>
+    <h4>Linking Datasets</h4>
     <p>
-        If datasets, references or other information are not yet available, they can be added at a later time to the project record 
-        using the “Edit” button on your Project Catalog page (see below for details). 
+        You can include datasets archived in external repositories, or within USAP-DC. If datasets are not yet available,
+        they can be added at a later time using the “Edit” button on your Project Landing Page.
+    </p>
+    <p>
+        Datasets submitted to USAP-DC will automatically be linked to your project page via the NSF Award Number.
+        Externally archived datasets require a link to where the dataset may be accessed. 
+    </p>
+
+    <h4>Publications & References</h4>
+    <p>
+        Linking publications and references is easy, and can be done at any time. Adding a DOI and/or URL (when available) is simple and easy.
+        You may also click the “Search Crossref for publications associated with linked awards” button.
+    </p>
+
+    <h4>After Submission</h4>
+    <p>
+        Once you submit your project registration form, you will receive a confirmation email. Your project page will not automatically be available on the website.
+        USAP-DC Staff will check over your submission before your project page is published. This usually takes 1-2 business days.
+        During this review, Staff may contact you if we have any questions regarding your submission.
+    </p>
+
+    <h4>AMD Registration</h4>
+    <p>
+        Using the project information provided by you in the USAP-DC registration forms, we will create a metadata record in the required format (DIF)
+        and submit it to the Antarctic Metadata Directory (AMD) on your behalf. This AMD registration is required for the final project report to NSF,
+        and will usually be done after the initial datasets have been linked to the project page. These submissions can be updated.
+    </p>
+
+    <h4>Revisions & Updates</h4>
+    <p>
+        You can update the project landing page at any time using the “Edit” button, located in the top-right corner of the page,
+        or clicking the “Edit” button next to the project listed in your <a href="{{url_for('dashboard')}}">User Dashboard</a>.
+    </p>
+    <p>
+        The Edit function takes you to the same pre-populated form with all the information currently available for the project.
+        Changes can be made to any of these fields at any time, saved, and submitted just as you did for the initial submission.
+        Once these updates are submitted, you will receive a confirmation email notification regarding these edits.
+        However, these changes will not automatically be visible on the website.
+        Edits will be reviewed by a USAP-DC Curator before they are published on the project page.
     </p>
 
     <p>
-        If you have submitted your project-related research data to USAP-DC, we will automatically link your dataset to your project. 
-        If your datasets are submitted to other repositories, please provide the dataset title and repository dataset-link. 
+        Please note, <strong>only users linked to the project</strong>, via ORCID or email address, can access the Edit forms.
+        If an un-linked user (or for whom the authentication on file is insufficient) tries to access this feature,
+        the user will be presented with an option to request access.
     </p>
 
-    <h3>After Submission</h3>
+    <h3>Frequently Asked Questions</h3>
     <p>
-        After you submit your project registration form, USAP-DC staff will check your submission before your project page is published. 
-        Usually, this takes 1-2 business days. Staff may contact you if we have any questions regarding your submission. 
-    </p>
-
-    <h4>Editing your Project Page</h4>
-    <p>
-        After the initial project page has been created you can update it at any time using the “Edit” button located in the top right 
-        corner of the page. The Edit button links to a pre-populated form with all the information previously entered for your project, 
-        where edits and updates can be made. The submitted updates will be checked by a USAP-DC data curator before they are published 
-        on your project page.  
-    </p>
-
-    <p>
-        Note that only users linked to the project by email address or ORCID can make edits. If a user tries to edit a project page to 
-        which the user is not linked or for whom the authentication on file is insufficient, the user will be presented with an option 
-        to request this access.
-    </p>
-
-    <h4>Registration within the AMD</h4>
-    <p>
-        Based on the project information, USAP-DC will create a metadata record in the required format (DIF) and submit it to the 
-        <a href="{{url_for('amd')}}">Antarctic Metadata Directory (AMD)</a>. This is required for the final project report to NSF, and will usually be done after the first 
-        datasets have been linked to the project page.   
-    </p>
-
-    <p>
-        If you run into problems or have questions, please  <a href="{{url_for('contact')}}">contact us.</a>
+        Did not see an answer to your question on this list? Check out the <a href="{{url_for('faq')}}">FAQ page</a>,
+        or contact us at <a href="mailto:info@usap-dc.org">info@usap-dc.org</a>. 
     </p>
 </div>
 {% endblock body %}
