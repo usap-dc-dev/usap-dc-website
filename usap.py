@@ -44,6 +44,7 @@ import xml.etree.ElementTree as ET
 import zipfile as zf
 from zoneinfo import ZoneInfo as zi
 from io import BytesIO
+import mimetypes
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -2850,6 +2851,10 @@ def file_download(filename):
         msg = "<br/>You failed to pass the reCAPTCHA test<br/>"
         raise CaptchaException(msg, url_for('home'))
 
+@app.route('/preview/<path:filename>', methods=['GET'])
+def file_display(filename):
+    mime_type, encoding = mimetypes.guess_type(filename)
+    return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
 
 @app.route('/readme/<dataset_id>')
 def readme(dataset_id):
