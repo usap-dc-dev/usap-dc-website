@@ -2854,7 +2854,30 @@ def file_download(filename):
 @app.route('/preview/<path:filename>', methods=['GET'])
 def file_display(filename):
     mime_type, encoding = mimetypes.guess_type(filename)
-    return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    if mime_type == "text/plain":
+        return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    if mime_type == "text/csv":
+        f = open(filename, "r")
+        text = "<table style='border:1px solid black'>"
+        line = f.readline()
+        # assume the first row is a header
+        if "" != line:
+            text += "<tr style='border:1px solid black'>"
+            columns = line.split(",")
+            for i in range(len(columns)):
+                text += "<th style='border:1px solid black'>" + columns[i] + "</th>"
+            text += "</tr>"
+            line = f.readline()
+        while "" != line:
+            text += "<tr style='border:1px solid black'>"
+            data = line.split(",")
+            for i in range(len(data)):
+                text += "<td style='border:1px solid black'>" + data[i] + "</td>"
+            text += "</tr>"
+            line = f.readline()
+        text += "</table>"
+        return text
+    return "Sorry, can't preview this type of file: " + mime_type
 
 @app.route('/readme/<dataset_id>')
 def readme(dataset_id):
