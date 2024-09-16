@@ -110,6 +110,10 @@ function showSelectedComboSize() {
       $("#complete_download").attr({'data-url':data_url, 'data-id':data_id});
     });
 
+    $('.data_preview').click(function() {
+        window.open($(this).attr('data-url'));
+    });
+
 
     $('#complete_download').click(function() {
         setMultifile(false);
@@ -564,6 +568,9 @@ function showSelectedComboSize() {
                         {% else %}
                         External
                         {% endif %}
+                    </div>
+                    <div class="download data_preview" {% if data.hold %} disabled {% else %} data-url="{{f['url'].replace('/dataset', '/preview/dataset')}}" {% endif %}>
+                        Preview
                     </div>
                 </div>
     
