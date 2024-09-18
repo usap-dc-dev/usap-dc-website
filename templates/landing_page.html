@@ -111,7 +111,8 @@ function showSelectedComboSize() {
     });
 
     $('.data_preview').click(function() {
-        window.open($(this).attr('data-url'));
+        //window.open($(this).attr('data-url'));
+        togglePreview($(this).attr('data-url'));
     });
 
 
@@ -190,6 +191,21 @@ function showSelectedComboSize() {
             button.innerHTML = "View FAIRness Details"
         }
     }
+
+    function togglePreview(url){
+        let popup = document.getElementById("preview_data");
+        if(!url) {
+            popup.style.display = "none";
+        }
+        else {
+            let content = document.createElement("embed");
+            content.src = url;
+            // remove everything except the close button
+            popup.replaceChildren(popup.children[0]);
+            popup.appendChild(content);
+            popup.style.display = "block";
+        }
+    }
 </script>
 {% endif %}
 <style type="text/css">
@@ -202,6 +218,18 @@ function showSelectedComboSize() {
         background-color:whitesmoke;
         border-radius:15px;
         overflow-y:auto;
+    }
+    .preview {
+        display: none;
+        position: fixed;
+        width: 60%;
+        height: 60%;
+        z-index:1001;
+        border-radius:15px;
+        overflow-y: auto;
+        overflow-x: auto;
+        margin-inline: auto;
+        background-color: whitesmoke;
     }
     .sticky {
         position: sticky;
@@ -268,6 +296,9 @@ function showSelectedComboSize() {
     </table>
   </div>
   {% endif %}
+  <div class="preview" id="preview_data">
+    <button style="background-color:transparent;border-color:transparent" onclick="togglePreview()">✕</button>
+  </div>
   <table class="borderless-table">
     <tr>
       <td width="75%">

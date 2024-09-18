@@ -2854,11 +2854,13 @@ def file_download(filename):
 @app.route('/preview/<path:filename>', methods=['GET'])
 def file_display(filename):
     mime_type, encoding = mimetypes.guess_type(filename)
+    if mime_type == None:
+        return "Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."
     if mime_type == "text/plain":
         return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
     if mime_type == "text/csv":
         f = open(filename, "r")
-        text = "<table style='border:1px solid black'>"
+        text = "<html><head></head><body><table style='border:1px solid black'>"
         line = f.readline()
         # assume the first row is a header
         if "" != line:
@@ -2875,7 +2877,7 @@ def file_display(filename):
                 text += "<td style='border:1px solid black'>" + data[i] + "</td>"
             text += "</tr>"
             line = f.readline()
-        text += "</table>"
+        text += "</table></body></html>"
         return text
     if mime_type == "text/tsv":
         f = open(filename, "r")
@@ -2898,7 +2900,7 @@ def file_display(filename):
             line = f.readline()
         text += "</table>"
         return text
-    if mime_type.startswith("image"):
+    if mime_type.startswith("image") and mime_type != "image/tiff":
         return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
     return "Sorry, can't preview this type of file: " + mime_type
 
