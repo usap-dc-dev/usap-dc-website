@@ -199,11 +199,19 @@ function showSelectedComboSize() {
         }
         else {
             let content = document.createElement("embed");
+            content.style.height="100%";
+            content.style.width="100%";
             content.src = url;
-            // remove everything except the close button
-            popup.replaceChildren(popup.children[0]);
-            popup.appendChild(content);
-            popup.style.display = "block";
+            let xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url, true);
+            xhr.onload = function() {
+                let contentType = xhr.getResponseHeader('Content-Type');
+                content.type = contentType;
+                popup.replaceChildren(popup.children[0]);
+                popup.appendChild(content);
+                popup.style.display = "block";
+            };
+            xhr.send();
         }
     }
 </script>
@@ -297,7 +305,7 @@ function showSelectedComboSize() {
   </div>
   {% endif %}
   <div class="preview" id="preview_data">
-    <button style="background-color:transparent;border-color:transparent" onclick="togglePreview()">✕</button>
+    <button class="sticky" style="background-color:transparent;border-color:transparent" onclick="togglePreview()">✕</button>
   </div>
   <table class="borderless-table">
     <tr>
