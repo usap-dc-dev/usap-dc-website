@@ -2855,51 +2855,27 @@ def file_download(filename):
 def file_display(filename):
     mime_type, encoding = mimetypes.guess_type(filename)
     if mime_type == None:
-        return "Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."
+        return render_template("preview.html", mimetype="text/plain", file_contents=["Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."])
     if mime_type == "text/plain":
-        return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
-    if mime_type == "text/csv":
-        f = open(filename, "r")
-        text = "<html><head></head><body><table style='border:1px solid black'>"
-        line = f.readline()
-        # assume the first row is a header
-        if "" != line:
-            text += "<tr style='border:1px solid black'>"
-            columns = line.split(",")
-            for i in range(len(columns)):
-                text += "<th style='border:1px solid black'>" + columns[i] + "</th>"
-            text += "</tr>"
-            line = f.readline()
-        while "" != line:
-            text += "<tr style='border:1px solid black'>"
-            data = line.split(",")
-            for i in range(len(data)):
-                text += "<td style='border:1px solid black'>" + data[i] + "</td>"
-            text += "</tr>"
-            line = f.readline()
-        text += "</table></body></html>"
-        return text
-    if mime_type == "text/tsv":
-        f = open(filename, "r")
-        text = "<table style='border:1px solid black'>"
-        line = f.readline()
-        # assume the first row is a header
-        if "" != line:
-            text += "<tr style='border:1px solid black'>"
-            columns = line.split("\t")
-            for i in range(len(columns)):
-                text += "<th style='border:1px solid black'>" + columns[i] + "</th>"
-            text += "</tr>"
-            line = f.readline()
-        while "" != line:
-            text += "<tr style='border:1px solid black'>"
-            data = line.split(",")
-            for i in range(len(data)):
-                text += "<td style='border:1px solid black'>" + data[i] + "</td>"
-            text += "</tr>"
-            line = f.readline()
-        text += "</table>"
-        return text
+        lines = []
+        with open(current_app.root_path + "/" + filename, "r", encoding="utf-8") as txtFile:
+            lines = [line for line in txtFile]
+        return render_template("preview.html", mimetype=mime_type, file_contents=lines)
+        #return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    if mime_type == "text/csv" or mime_type == "text/tab-separated-values":
+        delim = request.args.get('delim')
+        if not delim: delim = ',' if mime_type == "text/csv" else '\t'
+        rows = []
+        th = None
+        with open(filename, "r", newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=delim)
+            for row in reader:
+                if th == None:
+                    th = row
+                else:
+                    rows.append(row)
+        return render_template("preview.html", mimetype=mime_type, header=th, data=rows, delimiter=delim)
+            
     if mime_type.startswith("image") and mime_type != "image/tiff":
         return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
     return "Sorry, can't preview this type of file: " + mime_type

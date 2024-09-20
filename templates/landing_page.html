@@ -169,6 +169,28 @@ function showSelectedComboSize() {
     {{json_dumps(data['json_ld'], indent=2)|safe}}
 </script>
 
+<script type="text/javascript">
+    function togglePreview(url){
+        let popup = document.getElementById("preview_data");
+        if(!url) {
+            popup.style.display = "none";
+        }
+        else {
+            let content = document.createElement("embed");
+            content.src = url;
+            let xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url, true);
+            xhr.onload = function() {
+                let contentType = xhr.getResponseHeader('Content-Type');
+                content.type = contentType;
+                popup.replaceChildren(popup.children[0]);
+                popup.appendChild(content);
+                popup.style.display = "block";
+            };
+            xhr.send();
+        }
+    }
+</script>
 {% if see_review %}
 <script type="text/javascript">
     function toggleFairEval() {
@@ -188,30 +210,7 @@ function showSelectedComboSize() {
         }
         else {
             div.style.display = "none";
-            button.innerHTML = "View FAIRness Details"
-        }
-    }
-
-    function togglePreview(url){
-        let popup = document.getElementById("preview_data");
-        if(!url) {
-            popup.style.display = "none";
-        }
-        else {
-            let content = document.createElement("embed");
-            content.style.height="100%";
-            content.style.width="100%";
-            content.src = url;
-            let xhr = new XMLHttpRequest();
-            xhr.open('HEAD', url, true);
-            xhr.onload = function() {
-                let contentType = xhr.getResponseHeader('Content-Type');
-                content.type = contentType;
-                popup.replaceChildren(popup.children[0]);
-                popup.appendChild(content);
-                popup.style.display = "block";
-            };
-            xhr.send();
+            button.innerHTML = "View FAIRness Details";
         }
     }
 </script>
@@ -230,14 +229,15 @@ function showSelectedComboSize() {
     .preview {
         display: none;
         position: fixed;
-        width: 60%;
-        height: 60%;
+        max-width: 60%;
+        max-height: 60%;
         z-index:1001;
         border-radius:15px;
         overflow-y: auto;
         overflow-x: auto;
         margin-inline: auto;
         background-color: whitesmoke;
+        bottom: 30;
     }
     .sticky {
         position: sticky;
@@ -305,7 +305,7 @@ function showSelectedComboSize() {
   </div>
   {% endif %}
   <div class="preview" id="preview_data">
-    <button class="sticky" style="background-color:transparent;border-color:transparent" onclick="togglePreview()">✕</button>
+    <button class="sticky" style="background-color:whitesmoke;border-color:transparent;border-radius:15px;display:block" onclick="togglePreview()">✕</button>
   </div>
   <table class="borderless-table">
     <tr>

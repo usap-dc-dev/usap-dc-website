@@ -1,0 +1,88 @@
+<html>
+    <head>
+        {% if mimetype == 'text/csv' %}
+        <script>
+            function switchDelimiter(newDelim) {
+                if(!newDelim) {
+                    newDelim = document.getElementById('delimiters').value;
+                }
+                window.location.href = window.location.pathname.split("/").slice(-1)[0] + "?delim=" + newDelim;
+            }
+        </script>
+        <style>
+            table {
+                border-collapse: collapse;
+            }
+            td, th {
+                border: 1px solid black;
+                padding-left: 3px;
+                padding-right:3px;
+            }
+        </style>
+        {% elif mimetype == 'text/plain' %}
+        <style>
+            .textline {
+                margin:-1px;
+            }
+            .plaintext {
+                font-family:'Courier New', Courier, monospace;
+            }
+        </style>
+        <script>
+            function toggleFixedWidth() {
+                textLines = document.getElementsByClassName("textline");
+                for(let tl of textLines) {
+                    if(tl.classList.contains("plaintext")) {
+                        tl.classList.remove("plaintext")
+                    }
+                    else {
+                        tl.classList.add("plaintext")
+                    }
+                }
+            }
+        </script>
+        {% endif %}
+    </head>
+    <body>
+        {% if mimetype == 'text/plain' %}
+        <label for="FW_checkbox">View in fixed width font</label>
+        <input type="checkbox" name="FW_checkbox" id="FW_checkbox" onclick="toggleFixedWidth()">
+        {% for line in file_contents %}
+        <p class="textline">{{line}}</p>
+        {% endfor %}
+        {% elif mimetype == 'text/csv' or mimetype == 'text/tab-separated-values' %}
+        <label for="delimiters">Choose a delimiter:</label>
+        <select name="delimiters" id="delimiters">
+            {% if mimetype == 'text/csv' %}
+            <option value="," {% if delimiter == ',' %} selected {% endif %}>Comma (default{% if delimiter == ',' %}, current{%endif%})</option>
+            <option value="%09" {% if delimiter == '\t' %} selected {% endif %}>Tab{% if delimiter == '\t' %} (current){% endif %}</option>
+            {% else %}
+            <option value="%09" {% if delimiter == '\t' %} selected {% endif %}>Tab (default{% if delimiter == '\t' %}, current{% endif %})</option>
+            <option value="," {% if delimiter == ',' %} selected {% endif %}>Comma{% if delimiter == ',' %} (current){%endif%}</option>
+            {% endif %}
+            <option value="%20" {% if delimiter == ' ' %} selected {% endif %}>Space{% if delimiter == ' ' %} (current){% endif %}</option>
+            <option value=":" {% if delimiter == ':' %} selected {% endif %}>Colon{% if delimiter == ':' %} (current){% endif %}</option>
+            <option value=";" {% if delimiter == ';' %} selected {% endif %}>Semicolon{% if delimiter == ';' %} (current){% endif %}</option>
+        </select>
+         <button type="button" id="switchDelimBtn" onclick="switchDelimiter()">Reload with new delimiter</button>
+        <table>
+            <thead>
+                <tr>
+                    {% for entry in header %}
+                    <th>{{entry}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    {% for entry in row %}
+                    <td>{{entry}}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </body>
+</html>
