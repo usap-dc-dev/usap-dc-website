@@ -565,6 +565,7 @@
                 <th>Last Update</th>
                 <th>Status</th>
                 <th>FAIR Evaluation</th>
+                <th>FAIR Score</th>
                 <th>Comments</th>
                 <th>Landing Page</th>
                 <th hidden>comments_text</th>
@@ -578,6 +579,7 @@
                     <td>{{sub.last_update}}</td>
                     <td>{{sub.status}}</td>
                     <td>{{sub.fairStatus}}</td>
+                    <td>{{sub.fairScore}}</td>
                     <td>{% if sub.comments %}
                         <button type="button" class="in-table-button abstract-button" id="comments_btn" onclick="showComments(this);"><b>View Comments</b></button>{% endif %}</td>
                     <td>{% if sub.landing_page %} <a target="_blank" href={{sub['landing_page']}} rel="noopener noreferrer">{{sub.landing_page}}</a> {% endif %}</td>

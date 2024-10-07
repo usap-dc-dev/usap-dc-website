@@ -3015,6 +3015,7 @@ def curator():
                 for sub in res:
                     uid = sub['uid']
                     fairStatus = ""
+                    fairScore = "N/A"
                     if 'p' == uid[0] or 'p' == uid[1]:
                         fairStatus = "N/A"
                     else:
@@ -3022,27 +3023,35 @@ def curator():
                         fairCountQuery = "SELECT count(*) as ct from dataset_fairness where dataset_id='%s'" % dataset_id
                         cur.execute(fairCountQuery)
                         numEntries = int(cur.fetchall()[0]['ct'])
-                        if 0 == numEntries:
+                        if "N/A" == fairStatus:
+                            fairScore = "N/A"
+                        elif 0 == numEntries:
                             fairStatus = "Never evaluated"
+                            fairScore = "TBD"
                         else:
                             fairQuery = "SELECT * from dataset_fairness where dataset_id='%s'" % dataset_id
                             cur.execute(fairQuery)
                             fairRes = cur.fetchall()[0]
                             numFields = 0
                             numEvaluated = 0
+                            earnedPts = 0
+                            maxPts = 0
                             for field in fairRes:
                                 if field.endswith("check"):
                                     if fairRes[field] != -1:
                                         numFields += 1
                                     if fairRes[field] >= 0:
                                         numEvaluated += 1
-                            fairStatus = "%d/%d" % (numEvaluated, numFields)
+                                        maxPts += 2
+                                        earnedPts += fairRes[field]
+                            fairStatus = "Complete" if numEvaluated == numFields else "Incomplete" #"%d/%d" % (numEvaluated, numFields)
+                            fairScore = "%d/%d" % (earnedPts, maxPts)
                             if str(fairRes['reviewed_time']) < str(sub['submitted_date']):
-                                fairStatus = "(Needs update) " + fairStatus
+                                fairStatus = "Needs update"
                     landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update'],
-                                        'fairStatus': fairStatus})
+                                        'fairStatus': fairStatus, 'fairScore': fairScore})
 
             template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
