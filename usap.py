@@ -2510,7 +2510,7 @@ def landing_page(dataset_id):
     getCMRUrls(metadata['dif_records'])
 
 
-    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
+    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict, canPreview=can_preview)
 
 
 def getCMRUrls(dif_records):
@@ -2851,9 +2851,13 @@ def file_download(filename):
         msg = "<br/>You failed to pass the reCAPTCHA test<br/>"
         raise CaptchaException(msg, url_for('home'))
 
+def can_preview(mime_type):
+    return mime_type == "text/plain" or mime_type == "text/csv" or mime_type == "text/tab-separated-values" \
+        or mime_type == "text/html" or (mime_type.startswith("image") and mime_type != "image/tiff")
+
 @app.route('/preview/<path:filename>', methods=['GET'])
 def file_display(filename):
-    mime_type, encoding = mimetypes.guess_type(filename)
+    mime_type, n_coding = mimetypes.guess_type(filename)
     if mime_type == None:
         return render_template("preview.html", mimetype="text/plain", file_contents=["Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."])
     if mime_type == "text/plain":
@@ -2862,6 +2866,8 @@ def file_display(filename):
             lines = [line for line in txtFile]
         return render_template("preview.html", mimetype=mime_type, file_contents=lines)
         #return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    if mime_type == "text/html":
+        return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
     if mime_type == "text/csv" or mime_type == "text/tab-separated-values":
         delim = request.args.get('delim')
         if not delim: delim = ',' if mime_type == "text/csv" else '\t'

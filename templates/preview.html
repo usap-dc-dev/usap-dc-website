@@ -1,6 +1,6 @@
 <html>
     <head>
-        {% if mimetype == 'text/csv' %}
+        {% if mimetype == 'text/csv' or mimetype == 'text/tab-separated-values' %}
         <script>
             function switchDelimiter(newDelim) {
                 if(!newDelim) {

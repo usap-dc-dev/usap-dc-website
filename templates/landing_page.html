@@ -229,15 +229,18 @@ function showSelectedComboSize() {
     .preview {
         display: none;
         position: fixed;
-        max-width: 60%;
-        max-height: 60%;
+        max-width: 70%;
+        max-height: 70%;
         z-index:1001;
         border-radius:15px;
         overflow-y: auto;
         overflow-x: auto;
-        margin-inline: auto;
+        margin-left: auto;
+        margin-right: auto;
         background-color: whitesmoke;
-        bottom: 30;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
     .sticky {
         position: sticky;
@@ -597,7 +600,7 @@ function showSelectedComboSize() {
             {% endif %}
             {% for f in data.files | sort(attribute='file_name') %}
             <div class="lprow2" id="row_{{f['file_name']}}">
-                <div class="col1">
+                <div class="col1" style="display:flex">
                     <div class="download data_download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" {%
                         if '.usap-dc.org/' in f['url'] %} data-id="{{data.id}}" {% endif %} {% endif %}>
                         {% if '.usap-dc.org/' in f['url'] %}
@@ -608,7 +611,7 @@ function showSelectedComboSize() {
                         External
                         {% endif %}
                     </div>
-                    <div class="download data_preview" {% if data.hold %} disabled {% else %} data-url="{{f['url'].replace('/dataset', '/preview/dataset')}}" {% endif %}>
+                    <div class="download data_preview" {% if data.hold or not canPreview(f['mime_types']) %} disabled {% else %} data-url="{{f['url'].replace('/dataset', '/preview/dataset')}}" {% endif %}>
                         Preview
                     </div>
                 </div>
