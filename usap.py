@@ -2428,7 +2428,6 @@ def json_serial(obj):
 
 # determines if the currently logged in user is a creator of the given dataset
 def isCreator(dataset_content):
-    print(dataset_content)
     if session.get('user_info') is None:
         return False
     userid = session['user_info'].get('sub')
@@ -2437,7 +2436,7 @@ def isCreator(dataset_content):
     if userid is None:
         return False
     if dataset_content.get('creator'):
-        creator_ids = map(lambda x: x.id, dataset_content['creator_orcids'])
+        creator_ids = map(lambda x: x['orcid'] if 'orcid' in x else '', dataset_content['creator_orcids'])
         return userid in creator_ids
     return False
 
@@ -2478,8 +2477,16 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
-        if cf.isCurator():
-            review_privilege = True
+        metadata['creator_orcids'] = []
+        for c in metadata['creator'].split('; '):
+            p = get_person(c)
+            if p:
+                metadata['creator_orcids'].append({'id': p.get('id'), 'orcid': p.get('id_orcid')}) 
+            else:
+                metadata['creator_orcids'].append({'id': c, 'orcid': None})
+        
+        review_privilege = cf.isCurator() or isCreator(metadata)
+        if review_privilege:
             fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
                 " FROM dataset_fairness WHERE dataset_id=%s"])
             cur.execute(fairness_query, (dataset_id,))
@@ -2504,17 +2511,6 @@ def landing_page(dataset_id):
 
     if metadata.get('url_extra'):
         metadata['url_extra'] = os.path.basename(metadata['url_extra'])
-
-    metadata['creator_orcids'] = []
-    for c in metadata['creator'].split('; '):
-        p = get_person(c)
-        if p:
-            metadata['creator_orcids'].append({'id': p.get('id'), 'orcid': p.get('id_orcid')}) 
-        else:
-            metadata['creator_orcids'].append({'id': c, 'orcid': None})
-    
-    if not review_privilege:
-        review_privilege = isCreator(metadata)
 
     if not metadata['citation'] or metadata['citation'] == '':
         metadata['citation'] = makeCitation(metadata, dataset_id)
@@ -3026,7 +3022,7 @@ def curator():
                         if "N/A" == fairStatus:
                             fairScore = "N/A"
                         elif 0 == numEntries:
-                            fairStatus = "Never evaluated"
+                            fairStatus = "<span style='color:darkred'>Never evaluated</span>"
                             fairScore = "TBD"
                         else:
                             fairQuery = "SELECT * from dataset_fairness where dataset_id='%s'" % dataset_id
@@ -3044,10 +3040,10 @@ def curator():
                                         numEvaluated += 1
                                         maxPts += 2
                                         earnedPts += fairRes[field]
-                            fairStatus = "Complete" if numEvaluated == numFields else "Incomplete" #"%d/%d" % (numEvaluated, numFields)
+                            fairStatus = "Complete" if numEvaluated == numFields else "<span style='color:darkgoldenrod'>Incomplete</span>" #"%d/%d" % (numEvaluated, numFields)
                             fairScore = "%d/%d" % (earnedPts, maxPts)
                             if str(fairRes['reviewed_time']) < str(sub['submitted_date']):
-                                fairStatus = "Needs update"
+                                fairStatus = "<span style='color:red'>Needs update</span>"
                     landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update'],

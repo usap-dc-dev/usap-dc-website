@@ -578,7 +578,7 @@
                     <td>{{sub.date}}</td>
                     <td>{{sub.last_update}}</td>
                     <td>{{sub.status}}</td>
-                    <td>{{sub.fairStatus}}</td>
+                    <td>{{sub.fairStatus|safe}}</td>
                     <td>{{sub.fairScore}}</td>
                     <td>{% if sub.comments %}
                         <button type="button" class="in-table-button abstract-button" id="comments_btn" onclick="showComments(this);"><b>View Comments</b></button>{% endif %}</td>
