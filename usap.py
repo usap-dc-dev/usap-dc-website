@@ -44,6 +44,7 @@ import xml.etree.ElementTree as ET
 import zipfile as zf
 from zoneinfo import ZoneInfo as zi
 from io import BytesIO
+import mimetypes
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -2523,7 +2524,7 @@ def landing_page(dataset_id):
     getCMRUrls(metadata['dif_records'])
 
 
-    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict)
+    return render_template('landing_page.html', getnow=datetime.now, data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'], secret=app.config['RECAPTCHA_DATA_SITE_KEY'], see_review=review_privilege, review_exists=(prev_review is not None), review=prev_review, fairFields = fair_fields, eval_map = fair_eval_map, reviewer_dict = fair_review_dict, canPreview=can_preview)
 
 
 def getCMRUrls(dif_records):
@@ -2864,6 +2865,40 @@ def file_download(filename):
         msg = "<br/>You failed to pass the reCAPTCHA test<br/>"
         raise CaptchaException(msg, url_for('home'))
 
+def can_preview(mime_type):
+    return mime_type == "text/plain" or mime_type == "text/csv" or mime_type == "text/tab-separated-values" \
+        or mime_type == "text/html" or (mime_type.startswith("image") and mime_type != "image/tiff")
+
+@app.route('/preview/<path:filename>', methods=['GET'])
+def file_display(filename):
+    mime_type, n_coding = mimetypes.guess_type(filename)
+    if mime_type == None:
+        return render_template("preview.html", mimetype="text/plain", file_contents=["Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."])
+    if mime_type == "text/plain":
+        lines = []
+        with open(current_app.root_path + "/" + filename, "r", encoding="utf-8") as txtFile:
+            lines = [line for line in txtFile]
+        return render_template("preview.html", mimetype=mime_type, file_contents=lines)
+        #return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    if mime_type == "text/html":
+        return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    if mime_type == "text/csv" or mime_type == "text/tab-separated-values":
+        delim = request.args.get('delim')
+        if not delim: delim = ',' if mime_type == "text/csv" else '\t'
+        rows = []
+        th = None
+        with open(filename, "r", newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=delim)
+            for row in reader:
+                if th == None:
+                    th = row
+                else:
+                    rows.append(row)
+        return render_template("preview.html", mimetype=mime_type, header=th, data=rows, delimiter=delim)
+            
+    if mime_type.startswith("image") and mime_type != "image/tiff":
+        return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+    return "Sorry, can't preview this type of file: " + mime_type
 
 @app.route('/readme/<dataset_id>')
 def readme(dataset_id):

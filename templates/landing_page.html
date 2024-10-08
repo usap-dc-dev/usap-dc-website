@@ -110,6 +110,11 @@ function showSelectedComboSize() {
       $("#complete_download").attr({'data-url':data_url, 'data-id':data_id});
     });
 
+    $('.data_preview').click(function() {
+        //window.open($(this).attr('data-url'));
+        togglePreview($(this).attr('data-url'));
+    });
+
 
     $('#complete_download').click(function() {
         setMultifile(false);
@@ -164,6 +169,28 @@ function showSelectedComboSize() {
     {{json_dumps(data['json_ld'], indent=2)|safe}}
 </script>
 
+<script type="text/javascript">
+    function togglePreview(url){
+        let popup = document.getElementById("preview_data");
+        if(!url) {
+            popup.style.display = "none";
+        }
+        else {
+            let content = document.createElement("embed");
+            content.src = url;
+            let xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url, true);
+            xhr.onload = function() {
+                let contentType = xhr.getResponseHeader('Content-Type');
+                content.type = contentType;
+                popup.replaceChildren(popup.children[0]);
+                popup.appendChild(content);
+                popup.style.display = "block";
+            };
+            xhr.send();
+        }
+    }
+</script>
 {% if see_review %}
 <script type="text/javascript">
     function toggleFairEval() {
@@ -183,7 +210,7 @@ function showSelectedComboSize() {
         }
         else {
             div.style.display = "none";
-            button.innerHTML = "View FAIRness Details"
+            button.innerHTML = "View FAIRness Details";
         }
     }
 </script>
@@ -198,6 +225,22 @@ function showSelectedComboSize() {
         background-color:whitesmoke;
         border-radius:15px;
         overflow-y:auto;
+    }
+    .preview {
+        display: none;
+        position: fixed;
+        max-width: 70%;
+        max-height: 70%;
+        z-index:1001;
+        border-radius:15px;
+        overflow-y: auto;
+        overflow-x: auto;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: whitesmoke;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
     .sticky {
         position: sticky;
@@ -264,6 +307,9 @@ function showSelectedComboSize() {
     </table>
   </div>
   {% endif %}
+  <div class="preview" id="preview_data">
+    <button class="sticky" style="background-color:whitesmoke;border-color:transparent;border-radius:15px;display:block" onclick="togglePreview()">✕</button>
+  </div>
   <table class="borderless-table">
     <tr>
       <td width="75%">
@@ -554,7 +600,7 @@ function showSelectedComboSize() {
             {% endif %}
             {% for f in data.files | sort(attribute='file_name') %}
             <div class="lprow2" id="row_{{f['file_name']}}">
-                <div class="col1">
+                <div class="col1" style="display:flex">
                     <div class="download data_download" {% if data.hold %} disabled {% else %} data-url="{{f['url']}}" {%
                         if '.usap-dc.org/' in f['url'] %} data-id="{{data.id}}" {% endif %} {% endif %}>
                         {% if '.usap-dc.org/' in f['url'] %}
@@ -564,6 +610,9 @@ function showSelectedComboSize() {
                         {% else %}
                         External
                         {% endif %}
+                    </div>
+                    <div class="download data_preview" {% if data.hold or not canPreview(f['mime_types']) %} disabled {% else %} data-url="{{f['url'].replace('/dataset', '/preview/dataset')}}" {% endif %}>
+                        Preview
                     </div>
                 </div>
     
