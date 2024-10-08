@@ -2426,16 +2426,30 @@ def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     return str(obj)
 
+# determines if the currently logged in user is a creator of the given dataset
+def isCreator(dataset_content):
+    if session.get('user_info') is None:
+        return False
+    userid = session['user_info'].get('sub')
+    if userid is None:
+        userid = session['user_info'].get('orcid')
+    if userid is None:
+        return False
+    if dataset_content.get('creator'):
+        creator_ids = map(lambda x: x['orcid'] if 'orcid' in x else '', dataset_content['creator_orcids'])
+        return userid in creator_ids
+    return False
 
 @app.route('/view/dataset/<dataset_id>')
 def landing_page(dataset_id):
-    review_privilege = False
+    #review_privilege = False
     prev_review = None
     fair_fields = []
     datasets = get_datasets([dataset_id])
     if len(datasets) == 0:
         return redirect(url_for('not_found'))
     metadata = datasets[0]
+    review_privilege = False
 
     url = metadata['url']
     if not url:
@@ -2463,8 +2477,16 @@ def landing_page(dataset_id):
                 f['url'] = usap_domain + app.config['DATASET_FOLDER'] + os.path.join(f['dir_name'], f['file_name'])
             f['document_types'] = f['document_types']
         metadata['files'] = files
-        if cf.isCurator():
-            review_privilege = True
+        metadata['creator_orcids'] = []
+        for c in metadata['creator'].split('; '):
+            p = get_person(c)
+            if p:
+                metadata['creator_orcids'].append({'id': p.get('id'), 'orcid': p.get('id_orcid')}) 
+            else:
+                metadata['creator_orcids'].append({'id': c, 'orcid': None})
+        
+        review_privilege = cf.isCurator() or isCreator(metadata)
+        if review_privilege:
             fairness_query = "".join(["SELECT reviewed_time, %s" % ", ".join(list(map(lambda x : "%s, %s" % (x + "_check", x + "_comment"), list(fair_review_dict.keys())))),
                 " FROM dataset_fairness WHERE dataset_id=%s"])
             cur.execute(fairness_query, (dataset_id,))
@@ -2489,14 +2511,6 @@ def landing_page(dataset_id):
 
     if metadata.get('url_extra'):
         metadata['url_extra'] = os.path.basename(metadata['url_extra'])
-
-    metadata['creator_orcids'] = []
-    for c in metadata['creator'].split('; '):
-        p = get_person(c)
-        if p:
-            metadata['creator_orcids'].append({'id': p.get('id'), 'orcid': p.get('id_orcid')}) 
-        else:
-            metadata['creator_orcids'].append({'id': c, 'orcid': None})
 
     if not metadata['citation'] or metadata['citation'] == '':
         metadata['citation'] = makeCitation(metadata, dataset_id)
@@ -2997,6 +3011,7 @@ def curator():
                 for sub in res:
                     uid = sub['uid']
                     fairStatus = ""
+                    fairScore = "N/A"
                     if 'p' == uid[0] or 'p' == uid[1]:
                         fairStatus = "N/A"
                     else:
@@ -3004,27 +3019,35 @@ def curator():
                         fairCountQuery = "SELECT count(*) as ct from dataset_fairness where dataset_id='%s'" % dataset_id
                         cur.execute(fairCountQuery)
                         numEntries = int(cur.fetchall()[0]['ct'])
-                        if 0 == numEntries:
-                            fairStatus = "Never evaluated"
+                        if "N/A" == fairStatus:
+                            fairScore = "N/A"
+                        elif 0 == numEntries:
+                            fairStatus = "<span style='color:darkred'>Never evaluated</span>"
+                            fairScore = "TBD"
                         else:
                             fairQuery = "SELECT * from dataset_fairness where dataset_id='%s'" % dataset_id
                             cur.execute(fairQuery)
                             fairRes = cur.fetchall()[0]
                             numFields = 0
                             numEvaluated = 0
+                            earnedPts = 0
+                            maxPts = 0
                             for field in fairRes:
                                 if field.endswith("check"):
                                     if fairRes[field] != -1:
                                         numFields += 1
                                     if fairRes[field] >= 0:
                                         numEvaluated += 1
-                            fairStatus = "%d/%d" % (numEvaluated, numFields)
+                                        maxPts += 2
+                                        earnedPts += fairRes[field]
+                            fairStatus = "Complete" if numEvaluated == numFields else "<span style='color:darkgoldenrod'>Incomplete</span>" #"%d/%d" % (numEvaluated, numFields)
+                            fairScore = "%d/%d" % (earnedPts, maxPts)
                             if str(fairRes['reviewed_time']) < str(sub['submitted_date']):
-                                fairStatus = "(Needs update) " + fairStatus
+                                fairStatus = "<span style='color:red'>Needs update</span>"
                     landing_page = cf.getLandingPage(uid, cur)
                     submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update'],
-                                        'fairStatus': fairStatus})
+                                        'fairStatus': fairStatus, 'fairScore': fairScore})
 
             template_dict['submissions'] = submissions
         template_dict['coords'] = {'geo_n': '', 'geo_e': '', 'geo_w': '', 'geo_s': '', 'cross_dateline': False}
