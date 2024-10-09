@@ -41,6 +41,13 @@
                 }
             }
         </script>
+        {% elif mimetype=='application/zip' %}
+        <style>
+            .ziplist {
+                font-family:'Courier New', Courier, monospace;
+                list-style-type:none;
+            }
+        </style>
         {% endif %}
     </head>
     <body>
@@ -51,6 +58,7 @@
         <p class="textline">{{line}}</p>
         {% endfor %}
         {% elif mimetype == 'text/csv' or mimetype == 'text/tab-separated-values' %}
+        <p>{{data|length}} row(s)</p>
         <label for="delimiters">Choose a delimiter:</label>
         <select name="delimiters" id="delimiters">
             {% if mimetype == 'text/csv' %}
@@ -83,6 +91,12 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% elif mimetype == 'application/zip' %}
+        <ul class="ziplist">
+            {% for datum in data %}
+            <li>{{datum}}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
     </body>
 </html>

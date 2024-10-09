@@ -2867,7 +2867,8 @@ def file_download(filename):
 
 def can_preview(mime_type):
     return mime_type == "text/plain" or mime_type == "text/csv" or mime_type == "text/tab-separated-values" \
-        or mime_type == "text/html" or (mime_type.startswith("image") and mime_type != "image/tiff")
+        or mime_type == "text/html" or (mime_type.startswith("image") and mime_type != "image/tiff") \
+        or mime_type == "application/zip"
 
 @app.route('/preview/<path:filename>', methods=['GET'])
 def file_display(filename):
@@ -2887,7 +2888,7 @@ def file_display(filename):
         if not delim: delim = ',' if mime_type == "text/csv" else '\t'
         rows = []
         th = None
-        with open(filename, "r", newline='') as csvfile:
+        with open(filename, "r", newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile, delimiter=delim)
             for row in reader:
                 if th == None:
@@ -2895,6 +2896,10 @@ def file_display(filename):
                 else:
                     rows.append(row)
         return render_template("preview.html", mimetype=mime_type, header=th, data=rows, delimiter=delim)
+    if mime_type == "application/zip":
+        with zf.ZipFile(current_app.root_path + "/" + filename) as archive:
+            zipped = archive.namelist()
+            return render_template("preview.html", mimetype=mime_type, data=zipped)
             
     if mime_type.startswith("image") and mime_type != "image/tiff":
         return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
