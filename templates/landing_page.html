@@ -176,8 +176,14 @@ function showSelectedComboSize() {
             popup.style.display = "none";
         }
         else {
-            let content = document.createElement("embed");
-            content.src = url;
+            popup.appendChild(document.createTextNode("Loading…"));
+            popup.style.display = "block";
+            let content = document.createElement("object");
+            content.data = url;
+            content.onload = function() {
+                content.width = content.contentWindow.document.body.scrollWidth + 10;
+                content.height = content.contentWindow.document.body.scrollHeight + 10;
+            };
             let xhr = new XMLHttpRequest();
             xhr.open('HEAD', url, true);
             xhr.onload = function() {
