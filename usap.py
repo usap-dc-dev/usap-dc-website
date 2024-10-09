@@ -2888,6 +2888,7 @@ def file_display(filename):
         if not delim: delim = ',' if mime_type == "text/csv" else '\t'
         rows = []
         th = None
+        maxRows = 100
         with open(filename, "r", newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile, delimiter=delim)
             for row in reader:
@@ -2895,7 +2896,7 @@ def file_display(filename):
                     th = row
                 else:
                     rows.append(row)
-        return render_template("preview.html", mimetype=mime_type, header=th, data=rows, delimiter=delim)
+        return render_template("preview.html", mimetype=mime_type, header=th, data=rows[0:maxRows], numHiddenRows=len(rows)-maxRows, tooManyRows=len(rows)>maxRows, plural=len(rows)!=1, delimiter=delim)
     if mime_type == "application/zip":
         with zf.ZipFile(current_app.root_path + "/" + filename) as archive:
             zipped = archive.namelist()

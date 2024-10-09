@@ -58,7 +58,7 @@
         <p class="textline">{{line}}</p>
         {% endfor %}
         {% elif mimetype == 'text/csv' or mimetype == 'text/tab-separated-values' %}
-        <p>{{data|length}} row(s)</p>
+        <p>{% if tooManyRows %} Showing the first {{data|length}} rows. Download the file to see all data.{% else %}{{data|length}} row{% if plural %}s{% endif %}.{% endif %}</p>
         <label for="delimiters">Choose a delimiter:</label>
         <select name="delimiters" id="delimiters">
             {% if mimetype == 'text/csv' %}
@@ -91,6 +91,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if tooManyRows %}
+        <p>And {{numHiddenRows}} more rows…</p>
+        {% endif %}
         {% elif mimetype == 'application/zip' %}
         <ul class="ziplist">
             {% for datum in data %}
