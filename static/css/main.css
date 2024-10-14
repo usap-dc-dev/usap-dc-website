@@ -120,7 +120,7 @@ ul#ieda-menu {
   padding-left: 15px;
   /*margin-left: 2.9em;*/
   font: 100 1.18em/1em Open-Sans, Helvetica-Neue, Helvetica, Arial, sans-serif;
-  background-color: #92b9c5;
+  background-color: #245494;
 }
 ul#ieda-menu li {
   /*margin: 0 0.15em;*/
@@ -247,11 +247,15 @@ ul#ieda-menu li.submenu ul {
   height: 14.4em;
   padding: 1.44em;
   width: 18em;
-  background-color: #024a61;
+  border-color: #245484;
+  border-style: solid;
+  border-width: 2px;
+  border-radius: 15px;
+  background-color: rgba(255, 255, 255, 0.5);
   /* #7e4d17;*/
 }
 .shadow-container p {
-  color: #fff;
+  color: #245484;
   font-size: 200%;
 }
 .shadow-container a.image {
@@ -391,7 +395,7 @@ content area & common elements
   font: 100 2.3em/1em Helvetica-Neue, Helvetica, Arial, sans-serif;
   letter-spacing: -0.072em;
   padding-bottom: 0.144em;
-  color: #024a61;
+  color: #245484;
   font-weight: 350;
 }
 #content h3 {
@@ -466,7 +470,8 @@ content area & common elements
 }
 
 #dif-browser-table table th {
-  background-color:#92b9c5;
+  background-color:rgb(171, 193, 216);
+  color: rgb(36, 84, 148);
   text-align: left;
   padding-right: 1em; 
   padding: 0.14em 0.36em;
@@ -607,14 +612,19 @@ content area & common elements
   margin-left: 2.5em;
 }
 .read-more-button {
-  background-color: #92b9c5;
+  background-color: rgba(255, 255, 255, 0.5);
   height: 3em;
   width: 12em;
-  color: #fff;
+  color: #245484;
+  border-color: #245484;
+  border-radius:15px;
+  border-width: 2px;
+  border-style: solid;
+  vertical-align: center;
   font-size: 0.96em;
   display: inline-block;
   margin-bottom: 1.5em;
-  padding: 1em 1em;
+  padding: 1em 1em 1em 1em;
 }
 
 

@@ -68,7 +68,7 @@
     <div class="left">
       <h3>Recent News</h3>
       <div style="font-size:1.2em">
-        <ul>
+        <ul style="list-style-type:none">
           {% for news in news_dict %}
           {% if loop.index < 6 %}
           <li><h5><b>{{news.date}}</b><p>{{news.news|safe}}</p></h5></li>
@@ -80,7 +80,7 @@
 
       <h3>Recent Data</h3>
       <div style="font-size:1.2em">
-        <ul>
+        <ul style="list-style-type:none">
           {% for data in data_dict %}
           {% if loop.index < 6 %}
           <li><h5><b>{{data.date}}</b><p>{{data.link|safe}}&nbsp;{{data.authors}}&nbsp;{{data.title}}</p></h5></li>
