@@ -8,7 +8,7 @@ global elements
 
 h1,h2,h3,h4,h5,h6 {
   font-family: "Open Sans";
-  color: #024a61;
+  color: #245484;
 }
 
 body{
@@ -36,8 +36,8 @@ body{
 }
 
 .usap-dc-banner{ 
-  background: url('/static/imgs/header/2009-Nitsche_Frank-544.jpg') no-repeat;
-  background-position: center 25%;
+  background: url('https://upload.wikimedia.org/wikipedia/commons/4/4b/Antarctica_satellite_globe.jpg') no-repeat;
+  background-position: center;
    -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
@@ -180,7 +180,7 @@ ul#ieda-menu li a:hover,
 ul#ieda-menu > li:hover > a,
 ul#ieda-menu li a.cur {
   color: #fff;
-  background-color:#326c83;
+  background-color:#122a42;
 }
 /*Old rules for IE*/
 ul#ieda-menu li ul,
@@ -276,7 +276,8 @@ footer
 #footer {
   margin-top: 1.44em;
   padding: 0.36em 0.72em;
-  background-color: #92b9c5;
+  background-color: #245484;
+  color: white;
   text-align: left;
   font: 100 0.9em Helvetica-Neue, Helvetica, Arial, sans-serif;
   clear: both;
@@ -286,12 +287,12 @@ footer
 }
 #footer a:link {
   text-decoration: none;
-  color: #337ab7;
+  color: #99bddb;
 }
 #footer a:visited {
   text-decoration: none;
   border-bottom: 1px solid #337ab7;
-  color: #337ab7;
+  color: #99bddb;
 }
 #footer a:hover {
   text-decoration: none;
@@ -738,6 +739,10 @@ content area & common elements
   font-size: 10px;
   margin-left:3em;
   margin-bottom: 10px;
+}
+
+b, strong {
+    font-weight: bolder !important;
 }
 
 .stats-text {
