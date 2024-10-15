@@ -478,7 +478,7 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 
 .nested_table {
  border-collapse: collapse !important;
- border:none;
+ border:none !important;
 }
 
 .nested_table tr {

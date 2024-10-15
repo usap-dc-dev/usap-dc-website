@@ -31,7 +31,7 @@
 
 .title {
     font-size: 1.4em;
-    color: #024a61;
+    color: #245484;
     margin-bottom: 0.4em;
 }
 
@@ -82,18 +82,21 @@
 }
 
 .download {
-background-color: #008ab8;
-color: white;
+background-color: white;
+color: #245484;
 font-weight: 200;
 padding: 0.21em 0.72em 0.21em 0.72em;
 font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
 font-size: 0.7em;
 border-radius: 0.72em;
+border: 0.2em solid #245484 !important;
 cursor: pointer;
 }
 
 .download:disabled {
-    background-color:#c8c8c8;
+    border: 0.2em solid #92b9c5 !important;
+    color: #92B9C5;
+    display:none;
 }
 
 .value li {
@@ -107,16 +110,16 @@ overflow-x: auto;
 }
 
 .header {
-color: white;
-font-family: Georiga,"Times New Roman",Times,serif;
+color: #245484;
 font-size: 1.8em;
 letter-spacing: -1px;
 line-height: normal;
-font-weight: normal;
+font-weight: bold;
 padding: 0.36em;
-background-color: #92b9c5;
+background-color: inherit;
 margin: 0.72em;
 position: relative;
+border-bottom: 3px solid #245484;
 }
 
 .header.small {
@@ -156,7 +159,7 @@ font-size: 1.3em;
 .link-button {
   background: none;
   border: none;
-  color: #337ab7;
+  color: #245484;
   text-decoration: none;
   cursor: pointer;
   padding-left: 0;
@@ -171,10 +174,14 @@ font-size: 1.3em;
   text-decoration: underline
 }
 
+.kw-btn span {
+    color: #245484;
+}
 
 .ck-button {
     margin:4px;
     background-color:white;
+    color: #245484;
     border-radius:25px;
     border:1px solid #757575;
     overflow:auto;
@@ -250,6 +257,6 @@ font-size: 1.3em;
 .file_info {
   font-size: 12px;
   line-height: 15px;;
-  color: rgb(0,169,234);
+  color: #245484;
   font-weight: normal;
 }
