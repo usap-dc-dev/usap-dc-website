@@ -2872,17 +2872,28 @@ def can_preview(mime_type):
 
 @app.route('/preview/<path:filename>', methods=['GET'])
 def file_display(filename):
+    full_path = current_app.root_path + "/" + filename
+    file_stats = os.stat(full_path)
+    file_size = file_stats.st_size
+    max_bytes=10000
     mime_type, n_coding = mimetypes.guess_type(filename)
     if mime_type == None:
         return render_template("preview.html", mimetype="text/plain", file_contents=["Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."])
     if mime_type == "text/plain":
         lines = []
-        with open(current_app.root_path + "/" + filename, "r", encoding="utf-8") as txtFile:
-            lines = [line for line in txtFile]
+        if file_size <= max_bytes:
+            with open(full_path, "r", encoding="utf-8") as txtFile:
+                lines = [line for line in txtFile]
+        else:
+            with open(full_path, "r", encoding="utf8") as txtFile:
+                contents = txtFile.read(max_bytes-1)
+                lines = contents.split("\n")
+                lines.append("…")
+
         return render_template("preview.html", mimetype=mime_type, file_contents=lines)
         #return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
     if mime_type == "text/html":
-        return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
+        return send_file(full_path, mimetype=mime_type)
     if mime_type == "text/csv" or mime_type == "text/tab-separated-values":
         delim = request.args.get('delim')
         if not delim: delim = ',' if mime_type == "text/csv" else '\t'
