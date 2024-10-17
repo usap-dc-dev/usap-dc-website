@@ -615,9 +615,11 @@ function showSelectedComboSize() {
                         External
                         {% endif %}
                     </div>
-                    <div class="download data_preview" {% if data.hold or not canPreview(f['mime_types']) %} disabled {% else %} data-url="{{f['url'].replace('/dataset', '/preview/dataset')}}" {% endif %}>
+                    {% if canPreview(f['url']) %}
+                    <div class="download data_preview" {% if data.hold %}disabled {% else %} data-url="{{f['url'].replace('/dataset', '/preview/dataset')}}" {% endif %}>
                         Preview
                     </div>
+                    {% endif %}
                 </div>
     
     

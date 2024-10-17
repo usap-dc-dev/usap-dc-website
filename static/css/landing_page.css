@@ -120,6 +120,7 @@ background-color: inherit;
 margin: 0.72em;
 position: relative;
 border-bottom: 3px solid #245484;
+padding-bottom:0.7em;
 }
 
 .header.small {
