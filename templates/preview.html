@@ -52,6 +52,7 @@
     </head>
     <body>
         {% if mimetype == 'text/plain' %}
+        {% if cut_off %}<p>To read the entire file, you will need to download it.</p>{% endif %}
         <label for="FW_checkbox">View in fixed width font</label>
         <input type="checkbox" name="FW_checkbox" id="FW_checkbox" onclick="toggleFixedWidth()">
         {% for line in file_contents %}

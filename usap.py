@@ -2880,17 +2880,17 @@ def file_display(filename):
     if mime_type == None:
         return render_template("preview.html", mimetype="text/plain", file_contents=["Unknown file type: " + filename.split(".")[-1] + ". Cannot preview."])
     if mime_type == "text/plain":
+        show_full_file = file_size <= max_bytes
         lines = []
-        if file_size <= max_bytes:
+        if show_full_file:
             with open(full_path, "r", encoding="utf-8") as txtFile:
                 lines = [line for line in txtFile]
         else:
             with open(full_path, "r", encoding="utf8") as txtFile:
-                contents = txtFile.read(max_bytes-1)
+                contents = txtFile.read(max_bytes-1) + "…"
                 lines = contents.split("\n")
-                lines.append("…")
 
-        return render_template("preview.html", mimetype=mime_type, file_contents=lines)
+        return render_template("preview.html", mimetype=mime_type, file_contents=lines, cut_off = not show_full_file)
         #return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
     if mime_type == "text/html":
         return send_file(full_path, mimetype=mime_type)
