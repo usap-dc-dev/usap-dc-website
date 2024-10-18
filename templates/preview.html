@@ -96,11 +96,7 @@
         <p>And {{numHiddenRows}} more rows…</p>
         {% endif %}
         {% elif mimetype == 'application/zip' %}
-        <ul class="ziplist">
-            {% for datum in data %}
-            <li>{{datum}}</li>
-            {% endfor %}
-        </ul>
+        {{ data|safe }}
         {% endif %}
     </body>
 </html>
