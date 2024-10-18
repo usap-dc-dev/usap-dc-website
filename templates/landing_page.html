@@ -179,7 +179,7 @@ function showSelectedComboSize() {
             let content = document.createElement("object");
             content.data = url;
             content.onload = function() {
-                content.width = content.contentWindow.document.body.scrollWidth + 10;
+                content.width = content.contentWindow.document.body.scrollWidth + 30;
                 content.height = content.contentWindow.document.body.scrollHeight + 10;
             };
             let xhr = new XMLHttpRequest();
