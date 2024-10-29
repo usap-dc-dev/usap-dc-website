@@ -2868,9 +2868,9 @@ def file_download(filename):
 def can_preview(url):
     path = url.replace(app.config['USAP_DOMAIN'], current_app.root_path)
     mime_type, encoding = mimetypes.guess_type(path)
-    return mime_type == "text/plain" or mime_type == "text/csv" or mime_type == "text/tab-separated-values" \
-        or mime_type == "text/html" or (mime_type.startswith("image") and mime_type != "image/tiff") \
-        or mime_type == "application/zip"
+    return mime_type is not None and (mime_type == "text/plain" or mime_type == "text/csv" \
+        or mime_type == "text/tab-separated-values" or mime_type == "text/html" \
+        or (mime_type.startswith("image") and mime_type != "image/tiff") or mime_type == "application/zip")
 
 @app.route('/preview/<path:filename>', methods=['GET'])
 def file_display(filename):
