@@ -24,7 +24,7 @@ import humanize
 import lib.json2sql as json2sql
 import shutil
 import lib.curatorFunctions as cf
-from functools import partial
+from functools import partial, reduce
 from services.api_v1 import blueprint as api_v1
 # from services.api_v2 import blueprint as api_v2
 import services.settings as rp_settings
@@ -2913,7 +2913,31 @@ def file_display(filename):
     if mime_type == "application/zip":
         with zf.ZipFile(current_app.root_path + "/" + filename) as archive:
             zipped = archive.namelist()
-            return render_template("preview.html", mimetype=mime_type, data=zipped)
+            file_tree = {}
+            for fname in zipped:
+                fpath = fname.split("/")
+                cur_dir = file_tree
+                print(cur_dir)
+                file_name = fpath[-1]
+                for dir in fpath[:-1]:
+                    if dir not in cur_dir:
+                        cur_dir[dir] = {}
+                    cur_dir = cur_dir[dir]
+                if '' != file_name:
+                    cur_dir[file_name]=None
+            def create_html(ftree):
+                html_str = "<ul class='ziplist'>"
+                for item in ftree:
+                    #for directories/subdirectories
+                    if ftree[item] is not None:
+                        html_el = '<details open><summary>' + item + '</summary>' + create_html(ftree[item]) + '</details>'
+                    #for files/leaf nodes
+                    else:
+                        html_el = item
+                    html_str += '<li>' + html_el + '</li>'
+                html_str += "</ul>"
+                return html_str
+            return render_template("preview.html", mimetype=mime_type, data=create_html(file_tree))
             
     if mime_type.startswith("image") and mime_type != "image/tiff":
         return send_file(current_app.root_path + "/" + filename, mimetype=mime_type)
