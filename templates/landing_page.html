@@ -44,7 +44,7 @@ function toggleSelectAll() {
 }
 
 function showSelectedComboSize() {
-    const prefixes = {'k': 1000, 'M': 1000000};
+    const prefixes = {'': 1, 'k': 1000, 'M': 1000000};
     let dlZipBtn = document.getElementById("dl_zip_btn");
     let selected = Array.from(document.getElementsByName("dl_checkbox")).filter(x=>x.checked);
     if(dlZipBtn) {
@@ -54,10 +54,14 @@ function showSelectedComboSize() {
         let filename = x.id.slice(4);
         let row = document.getElementById(`row_${filename}`);
         let sizeCell = row.getElementsByClassName("col2")[0];
-        return sizeCell.innerHTML.slice(0, sizeCell.innerHTML.search("B"));
+        let sizeTxt = sizeCell.innerHTML.trim();
+        return sizeTxt.slice(0, sizeTxt.search("B"));
     });
     let sum = sizes.reduce(function(acc, x) {
         let w = x.trim().split(" ");
+        if(!w[1]) {
+            w[1] = '';
+        }
         let mantissa = parseFloat(w[0]), magnitude = prefixes[w[1]];
         //alert(`${mantissa} * ${magnitude}`);
         return acc + mantissa * magnitude;
