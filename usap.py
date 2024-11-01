@@ -3231,7 +3231,7 @@ def curator():
                     json_data = json.loads(json_str)
                     template_dict['json'] = json_str
 
-                    sql, readme_file = json2sql.json2sql(json_data, uid, curator_id, cf.isCurator(json_data['submitter_orcid']))
+                    sql, readme_file = json2sql.json2sql(json_data, uid, curator_id, cf.isCurator(json_data['submitter_orcid']) if 'submitter_orcid' in json_data else False)
 
                     template_dict['sql'] = sql
                     template_dict['readme_file'] = readme_file
