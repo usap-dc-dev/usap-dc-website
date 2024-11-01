@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from gmail_functions import send_gmail_message
 import crossref
 import url_test
+from functools import reduce
 
 config = json.loads(open('/web/usap-dc/htdocs/config.json', 'r').read())
 config.update(json.loads(open('/web/usap-dc/htdocs/inc/report_config.json', 'r').read()))
@@ -38,6 +39,40 @@ def querySubmissionTable(cur, submission_type, status):
         msg += """<li><a href="%s">%s</a> %s</li>""" % (url, d['uid'], d['submitted_date'].strftime('%Y-%m-%d'))
     msg += """</ul>"""
     return msg
+
+def getFairSummary(cur):
+    unevaluated = []
+    needsUpdate = []
+    incomplete = []
+    unevaluatedQuery = 'select id from dataset where id not in (select dataset_id from dataset_fairness);'
+    print(unevaluatedQuery)
+    cur.execute(unevaluatedQuery)
+    res = cur.fetchall()
+    unevaluated = list(map(lambda x: x['id'], res))
+    needsUpdateQuery = 'select id from (select dataset.id, dataset.date_modified, cast(dataset_fairness.reviewed_time as date) as date_reviewed from dataset join dataset_fairness on dataset.id=dataset_fairness.dataset_id) as d where date_modified>date_reviewed order by date_modified desc;'
+    print(needsUpdateQuery)
+    cur.execute(needsUpdateQuery)
+    res = cur.fetchall()
+    needsUpdate = list(map(lambda x: x['id'], res))
+    incompleteQuery = 'select dataset_id as id from dataset_fairness where \'-2\' in (file_name_check, file_format_check, file_organization_check,\
+													  table_header_check, data_content_check, data_process_check,\
+													  data_acquisition_check, data_spatial_check, data_variable_check,\
+													  data_issues_check, data_ref_check, abstract_check,\
+													  data_temporal_check, title_check, keywords_check)'
+    if len(needsUpdate) > 0:
+        incompleteQuery += ' and dataset_id not in (' + reduce(lambda a,b: a + ','+ b, map(lambda a: '\''+a+'\'', needsUpdate)) + ')'
+        print(incompleteQuery)
+    cur.execute(incompleteQuery)
+    res = cur.fetchall()
+    incomplete = list(map(lambda x: x['id'], res))
+    retMap = {'unevaluated':unevaluated, 'needsUpdate':needsUpdate, 'incomplete':incomplete}
+    return retMap
+
+def formatList(theList, ordered=False):
+    ret = '<ol>' if ordered else '<ul>'
+    ret += reduce(lambda a,b: a+b, map(lambda c: '<li>' + c + '</li>', theList))
+    ret += '</ol>' if ordered else '</ul>'
+    return ret
 
 
 # this is the old sendmail function, which led to emails in the spma folder
@@ -137,6 +172,18 @@ if __name__ == '__main__':
 
     msg += """<h3>Datasets Missing ISO XML:</h3><ul>"""
     msg += querySubmissionTable(cur, 'dataset submission', 'ISO XML file missing')
+
+    fairLists = getFairSummary(cur)
+    unevaluated = fairLists['unevaluated']
+    needsUpdate = fairLists['needsUpdate']
+    incomplete = fairLists['incomplete']
+    getCuratorUrl = lambda uid: '<a href="' + (config['CURATOR_PAGE'] % uid) + '">' + uid + '</a>'
+    msg += """<h3>Datasets missing FAIRness evaluation:</h3>"""
+    msg += formatList(list(map(getCuratorUrl, unevaluated)))
+    msg += """<h3>Datasets edited since their last FAIRness evaluation:</h3>"""
+    msg += formatList(list(map(getCuratorUrl, needsUpdate)))
+    msg += """<h3>Datasets whose FAIRness evaluation is incomplete:</h3>"""
+    msg += formatList(list(map(getCuratorUrl, incomplete)))
 
     msg += """<h3>Projects Not Yet Ingested:</h3><ul>"""
     msg += querySubmissionTable(cur, 'project submission', 'Pending')
