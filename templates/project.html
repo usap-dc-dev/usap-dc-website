@@ -67,8 +67,9 @@
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
-                  <li><a data-toggle="tooltip" data-placement="right">None</li></li>
-                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your NSF Award in this list" data-placement="right">Not In This List</li></li>
+                  <li><a data-toggle="tooltip" data-placement="right">None</a></li>
+                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your NSF Award in this list" data-placement="right">Not In This List</a></li>
+                  <li><input data-toggle="" type="text" placeholder="Search awards…" oninput="filterList(this.parentElement.parentElement.querySelectorAll('li:nth-of-type(n+4)'), this)"></li>
                   {% for grant in nsf_grants %}
                   {% set s = grant['award'] + " " + grant['name'] %}
                   <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
