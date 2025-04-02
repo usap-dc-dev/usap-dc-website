@@ -1,5 +1,11 @@
-function filterList(list, searchBox, filterFn=x=>x.innerHTML.toUpperCase().includes(searchBox.value.toUpperCase())) {
-    console.log("You searched " + searchBox.value);
+function getDefaultFilterFn(searchBox) {
+    return function(listItem) {
+        let searchableHtml = listItem.childNodes[0].innerHTML.toUpperCase();
+        return searchableHtml.includes(searchBox.value.toUpperCase());
+    }
+}
+
+function filterList(list, searchBox, filterFn=getDefaultFilterFn(searchBox)) {
     for(let el of list) {
         if(filterFn(el)) {
             el.style.display="";
