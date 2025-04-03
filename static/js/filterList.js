@@ -1,7 +1,9 @@
 function getDefaultFilterFn(searchBox) {
     return function(listItem) {
         let searchableHtml = listItem.childNodes[0].innerHTML.toUpperCase();
-        return searchableHtml.includes(searchBox.value.toUpperCase());
+        let keywords = searchBox.value.toUpperCase().split(/\s+/);
+        let includesKeyword = keywords.reduce((acc, cur) => acc && searchableHtml.includes(cur), true);
+        return includesKeyword;
     }
 }
 
