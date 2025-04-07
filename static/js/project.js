@@ -395,7 +395,7 @@ $(document).ready(function() {
                                             let splitName = name.split(/\s+/);
                                             let beginLastName = splitName.length-1;
                                             while(beginLastName > 1) {
-                                                if(splitName[beginLastName-1][0] === splitName[beginLastName-1][0].toUpperCase()) {
+                                                if(splitName[beginLastName-1][0] === splitName[beginLastName-1][0].toUpperCase() || splitName[beginLastName] === splitName[beginLastName].toUpperCase() || !splitName[beginLastName][-1].match(/^[a-zA-Z-]*$/)) {
                                                     break;
                                                 }
                                                 beginLastName--;
@@ -411,7 +411,7 @@ $(document).ready(function() {
                         }
                         else {
                             let authorName = {"name_first": copis[1], "name_last": copis[0]};
-                            addAuthorRow(authorName);
+                            addAuthor(authorName, 0);
                         }
                     }
                 }
