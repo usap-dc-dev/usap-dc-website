@@ -5671,6 +5671,18 @@ def tracker():
 def favicon():
     return redirect(url_for('static', filename='imgs/favicon.ico'))
 
+@app.route('/separated_name', methods=['GET'])
+def getSeparatedName():
+    if "name" in request.args:
+        name = request.args.get("name")
+        conn, cur = connect_to_db()
+        query = "select first_name, middle_name, last_name from person where replace(concat(first_name, ' ', middle_name, ' ', last_name), '  ', ' ')=%s"
+        cur.execute(query, (name,))
+        matches = cur.fetchall()
+        return json.dumps(matches)
+    return "[]"
+
+
 
 @app.errorhandler(500)
 def internal_error(error):

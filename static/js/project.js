@@ -342,7 +342,7 @@ $(document).ready(function() {
                 // add co-pis
                 if (msg[0].copi != null && msg[0].copi !== ''){
                     var copis = msg[0].copi.split(';');
-                    if (copis.length > 0) {
+                    if (copis.length > 1) {
                         delim = copis[0].includes(',') ? ',' : ' ';
                         if (delim == ',') {
                         copi = copis[0].split(delim);
@@ -365,6 +365,53 @@ $(document).ready(function() {
                             var author = {'name_last': copis[i].substr(lastIndex+1).trim(), 'name_first': copis[i].substr(0, lastIndex).trim()};
                         }
                         addAuthorRow(author);
+                        }
+                    }
+                    else {
+                        let addAuthor = function(authorName, index) {
+                            if(0 === index) {
+                                $('#copi_name_last').attr('value', authorName["name_last"]);
+                                $('#copi_name_first').attr('value', authorName["name_first"]);
+                            }
+                            else {
+                                addAuthorRow(authorName);
+                            }
+                        };
+                        copis = msg[0].copi.split(",").map(x => x.trim());
+                        if(copis[0].includes(" ")) {
+                            let getSepName = function(name, index) {
+                                let _url = window.location.protocol + '//' + window.location.hostname + "/separated_name?name="+name;
+                                $.ajax({
+                                    method: 'GET',
+                                    url: _url,
+                                    success: function(msg) {
+                                        let namesList = JSON.parse(msg);
+                                        if(namesList.length > 0) {
+                                            let name2 = namesList[0];
+                                            let fixedName = {"name_first": name2["first_name"] + (name2["middle_name"]?(" " + name2["middle_name"]):""), "name_last": name2["last_name"]};
+                                            addAuthor(fixedName, index);
+                                        }
+                                        else {
+                                            let splitName = name.split(/\s+/);
+                                            let beginLastName = splitName.length-1;
+                                            while(beginLastName > 1) {
+                                                if(splitName[beginLastName-1][0] === splitName[beginLastName-1][0].toUpperCase()) {
+                                                    break;
+                                                }
+                                                beginLastName--;
+                                            }
+                                            let firstName = splitName.slice(0, beginLastName).join(" "), lastName = splitName.slice(beginLastName);
+                                            let authorName = {"name_first": firstName, "name_last": lastName};
+                                            addAuthor(authorName, index);
+                                        }
+                                    }
+                                })
+                            }
+                            copis.forEach(getSepName);
+                        }
+                        else {
+                            let authorName = {"name_first": copis[1], "name_last": copis[0]};
+                            addAuthorRow(authorName);
                         }
                     }
                 }
