@@ -5676,7 +5676,7 @@ def getSeparatedName():
     if "name" in request.args:
         name = request.args.get("name")
         conn, cur = connect_to_db()
-        query = "select first_name, middle_name, last_name from person where replace(concat(first_name, ' ', middle_name, ' ', last_name), '  ', ' ')=%s"
+        query = "select first_name, middle_name, last_name, id_orcid, organization from person where replace(concat(first_name, ' ', middle_name, ' ', last_name), '  ', ' ')=%s"
         cur.execute(query, (name,))
         matches = cur.fetchall()
         return json.dumps(matches)

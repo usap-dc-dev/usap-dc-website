@@ -372,6 +372,9 @@ $(document).ready(function() {
                             if(0 === index) {
                                 $('#copi_name_last').attr('value', authorName["name_last"]);
                                 $('#copi_name_first').attr('value', authorName["name_first"]);
+                                if(authorName["org"] && authorName["org"] !== "") {
+                                    $('#copi_org'+index).attr('value', authorName["org"]);
+                                }
                             }
                             else {
                                 addAuthorRow(authorName);
@@ -388,7 +391,7 @@ $(document).ready(function() {
                                         let namesList = JSON.parse(msg);
                                         if(namesList.length > 0) {
                                             let name2 = namesList[0];
-                                            let fixedName = {"name_first": name2["first_name"] + (name2["middle_name"]?(" " + name2["middle_name"]):""), "name_last": name2["last_name"]};
+                                            let fixedName = {"name_first": name2["first_name"] + (name2["middle_name"]?(" " + name2["middle_name"]):""), "name_last": name2["last_name"], "orcid":name2["id_orcid"], "org":name2["organization"]};
                                             addAuthor(fixedName, index);
                                         }
                                         else {
@@ -417,7 +420,7 @@ $(document).ready(function() {
                 }
                 $("#entry textarea[name='title']").val(msg[0].title);
                 $("#entry input[name='pi_name_last']").val(pi[0]);
-                $("#entry input[name='pi_name_first']").val(pi[1].trim());
+                $("#entry input[name='pi_name_first']").val(pi[1]?.trim());
                 $("#entry input[name='org']").val(msg[0].org);
                 if (msg[0].email) $("#entry input[name='email']").val(msg[0].email);
                 $("#entry input[name='copi']").val(msg[0].copi);
