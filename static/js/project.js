@@ -332,6 +332,15 @@ $(document).ready(function() {
         success: function(msg) {
             if(msg.length > 0) {
                 pi = msg[0].name.split(',');
+                let _url = window.location.protocol + '//' + window.location.hostname + "/separated_name?name="+pi[1].trim() + " " + pi[0].trim();
+                $.ajax({
+                    method: "GET",
+                    url: _url,
+                    success: function(msg2) {
+                        let name = JSON.parse(msg2);
+                        $('#pi_orcid').val(name[0]?.id_orcid);
+                    }
+                });
                 //reset co-pis
                 $('#copi_name_last').attr('value', '');
                 $('#copi_name_first').attr('value', '');
@@ -374,6 +383,9 @@ $(document).ready(function() {
                                 $('#copi_name_first').attr('value', authorName["name_first"]);
                                 if(authorName["org"] && authorName["org"] !== "") {
                                     $('#copi_org'+index).attr('value', authorName["org"]);
+                                }
+                                if(authorName["orcid"] && authorName["orcid"] !== "") {
+                                    $('#copi_orcid'+index).attr('value', authorName["orcid"]);
                                 }
                             }
                             else {
@@ -636,6 +648,7 @@ $(document).ready(function() {
           $(extraAuthor).find('#copi_name_first').attr({'id': 'copi_name_first'+author_counter, 'name': 'copi_name_first'+author_counter, 'value': ''});
           $(extraAuthor).find('#copi_role').attr({'id': 'copi_role'+author_counter, 'name': 'copi_role'+author_counter, 'value': ''});
           $(extraAuthor).find('#copi_org').attr({'id': 'copi_org'+author_counter, 'name': 'copi_org'+author_counter, 'value': ''});
+          $(extraAuthor).find('#copi_orcid').attr({'id':'copi_orcid'+author_counter, 'name': 'copi_orcid'+author_counter, 'value':''})
           $(extraAuthor).find('#removeAuthorRow').show();
           $(extraAuthor).find('#extraAuthorLine').show();
 
@@ -646,6 +659,7 @@ $(document).ready(function() {
             $('#copi_name_first'+author_counter).val(author.name_first);
             $('#copi_org'+author_counter).val(author.org);
             $('#copi_role'+author_counter).val(author.role);
+            $('#copi_orcid'+author_counter).val(author.orcid);
           }
 
           autocomplete(document.getElementById("copi_name_last"+author_counter), document.getElementById("copi_name_first"+author_counter), persons);
