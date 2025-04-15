@@ -108,7 +108,7 @@
           </div>  
           <div class="form-group required" style="margin:10px 0 10px 0">
             <b>Main Contact:</b><br>
-            <div class="input-group">
+            <div class="input-group" onfocusout="getOrcid(this)">
               <input class="input-sm form-control" type="text" size=8 id="pi_name_last" name="pi_name_last" value="{{full_name.last_name}}" placeholder="Last Name" /> 
               <span class="input-group-addon">,</span>
               <input class="input-sm form-control" type="text" size=8 id="pi_name_first" name="pi_name_first" value="{{full_name.first_name}}" placeholder="First Name" />

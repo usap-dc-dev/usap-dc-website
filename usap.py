@@ -1814,7 +1814,8 @@ def process_form_data(form):
             copi = {'name_last': msg_data[key],
                     'name_first': msg_data.get(key.replace('last', 'first')),
                     'role': msg_data.get(key.replace('name_last', 'role')),
-                    'org': msg_data.get(key.replace('name_last', 'org'))
+                    'org': msg_data.get(key.replace('name_last', 'org')),
+                    'orcid': msg_data.get(key.replace('name_last', 'orcid'))
                     }
             copis.append(copi)
         del msg_data[key]
@@ -5682,6 +5683,23 @@ def getSeparatedName():
         return json.dumps(matches)
     return "[]"
 
+@app.route('/person', methods=['GET'])
+def getPerson():
+    if "fullName" in request.args:
+        name = request.args.get("fullName")
+        conn, cur = connect_to_db()
+        query = "select first_name, middle_name, last_name, id_orcid, organization from person where replace(concat(first_name, ' ', middle_name, ' ', last_name), '  ', ' ')=%s"
+        cur.execute(query, (name,))
+        matches = cur.fetchall()
+        return json.dumps(matches)
+    elif "first" in request.args and "last" in request.args:
+        firstName = request.args.get("first") + ((" " + request.args.get("middle")) if "middle" in request.args else "")
+        lastName = request.args.get("last")
+        conn, cur=connect_to_db()
+        query = "select first_name, middle_name, last_name, id_orcid, organization from person where trim(concat(first_name, ' ', middle_name))=%s and last_name=%s"
+        cur.execute(query, (firstName, lastName))
+        matches = cur.fetchall()
+        return json.dumps(matches)
 
 
 @app.errorhandler(500)

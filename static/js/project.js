@@ -967,6 +967,7 @@ function autocomplete(inp, inp2, arr) {
                   selected = this.getElementsByTagName("input")[0].value;
                   inp.value = selected;
                 }
+                getOrcid(inp.parentElement);
                 /*close the list of autocompleted values,
                 (or any other open lists of autocompleted values:*/
                 closeAllLists();
@@ -1132,4 +1133,29 @@ function addFormat(format_wrapper, format) {
     $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
     $('[data-toggle="tooltip"]').tooltip({container: 'body'});
     format_counter++;
+}
+
+function getOrcid(parentElement) {
+    if(parentElement.contains(document.activeElement)) return;
+    let nameElements = Array.from(parentElement.querySelectorAll("input"));
+    let firstName = nameElements[1].value, lastName = nameElements[0].value;
+    let _url = window.location.protocol + '//' + window.location.hostname + `/person?first=${firstName}&last=${lastName}`;
+    fetch(_url).then(function(resp) {
+        if(200 === resp.status) {
+            return resp.json();
+        }
+        else {
+            return [];
+        }
+    }).then(function(json) {
+        for(let i = 0; i < json.length; i++) {
+            if(json[i].id_orcid) {
+                parentElement.nextElementSibling.value = json[i].id_orcid;
+                break;
+            }
+            else {
+                parentElement.nextElementSibling.value = "";
+            }
+        }
+    });
 }
