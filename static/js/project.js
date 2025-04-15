@@ -1138,6 +1138,7 @@ function addFormat(format_wrapper, format) {
 function getOrcid(parentElement) {
     if(parentElement.contains(document.activeElement)) return;
     let nameElements = Array.from(parentElement.querySelectorAll("input"));
+    let orcidFieldId = nameElements[0].id.replace(/name_(la|fir)st/, "orcid");
     let firstName = nameElements[1].value, lastName = nameElements[0].value;
     let _url = window.location.protocol + '//' + window.location.hostname + `/person?first=${firstName}&last=${lastName}`;
     fetch(_url).then(function(resp) {
@@ -1150,11 +1151,11 @@ function getOrcid(parentElement) {
     }).then(function(json) {
         for(let i = 0; i < json.length; i++) {
             if(json[i].id_orcid) {
-                parentElement.nextElementSibling.value = json[i].id_orcid;
+                document.getElementById(orcidFieldId).value = json[i].id_orcid;
                 break;
             }
             else {
-                parentElement.nextElementSibling.value = "";
+                document.getElementById(orcidFieldId).value = "";
             }
         }
     });
