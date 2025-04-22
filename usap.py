@@ -5280,7 +5280,7 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         free_text = escapeChars(free_text) 
-        inc_platforms = " OR platforms ~* '%s' OR instruments ~* '%s' OR paleo_time ~* '%s'" % (free_text, free_text, free_text) if dp_type == 'Project' else ""
+        inc_platforms = " OR platforms ~* '%s' OR instruments ~* '%s' OR paleo_time ~* '%s' OR uid in (select proj_uid from project_dataset_map pdm inner join dataset_view dv on pdm.dataset_id=dv.uid where title ~* '%s' or description ~* '%s' or keywords ~* '%s' or persons ~* '%s')" % (free_text, free_text, free_text, free_text, free_text, free_text, free_text) if dp_type == 'Project' else ""
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s" + inc_platforms + " OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
