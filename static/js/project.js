@@ -578,7 +578,7 @@ $(document).ready(function() {
 
     function addParameter(parameter) {
       var $cloned = $("#parameters select[name='parameter1']").clone();
-      var idx = $('#parameters').children().length+1;
+      var idx = document.querySelectorAll('#parameters .mySelect2').length+1;
       $cloned.attr('name','parameter'+idx);
       $cloned.attr('id', 'parameter'+idx);
       $cloned.removeAttr('required');
@@ -587,7 +587,9 @@ $(document).ready(function() {
  
       if (typeof parameter != 'undefined') {
         $('#parameter'+idx).val(parameter);
-      }  
+      }
+      $cloned.select2();
+      $('#parameters .mySelect2').select2();
     }
 
     $('#add_repo').click(function() {

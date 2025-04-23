@@ -315,7 +315,7 @@
         <div class="form-group required">
           <b>GCMD Keyword(s):</b> &nbsp;<i>(terms from the <a class="external" href="https://earthdata.nasa.gov/earth-observation-data/find-data/idn/gcmd-keywords" target="_blank">GCMD</a> Keyword list)</i><br>
           <div id="parameters">
-            <select name="parameter1" id="parameter1" style="width:40em;margin-bottom: 3px">
+            <select name="parameter1" id="parameter1" class="mySelect2" style="width:40em;margin-bottom: 3px">
               <option value="">(Select Term 1)</option>
               {% for k in parameters %}
                 <option value="{{k.id}}">{{k.id}}</option>
