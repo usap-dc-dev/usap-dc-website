@@ -5077,6 +5077,9 @@ def search():
     template_dict = {}
 
     params = request.args.to_dict()
+
+    print("Params are ");
+    print(params)
     params['dp_type'] = 'Project'
 
     template_dict['show_map'] = False
@@ -5087,6 +5090,13 @@ def search():
     checkHoneypot(params, 'There was an issue with your search, please try again.', url_for('search'))
     params.pop('email', None)
     params.pop('name', None)
+
+    params.pop("keyword_input", None)
+
+    if 'keywordsArray' in params:
+        template_dict['keywordsArray'] = json.loads(params['keywordsArray'])
+    else:
+        template_dict['keywordsArray'] = []
 
     rows = filter_datasets_projects(**params)
     session['search_params'] = params
@@ -5107,6 +5117,11 @@ def search():
     template_dict['records'] = rows
 
     template_dict['search_params'] = session.get('search_params')
+    conn, cur = connect_to_db()
+    query_str = "select * from keyword_usap"
+    cur.execute(query_str)
+    keywords = list(cur.fetchall())
+    template_dict['keywords']=list(map(lambda kw: kw["keyword_label"], keywords))
     return render_template('search.html', **template_dict)  
 
 
@@ -5231,7 +5246,7 @@ def filter_joint_menus():
 
 
 def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None, person=None, spatial_bounds_interpolated=None, sci_program=None,
-                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, location=None, exclude=False):
+                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, location=None, exclude=False, keywordsArray=None):
 
     (conn, cur) = connect_to_db()
 
@@ -5285,6 +5300,12 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify("%s = ANY(string_to_array(repositories, '; '))", (escapeChars(repo),)))
+    
+    if keywordsArray:
+        theKeywords = json.loads(keywordsArray)
+        print("The", len(theKeywords), "keywords are", theKeywords)
+        keywordsCond = " AND ".join(list(map(lambda kw: "keywords ~* '%s'" % (kw,), theKeywords)))
+        conds.append(keywordsCond)
 
     if len(conds) > 0:
         q_conds = []
