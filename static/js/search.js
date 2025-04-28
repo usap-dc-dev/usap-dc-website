@@ -928,11 +928,11 @@ function getKeywordsToForm() {
     el.id = "keywordsArray";
     el.name = "keywordsArray";
     el.value = "[" + keywordList.map(x => `"${x}"`).join(", ") + "]";
+    el.style.display="none";
     let formList = Array.from(document.getElementsByTagName("form")).filter(x => x.contains(document.getElementById("keywordList")));
     if(formList && formList.length > 0) {
         let theForm = formList[0];
         theForm.appendChild(el);
-        alert(el.value);
     }
     else {
         alert("Couldn't find the form");

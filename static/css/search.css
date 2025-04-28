@@ -561,7 +561,8 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 
 .oval_list {
     list-style-type: none;
-
+    display: block;
+    padding-left: 0;
 }
 
 .oval_list > li {

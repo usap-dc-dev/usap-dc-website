@@ -163,7 +163,7 @@
           </div>
         </div>
         <div class="row2">
-            <label for="keyword_input">Keyword</label>
+            <label for="keyword_input">Keyword</label><br>
             <input type="text" list="keywords" id="keyword_input" name="keyword_input"/>
             <datalist id="keywords">
                 {% for kw in keywords %}
@@ -171,8 +171,6 @@
                 {% endfor %}
             </datalist>
             <button onclick="addKeyword('keyword_input')">Add keyword to search</button>
-        </div>
-        <div class="row2">
             <ul class="oval_list" id="keywordList">
                 {% for kw in keywordsArray %}
                 <li>{{kw}}<button style="minHeight:1px; minWidth:1px" onclick="removeKeyword('{{kw}}')">✖</button></li>
