@@ -48,6 +48,13 @@
     }
   </script>
   {% endif %}
+  {% if cur=='project' or cur=='dataset' %}
+  <script type="text/javascript">
+    var keywordsList = {{keywordsList|safe}};
+  </script>
+  <script src="{{url_for('static', filename='js/userKeywordsList.js')}}"></script>
+  <link rel="stylesheet" href="{{url_for('static', filename='css/userKeywordsList.css')}}"/>
+  {% endif %}
   
   {{ JSGlue.include() }}
 

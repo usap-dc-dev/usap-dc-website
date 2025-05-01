@@ -367,10 +367,10 @@ def get_usap_locations(conn=None, cur=None, dataset_id=None):
 def get_keywords(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT * FROM keyword'
+    query = 'SELECT * FROM keyword_usap'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,)).decode()
-    query += ' ORDER BY id'
+        query += cur.mogrify(' WHERE keyword_id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,)).decode()
+    query += ' ORDER BY keyword_id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -1669,7 +1669,8 @@ def project(project_id=None):
                                    nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
                                    locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                    instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
-                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success)
+                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
     else:  
         # if returning after an unsuccessful submission, repopulate form with the existing metadata
@@ -1716,7 +1717,8 @@ def project(project_id=None):
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
                                locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
-                               data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=session.get('project_metadata'), edit=edit)
+                               data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=session.get('project_metadata'), edit=edit,
+                               keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
 
 def send_autoreply(recipient, subject):
