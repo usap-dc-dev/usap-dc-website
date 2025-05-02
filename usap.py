@@ -673,7 +673,8 @@ def dataset(dataset_id=None):
             # arriving back from Page 2
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), 
-                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         elif request.form.get('action') == "save":
             # save to file
@@ -693,7 +694,8 @@ def dataset(dataset_id=None):
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), 
-                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -719,7 +721,8 @@ def dataset(dataset_id=None):
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         if edit:
             return redirect('/edit/dataset2/' + dataset_id, code=307)
@@ -767,7 +770,8 @@ def dataset(dataset_id=None):
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=page1, page2=page2,
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
-                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
+                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template,
+                               keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
 
 def groupPage1Fields(page1):
@@ -1462,15 +1466,16 @@ def dataset2(dataset_id=None):
             else:
                 error = "Unable to restore dataset."
             return render_template('dataset2.html', error=error, success=success, 
-                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
+                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit,
+                                    keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         else:
             return render_template('dataset2.html', dataset_metadata=page2, page1=page1,
-                                licenses=get_licenses(), edit=edit)       
+                                licenses=get_licenses(), edit=edit, keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))       
     else:
         # if accessing directly through GET - return empty form
         return render_template('dataset2.html', dataset_metadata={}, page1={}, 
-                               licenses=get_licenses(), edit=edit)
+                               licenses=get_licenses(), edit=edit, keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
 
 # Read the next doi reference number from the file
@@ -1642,7 +1647,8 @@ def project(project_id=None):
                                    nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
                                    locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                    instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
-                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success)
+                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         elif request.form.get('action') == "restore":
             # restore from file

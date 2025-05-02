@@ -450,7 +450,7 @@
 
           <div class="form-group">
             <label for="user_keywords">User Keywords</label>
-            <textarea name="user_keywords" id="user_keywords" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
+            <textarea name="user_keywords" id="user_keywords" onkeyup="getKeywordSuggestions()" onfocus="getKeywordSuggestions()" onclick="getKeywordSuggestions()" class="form-control">{{dataset_metadata.get('user_keywords','')}}</textarea>
             <span class="help-block">Enter comma separated non-geographic keywords, eg. volatiles, mantle melting, CO2 fluxes.</span>
           </div>
 
