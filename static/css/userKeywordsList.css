@@ -1,0 +1,28 @@
+#keywordSuggestionBox {
+    background-color: rgba(36, 84, 128, 0.5);
+    height: fit-content;
+    width: 260px;
+    max-height: 202px;
+    overflow-y: scroll;
+    padding: 0px 5px;
+    border-radius: 5px;
+}
+
+#keywordSuggestionBox::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+}
+
+#keywordSuggestionBox::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#keywordSuggestionBox > div {
+    width: 100%;
+    cursor: pointer;
+}
+
+#keywordSuggestionBox > div:nth-of-type(n + 2) {
+    border-top: 1px solid white;
+}
