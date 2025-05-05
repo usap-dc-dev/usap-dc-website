@@ -5309,11 +5309,13 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     if repo:
         conds.append(cur.mogrify("%s = ANY(string_to_array(repositories, '; '))", (escapeChars(repo),)))
     
-    if keywordsArray:
+    if keywordsArray and len(keywordsArray)>0:
         theKeywords = json.loads(keywordsArray)
         print("The", len(theKeywords), "keywords are", theKeywords)
         keywordsCond = " AND ".join(list(map(lambda kw: "keywords ~* '%s'" % (kw,), theKeywords)))
         conds.append(keywordsCond)
+
+    conds = list(filter(lambda x: len(x.strip())>0, conds))
 
     if len(conds) > 0:
         q_conds = []

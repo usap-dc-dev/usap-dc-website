@@ -150,7 +150,9 @@ $(document).ready(function() {
     results_map = null;
     
     $('#data_link').on('submit', (function(){
-        getSpatialBoundsInterpolated();
+        if(results_map) {
+            getSpatialBoundsInterpolated();
+        }
     }));
 
     function getSpatialBoundsInterpolated() {
