@@ -3,6 +3,9 @@
 {% block catalog_body %}
 
 <script type="text/javascript" src="/static/js/dropdown-select.js"></script>
+<script type="text/javascript">
+    {% for kw in keywordsArray %}keywordList.push("{{kw}}");
+{% endfor %}</script>
 
 <div id="search_params" hidden>{{search_params|tojson}}</div>
 <div id="search_results" hidden>{{records|tojson}}</div>
@@ -159,6 +162,21 @@
             </div>
           </div>
         </div>
+        <div class="row2">
+            <label for="keyword_input">Keyword</label><br>
+            <input type="text" list="keywords" id="keyword_input" name="keyword_input"/>
+            <datalist id="keywords">
+                {% for kw in keywords %}
+                <option value="{{kw}}"></option>
+                {% endfor %}
+            </datalist>
+            <button onclick="addKeyword('keyword_input')">Add keyword to search</button>
+            <ul class="oval_list" id="keywordList">
+                {% for kw in keywordsArray %}
+                <li>{{kw}}<button style="minHeight:1px; minWidth:1px" onclick="removeKeyword('{{kw}}')">✖</button></li>
+                {% endfor %}
+            </ul>
+        </div>
  
         <div class="row4_no_mbot">
           <!-- Location -->
@@ -202,7 +220,7 @@
         </div> 
 
         <div class="btn-group">
-          <input class="btn btn-primary btn-lg w3-blue-grey" id="search_btn" type="submit" value="Search">
+          <input class="btn btn-primary btn-lg w3-blue-grey" id="search_btn" type="submit" value="Search" onclick="getKeywordsToForm(this)">
           <input type="button" id="reset-btn" class="btn btn-default btn-lg " value="Reset" onClick="resetForm()">
         </div>
 

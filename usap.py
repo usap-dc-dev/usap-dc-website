@@ -367,10 +367,10 @@ def get_usap_locations(conn=None, cur=None, dataset_id=None):
 def get_keywords(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
         (conn, cur) = connect_to_db()
-    query = 'SELECT * FROM keyword'
+    query = 'SELECT * FROM keyword_usap'
     if dataset_id:
-        query += cur.mogrify(' WHERE id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,)).decode()
-    query += ' ORDER BY id'
+        query += cur.mogrify(' WHERE keyword_id in (SELECT keyword_id FROM dataset_keyword_map WHERE dataset_id=%s)', (dataset_id,)).decode()
+    query += ' ORDER BY keyword_id'
     cur.execute(query)
     return cur.fetchall()
 
@@ -673,7 +673,8 @@ def dataset(dataset_id=None):
             # arriving back from Page 2
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), 
-                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         elif request.form.get('action') == "save":
             # save to file
@@ -693,7 +694,8 @@ def dataset(dataset_id=None):
                     error = "Unable to save dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), 
-                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -719,7 +721,8 @@ def dataset(dataset_id=None):
                 error = "Unable to restore dataset."
             return render_template('dataset.html', name=user_info['name'], email="", error=error, success=success, 
                                    dataset_metadata=page1, page2=page2, nsf_grants=get_nsf_grants(['award', 'name', 'title'], 
-                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit)
+                                   only_inhabited=False), projects=get_projects(), persons=get_persons(), locations=get_usap_locations(), edit=edit,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         if edit:
             return redirect('/edit/dataset2/' + dataset_id, code=307)
@@ -767,7 +770,8 @@ def dataset(dataset_id=None):
         return render_template('dataset.html', name=name, email=email, error=error, success=success, 
                                dataset_metadata=page1, page2=page2,
                                nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), projects=get_projects(), 
-                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template)
+                               persons=get_persons(), locations=get_usap_locations(), edit=edit, template=template,
+                               keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
 
 def groupPage1Fields(page1):
@@ -1462,15 +1466,16 @@ def dataset2(dataset_id=None):
             else:
                 error = "Unable to restore dataset."
             return render_template('dataset2.html', error=error, success=success, 
-                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit)
+                                    dataset_metadata=page2, page1=page1, licenses=get_licenses(), edit=edit,
+                                    keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         else:
             return render_template('dataset2.html', dataset_metadata=page2, page1=page1,
-                                licenses=get_licenses(), edit=edit)       
+                                licenses=get_licenses(), edit=edit, keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))       
     else:
         # if accessing directly through GET - return empty form
         return render_template('dataset2.html', dataset_metadata={}, page1={}, 
-                               licenses=get_licenses(), edit=edit)
+                               licenses=get_licenses(), edit=edit, keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
 
 # Read the next doi reference number from the file
@@ -1639,10 +1644,11 @@ def project(project_id=None):
             success, error, full_name = save_project(project_metadata)
             
             return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
-                                   nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
+                                   nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
                                    locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                    instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
-                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success)
+                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
         elif request.form.get('action') == "restore":
             # restore from file
@@ -1666,10 +1672,11 @@ def project(project_id=None):
             else:
                 error = "Unable to restore dataset."
             return render_template('project.html', name=user_info['name'], full_name=full_name, email=project_metadata['email'], programs=get_projects(), persons=get_persons(),
-                                   nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
+                                   nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
                                    locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                    instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
-                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success)
+                                   data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=project_metadata, edit=edit, error=error, success=success,
+                                   keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
     else:  
         # if returning after an unsuccessful submission, repopulate form with the existing metadata
@@ -1713,10 +1720,11 @@ def project(project_id=None):
             email = form_data['email']
 
         return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=get_projects(), persons=get_persons(),
-                               nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(),
+                               nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
                                locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
-                               data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=session.get('project_metadata'), edit=edit)
+                               data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=session.get('project_metadata'), edit=edit,
+                               keywordsList = list(map(lambda kw: kw['keyword_label'], list(get_keywords()))))
 
 
 def send_autoreply(recipient, subject):
@@ -1814,7 +1822,8 @@ def process_form_data(form):
             copi = {'name_last': msg_data[key],
                     'name_first': msg_data.get(key.replace('last', 'first')),
                     'role': msg_data.get(key.replace('name_last', 'role')),
-                    'org': msg_data.get(key.replace('name_last', 'org'))
+                    'org': msg_data.get(key.replace('name_last', 'org')),
+                    'orcid': msg_data.get(key.replace('name_last', 'orcid'))
                     }
             copis.append(copi)
         del msg_data[key]
@@ -5076,6 +5085,9 @@ def search():
     template_dict = {}
 
     params = request.args.to_dict()
+
+    print("Params are ");
+    print(params)
     params['dp_type'] = 'Project'
 
     template_dict['show_map'] = False
@@ -5086,6 +5098,13 @@ def search():
     checkHoneypot(params, 'There was an issue with your search, please try again.', url_for('search'))
     params.pop('email', None)
     params.pop('name', None)
+
+    params.pop("keyword_input", None)
+
+    if 'keywordsArray' in params:
+        template_dict['keywordsArray'] = json.loads(params['keywordsArray'])
+    else:
+        template_dict['keywordsArray'] = []
 
     rows = filter_datasets_projects(**params)
     session['search_params'] = params
@@ -5106,6 +5125,11 @@ def search():
     template_dict['records'] = rows
 
     template_dict['search_params'] = session.get('search_params')
+    conn, cur = connect_to_db()
+    query_str = "select * from keyword_usap"
+    cur.execute(query_str)
+    keywords = list(cur.fetchall())
+    template_dict['keywords']=list(map(lambda kw: kw["keyword_label"], keywords))
     return render_template('search.html', **template_dict)  
 
 
@@ -5230,7 +5254,7 @@ def filter_joint_menus():
 
 
 def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None, person=None, spatial_bounds_interpolated=None, sci_program=None,
-                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, location=None, exclude=False):
+                             nsf_program=None, dp_type=None, spatial_bounds=None, repo=None, location=None, exclude=False, keywordsArray=None):
 
     (conn, cur) = connect_to_db()
 
@@ -5279,11 +5303,19 @@ def filter_datasets_projects(uid=None, free_text=None, dp_title=None, award=None
     #     conds.append(cur.mogrify('dpv.locations ~* %s ', (location,)))
     if free_text:
         free_text = escapeChars(free_text) 
-        inc_platforms = " OR platforms ~* '%s' OR instruments ~* '%s' OR paleo_time ~* '%s'" % (free_text, free_text, free_text) if dp_type == 'Project' else ""
+        inc_platforms = " OR platforms ~* '%s' OR instruments ~* '%s' OR paleo_time ~* '%s' OR uid in (select proj_uid from project_dataset_map pdm inner join dataset_view dv on pdm.dataset_id=dv.uid where title ~* '%s' or description ~* '%s' or keywords ~* '%s' or persons ~* '%s')" % (free_text, free_text, free_text, free_text, free_text, free_text, free_text) if dp_type == 'Project' else ""
         conds.append(cur.mogrify("title ~* %s OR description ~* %s OR keywords ~* %s OR persons ~* %s" + inc_platforms + " OR " + d_or_p + " ~* %s", 
                                  (free_text, free_text, free_text, free_text, free_text)))
     if repo:
         conds.append(cur.mogrify("%s = ANY(string_to_array(repositories, '; '))", (escapeChars(repo),)))
+    
+    if keywordsArray and len(keywordsArray)>0:
+        theKeywords = json.loads(keywordsArray)
+        print("The", len(theKeywords), "keywords are", theKeywords)
+        keywordsCond = " AND ".join(list(map(lambda kw: "keywords ~* '%s'" % (kw,), theKeywords)))
+        conds.append(keywordsCond)
+
+    conds = list(filter(lambda x: len(x.strip())>0, conds))
 
     if len(conds) > 0:
         q_conds = []
@@ -5670,6 +5702,35 @@ def tracker():
 @app.route('/favicon.ico', methods=['GET'])
 def favicon():
     return redirect(url_for('static', filename='imgs/favicon.ico'))
+
+@app.route('/separated_name', methods=['GET'])
+def getSeparatedName():
+    if "name" in request.args:
+        name = request.args.get("name")
+        conn, cur = connect_to_db()
+        query = "select first_name, middle_name, last_name, id_orcid, organization from person where replace(concat(first_name, ' ', middle_name, ' ', last_name), '  ', ' ')=%s"
+        cur.execute(query, (name,))
+        matches = cur.fetchall()
+        return json.dumps(matches)
+    return "[]"
+
+@app.route('/person', methods=['GET'])
+def getPerson():
+    if "fullName" in request.args:
+        name = request.args.get("fullName")
+        conn, cur = connect_to_db()
+        query = "select first_name, middle_name, last_name, id_orcid, organization from person where replace(concat(first_name, ' ', middle_name, ' ', last_name), '  ', ' ')=%s"
+        cur.execute(query, (name,))
+        matches = cur.fetchall()
+        return json.dumps(matches)
+    elif "first" in request.args and "last" in request.args:
+        firstName = request.args.get("first") + ((" " + request.args.get("middle")) if "middle" in request.args else "")
+        lastName = request.args.get("last")
+        conn, cur=connect_to_db()
+        query = "select first_name, middle_name, last_name, id_orcid, organization from person where trim(concat(first_name, ' ', middle_name))=%s and last_name=%s"
+        cur.execute(query, (firstName, lastName))
+        matches = cur.fetchall()
+        return json.dumps(matches)
 
 
 @app.errorhandler(500)

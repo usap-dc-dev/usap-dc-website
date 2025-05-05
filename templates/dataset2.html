@@ -74,10 +74,6 @@
           <input type="checkbox" name="comprehensiveLegends" {% if dataset_metadata.get('comprehensiveLegends') %}checked{% endif %}>Graph and Maps (if provided) have comprehensive legends.<br>
           <br>
 
-          <b>Other comments relevant for data submission</b><br>
-          <textarea name="other_comments" rows="3" cols="80">{{dataset_metadata.get('other_comments','')}}</textarea><br>
-          <br>
-
           {% if edit %}
             <div id="uploaded_files" name="uploaded_files">
               <input type='hidden' name='file_deleted' id='file_deleted' value='false'>
@@ -137,6 +133,10 @@
             <input type="checkbox" name="agree" {% if dataset_metadata.get('agree') %}checked{% endif %}> I agree these file(s) will be posted online with a DOI.
           </div>
           <br/>
+
+          <b>Other comments relevant for data submission</b><br>
+          <textarea name="other_comments" rows="3" cols="80">{{dataset_metadata.get('other_comments','')}}</textarea><br>
+          <br>
 
           <button type="submit" name="action" value="Submit">Submit</button>
           <!-- <button class="prev-button" type="button" name="action" value="Previous Page">Previous Page</button> -->

@@ -558,3 +558,26 @@ div.autocomplete ul li.selected { background-color: #ffb;}
 .ol-popup {
   z-index: 100;
 }
+
+.oval_list {
+    list-style-type: none;
+    display: block;
+    padding-left: 0;
+}
+
+.oval_list > li {
+    background-color: rgba(36, 84, 128, 0.5);
+    color: rgb(36, 84, 128);
+    border-color: rgb(36, 84, 128);
+    border-radius: 5px;
+    min-width: 1px;
+    padding: 2px 5px;
+    margin: 1px;
+    display: inline-block;
+}
+
+.oval_list > li > button {
+    border: none;
+    color: inherit;
+    background-color: transparent;
+}

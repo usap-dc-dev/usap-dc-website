@@ -332,6 +332,15 @@ $(document).ready(function() {
         success: function(msg) {
             if(msg.length > 0) {
                 pi = msg[0].name.split(',');
+                let _url = window.location.protocol + '//' + window.location.hostname + "/separated_name?name="+pi[1].trim() + " " + pi[0].trim();
+                $.ajax({
+                    method: "GET",
+                    url: _url,
+                    success: function(msg2) {
+                        let name = JSON.parse(msg2);
+                        $('#pi_orcid').val(name[0]?.id_orcid);
+                    }
+                });
                 //reset co-pis
                 $('#copi_name_last').attr('value', '');
                 $('#copi_name_first').attr('value', '');
@@ -342,7 +351,7 @@ $(document).ready(function() {
                 // add co-pis
                 if (msg[0].copi != null && msg[0].copi !== ''){
                     var copis = msg[0].copi.split(';');
-                    if (copis.length > 0) {
+                    if (copis.length > 1) {
                         delim = copis[0].includes(',') ? ',' : ' ';
                         if (delim == ',') {
                         copi = copis[0].split(delim);
@@ -367,10 +376,63 @@ $(document).ready(function() {
                         addAuthorRow(author);
                         }
                     }
+                    else {
+                        let addAuthor = function(authorName, index) {
+                            if(0 === index) {
+                                $('#copi_name_last').attr('value', authorName["name_last"]);
+                                $('#copi_name_first').attr('value', authorName["name_first"]);
+                                if(authorName["org"] && authorName["org"] !== "") {
+                                    $('#copi_org'+index).attr('value', authorName["org"]);
+                                }
+                                if(authorName["orcid"] && authorName["orcid"] !== "") {
+                                    $('#copi_orcid'+index).attr('value', authorName["orcid"]);
+                                }
+                            }
+                            else {
+                                addAuthorRow(authorName);
+                            }
+                        };
+                        copis = msg[0].copi.split(",").map(x => x.trim());
+                        if(copis[0].includes(" ")) {
+                            let getSepName = function(name, index) {
+                                let _url = window.location.protocol + '//' + window.location.hostname + "/separated_name?name="+name;
+                                $.ajax({
+                                    method: 'GET',
+                                    url: _url,
+                                    success: function(msg) {
+                                        let namesList = JSON.parse(msg);
+                                        if(namesList.length > 0) {
+                                            let name2 = namesList[0];
+                                            let fixedName = {"name_first": name2["first_name"] + (name2["middle_name"]?(" " + name2["middle_name"]):""), "name_last": name2["last_name"], "orcid":name2["id_orcid"], "org":name2["organization"]};
+                                            addAuthor(fixedName, index);
+                                        }
+                                        else {
+                                            let splitName = name.split(/\s+/);
+                                            let beginLastName = splitName.length-1;
+                                            while(beginLastName > 1) {
+                                                if(splitName[beginLastName-1][0] === splitName[beginLastName-1][0].toUpperCase() || splitName[beginLastName] === splitName[beginLastName].toUpperCase() || !splitName[beginLastName][-1].match(/^[a-zA-Z-]*$/)) {
+                                                    break;
+                                                }
+                                                beginLastName--;
+                                            }
+                                            let firstName = splitName.slice(0, beginLastName).join(" "), lastName = splitName.slice(beginLastName);
+                                            let authorName = {"name_first": firstName, "name_last": lastName};
+                                            addAuthor(authorName, index);
+                                        }
+                                    }
+                                })
+                            }
+                            copis.forEach(getSepName);
+                        }
+                        else {
+                            let authorName = {"name_first": copis[1], "name_last": copis[0]};
+                            addAuthor(authorName, 0);
+                        }
+                    }
                 }
                 $("#entry textarea[name='title']").val(msg[0].title);
                 $("#entry input[name='pi_name_last']").val(pi[0]);
-                $("#entry input[name='pi_name_first']").val(pi[1].trim());
+                $("#entry input[name='pi_name_first']").val(pi[1]?.trim());
                 $("#entry input[name='org']").val(msg[0].org);
                 if (msg[0].email) $("#entry input[name='email']").val(msg[0].email);
                 $("#entry input[name='copi']").val(msg[0].copi);
@@ -516,7 +578,7 @@ $(document).ready(function() {
 
     function addParameter(parameter) {
       var $cloned = $("#parameters select[name='parameter1']").clone();
-      var idx = $('#parameters').children().length+1;
+      var idx = document.querySelectorAll('#parameters .mySelect2').length+1;
       $cloned.attr('name','parameter'+idx);
       $cloned.attr('id', 'parameter'+idx);
       $cloned.removeAttr('required');
@@ -525,7 +587,9 @@ $(document).ready(function() {
  
       if (typeof parameter != 'undefined') {
         $('#parameter'+idx).val(parameter);
-      }  
+      }
+      $cloned.select2();
+      $('#parameters .mySelect2').select2();
     }
 
     $('#add_repo').click(function() {
@@ -586,6 +650,7 @@ $(document).ready(function() {
           $(extraAuthor).find('#copi_name_first').attr({'id': 'copi_name_first'+author_counter, 'name': 'copi_name_first'+author_counter, 'value': ''});
           $(extraAuthor).find('#copi_role').attr({'id': 'copi_role'+author_counter, 'name': 'copi_role'+author_counter, 'value': ''});
           $(extraAuthor).find('#copi_org').attr({'id': 'copi_org'+author_counter, 'name': 'copi_org'+author_counter, 'value': ''});
+          $(extraAuthor).find('#copi_orcid').attr({'id':'copi_orcid'+author_counter, 'name': 'copi_orcid'+author_counter, 'value':''})
           $(extraAuthor).find('#removeAuthorRow').show();
           $(extraAuthor).find('#extraAuthorLine').show();
 
@@ -596,6 +661,7 @@ $(document).ready(function() {
             $('#copi_name_first'+author_counter).val(author.name_first);
             $('#copi_org'+author_counter).val(author.org);
             $('#copi_role'+author_counter).val(author.role);
+            $('#copi_orcid'+author_counter).val(author.orcid);
           }
 
           autocomplete(document.getElementById("copi_name_last"+author_counter), document.getElementById("copi_name_first"+author_counter), persons);
@@ -903,6 +969,7 @@ function autocomplete(inp, inp2, arr) {
                   selected = this.getElementsByTagName("input")[0].value;
                   inp.value = selected;
                 }
+                getOrcid(inp.parentElement);
                 /*close the list of autocompleted values,
                 (or any other open lists of autocompleted values:*/
                 closeAllLists();
@@ -1068,4 +1135,30 @@ function addFormat(format_wrapper, format) {
     $('.dropdown').each(function(i,elem) {$(elem).makeDropdownIntoSelect('',''); });
     $('[data-toggle="tooltip"]').tooltip({container: 'body'});
     format_counter++;
+}
+
+function getOrcid(parentElement) {
+    if(parentElement.contains(document.activeElement)) return;
+    let nameElements = Array.from(parentElement.querySelectorAll("input"));
+    let orcidFieldId = nameElements[0].id.replace(/name_(la|fir)st/, "orcid");
+    let firstName = nameElements[1].value, lastName = nameElements[0].value;
+    let _url = window.location.protocol + '//' + window.location.hostname + `/person?first=${firstName}&last=${lastName}`;
+    fetch(_url).then(function(resp) {
+        if(200 === resp.status) {
+            return resp.json();
+        }
+        else {
+            return [];
+        }
+    }).then(function(json) {
+        for(let i = 0; i < json.length; i++) {
+            if(json[i].id_orcid) {
+                document.getElementById(orcidFieldId).value = json[i].id_orcid;
+                break;
+            }
+            else {
+                document.getElementById(orcidFieldId).value = "";
+            }
+        }
+    });
 }

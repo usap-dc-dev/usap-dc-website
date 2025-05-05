@@ -9,6 +9,7 @@ var repos = [];
 var map;
 var search_table_dt;
 var date_col, vis_col, sel_col;
+var keywordList = [];
 
 $(document).ready(function() {
     $(document).ajaxStart(function () { $("html").addClass("wait"); });
@@ -149,7 +150,9 @@ $(document).ready(function() {
     results_map = null;
     
     $('#data_link').on('submit', (function(){
-        getSpatialBoundsInterpolated();
+        if(results_map) {
+            getSpatialBoundsInterpolated();
+        }
     }));
 
     function getSpatialBoundsInterpolated() {
@@ -887,7 +890,56 @@ function dragElement(elmnt) {
   }
 }
 
+function addKeyword(inputBoxId) {
+    event.preventDefault();
+    let kw = document.getElementById(inputBoxId)?.value;
+    if(!keywordList.includes(kw)) {
+        keywordList.push(kw);
+        let kwList = document.getElementById("keywordList");
+        let newKw = document.createElement("li");
+        newKw.innerHTML = kw;
+        let closeBtn = document.createElement("button");
+        closeBtn.innerHTML = "✖";
+        closeBtn.style.minHeight = "1px";
+        closeBtn.style.minWidth = "1px";
+        closeBtn.addEventListener("click", function() { removeKeyword(kw)});
+        newKw.appendChild(closeBtn);
+        kwList.appendChild(newKw);
+        document.getElementById(inputBoxId).value="";
+    }
+}
 
+function removeKeyword(keyword) {
+    let i = -1;
+    do {
+        i++;
+    } while(i < keywordList.length && keywordList[i] !== keyword);
+    if(i < keywordList.length && i >= 0) {
+        let childToRemove = document.getElementById("keywordList")?.children[i];
+        document.getElementById("keywordList").removeChild(childToRemove);
+        keywordList.splice(i, 1);
+    }
+}
+
+function getKeywordsToForm() {
+    let el = document.getElementById("keywordsArray");
+    if(el) {
+        el.remove();
+    }
+    el = document.createElement("input");
+    el.id = "keywordsArray";
+    el.name = "keywordsArray";
+    el.value = "[" + keywordList.map(x => `"${x}"`).join(", ") + "]";
+    el.style.display="none";
+    let formList = Array.from(document.getElementsByTagName("form")).filter(x => x.contains(document.getElementById("keywordList")));
+    if(formList && formList.length > 0) {
+        let theForm = formList[0];
+        theForm.appendChild(el);
+    }
+    else {
+        alert("Couldn't find the form");
+    }
+}
 
 function MapClient(target='map') {
 
