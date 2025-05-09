@@ -3192,10 +3192,10 @@ def curator():
                     template_dict['proj_awards'] = cf.getProjectAwardsFromDatabase(uid) 
 
                 if edit:
-                    template_dict['status_options'] = ['Pending', 'Edit completed', 'Rejected', 'No Action Required']
+                    template_dict['status_options'] = ['Pending', 'Edit completed', 'Rejected', 'No Action Required', 'Edit To Be Archived']
                 else:
                     template_dict['status_options'] = ['Pending', 'DIF XML file missing', 
-                                                       'Completed', 'Rejected', 'No Action Required']  
+                                                       'Completed', 'Rejected', 'No Action Required', 'To Be Archived']  
 
             else:
                 template_dict['type'] = 'dataset'
@@ -3217,9 +3217,9 @@ def curator():
                 if not edit:
                     template_dict['replaced_dataset'] = cf.getReplacedDataset(uid)
                     template_dict['status_options'] = ['Pending', 'Not yet registered with DataCite', 'ISO XML file missing', 
-                                                       'Completed', 'Rejected', 'No Action Required'] 
+                                                       'Completed', 'Rejected', 'No Action Required', 'To Be Archived'] 
                 else:
-                    template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required']
+                    template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required', 'To Be Archived']
                 template_dict['weekly_report_options'] = cf.getWeeklyReportOptions(uid)
         
             submission_file = os.path.join(submitted_dir, filename + ".json")
@@ -3489,7 +3489,7 @@ def curator():
                                 template_dict['error'] = error
                             else:
                                 # Update submission table
-                                update_status(uid, 'Completed')
+                                update_status(uid, 'To Be Archived')
 
                     except Exception as err:
                         template_dict['error'] = "Error saving ISO XML file to watch directory: " + str(err)
@@ -3524,6 +3524,7 @@ def curator():
                     else:
                         template_dict['message'].append(success)
                         template_dict['archive_status'] = cf.getArchiveStatus(uid)
+                        update_status(uid, "Completed")
 
                 # Send email to creator and editor - for both datasets and projects
                 elif request.form.get('submit') == "send_email":
@@ -3647,7 +3648,7 @@ def curator():
 
                         # Update submission table
                         if edit:
-                            update_status('e' + uid, 'Edit completed')
+                            update_status('e' + uid, 'Edit To Be Archived')
                         else:
                             update_status(uid, 'DIF XML file missing')
 
