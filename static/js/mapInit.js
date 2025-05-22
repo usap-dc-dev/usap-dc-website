@@ -223,6 +223,41 @@ function MapClient(zoom) {
     });  
     map.addLayer(amrc_stations);
 
+    var iodpSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function() {
+            $.get({
+                url: "/static/data/Drilled_Holes_Filtered.csv",
+                dataType: "text"
+            }).done(function(response){
+                var csvString = response;
+                csv2geojson.csv2geojson(csvString, {latfield: "latitude", lonfield: "longitude"}, function(err, data) {
+                    iodpSource.addFeatures(vectorSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3031'}));
+                })
+            });
+        }
+    });
+    var iodpStations = new ol.layer.Vector({
+        visible: true,
+        source: iodpSource,
+        style: [
+            new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 5,
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(0, 0, 0, 0.6)',
+                        width: 1
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(0, 80, 80, 0.6)'
+                    })
+                })
+            })
+        ],
+        title: "IODP Drill Sites"
+    });
+    map.addLayer(iodpStations);
+
     var vectorSource = new ol.source.Vector({
         format: new ol.format.GeoJSON(),
         loader: function(){
@@ -582,6 +617,7 @@ function MapClient(zoom) {
         //check for other features
         var icecore_features = [];
         var amrc_features = [];
+        var iodp_drillsites = [];
         if (evt.pixel) {
             map.forEachFeatureAtPixel(evt.pixel, 
                 function(feature, layer) {
@@ -592,7 +628,9 @@ function MapClient(zoom) {
                         else if (layer.getProperties().title === 'AMRC Weather Stations') {
                             amrc_features.push(feature);
                         }
-                        
+                        else if(layer.getProperties().title === 'IODP Drill Sites') {
+                            iodp_drillsites.push(feature);
+                        }
                     }
                 }, {"hitTolerance":1});
         }
@@ -627,7 +665,27 @@ function MapClient(zoom) {
             var $msg = $('<div>' + msg + '</div>');
             popup.show(evt.coordinate, $msg.prop('innerHTML'));
         }
-
+        if(iodp_drillsites.length > 0) {
+            var msg = "<h6>Number of drill sites: " + iodp_drillsites.length + "</h6>";
+            for(let drillSite of iodp_drillsites) {
+                var props = drillSite.getProperties();
+                msg += '<p style="font-size:0.8em; max-height: 500px;">';
+                if(props["leg"] && props["leg"].length>0) {
+                    msg += "<b>Leg:</b> " + props['leg'] + "<br>";
+                }
+                if(props['expedition'] && props['expedition'].length>0) {
+                    msg += "<b>Expedition:<b> " + props['expedition'] + "<br>";
+                }
+                msg += "<b>Site:</b> " + props['site'] + "<br>";
+                msg += "<b>Link to Core Data:</b> " + '<a href="' + props['url_core'] + '" target="_blank">' + "URL core" + '</a><br>'
+                if(props["arrival"] && props["arrival"].length>0) {
+                    msg += "<b>Arrival:</b> " + props["arrival"] + "<br>"
+                }
+                msg += "===========<br>"
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+        }
     });
 
     //drawing buttons
