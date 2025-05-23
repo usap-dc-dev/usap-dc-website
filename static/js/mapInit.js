@@ -238,7 +238,7 @@ function MapClient(zoom) {
         }
     });
     var iodpStations = new ol.layer.Vector({
-        visible: true,
+        visible: false,
         source: iodpSource,
         style: [
             new ol.style.Style({
