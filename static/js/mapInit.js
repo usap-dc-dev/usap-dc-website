@@ -671,7 +671,7 @@ function MapClient(zoom) {
                 var props = drillSite.getProperties();
                 msg += '<p style="font-size:0.8em; max-height: 500px;">';
                 if(props["leg"] && props["leg"].length>0) {
-                    msg += "<b>Leg:</b> " + props['leg'] + "<br>";
+                    msg += "<b>Leg:</b> " + Number(props['leg']) + "<br>";
                 }
                 if(props['expedition'] && props['expedition'].length>0) {
                     msg += "<b>Expedition:<b> " + props['expedition'] + "<br>";
