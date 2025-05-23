@@ -3648,7 +3648,7 @@ def curator():
 
                         # Update submission table
                         if edit:
-                            update_status('e' + uid, 'Edit To Be Archived')
+                            update_status('e' + uid, 'Edit Completed')
                         else:
                             update_status(uid, 'DIF XML file missing')
 
