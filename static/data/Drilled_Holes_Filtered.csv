@@ -1,0 +1,376 @@
+leg,expedition,site,hole,latitude,longitude,arrival,water_depth,core_penetrated,core_recovered,url_core,url_log,url_vcd,url_xct,program
+28.0,,265,,-53.5408,109.9457,,,463.0,107.9,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/265/index.htm,,,,DSDP
+28.0,,266,,-56.4022,110.1117,,,384.0,145.0,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/266/index.htm,,,,DSDP
+28.0,,267,A,-59.2623,104.4883,,,66.5,11.6,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/267A/index.htm,,,,DSDP
+28.0,,267,B,-59.2623,104.4883,,,323.5,53.28,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/267B/index.htm,,,,DSDP
+28.0,,267,,-59.2623,104.4883,,,219.5,26.1,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/267/index.htm,,,,DSDP
+28.0,,268,,-63.9498,105.1557,,,474.5,65.6,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/268/index.htm,,,,DSDP
+28.0,,269,A,-61.6762,140.0702,,,958.0,55.4,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/269A/index.htm,,,,DSDP
+28.0,,269,,-61.6762,140.0702,,,397.5,38.8,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/269/index.htm,,,,DSDP
+28.0,,270,,-77.4413,-178.5032,,,408.5,256.3,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/270/index.htm,,,,DSDP
+28.0,,271,,-76.7212,-175.0477,,,263.0,15.2,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/271/index.htm,,,,DSDP
+28.0,,272,,-77.127,-176.7602,,,443.0,162.04,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/272/index.htm,,,,DSDP
+28.0,,273,A,-74.5382,174.6262,,,338.0,55.62,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/273A/index.htm,,,,DSDP
+28.0,,273,,-74.5382,174.6262,,,76.0,27.9,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/273/index.htm,,,,DSDP
+28.0,,274,,-68.9968,173.4273,,,421.0,279.08,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/28/274/index.htm,,,,DSDP
+29.0,,275,,-50.439,176.3165,,,43.0,17.02,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/275/index.htm,,,,DSDP
+29.0,,276,,-50.8018,176.8067,,,1.0,0.2,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/276/index.htm,,,,DSDP
+29.0,,277,,-52.2238,166.1913,,,434.5,254.8,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/277/index.htm,,,,DSDP
+29.0,,278,A,-56.557,160.0715,,,19.0,7.5,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/278A/index.htm,,,,DSDP
+29.0,,278,,-56.557,160.0715,,,323.5,274.1,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/278/index.htm,,,,DSDP
+29.0,,279,A,-51.3357,162.635,,,110.0,79.8,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/279A/index.htm,,,,DSDP
+29.0,,280,A,-48.9573,147.2347,,,201.0,96.7,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/280A/index.htm,,,,DSDP
+29.0,,280,,-48.9573,147.2347,,,6.0,5.5,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/280/index.htm,,,,DSDP
+29.0,,281,A,-47.9973,147.7642,,,28.5,7.1,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/281A/index.htm,,,,DSDP
+29.0,,281,,-47.9973,147.7642,,,169.0,101.91,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/281/index.htm,,,,DSDP
+29.0,,282,,-42.246,143.4863,,,167.5,63.7,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/282/index.htm,,,,DSDP
+29.0,,283,A,-43.91,154.2827,,,11.0,10.3,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/283A/index.htm,,,,DSDP
+29.0,,283,,-43.91,154.2827,,,156.0,61.1,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/283/index.htm,,,,DSDP
+29.0,,284,A,-40.508,167.6802,,,19.0,15.4,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/284A/index.htm,,,,DSDP
+29.0,,284,,-40.508,167.6802,,,207.5,166.76,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/29/284/index.htm,,,,DSDP
+35.0,,322,,-60.0242,-79.4248,,,125.5,33.83,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/35/322/index.htm,,,,DSDP
+35.0,,323,,-63.6807,-97.9948,,,199.5,75.73,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/35/323/index.htm,,,,DSDP
+35.0,,324,,-69.0535,-98.7867,,,95.0,47.9,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/35/324/index.htm,,,,DSDP
+35.0,,325,,-65.0465,-73.6733,,,95.0,34.22,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/35/325/index.htm,,,,DSDP
+36.0,,326,,-56.5833,-65.3033,,,9.5,0.5,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/326/index.htm,,,,DSDP
+36.0,,327,A,-50.8713,-46.7837,,,256.5,132.4,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/327A/index.htm,,,,DSDP
+36.0,,327,,-50.8713,-46.7837,,,5.0,5.45,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/327/index.htm,,,,DSDP
+36.0,,328,A,-49.8112,-36.6588,,,17.0,7.4,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/328A/index.htm,,,,DSDP
+36.0,,328,B,-49.8112,-36.6588,,,67.0,63.0,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/328B/index.htm,,,,DSDP
+36.0,,328,,-49.8112,-36.6588,,,112.0,62.3,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/328/index.htm,,,,DSDP
+36.0,,329,,-50.6552,-46.0955,,,312.5,215.3,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/329/index.htm,,,,DSDP
+36.0,,330,A,-50.9198,-46.8833,,,47.5,4.0,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/330A/index.htm,,,,DSDP
+36.0,,330,,-50.9198,-46.8833,,,161.5,85.3,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/36/330/index.htm,,,,DSDP
+71.0,,511,,-51.0047,-46.9717,,,631.0,384.43,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/71/511/index.htm,https://mlp.ldeo.columbia.edu/data/dsdp/leg71/511/,,,DSDP
+71.0,,512,A,-49.8695,-40.8452,,,17.3,7.77,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/71/512A/index.htm,,,,DSDP
+71.0,,512,,-49.8698,-40.8452,,,77.3,66.96,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/71/512/index.htm,,,,DSDP
+71.0,,513,A,-47.5832,-24.64,,,321.0,178.88,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/71/513A/index.htm,,,,DSDP
+71.0,,513,,-47.5832,-24.64,,,104.0,56.72,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/71/513/index.htm,,,,DSDP
+71.0,,514,,-46.0462,-26.855,,,150.4,139.03,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/71/514/index.htm,,,,DSDP
+90.0,,593,A,-40.5078,167.6745,,,257.3,227.71,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/90/593A/index.htm,,,,DSDP
+90.0,,593,,-40.5078,167.6745,,,569.7,469.48,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/90/593/index.htm,,,,DSDP
+90.0,,594,A,-45.5235,174.948,,,613.7,161.53,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/90/594A/index.htm,,,,DSDP
+90.0,,594,B,-45.5235,174.948,,,42.9,34.18,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/90/594B/index.htm,,,,DSDP
+90.0,,594,,-45.5235,174.948,,,504.1,300.66,http://www.ngdc.noaa.gov/mgg/geology/dsdp/data/90/594/index.htm,,,,DSDP
+113.0,,689,A,-64.517,3.0999,1/16/87 13:47,,9.5,9.35,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=689,,,,ODP
+113.0,,689,B,-64.517,3.0999,1/16/87 13:52,,297.3,229.45,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=689,,,,ODP
+113.0,,689,C,-64.517,3.1004,1/18/87 15:05,,27.6,20.54,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=689,,,,ODP
+113.0,,689,D,-64.517,3.1004,1/18/87 19:18,,115.7,115.97,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=689,,,,ODP
+113.0,,690,A,-65.16048,1.20493,1/20/87 8:10,,7.7,9.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=690,,,,ODP
+113.0,,690,B,-65.16048,1.20493,1/20/87 8:12,,213.4,214.75,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=690,,,,ODP
+113.0,,690,C,-65.16035,1.20475,1/21/87 16:39,,200.6,177.19,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=690,,,,ODP
+113.0,,691,A,-70.742,-13.811,2/6/87 20:15,,0.1,0.05,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=691,,,,ODP
+113.0,,691,B,-70.744,-13.8093,5/14/87 11:24,,1.7,0.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=691,,,,ODP
+113.0,,691,C,-70.743,-13.8113,5/14/87 11:27,,12.7,0.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=691,,,,ODP
+113.0,,692,A,-70.72411,-13.82013,1/27/87 0:21,,6.7,0.65,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=692,,,,ODP
+113.0,,692,B,-70.72387,-13.81992,1/27/87 3:55,,97.9,29.3,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=692,,,,ODP
+113.0,,693,A,-70.83153,-14.5735,1/30/87 18:59,,483.9,213.58,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=693,https://mlp.ldeo.columbia.edu/data/odp/leg113/693A/,,,ODP
+113.0,,693,B,-70.83147,-14.57435,2/6/87 10:39,,167.4,92.16,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=693,,,,ODP
+113.0,,694,A,-66.847,-33.4465,2/10/87 19:07,,9.8,9.85,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=694,,,,ODP
+113.0,,694,B,-66.847,-33.4471,2/10/87 21:07,,184.7,64.94,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=694,,,,ODP
+113.0,,694,C,-66.847,-33.4461,2/14/87 21:27,,211.5,71.73,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=694,,,,ODP
+113.0,,695,A,-62.39127,-43.45158,2/20/87 19:31,,352.1,254.39,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=695,,,,ODP
+113.0,,696,A,-61.84908,-42.93307,2/23/87 22:07,,106.0,58.3,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=696,,,,ODP
+113.0,,696,B,-61.84932,-42.93327,2/25/87 1:19,,570.4,156.69,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=696,https://mlp.ldeo.columbia.edu/data/odp/leg113/696B/,,,ODP
+113.0,,697,A,-61.81057,-40.2878,3/3/87 4:13,,28.1,26.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=697,,,,ODP
+113.0,,697,B,-61.81043,-40.29582,3/4/87 8:46,,304.9,188.3,http://web.iodp.tamu.edu/OVERVIEW/?&exp=113&site=697,,,,ODP
+114.0,,698,A,-51.459,-33.0993,3/18/87 4:35,,237.0,52.26,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=698,,,,ODP
+114.0,,699,A,-51.542,-30.677,3/21/87 8:55,,518.1,356.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=699,,,,ODP
+114.0,,700,A,-51.533,-30.2783,3/27/87 12:24,,9.6,0.19,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=700,,,,ODP
+114.0,,700,B,-51.533,-30.2781,3/28/87 16:31,,472.1,245.19,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=700,https://mlp.ldeo.columbia.edu/data/odp/leg114/700B/,,,ODP
+114.0,,701,A,-51.985,-23.2123,4/5/87 6:39,,74.8,69.66,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=701,,,,ODP
+114.0,,701,B,-51.985,-23.2123,4/6/87 20:36,,133.0,96.36,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=701,,,,ODP
+114.0,,701,C,-51.985,-23.2117,4/8/87 4:53,,481.3,331.06,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=701,,,,ODP
+114.0,,702,A,-50.946,-26.3688,4/13/87 13:56,,33.1,34.21,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=702,,,,ODP
+114.0,,702,B,-50.946,-26.3686,4/13/87 19:05,,294.3,195.1,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=702,,,,ODP
+114.0,,703,A,-47.051,7.8947,4/21/87 20:29,,377.4,192.29,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=703,https://mlp.ldeo.columbia.edu/data/odp/leg114/703A/,,,ODP
+114.0,,704,A,-46.879,7.4208,4/26/87 2:53,,282.7,224.55,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=704,,,,ODP
+114.0,,704,B,-46.88,7.4205,4/27/87 9:01,,671.7,502.75,http://web.iodp.tamu.edu/OVERVIEW/?&exp=114&site=704,https://mlp.ldeo.columbia.edu/data/odp/leg114/704B/,,,ODP
+119.0,,736,A,-49.403,71.6615,12/26/87 14:41,,250.3,147.05,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=736,,,,ODP
+119.0,,736,B,-49.403,71.6615,12/28/87 5:51,,27.4,27.81,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=736,,,,ODP
+119.0,,736,C,-49.403,71.6615,12/28/87 21:17,,164.1,77.31,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=736,,,,ODP
+119.0,,737,A,-50.228,73.0324,12/30/87 4:33,,273.2,181.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=737,,,,ODP
+119.0,,737,B,-50.228,73.0324,12/31/87 19:21,,481.3,298.35,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=737,https://mlp.ldeo.columbia.edu/data/odp/leg119/737B/,,,ODP
+119.0,,738,A,-62.709,82.7878,1/10/88 12:44,,2.8,2.76,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=738,,,,ODP
+119.0,,738,B,-62.709,82.7878,1/10/88 13:51,,214.3,170.85,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=738,,,,ODP
+119.0,,738,C,-62.709,82.7878,1/12/88 4:24,,337.2,146.03,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=738,https://mlp.ldeo.columbia.edu/data/odp/leg119/738C/,,,ODP
+119.0,,739,A,-67.285,75.0818,1/18/88 17:01,,5.6,5.73,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=739,,,,ODP
+119.0,,739,B,-67.285,75.0818,1/18/88 17:07,,7.2,1.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=739,,,,ODP
+119.0,,739,C,-67.285,75.0818,1/19/88 2:18,,486.8,168.5,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=739,https://mlp.ldeo.columbia.edu/data/odp/leg119/739C/,,,ODP
+119.0,,740,A,-68.764,76.6819,1/23/88 19:07,,225.5,72.19,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=740,,,,ODP
+119.0,,740,B,-68.764,76.6819,1/27/88 10:58,,1.6,1.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=740,,,,ODP
+119.0,,741,A,-68.387,76.3825,1/27/88 22:12,,128.1,33.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=741,,,,ODP
+119.0,,742,A,-67.553,75.409,1/30/88 4:58,,316.0,168.73,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=742,https://mlp.ldeo.columbia.edu/data/odp/leg119/742A/,,,ODP
+119.0,,743,A,-66.916,74.6905,2/2/88 17:48,,97.3,21.8,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=743,,,,ODP
+119.0,,744,A,-61.579,80.595,2/5/88 21:15,,176.1,144.91,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=744,,,,ODP
+119.0,,744,B,-61.579,80.595,2/6/88 17:24,,78.5,79.74,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=744,,,,ODP
+119.0,,744,C,-61.579,80.595,2/7/88 4:02,,26.0,26.77,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=744,,,,ODP
+119.0,,745,A,-59.595,85.8542,2/9/88 0:43,,10.0,9.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=745,,,,ODP
+119.0,,745,B,-59.595,85.8542,2/9/88 0:46,,215.0,220.72,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=745,,,,ODP
+119.0,,746,A,-59.569,85.8682,2/10/88 21:31,,125.5,94.45,http://web.iodp.tamu.edu/OVERVIEW/?&exp=119&site=746,,,,ODP
+120.0,,747,A,-54.811,76.794,3/7/88 4:33,,256.0,227.34,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=747,,,,ODP
+120.0,,747,B,-54.811,76.794,3/8/88 12:23,,50.3,48.91,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=747,,,,ODP
+120.0,,747,C,-54.811,76.794,3/9/88 11:45,,144.5,49.5,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=747,https://mlp.ldeo.columbia.edu/data/odp/leg120/747C/,,,ODP
+120.0,,748,A,-58.441,78.9981,3/14/88 0:27,,19.0,19.25,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=748,,,,ODP
+120.0,,748,B,-58.441,78.9981,3/14/88 0:32,,225.1,190.15,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=748,,,,ODP
+120.0,,748,C,-58.441,78.9981,3/15/88 15:27,,760.0,185.88,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=748,,,,ODP
+120.0,,749,A,-58.717,76.4075,3/24/88 9:19,,9.5,10.04,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=749,,,,ODP
+120.0,,749,B,-58.717,76.4075,3/24/88 10:18,,123.8,64.66,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=749,,,,ODP
+120.0,,749,C,-58.717,76.4075,3/25/88 12:21,,147.5,29.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=749,,,,ODP
+120.0,,750,A,-57.592,81.2403,4/14/88 11:04,,189.3,68.63,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=750,https://mlp.ldeo.columbia.edu/data/odp/leg120/750A/,,,ODP
+120.0,,750,B,-57.592,81.2395,4/20/88 14:17,,57.4,24.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=750,,,,ODP
+120.0,,751,A,-57.726,79.8148,4/18/88 21:34,,166.2,162.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=120&site=751,,,,ODP
+141.0,,859,A,-45.896,-75.8528,11/29/91 9:26,,145.0,53.56,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=859,,,,ODP
+141.0,,859,B,-45.895,-75.8557,12/2/91 18:07,,365.0,169.67,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=859,https://mlp.ldeo.columbia.edu/data/odp/leg141/859B/,,,ODP
+141.0,,860,A,-45.886,-75.7517,12/9/91 7:23,,9.5,9.78,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=860,,,,ODP
+141.0,,860,B,-45.886,-75.7517,12/9/91 7:26,,617.8,225.83,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=860,https://mlp.ldeo.columbia.edu/data/odp/leg141/860B/,,,ODP
+141.0,,861,A,-45.85,-75.6922,12/17/91 15:35,,9.5,10.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=861,,,,ODP
+141.0,,861,B,-45.85,-75.6922,12/17/91 15:38,,9.5,9.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=861,,,,ODP
+141.0,,861,C,-45.85,-75.6922,12/17/91 15:41,,353.1,202.17,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=861,,,,ODP
+141.0,,861,D,-45.85,-75.6917,12/21/91 11:58,,154.0,40.65,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=861,,,,ODP
+141.0,,862,A,-46.508,-75.8267,12/25/91 3:43,,22.1,21.45,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=862,,,,ODP
+141.0,,862,B,-46.508,-75.8267,12/25/91 12:11,,25.4,6.1,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=862,,,,ODP
+141.0,,862,C,-46.509,-75.8261,12/26/91 10:46,,62.1,1.47,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=862,,,,ODP
+141.0,,863,A,-46.237,-75.7729,12/29/91 20:09,,297.3,75.39,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=863,,,,ODP
+141.0,,863,B,-46.237,-75.7729,1/2/92 12:22,,445.6,192.91,http://web.iodp.tamu.edu/OVERVIEW/?&exp=141&site=863,https://mlp.ldeo.columbia.edu/data/odp/leg141/863B/,,,ODP
+177.0,,1088,A,-41.1361,13.5628,12/11/97 13:39,,9.5,9.94,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1088,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1088.PDF,,ODP
+177.0,,1088,B,-41.13606,13.56284,12/17/97 8:39,,129.0,125.55,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1088,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1088.PDF,,ODP
+177.0,,1088,C,-41.1361,13.5629,12/18/97 0:55,,233.4,93.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1088,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1088.PDF,,ODP
+177.0,,1089,A,-40.9364,9.8941,12/19/97 17:51,,216.3,149.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1089,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1089.PDF,,ODP
+177.0,,1089,B,-40.9364,9.8941,12/21/97 11:51,,264.9,246.62,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1089,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1089.PDF,,ODP
+177.0,,1089,C,-40.9361,9.894,12/22/97 21:02,,194.4,160.29,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1089,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1089.PDF,,ODP
+177.0,,1089,D,-40.9364,9.8937,12/24/97 1:15,,118.0,119.36,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1089,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1089.PDF,,ODP
+177.0,,1090,A,-42.9137,8.8997,12/25/97 19:26,,7.0,7.02,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1090,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1090.PDF,,ODP
+177.0,,1090,B,-42.9137,8.8997,12/26/97 15:01,,397.5,373.23,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1090,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1090.PDF,,ODP
+177.0,,1090,C,-42.9135,8.8998,12/28/97 14:05,,69.3,63.78,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1090,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1090.PDF,,ODP
+177.0,,1090,D,-42.9136,8.9,12/28/97 22:54,,225.9,213.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1090,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1090.PDF,,ODP
+177.0,,1090,E,-42.9136,8.8999,12/30/97 0:39,,236.7,217.26,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1090,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1090.PDF,,ODP
+177.0,,1091,A,-47.0947,5.9187,1/1/98 18:01,,310.9,279.77,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1091,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1091.PDF,,ODP
+177.0,,1091,B,-47.0947,5.9187,1/4/98 2:59,,273.8,203.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1091,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1091.PDF,,ODP
+177.0,,1091,C,-47.0948,5.9194,1/5/98 9:35,,4.0,3.95,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1091,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1091.PDF,,ODP
+177.0,,1091,D,-47.0948,5.9194,1/5/98 12:35,,203.1,165.18,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1091,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1091.PDF,,ODP
+177.0,,1091,E,-47.0949,5.9192,1/6/98 12:32,,51.7,31.49,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1091,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1091.PDF,,ODP
+177.0,,1092,A,-46.4118,7.0799,1/7/98 11:56,,188.5,181.94,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1092,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1092.PDF,,ODP
+177.0,,1092,B,-46.4118,7.0799,1/8/98 6:07,,168.9,144.54,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1092,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1092.PDF,,ODP
+177.0,,1092,C,-46.4116,7.0799,1/8/98 19:27,,165.5,150.79,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1092,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1092.PDF,,ODP
+177.0,,1092,D,-46.4117,7.0798,1/9/98 6:21,,64.9,28.28,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1092,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1092.PDF,,ODP
+177.0,,1093,A,-49.9766,5.8654,1/10/98 15:46,,309.4,263.69,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1093,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1093.PDF,,ODP
+177.0,,1093,B,-49.9765,5.8655,1/12/98 12:25,,221.8,208.98,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1093,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1093.PDF,,ODP
+177.0,,1093,C,-49.9766,5.8658,1/13/98 12:16,,169.5,119.46,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1093,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1093.PDF,,ODP
+177.0,,1093,D,-49.9765,5.8656,1/15/98 4:48,,597.7,160.43,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1093,https://mlp.ldeo.columbia.edu/data/odp/leg177/1093D/,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1093.PDF,,ODP
+177.0,,1093,E,-49.9763,5.8656,1/18/98 21:27,,42.5,11.54,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1093,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1093.PDF,,ODP
+177.0,,1093,F,-49.9763,5.8656,1/19/98 5:39,,43.5,6.24,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1093,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1093.PDF,,ODP
+177.0,,1094,A,-53.1802,5.1304,1/20/98 18:25,,159.6,135.08,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1094,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1094.PDF,,ODP
+177.0,,1094,B,-53.1804,5.1305,1/21/98 22:17,,38.0,23.58,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1094,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1094.PDF,,ODP
+177.0,,1094,C,-53.1805,5.1301,1/22/98 3:24,,73.1,46.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1094,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1094.PDF,,ODP
+177.0,,1094,D,-53.1803,5.1303,1/22/98 10:54,,171.1,100.76,http://web.iodp.tamu.edu/OVERVIEW/?&exp=177&site=1094,,http://www-odp.tamu.edu/publications/177_IR/VOLUME/CORES/VCD_1094.PDF,,ODP
+178.0,,1095,A,-66.98544,-78.48731,2/18/98 10:35,,87.3,86.48,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1095,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1095.PDF,,ODP
+178.0,,1095,B,-66.98544,-78.48783,2/18/98 22:58,,570.2,385.75,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1095,https://mlp.ldeo.columbia.edu/data/odp/leg178/1095B/,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1095.PDF,,ODP
+178.0,,1095,C,-66.98536,-78.48825,2/24/98 5:53,,2.9,2.87,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1095,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1095.PDF,,ODP
+178.0,,1095,D,-66.98535,-78.48809,2/24/98 6:15,,84.6,78.96,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1095,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1095.PDF,,ODP
+178.0,,1096,A,-67.56681,-76.96323,2/25/98 13:12,,140.7,118.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1096,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1096.PDF,,ODP
+178.0,,1096,B,-67.56682,-76.96353,2/26/98 6:06,,260.6,209.77,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1096,https://mlp.ldeo.columbia.edu/data/odp/leg178/1096C/,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1096.PDF,,ODP
+178.0,,1096,C,-67.56682,-76.96377,2/28/98 12:05,,607.7,344.98,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1096,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1096.PDF,,ODP
+178.0,,1097,A,-66.3928,-70.7564,3/6/98 9:39,,436.6,59.3,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1097,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1097.PDF,,ODP
+178.0,,1098,A,-64.86206,-64.20785,3/12/98 17:28,,45.9,45.78,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1098,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1098.PDF,,ODP
+178.0,,1098,B,-64.86194,-64.20799,3/13/98 1:38,,43.0,44.66,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1098,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1098.PDF,,ODP
+178.0,,1098,C,-64.86184,-64.20782,3/13/98 7:13,,46.7,46.3,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1098,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1098.PDF,,ODP
+178.0,,1099,A,-64.94513,-64.31529,3/13/98 12:16,,62.3,63.74,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1099,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1099.PDF,,ODP
+178.0,,1099,B,-64.94512,-64.31526,3/13/98 23:57,,107.5,48.34,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1099,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1099.PDF,,ODP
+178.0,,1100,A,-63.88335,-65.70565,3/14/98 12:30,,33.8,0.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1100,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1100.PDF,,ODP
+178.0,,1100,B,-63.8835,-65.70581,3/14/98 23:37,,35.9,0.15,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1100,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1100.PDF,,ODP
+178.0,,1100,C,-63.88331,-65.70606,3/15/98 19:57,,5.0,4.05,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1100,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1100.PDF,,ODP
+178.0,,1100,D,-63.88342,-65.70587,3/16/98 12:45,,110.5,5.28,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1100,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1100.PDF,,ODP
+178.0,,1101,A,-64.37219,-70.26118,3/18/98 13:31,,217.7,215.75,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1101,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1101.PDF,,ODP
+178.0,,1102,A,-63.80285,-65.85822,3/21/98 8:50,,7.9,0.42,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1102,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1102.PDF,,ODP
+178.0,,1102,B,-63.80279,-65.85788,3/21/98 16:46,,7.5,0.39,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1102,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1102.PDF,,ODP
+178.0,,1102,C,-63.80234,-65.8582,3/21/98 17:13,,6.5,0.01,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1102,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1102.PDF,,ODP
+178.0,,1102,D,-63.80119,-65.85645,3/22/98 12:33,,14.9,0.85,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1102,,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1102.PDF,,ODP
+178.0,,1103,A,-63.9995,-65.46532,3/23/98 1:28,,362.7,44.54,http://web.iodp.tamu.edu/OVERVIEW/?&exp=178&site=1103,https://mlp.ldeo.columbia.edu/data/odp/leg178/1103A/,http://www-odp.tamu.edu/publications/178_IR/VOLUME/CORES/COR_1103.PDF,,ODP
+181.0,,1119,A,-44.75553667,172.3933,8/22/98 20:38,,6.0,6.01,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1119,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1119.PDF,,ODP
+181.0,,1119,B,-44.75553667,172.3933,8/22/98 23:55,,155.8,164.47,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1119,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1119.PDF,,ODP
+181.0,,1119,C,-44.755525,172.393565,8/23/98 12:51,,494.8,442.33,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1119,https://mlp.ldeo.columbia.edu/data/odp/leg181/1119C/,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1119.PDF,,ODP
+181.0,,1120,A,-50.06339,173.3716717,8/27/98 16:19,,4.6,4.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1120,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1120.PDF,,ODP
+181.0,,1120,B,-50.06339,173.3716717,8/27/98 18:08,,188.0,146.51,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1120,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1120.PDF,,ODP
+181.0,,1120,C,-50.06359167,173.3716617,8/29/98 14:05,,44.6,44.95,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1120,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1120.PDF,,ODP
+181.0,,1120,D,-50.06369833,173.371665,8/31/98 4:42,,220.7,66.17,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1120,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1120.PDF,,ODP
+181.0,,1121,A,-50.89793167,176.9976967,9/1/98 23:08,,8.4,8.37,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1121,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1121.PDF,,ODP
+181.0,,1121,B,-50.89793167,176.9976967,9/2/98 4:58,,139.7,87.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1121,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1121.PDF,,ODP
+181.0,,1122,A,-46.57968167,-177.3935033,9/5/98 22:14,,123.9,87.46,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1122,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1122.PDF,,ODP
+181.0,,1122,B,-46.57966667,-177.3936867,9/6/98 16:16,,9.5,9.81,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1122,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1122.PDF,,ODP
+181.0,,1122,C,-46.57966667,-177.3936867,9/6/98 19:12,,627.4,351.44,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1122,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1122.PDF,,ODP
+181.0,,1123,A,-41.78623833,-171.4990017,9/13/98 4:59,,158.1,158.63,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1123,https://mlp.ldeo.columbia.edu/data/odp/leg181/1123B/,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1123.PDF,,ODP
+181.0,,1123,B,-41.78599667,-171.4989783,9/14/98 13:09,,489.0,451.4,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1123,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1123.PDF,,ODP
+181.0,,1123,C,-41.78577667,-171.4990083,9/18/98 21:46,,632.8,289.44,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1123,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1123.PDF,,ODP
+181.0,,1125,A,-42.54993667,-178.166485,10/2/98 6:00,,203.5,209.07,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1125,,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1125.PDF,,ODP
+181.0,,1125,B,-42.54965167,-178.16646,10/3/98 6:59,,552.1,511.56,http://web.iodp.tamu.edu/OVERVIEW/?&exp=181&site=1125,https://mlp.ldeo.columbia.edu/data/odp/leg181/1125B/,http://www-odp.tamu.edu/publications/181_IR/VOLUME/CORES/COR_1125.PDF,,ODP
+183.0,,1135,A,-59.69992,84.27353,12/14/98 23:13,,526.0,208.7,http://web.iodp.tamu.edu/OVERVIEW/?&exp=183&site=1135,,http://www-odp.tamu.edu/publications/183_IR/VOLUME/CORES/COR_1135.PDF,,ODP
+183.0,,1136,A,-59.65163,84.83484,12/26/98 23:39,,161.4,72.55,http://web.iodp.tamu.edu/OVERVIEW/?&exp=183&site=1136,,http://www-odp.tamu.edu/publications/183_IR/VOLUME/CORES/COR_1136.PDF,,ODP
+183.0,,1137,A,-56.83305,68.09345,12/31/98 17:18,,371.2,219.38,http://web.iodp.tamu.edu/OVERVIEW/?&exp=183&site=1137,https://mlp.ldeo.columbia.edu/data/odp/leg183/1137A/,http://www-odp.tamu.edu/publications/183_IR/VOLUME/CORES/COR_1137.PDF,,ODP
+183.0,,1138,A,-53.55175,75.97488,1/7/99 6:53,,842.7,411.98,http://web.iodp.tamu.edu/OVERVIEW/?&exp=183&site=1138,,http://www-odp.tamu.edu/publications/183_IR/VOLUME/CORES/COR_1138.PDF,,ODP
+183.0,,1139,A,-50.18505,63.93653,1/15/99 6:17,,694.2,356.88,http://web.iodp.tamu.edu/OVERVIEW/?&exp=183&site=1139,https://mlp.ldeo.columbia.edu/data/odp/leg183/1139A/,http://www-odp.tamu.edu/publications/183_IR/VOLUME/CORES/COR_1139.PDF,,ODP
+183.0,,1140,A,-46.27665,68.49164,1/22/99 18:24,,321.9,144.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=183&site=1140,https://mlp.ldeo.columbia.edu/data/odp/leg183/1140A/,http://www-odp.tamu.edu/publications/183_IR/VOLUME/CORES/COR_1140.PDF,,ODP
+187.0,,1152,A,-41.89793667,127.00672,11/26/99 9:23,,11.2,0.59,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1152,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1152.PDF,,ODP
+187.0,,1152,B,-41.897215,127.0075733,11/27/99 4:51,,23.7,3.59,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1152,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1152.PDF,,ODP
+187.0,,1153,A,-41.27152333,129.8151417,11/29/99 1:33,,7.3,1.77,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1153,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1153.PDF,,ODP
+187.0,,1154,A,-41.477825,131.3172567,12/2/99 0:00,,34.4,9.42,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1154,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1154.PDF,,ODP
+187.0,,1155,A,-41.95820833,127.9948233,12/4/99 23:55,,26.2,2.34,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1155,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1155.PDF,,ODP
+187.0,,1155,B,-41.95819,127.9923617,12/5/99 17:53,,46.0,18.18,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1155,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1155.PDF,,ODP
+187.0,,1156,A,-42.73322167,127.8881867,12/9/99 1:47,,11.4,6.3,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1156,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1156.PDF,,ODP
+187.0,,1156,B,-42.73145,127.888045,12/10/99 7:10,,33.6,9.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1156,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1156.PDF,,ODP
+187.0,,1157,A,-43.261065,128.8861,12/12/99 7:32,,16.4,2.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1157,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1157.PDF,,ODP
+187.0,,1157,B,-43.26126333,128.883825,12/13/99 4:28,,40.4,11.7,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1157,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1157.PDF,,ODP
+187.0,,1158,A,-43.94828333,128.828265,12/15/99 12:56,,14.4,0.85,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1158,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1158.PDF,,ODP
+187.0,,1158,B,-43.946395,128.8284567,12/16/99 5:45,,15.0,1.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1158,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1158.PDF,,ODP
+187.0,,1158,C,-43.94463667,128.828545,12/16/99 22:06,,9.4,1.61,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1158,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1158.PDF,,ODP
+187.0,,1159,A,-45.95670167,129.9999,12/18/99 22:46,,27.7,7.96,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1159,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1159.PDF,,ODP
+187.0,,1160,A,-44.00997833,134.998285,12/21/99 9:49,,5.1,0.43,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1160,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1160.PDF,,ODP
+187.0,,1160,B,-44.00823,134.9983467,12/22/99 1:54,,45.1,13.01,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1160,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1160.PDF,,ODP
+187.0,,1161,A,-44.28659667,129.0512783,12/24/99 7:05,,29.3,4.39,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1161,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1161.PDF,,ODP
+187.0,,1161,B,-44.28460167,129.0512567,12/26/99 6:14,,8.5,0.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1161,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1161.PDF,,ODP
+187.0,,1162,A,-44.63385167,129.1881767,12/27/99 8:47,,31.4,2.58,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1162,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1162.PDF,,ODP
+187.0,,1162,B,-44.63207,129.188015,12/28/99 16:02,,58.9,9.94,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1162,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1162.PDF,,ODP
+187.0,,1163,A,-44.42459333,126.9082967,12/31/99 8:09,,47.1,15.7,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1163,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1163.PDF,,ODP
+187.0,,1164,A,-43.74833,127.7481883,1/3/00 2:12,,8.5,0.97,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1164,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1164.PDF,,ODP
+187.0,,1164,B,-43.74920167,127.7461467,1/4/00 1:30,,65.7,10.65,http://web.iodp.tamu.edu/OVERVIEW/?&exp=187&site=1164,,http://www-odp.tamu.edu/publications/187_IR/VOLUME/CORES/COR_1164.PDF,,ODP
+188.0,,1165,A,-64.37964333,67.21905833,1/26/00 21:16,,5.4,5.43,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1165,,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1165.PDF,,ODP
+188.0,,1165,B,-64.37964333,67.21905833,1/28/00 21:43,,682.2,434.04,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1165,,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1165.PDF,,ODP
+188.0,,1165,C,-64.37945833,67.21806333,2/4/00 9:17,,999.1,269.27,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1165,https://mlp.ldeo.columbia.edu/data/odp/leg188/1165C/,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1165.PDF,,ODP
+188.0,,1166,A,-67.69617667,74.786925,2/15/00 12:31,,381.3,71.31,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1166,https://mlp.ldeo.columbia.edu/data/odp/leg188/1166A/,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1166.PDF,,ODP
+188.0,,1166,B,-67.696395,74.78775,2/21/00 15:05,,42.5,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1166,https://mlp.ldeo.columbia.edu/data/odp/leg188/1166B/,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1166.PDF,,ODP
+188.0,,1167,A,-66.40018,72.284185,2/22/00 20:53,,447.5,191.33,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1167,https://mlp.ldeo.columbia.edu/data/odp/leg188/1167A/,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1167.PDF,,ODP
+188.0,,1167,B,-66.39982333,72.28346333,2/28/00 10:49,,261.8,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=188&site=1167,https://mlp.ldeo.columbia.edu/data/odp/leg188/1167B/,http://www-odp.tamu.edu/publications/188_IR/VOLUME/CORES/COR_1167.PDF,,ODP
+189.0,,1168,A,-42.60968167,144.4127,3/17/00 5:25,,883.5,836.85,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1168,https://mlp.ldeo.columbia.edu/data/odp/leg189/1168A/,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1168.PDF,,ODP
+189.0,,1168,B,-42.60948667,144.4126567,3/24/00 12:47,,108.4,106.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1168,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1168.PDF,,ODP
+189.0,,1168,C,-42.60922167,144.41269,3/25/00 0:43,,290.5,248.15,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1168,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1168.PDF,,ODP
+189.0,,1169,A,-47.065265,145.236815,3/28/00 5:18,,246.3,224.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1169,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1169.PDF,,ODP
+189.0,,1170,A,-47.150725,146.0498017,3/30/00 23:37,,464.3,379.87,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1170,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1170.PDF,,ODP
+189.0,,1170,B,-47.15057333,146.0497433,4/2/00 23:57,,175.8,179.67,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1170,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1170.PDF,,ODP
+189.0,,1170,C,-47.15037667,146.049785,4/3/00 20:52,,180.1,179.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1170,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1170.PDF,,ODP
+189.0,,1170,D,-47.15017833,146.049715,4/5/00 7:36,,779.8,287.41,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1170,https://mlp.ldeo.columbia.edu/data/odp/leg189/1170D/,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1170.PDF,,ODP
+189.0,,1171,A,-48.49993333,149.1115017,4/12/00 3:31,,124.4,117.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1171,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1171.PDF,,ODP
+189.0,,1171,B,-48.49975667,149.1114383,4/12/00 18:44,,108.8,106.73,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1171,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1171.PDF,,ODP
+189.0,,1171,C,-48.49995167,149.1117517,4/13/00 4:59,,274.8,245.58,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1171,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1171.PDF,,ODP
+189.0,,1171,D,-48.49995833,149.1120367,4/14/00 16:22,,958.8,525.4,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1171,https://mlp.ldeo.columbia.edu/data/odp/leg189/1171D/,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1171.PDF,,ODP
+189.0,,1172,A,-43.95975667,149.9282683,4/23/00 2:48,,522.6,483.72,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1172,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1172.PDF,,ODP
+189.0,,1172,B,-43.95958333,149.92835,4/25/00 23:43,,202.4,206.7,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1172,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1172.PDF,,ODP
+189.0,,1172,C,-43.95947333,149.9284617,4/27/00 0:10,,171.0,172.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1172,,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1172.PDF,,ODP
+189.0,,1172,D,-43.95924167,149.928615,4/28/00 7:05,,766.5,237.09,http://web.iodp.tamu.edu/OVERVIEW/?&exp=189&site=1172,https://mlp.ldeo.columbia.edu/data/odp/leg189/1172D/,http://www-odp.tamu.edu/publications/189_IR/VOLUME/CORES/COR_1172.PDF,,ODP
+202.0,,1233,A,-41.00001833,-74.44996,4/12/02 13:26,,12.0,9.94,http://web.iodp.tamu.edu/OVERVIEW/?&exp=202&site=1233,,http://www-odp.tamu.edu/publications/202_IR/VOLUME/CORES/COR_1233.PDF,,ODP
+202.0,,1233,B,-41.00001833,-74.44996,4/12/02 17:56,,109.5,102.01,http://web.iodp.tamu.edu/OVERVIEW/?&exp=202&site=1233,,http://www-odp.tamu.edu/publications/202_IR/VOLUME/CORES/COR_1233.PDF,,ODP
+202.0,,1233,C,-41.00004333,-74.44986167,4/13/02 1:06,,116.3,121.75,http://web.iodp.tamu.edu/OVERVIEW/?&exp=202&site=1233,,http://www-odp.tamu.edu/publications/202_IR/VOLUME/CORES/COR_1233.PDF,,ODP
+202.0,,1233,D,-41.00015333,-74.44984333,4/13/02 10:44,,112.3,114.88,http://web.iodp.tamu.edu/OVERVIEW/?&exp=202&site=1233,,http://www-odp.tamu.edu/publications/202_IR/VOLUME/CORES/COR_1233.PDF,,ODP
+202.0,,1233,E,-41.00020833,-74.44971,4/13/02 21:45,,101.5,73.65,http://web.iodp.tamu.edu/OVERVIEW/?&exp=202&site=1233,,http://www-odp.tamu.edu/publications/202_IR/VOLUME/CORES/COR_1233.PDF,,ODP
+,317,U1351,A,-44.883845,171.8400617,11/18/09 9:30,126.82,28.0,27.33,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1351,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1351.PDF,,IODP
+,317,U1351,B,-44.88403667,171.8401083,11/18/09 23:30,126.22,1030.6,304.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1351,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp317/U1351B/,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1351.PDF,,IODP
+,317,U1351,C,-44.88428667,171.840095,11/25/09 18:00,126.22,967.3,0.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1351,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp317/U1351C/,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1351.PDF,,IODP
+,317,U1352,A,-44.9374,172.0226917,11/30/09 5:00,348.32,42.2,43.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1352,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1352_1.PDF,,IODP
+,317,U1352,B,-44.93759667,172.0227167,11/30/09 15:30,348.12,830.9,613.87,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1352,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp317/U1352B/,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1352_1.PDF,,IODP
+,317,U1352,C,-44.93777,172.0227167,12/5/09 16:15,348.12,1927.5,656.5,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1352,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp317/U1352C/,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1352_2.PDF,,IODP
+,317,U1352,D,-44.93721,172.022685,12/20/09 22:00,338.92,127.0,130.84,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1352,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1352_2.PDF,,IODP
+,317,U1353,A,-44.768465,171.6739467,12/21/09 23:15,89.32,56.0,56.38,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1353,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1353.PDF,,IODP
+,317,U1353,B,-44.76867167,171.6740117,12/22/09 11:15,89.82,614.3,211.48,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1353,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1353.PDF,,IODP
+,317,U1353,C,-44.76830333,171.6739667,12/26/09 20:45,89.82,529.0,0.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1353,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp317/U1353C/,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1353.PDF,,IODP
+,317,U1354,A,-44.847135,171.7868267,12/28/09 23:45,115.12,85.4,84.43,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1354,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1354.PDF,,IODP
+,317,U1354,B,-44.84727833,171.7867817,12/29/09 23:00,118.72,77.2,77.52,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1354,,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1354.PDF,,IODP
+,317,U1354,C,-44.84747833,171.7868,12/30/09 12:45,118.72,384.2,133.37,http://web.iodp.tamu.edu/OVERVIEW/?&exp=317&site=U1354,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp317/U1354C/,http://publications.iodp.org/proceedings/317/EXP_REPT/CORES/U1354.PDF,,IODP
+,318,U1355,A,-63.84117333,138.8237833,1/19/10 10:45,3733.52,31.7,14.95,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1355,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1355.PDF,,IODP
+,318,U1356,A,-63.31023,135.99896,1/22/10 14:45,3996.62,1006.4,350.13,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1356,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1356.PDF,,IODP
+,318,U1357,A,-66.41331833,140.4250133,2/3/10 6:15,1019.42,186.6,183.885,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1357,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1357.PDF,,IODP
+,318,U1357,B,-66.41331667,140.426175,2/4/10 13:45,1021.52,170.7,172.44,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1357,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1357.PDF,,IODP
+,318,U1357,C,-66.413355,140.4244183,2/5/10 6:45,1020.52,103.8,110.71,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1357,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1357.PDF,,IODP
+,318,U1358,A,-66.09039833,143.312845,2/6/10 17:30,503.52,2.0,1.1,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1358,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1358.PDF,,IODP
+,318,U1358,B,-66.09040667,143.3127767,2/7/10 2:50,503.52,35.6,8.0,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1358,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1358.PDF,,IODP
+,318,U1359,A,-64.90396167,143.961375,2/8/10 7:00,3014.52,193.5,154.085,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1359,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1359.PDF,,IODP
+,318,U1359,B,-64.90405167,143.9609217,2/9/10 18:15,3012.42,252.0,198.93,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1359,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1359.PDF,,IODP
+,318,U1359,C,-64.90412833,143.9604133,2/10/10 23:40,3015.92,168.7,150.755,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1359,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1359.PDF,,IODP
+,318,U1359,D,-64.90432667,143.9593733,2/19/10 22:15,3016.62,450.0,269.435,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1359,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp318/U1359D/,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1359.PDF,,IODP
+,318,U1360,A,-66.367325,142.7450833,2/12/10 23:15,499.52,70.8,7.03,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1360,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1360.PDF,,IODP
+,318,U1361,A,-64.40954667,143.8866533,2/25/10 19:45,3459.22,388.0,338.855,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1361,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp318/U1361A/,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1361.PDF,,IODP
+,318,U1361,B,-64.40909,143.88661,3/2/10 8:40,3460.52,12.1,12.04,http://web.iodp.tamu.edu/OVERVIEW/?&exp=318&site=U1361,,http://publications.iodp.org/proceedings/318/EXP_REPT/CORES/CORU1361.PDF,,IODP
+,329,U1370,A,-41.85214833,-153.1063317,11/26/10 16:00,5074.58,66.7,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1370,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1370.PDF,,IODP
+,329,U1370,B,-41.85214167,-153.1065883,11/27/10 6:15,5074.58,7.8,7.81,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1370,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1370.PDF,,IODP
+,329,U1370,C,-41.85195167,-153.106625,11/27/10 10:00,5074.58,7.8,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1370,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1370.PDF,,IODP
+,329,U1370,D,-41.85192667,-153.1063533,11/27/10 20:00,5073.58,68.2,70.26,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1370,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1370.PDF,,IODP
+,329,U1370,E,-41.85193,-153.1061133,11/28/10 12:45,5074.16,65.6,70.2,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1370,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1370.PDF,,IODP
+,329,U1370,F,-41.85211167,-153.1061233,11/29/10 9:00,5073.65,64.7,66.32,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1370,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1370.PDF,,IODP
+,329,U1371,A,-45.96415333,-163.1841883,12/2/10 9:00,5305.2,123.5,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,B,-45.96418167,-163.184455,12/2/10 23:45,5305.18,8.1,8.15,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,C,-45.96400667,-163.1844733,12/3/10 3:00,5300.78,9.5,9.83,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,D,-45.96399,-163.1841867,12/3/10 4:45,5299.88,126.0,126.87,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,E,-45.963995,-163.1839417,12/4/10 13:30,5287.55,128.2,118.16,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,F,-45.96417,-163.1839483,12/5/10 11:00,5285.64,130.6,118.44,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,G,-45.964395,-163.1839333,12/6/10 7:00,5302.72,1.4,1.37,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,329,U1371,H,-45.96441333,-163.1841867,12/6/10 9:45,5298.92,6.2,6.19,http://web.iodp.tamu.edu/OVERVIEW/?&exp=329&site=U1371,,http://publications.iodp.org/proceedings/329/EXP_REPT/CORES/CORU1371.PDF,,IODP
+,361,U1475,A,-41.42675,25.26073333,2/23/16 13:38,2670.36,1.5,1.48,http://web.iodp.tamu.edu/OVERVIEW/?&exp=361&site=U1475,,http://publications.iodp.org/proceedings/361/EXP_REPT/CORES/CORU1475.PDF,,IODP
+,361,U1475,B,-41.42675,25.260735,2/24/16 1:00,2669.46,243.9,250.31,http://web.iodp.tamu.edu/OVERVIEW/?&exp=361&site=U1475,,http://publications.iodp.org/proceedings/361/EXP_REPT/CORES/CORU1475.PDF,,IODP
+,361,U1475,C,-41.42657,25.26073167,2/25/16 2:30,2669.34,275.0,280.7,http://web.iodp.tamu.edu/OVERVIEW/?&exp=361&site=U1475,,http://publications.iodp.org/proceedings/361/EXP_REPT/CORES/CORU1475.PDF,,IODP
+,361,U1475,D,-41.42676,25.26097667,2/26/16 7:35,2668.32,143.0,150.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=361&site=U1475,,http://publications.iodp.org/proceedings/361/EXP_REPT/CORES/CORU1475.PDF,,IODP
+,361,U1475,E,-41.42694,25.26073167,2/27/16 2:25,2671.85,277.0,277.2,http://web.iodp.tamu.edu/OVERVIEW/?&exp=361&site=U1475,,http://publications.iodp.org/proceedings/361/EXP_REPT/CORES/CORU1475.PDF,,IODP
+,361,U1475,F,-41.42676,25.26049833,2/28/16 11:35,2669.35,133.5,55.37,http://web.iodp.tamu.edu/OVERVIEW/?&exp=361&site=U1475,,http://publications.iodp.org/proceedings/361/EXP_REPT/CORES/CORU1475.PDF,,IODP
+,374,U1521,A,-75.68392,-179.6718467,1/15/18 20:57,562.18,650.1,411.5,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1521,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp374/U1521A/,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1521.pdf,,IODP
+,374,U1522,A,-76.55377,-174.7577533,1/21/18 17:54,557.6,701.8,279.57,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1522,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp374/U1522A/,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1522.pdf,,IODP
+,374,U1523,A,-74.15029,-176.7951117,1/28/18 13:18,828.02,46.3,33.51,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1523,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1523.pdf,,IODP
+,374,U1523,B,-74.1503,-176.7944333,1/29/18 15:50,827.99,164.4,45.13,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1523,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1523.pdf,,IODP
+,374,U1523,C,-74.15048,-176.7944667,1/31/18 4:40,827.99,43.3,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1523,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1523.pdf,,IODP
+,374,U1523,D,-74.15048,-176.795145,1/31/18 12:30,827.97,307.8,0.9,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1523,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp374/U1523D/,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1523.pdf,,IODP
+,374,U1523,E,-74.15048,-176.7958183,2/2/18 13:40,827.88,130.8,54.08,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1523,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1523.pdf,,IODP
+,374,U1524,A,-74.21738,-173.6336417,2/3/18 21:44,2394.39,299.5,282.35,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1524,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1524.pdf,,IODP
+,374,U1524,B,-74.2174,-173.6330567,2/5/18 20:50,2394.16,7.7,7.76,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1524,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1524.pdf,,IODP
+,374,U1524,C,-74.21756,-173.63223,2/8/18 21:00,2394.34,441.9,19.2,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1524,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1524.pdf,,IODP
+,374,U1525,A,-75.00101,-173.9200467,2/6/18 13:15,1775.74,213.2,158.7,http://web.iodp.tamu.edu/OVERVIEW/?&exp=374&site=U1525,,http://publications.iodp.org/proceedings/374/EXP_REPT/CORES/CORU1525.pdf,,IODP
+,378,U1553,A,-52.22382,166.191335,1/14/20 23:10,1221.2,216.4,214.08,http://web.iodp.tamu.edu/OVERVIEW/?&exp=378&site=U1553,,,,IODP
+,378,U1553,B,-52.22383,166.1916067,1/16/20 9:15,1221.66,243.0,231.91,http://web.iodp.tamu.edu/OVERVIEW/?&exp=378&site=U1553,,,,IODP
+,378,U1553,C,-52.22402,166.191625,1/18/20 3:45,1221.63,567.5,158.76,http://web.iodp.tamu.edu/OVERVIEW/?&exp=378&site=U1553,,,,IODP
+,378,U1553,D,-52.22401,166.1913267,1/21/20 14:30,1221.61,584.3,97.95,http://web.iodp.tamu.edu/OVERVIEW/?&exp=378&site=U1553,,,,IODP
+,378,U1553,E,-52.22401,166.1910267,1/24/20 12:55,1221.26,237.6,209.77,http://web.iodp.tamu.edu/OVERVIEW/?&exp=378&site=U1553,,,,IODP
+,379,U1532,A,-68.61139,-107.525005,1/31/19 0:45,3961.48,100.6,103.04,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1532,B,-68.6114,-107.5244933,2/1/19 12:30,3961.44,180.3,91.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1532,C,-68.61159,-107.524535,2/3/19 20:15,3961.41,392.3,179.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1532,D,-68.61159,-107.525025,2/8/19 3:45,3961.48,381.9,17.42,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1532,E,-68.60715,-107.5410217,2/10/19 9:04,3977.36,101.6,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1532,F,-68.61139,-107.525505,2/10/19 21:30,3961.46,321.4,,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1532,G,-68.61159,-107.5254983,2/12/19 21:45,3961.41,794.0,366.41,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1532,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1532.PDF,,IODP
+,379,U1533,A,-68.73361,-109.0100233,2/24/19 0:09,4180.81,28.5,29.54,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1533,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1533.PDF,,IODP
+,379,U1533,B,-68.73499,-109.0500167,2/25/19 13:43,4190.21,382.6,250.78,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1533,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1533.PDF,,IODP
+,379,U1533,C,-68.73449,-109.0251717,2/27/19 6:30,4183.05,7.7,7.74,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1533,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1533.PDF,,IODP
+,379,U1533,D,-68.73455,-109.024835,2/27/19 11:05,4183.94,40.0,40.01,http://web.iodp.tamu.edu/OVERVIEW/?&exp=379&site=U1533,,http://publications.iodp.org/proceedings/379/EXP_REPT/CORES/CORU1533.PDF,,IODP
+,382,U1534,A,-53.18963,-58.76079833,3/29/19 14:45,605.09,266.3,270.84,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1534,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1534.pdf,,IODP
+,382,U1534,B,-53.18961,-58.76049667,4/1/19 2:00,605.07,1.5,1.51,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1534,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1534.pdf,,IODP
+,382,U1534,C,-53.18978,-58.76049333,4/1/19 6:00,606.27,159.2,159.55,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1534,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1534.pdf,,IODP
+,382,U1534,D,-53.1898,-58.76043167,4/2/19 3:30,606.07,28.5,29.64,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1534,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1534.pdf,,IODP
+,382,U1535,A,-53.1915,-58.64341333,4/2/19 12:30,646.86,117.3,112.47,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1535,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1535.pdf,,IODP
+,382,U1536,A,-59.441,-41.06099333,4/6/19 7:00,3219.52,354.4,364.27,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1536,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1536.pdf,,IODP
+,382,U1536,B,-59.44101,-41.060665,4/12/19 9:10,3220.06,226.1,230.71,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1536,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1536.pdf,,IODP
+,382,U1536,C,-59.44101,-41.06031833,4/13/19 21:00,3222.05,352.0,187.42,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1536,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1536.pdf,,IODP
+,382,U1536,D,-59.44084,-41.06033,4/16/19 20:30,3221.72,6.9,6.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1536,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1536.pdf,,IODP
+,382,U1536,E,-59.44083,-41.06065333,4/17/19 9:30,3219.08,645.4,110.55,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1536,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp382/U1536E/,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1536.pdf,,IODP
+,382,U1537,A,-59.11076,-40.90620833,4/26/19 8:15,3712.91,264.0,268.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1537,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1537.pdf,,IODP
+,382,U1537,B,-59.11097,-40.90586,4/29/19 0:15,3712.01,7.4,7.4,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1537,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1537.pdf,,IODP
+,382,U1537,C,-59.10866,-40.90145,4/29/19 3:30,3713.61,15.3,11.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1537,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1537.pdf,,IODP
+,382,U1537,D,-59.112,-40.90612833,4/29/19 7:00,3713.09,354.3,348.94,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1537,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1537.pdf,,IODP
+,382,U1538,A,-57.44208,-43.35781833,5/4/19 5:45,3130.58,676.0,476.43,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1538,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1538.pdf,,IODP
+,382,U1538,B,-57.44228,-43.35742333,5/10/19 19:30,3129.81,8.5,8.49,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1538,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1538.pdf,,IODP
+,382,U1538,C,-57.44231,-43.357535,5/10/19 22:45,3130.21,105.9,98.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1538,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1538.pdf,,IODP
+,382,U1538,D,-57.44223,-43.35787167,5/12/19 22:30,3130.4,126.4,114.6,http://web.iodp.tamu.edu/OVERVIEW/?&exp=382&site=U1538,,http://publications.iodp.org/proceedings/382/EXP_REPT/CORES/CORU1538.pdf,,IODP
+,383,U1539,A,-56.151,-115.1341017,5/31/19 15:15,4071.08,107.6,104.75,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1539,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1539.PDF,,IODP
+,383,U1539,B,-56.15098,-115.1337933,6/2/19 5:30,4070.45,28.2,21.92,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1539,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1539.PDF,,IODP
+,383,U1539,C,-56.15119,-115.1338083,6/3/19 13:00,4070.15,268.1,247.5,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1539,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1539.PDF,,IODP
+,383,U1539,D,-56.1512,-115.1341167,6/5/19 15:30,4070.13,198.0,128.18,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1539,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1539.PDF,,IODP
+,383,U1540,A,-55.14112,-114.84198,6/7/19 12:15,3584.6,150.0,155.13,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1540,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1540.PDF,,IODP
+,383,U1540,B,-55.14109,-114.8416417,6/9/19 12:00,3579.98,150.0,140.78,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1540,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1540.PDF,,IODP
+,383,U1540,C,-55.14079,-114.8416567,6/10/19 13:00,3579.26,6.8,6.77,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1540,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1540.PDF,,IODP
+,383,U1540,D,-55.14128,-114.8419933,6/10/19 14:30,3577.16,211.0,151.02,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1540,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1540.PDF,,IODP
+,383,U1540,E,-55.14129,-114.8422917,6/11/19 20:15,3577.16,213.0,78.87,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1540,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1540.PDF,,IODP
+,383,U1541,A,-54.2126,-125.4258,6/17/19 11:15,3606.32,9.5,9.67,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1541,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1541.PDF,,IODP
+,383,U1541,B,-54.21259,-125.4257183,6/18/19 3:00,3603.72,138.5,129.27,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1541,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1541.PDF,,IODP
+,383,U1541,C,-54.21261,-125.42548,6/19/19 4:00,3602.62,118.1,100.37,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1541,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1541.PDF,,IODP
+,383,U1542,A,-52.7048,-75.59653667,7/3/19 23:30,1099.81,169.5,181.74,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1542,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1542.PDF,,IODP
+,383,U1542,B,-52.70482,-75.59591833,7/5/19 18:45,1101.11,1.4,1.46,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1542,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1542.PDF,,IODP
+,383,U1542,C,-52.70482,-75.59591833,7/5/19 21:00,1100.21,234.0,236.86,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1542,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1542.PDF,,IODP
+,383,U1542,D,-52.705,-75.59623667,7/7/19 7:15,1100.71,213.7,205.04,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1542,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1542.PDF,,IODP
+,383,U1543,A,-54.58439,-76.6765,7/8/19 20:15,3863.36,339.6,350.62,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1543,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1543.PDF,,IODP
+,383,U1543,B,-54.58441,-76.67616167,7/11/19 21:30,3865.29,286.5,294.97,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1543,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1543.PDF,,IODP
+,383,U1544,A,-55.53699,-71.59365667,7/14/19 20:45,2089.86,106.0,91.34,http://web.iodp.tamu.edu/OVERVIEW/?&exp=383&site=U1544,,http://publications.iodp.org/proceedings/383/EXP_REPT/CORES/CORU1544.PDF,,IODP
+,392,U1580,A,-40.78589167,26.606895,2/25/22 11:30,2560.33,533.9,351.03,https://web.iodp.tamu.edu/OVERVIEW/?&exp=392&site=U1580,https://mlp.ldeo.columbia.edu/data/iodp-usio/exp392/U1580A/,http://publications.iodp.org/proceedings/392/EXP_REPT/CORES/CORU1580.PDF,,IODP
+,392,U1580,B,-40.78590333,26.60713667,3/7/22 5:00,2560.33,77.8,23.78,https://web.iodp.tamu.edu/OVERVIEW/?&exp=392&site=U1580,,http://publications.iodp.org/proceedings/392/EXP_REPT/CORES/CORU1580.PDF,,IODP
