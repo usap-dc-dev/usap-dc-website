@@ -1720,7 +1720,7 @@ def project(project_id=None):
             email = form_data['email']
 
         return render_template('project.html', name=user_info['name'], full_name=full_name, email=email, programs=get_projects(), persons=get_persons(),
-                               nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'],
+                               nsf_grants=get_nsf_grants(['award', 'name', 'title'], only_inhabited=False), deployment_types=get_deployment_types(), orcid=user_info['orcid'] if user_info['orcid'] else '',
                                locations=get_usap_locations(), parameters=get_parameters(), orgs=get_orgs(), roles=get_roles(), platforms=get_gcmd_platforms(),
                                instruments=get_gcmd_instruments(), paleo_time=get_gcmd_paleo_time(), progresses=get_gcmd_progress(), product_levels=get_product_levels(),
                                data_types=get_gcmd_data_types(), formats=get_gcmd_data_formats(), project_metadata=session.get('project_metadata'), edit=edit,
