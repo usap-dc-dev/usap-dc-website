@@ -151,10 +151,10 @@ if __name__ == '__main__':
         print(log_file)
         #log_file = "test.log"
         f = open(log_file, 'r')
-        #entries = f.readlines()
-        entry = f.readline()
+        entries = f.readlines()
+        #entry = f.readline()
         num = 0
-        while entry:
+        for entry in entries:
             log_line_data = line_parser(entry)
             request_url = log_line_data['request_url']
 
@@ -255,6 +255,6 @@ if __name__ == '__main__':
                     #entry already exists, do nothing
                     pass
                 cur.execute("COMMIT;")
-            entry = f.readline()
+            #entry = f.readline()
 
         print(("%s entries added to the database" % num))
