@@ -82,7 +82,7 @@ app.secret_key = app.config['SECRET_KEY']
 
 app.register_blueprint(api_v1)
 # set up api v2 for future use
-#app.register_blueprint(api_v2)
+app.register_blueprint(api_v2)
 
 app.config['SWAGGER_UI_DOC_EXPANSION'] = rp_settings.RESTPLUS_SWAGGER_UI_DOC_EXPANSION
 app.config['RESTPLUS_VALIDATE'] = rp_settings.RESTPLUS_VALIDATE
