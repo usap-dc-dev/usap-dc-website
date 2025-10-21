@@ -1,6 +1,6 @@
-from flask import json, send_file, send_from_directory
+from flask import json, send_file, send_from_directory, request
 import usap
-import datetime
+from datetime import datetime
 from collections import OrderedDict
 from services.lib.flask_restplus import Resource, reqparse, fields, inputs, Namespace
 import services.models as models
@@ -8,6 +8,9 @@ import os
 from zipfile import ZipFile, ZIP_DEFLATED
 from tempfile import TemporaryDirectory
 from io import BytesIO
+import psycopg2
+import psycopg2.extras
+import lib.curatorFunctions as cf
 
 
 config = json.loads(open('config.json', 'r').read())
@@ -22,6 +25,39 @@ datafiles_model = ns.model("Datafile", OrderedDict([
     ("dataset_uid", fields.String(attribute="id")),
     ("file_name", fields.String(attribute="filename"))
     ]))
+
+def connect_to_db(curator=False):
+    info = config['DATABASE']
+    if curator and cf.isCurator():
+        user = info['USER_CURATOR']
+        password = info['PASSWORD_CURATOR']
+    else:
+        user = info['USER']
+        password = info['PASSWORD']
+    conn = psycopg2.connect(host=info['HOST'],
+                            port=info['PORT'],
+                            database=info['DATABASE'],
+                            user=user,
+                            password=password)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    return (conn, cur)
+
+conn, cur = connect_to_db()
+
+#placeholder for now
+def encrypt(kw):
+    return kw
+
+def isValidApiKey(key):
+    queryTxt = "select * from api_key where encrypted_key=%s"
+    query = cur.mogrify(queryTxt, (key,))
+    cur.execute(query)
+    results = cur.fetchall()
+    valid = False
+    for result in results:
+        if result['status'] == "valid":
+            valid = True
+    return valid
 
 def getFilesWithName(rootDir, file_name):
     fileList = []
@@ -65,35 +101,32 @@ def makeZip(dirs, filename):
             zip.writestr(path_within_zip, contents)
     return my_zip.getvalue(), {"Content-Type: application/zip"}
 
-
-# just a placeholder for now - will be replaced by API key
-def canDownload(user):
-    return not not user
-
 @ns.route('/<dataset_uid>/<file_name>')
 class DataFileItem(Resource):
     @ns.response(200, 'Success')
     @ns.response(404, 'File not found')
     def get(self, dataset_uid, file_name):
-        """# test for proprietary hold
-        ds = usap.get_datasets([dataset_id])[0]
-        holdTime = ""
-        # check for proprietary hold
-        if len(ds['release_date']) == 4:
-            hold = datetime.strptime(ds['release_date'], '%Y') > datetime.utcnow()
-            holdTime = datetime.strptime(ds['release_date'], '%Y')
-        elif len(ds['release_date']) == 10:  
-            hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
-            holdTime = datetime.strptime(ds['release_date'], '%Y-%m-%d')
-        else:
-            hold = False
-        if hold:
-            return "There is a hold on this data. Try again on or after " + holdTime + "."
-        """
-        directory = os.path.join("dataset", "usap-dc", dataset_uid)
-        print("Getting the file", file_name, "from", directory)
-        if canDownload("hello"):
+        # test API key
+        if isValidApiKey("invalidkey"):
+            # test for proprietary hold
+            ds = usap.get_datasets([dataset_uid])[0]
+            holdTime = ""
+            # check for proprietary hold
+            if len(ds['release_date']) == 4:
+                hold = datetime.strptime(ds['release_date'], '%Y') > datetime.utcnow()
+                holdTime = datetime.strptime(ds['release_date'], '%Y')
+            elif len(ds['release_date']) == 10:  
+                hold = datetime.strptime(ds['release_date'], '%Y-%m-%d') > datetime.utcnow()
+                holdTime = datetime.strptime(ds['release_date'], '%Y-%m-%d')
+            else:
+                hold = False
+            if hold:
+                return "There is a hold on this data. Try again on or after " + holdTime + "."
+            directory = os.path.join("dataset", "usap-dc", dataset_uid)
+            print("Getting the file", file_name, "from", directory)
             parentDirs = getDirsWithMatchingFile(directory, file_name)
+            if len(parentDirs) == 0:
+                return usap.not_found()
             if len(parentDirs) == 1:
                 return send_from_directory(parentDirs[0], file_name, as_attachment=True)
             return makeZip(parentDirs, file_name)
