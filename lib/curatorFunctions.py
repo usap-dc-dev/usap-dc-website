@@ -17,6 +17,7 @@ import mimetypes
 import shutil
 import py7zlib
 import hashlib
+from cryptography.fernet import Fernet
 
 UPLOAD_FOLDER = "upload"
 DATASET_FOLDER = "dataset"
@@ -2880,3 +2881,18 @@ def getMimeAndDocTypes(name, path_name, cur, zp=None, tar_archive=None):
             print(e)
 
     return mime_type, doc_type
+
+
+
+def makeApiKey(username):
+    # first create the key
+    api_key = Fernet.generate_key()
+    encoder = Fernet(api_key)
+    api_anchor = bytes(app.config["API_KEY"], "UTF-8")
+    encoded_key = encoder.encode(api_anchor)
+    # then store it in the DB
+    (conn, cur) = usap.connect_to_db(curator=True)
+    queryTemplate = "INSERT INTO api_key (encrypted_key, owner) VALUES (%s, %s)"
+    query = cur.mogrify(queryTemplate, (encoded_key, username))
+    cur.execute(query)
+    return [api_key, username]

@@ -617,7 +617,6 @@ def check_user_permission(user_info, uid, project=False):
 def sortNumerically(val, replace_str, replace_str2=''):
     return int(val.replace(replace_str, '0').replace(replace_str2, ''))
 
-
 #for page 1 of dataset submission/editing
 @app.route('/edit/dataset/<dataset_id>', methods=['GET', 'POST'])
 @app.route('/submit/dataset', methods=['GET', 'POST'])
