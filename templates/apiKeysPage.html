@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% set cur="manageApiKeys" %}
+{% block body %}
+{% if need_login %}
+    
+<div class="container">
+      
+  <h4>Curator Login </h4>
+
+  <div id="container">
+    <h5>
+      Sign in using an authorized curator account
+    </h5>
+    <div id="buttons">
+      <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+        Google
+      </a>
+      <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+        <span style="color:gray; font-weight:bolder">ORC</span>iD
+      </a>
+    </div>
+  </div>
+
+      
+{% else %}
+<div id="apiKeyPopup">
+    <div id="popupHeader"></div>
+    <div id="popupBody">
+    </div>
+</div>
+Fill in any of the fields below, then "Search" to find the person for whom you wish to generate an API key.
+{% if fields %}
+<form id="searchForm" name="searchForm">
+    {% for (fieldname, datatype) in fields.items() %}
+    {% set displayname=fieldname.replace("_", " ").title() %}
+    {% if fieldname=="id" %}
+    {% set displayname="ID" %}
+    {% elif fieldname=="id_orcid" %}
+    {% set displayname="OrcID" %}
+    {% elif fieldname=="id_geolink" %}
+    {% set displayname="GeoLink ID" %}
+    {% endif %}
+    <div style="display: inline-block">
+        <label for="{{fieldname}}_select">{{displayname}}</label>
+        {% if fieldname in dropdowns.keys() %}
+        <select id="{{fieldname}}_select" name="{{fieldname}}">
+            <option {% if not queryParams or queryParams[fieldname]|trim == '' %}selected{% endif %} value="">Any</option>
+            {% for option in dropdowns[fieldname] %}
+            <option value="{{option}}"{% if queryParams and queryParams[fieldname]==option %} selected{% endif %}>{{option}}</option>
+            {% endfor %}
+        </select>
+        {% else %}
+        {% set inputType="text" %}
+        {% if fieldname in ["phone", "fax"] %}
+        {% set inputType="tel" %}
+        {% elif datatype in ['integer', 'bigint', 'double precision', 'numeric', 'real', 'smallint', 'money'] %}
+        {% set inputType="number" %}
+        {% endif %}
+        <input type="{{inputType}}" id="{{fieldname}}_select" name="{{fieldname}}"{% if queryParams and queryParams[fieldname] %} value="{{queryParams[fieldname]}}"{% endif %}{% if fieldname=="id" %}placeholder="Lastname, Firstname"{% endif %}>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <input type="submit" value="Search">
+</form>
+{% endif %}
+{% if people and people|length > 0 %}
+<table id="searchResultsTable" style="width:100%">
+    <tbody>
+        <tr><th>Name</th><th>Organization</th><th>E-Mail Address</th><th>OrcID</th><th></th></tr>
+        {% for person in people %}
+        {% set name=person['Name'] %}
+        <tr><td>{{person["Name"]}}</td><td>{{person["Organization"]}}</td><td>{{person["email"]}}</td><td>{{person["OrcID"]}}</td><td><button onclick="showPopup('{{name}}')">Manage API Keys</button></td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock body %}

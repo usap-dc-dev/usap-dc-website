@@ -1,6 +1,6 @@
 import math
 import flask
-from flask import Flask, session, render_template, redirect, url_for, request, send_from_directory, send_file, current_app, make_response
+from flask import Flask, session, render_template, redirect, url_for, request, send_from_directory, send_file, current_app, make_response, abort
 from flask_jsglue import JSGlue
 from random import randint
 import os
@@ -5665,6 +5665,72 @@ def dif_harvest():
 
     return render_template('dif_harvest.html', **template_dict)
 
+@app.route('/curator/manage_api_keys/<name>')
+def getApiKeys(name):
+    if (not cf.isCurator()):
+        abort(401)
+    else:
+        query = "SELECT alias, created, status, other_users from api_key where owner=%s"
+        (conn, cur) = connect_to_db(curator=True)
+        queryTxt = cur.mogrify(query, (name,))
+        cur.execute(queryTxt)
+        results = list(map(lambda row: dict(row), list(cur.fetchall())))
+        for result in results:
+            result['created'] = str(result['created'])
+        return str(results)
+
+
+@app.route('/curator/manage_api_keys')
+def apiKeyPage():
+    template_dict = {}
+    template_dict['message'] = []
+    template_dict['errors'] = []
+    # first check if the user is a curator
+    if (not cf.isCurator()):
+        session['next'] = request.url
+        template_dict['need_login'] = True
+    else:
+        template_dict['need_login'] = False
+    query = "select column_name, data_type from information_schema.columns where table_name='person'"
+    (conn, cur) = connect_to_db()
+    cur.execute(query)
+    results = cur.fetchall()
+    template_dict['fields'] = {}
+    template_dict['dropdowns'] = {}
+    template_dict['queryParams'] = request.args
+    for field in ['country', 'state', 'organization']:
+        template_dict['dropdowns'][field] = []
+        listQuery = "select distinct %s from person where %s is not null and not %s=''" % (field, field, field)
+        cur.execute(listQuery)
+        listResults = cur.fetchall()
+        for result in listResults:
+            template_dict['dropdowns'][field].append(result[field])
+    for result in results:
+        template_dict['fields'][result['column_name']] = result['data_type']
+
+    shouldSearch = False
+    personsQuery = "SELECT id as \"Name\", organization as \"Organization\", email, id_orcid as \"OrcID\", email as \"Email\" FROM person"
+    for (key, val) in request.args.items():
+        shouldSearch = shouldSearch or len(str(val).strip())>0
+        if shouldSearch:
+            personsQuery += " WHERE "
+            break
+    if shouldSearch:
+        searchValues = []
+        searchTerms = filter((lambda entry: len(str(entry[1]))>0), request.args.items())
+        def addSearchTerm(entry):
+            searchValues.append(entry[1])
+            return entry[0] + "=%s"
+        personsQuery += " AND ".join(map(addSearchTerm, searchTerms))
+        personsQueryTxt = cur.mogrify(personsQuery, tuple(searchValues))
+        template_dict["query"] = str(personsQueryTxt)
+        cur.execute(personsQueryTxt)
+        template_dict['people'] = list(map(lambda row: dict(row), list(cur.fetchall())))
+
+        
+
+    return render_template("apiKeysPage.html", **template_dict);
+
 @app.route('/view/dataset/sitemap.xml', methods=['GET'])
 def sitemap():
     (conn, cur) = connect_to_db()
@@ -5741,6 +5807,10 @@ def internal_error(error):
 @app.errorhandler(404)
 def page_not_found(error):
     return redirect(url_for('not_found'))
+
+@app.errorhandler(401)
+def unauthorized_access(error):
+    return error
 
 
 app.jinja_env.globals.update(map=map)

@@ -1,4 +1,4 @@
-from flask import json, send_file, send_from_directory, request
+from flask import json, abort, jsonify, send_file, send_from_directory, request, Response
 import usap
 from datetime import datetime
 from collections import OrderedDict
@@ -104,6 +104,7 @@ def makeZip(dirs, filename):
 @ns.route('/<dataset_uid>/<file_name>')
 class DataFileItem(Resource):
     @ns.response(200, 'Success')
+    @ns.response(401, 'Missing or invalid API key')
     @ns.response(404, 'File not found')
     def get(self, dataset_uid, file_name):
         # test API key
@@ -130,4 +131,4 @@ class DataFileItem(Resource):
             if len(parentDirs) == 1:
                 return send_from_directory(parentDirs[0], file_name, as_attachment=True)
             return makeZip(parentDirs, file_name)
-        return "<html><body>Can't authenticate your API key. If this persists, contact the USAP-DC team at info@usap-dc.org for assistance.</body></html>"
+        return Response("Missing or invalid API key", 401, {'WWW-Authenticate':'Basic realm="USAP-DC Download API"'})

@@ -1,0 +1,13 @@
+#apiKeyPopup {
+    display: none;
+    max-width: 50vw;
+    max-height: 50vh;
+    min-width: 20vw;
+    min-height: 20vh;
+    background-color: rgb(227, 236, 255);
+    position: absolute;
+    z-index:101;
+}
+
+
+
