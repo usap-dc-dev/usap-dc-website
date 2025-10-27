@@ -1,13 +1,27 @@
 #apiKeyPopup {
     display: none;
-    max-width: 50vw;
-    max-height: 50vh;
-    min-width: 20vw;
-    min-height: 20vh;
+    max-height: 50%;
+    padding-bottom: 10px;
     background-color: rgb(227, 236, 255);
     position: absolute;
     z-index:101;
+    overflow: scroll;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 5px;
+}
+#popupHeader {
+    display: block;
+    width: 100%;
+    text-align: right;
 }
 
+#popupBody > table td, th {
+    padding: 0px 15px;
+}
 
+#popupCloseBtn, #popupReloadBtn {
+    background: none;
+    border: none;
+}
 

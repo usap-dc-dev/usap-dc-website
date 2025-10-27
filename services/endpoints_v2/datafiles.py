@@ -108,7 +108,8 @@ class DataFileItem(Resource):
     @ns.response(404, 'File not found')
     def get(self, dataset_uid, file_name):
         # test API key
-        if isValidApiKey("invalidkey"):
+        apiKey = request.headers["X-Auth-Token"]
+        if cf.isValidApiKey(apiKey):
             # test for proprietary hold
             ds = usap.get_datasets([dataset_uid])[0]
             holdTime = ""
@@ -128,6 +129,7 @@ class DataFileItem(Resource):
             parentDirs = getDirsWithMatchingFile(directory, file_name)
             if len(parentDirs) == 0:
                 return usap.not_found()
+            cf.recordApiDownload(apiKey, dataset_uid, file_name)
             if len(parentDirs) == 1:
                 return send_from_directory(parentDirs[0], file_name, as_attachment=True)
             return makeZip(parentDirs, file_name)

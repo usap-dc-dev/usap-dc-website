@@ -24,7 +24,10 @@
       
 {% else %}
 <div id="apiKeyPopup">
-    <div id="popupHeader"></div>
+    <div id="popupHeader">
+        <button id="popupReloadBtn" onclick="reloadPopup()">⟳</button>
+        <button id="popupCloseBtn" onclick="hidePopup()">×</button>
+    </div>
     <div id="popupBody">
     </div>
 </div>
@@ -49,13 +52,7 @@ Fill in any of the fields below, then "Search" to find the person for whom you w
             <option value="{{option}}"{% if queryParams and queryParams[fieldname]==option %} selected{% endif %}>{{option}}</option>
             {% endfor %}
         </select>
-        {% else %}
-        {% set inputType="text" %}
-        {% if fieldname in ["phone", "fax"] %}
-        {% set inputType="tel" %}
-        {% elif datatype in ['integer', 'bigint', 'double precision', 'numeric', 'real', 'smallint', 'money'] %}
-        {% set inputType="number" %}
-        {% endif %}
+        {% else %}{% set inputType="text" %}{% if fieldname in ["phone", "fax"] %}{% set inputType="tel" %}{% elif datatype in ['integer', 'bigint', 'double precision', 'numeric', 'real', 'smallint', 'money'] %}{% set inputType="number" %}{% endif %}
         <input type="{{inputType}}" id="{{fieldname}}_select" name="{{fieldname}}"{% if queryParams and queryParams[fieldname] %} value="{{queryParams[fieldname]}}"{% endif %}{% if fieldname=="id" %}placeholder="Lastname, Firstname"{% endif %}>
         {% endif %}
     </div>

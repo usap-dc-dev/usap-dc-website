@@ -5670,14 +5670,30 @@ def getApiKeys(name):
     if (not cf.isCurator()):
         abort(401)
     else:
-        query = "SELECT alias, created, status, other_users from api_key where owner=%s"
+        query = "SELECT alias, created, status, other_users from api_key where owner=%s ORDER BY created desc"
         (conn, cur) = connect_to_db(curator=True)
         queryTxt = cur.mogrify(query, (name,))
         cur.execute(queryTxt)
         results = list(map(lambda row: dict(row), list(cur.fetchall())))
         for result in results:
             result['created'] = str(result['created'])
-        return str(results)
+        return json.dumps(results)
+
+@app.route('/curator/manage_api_keys/<name>/<created>/<action>')
+def takeActionOnApiKey(name, created, action):
+    if not cf.isCurator():
+        abort(401)
+    newLabel = {
+        "Disable": "disabled",
+        "Reinstate": "valid",
+        "Suspend": "suspended"
+    }[action]
+    (conn, cur) = connect_to_db(curator=True)
+    query = "UPDATE api_key SET status=%s WHERE owner=%s AND created=%s RETURNING status"
+    queryTxt = cur.mogrify(query, (newLabel, name, created))
+    cur.execute(queryTxt)
+    conn.commit()
+    return cur.fetchall()[0]['status']
 
 
 @app.route('/curator/manage_api_keys')
@@ -5726,10 +5742,13 @@ def apiKeyPage():
         template_dict["query"] = str(personsQueryTxt)
         cur.execute(personsQueryTxt)
         template_dict['people'] = list(map(lambda row: dict(row), list(cur.fetchall())))
-
-        
-
     return render_template("apiKeysPage.html", **template_dict);
+
+@app.route('/curator/manage_api_keys/new/<name>')
+def makeNewKey(name):
+    if not cf.isCurator():
+        abort(401)
+    return json.dumps(cf.makeApiKey(name))
 
 @app.route('/view/dataset/sitemap.xml', methods=['GET'])
 def sitemap():
