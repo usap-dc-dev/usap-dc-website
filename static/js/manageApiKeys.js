@@ -39,6 +39,36 @@ function showPopup(name) {
                         }
                         else {
                             cell.innerHTML = entry[col].toString();
+                            if(col === "alias") {
+                                let btn = document.createElement("button");
+                                btn.innerHTML = "✎";
+                                btn.classList.add("updateAliasBtn");
+                                btn.addEventListener("click", function() {
+                                    if("✓" === btn.innerHTML) {
+                                        let inputBox = cell.getElementsByTagName("input")[0];
+                                        let newAlias = inputBox.value;
+                                        cell.removeChild(inputBox);
+                                        btn.innerHTML = "✎";
+                                        fetch(`/curator/manage_api_keys/${name}/${entry.created}/updateAlias?newAlias=${newAlias}`)
+                                        .then(resp => resp.text()).then(function(text) {
+                                            let newTextNode = document.createTextNode(text);
+                                            cell.insertBefore(newTextNode, btn);
+                                        });
+                                    }
+                                    else {
+                                        let prevAliasNode = Array.from(cell.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)[0];
+                                        if(prevAliasNode) {
+                                            cell.removeChild(prevAliasNode);
+                                        }
+                                        let input = document.createElement("input");
+                                        input.value = entry[col].toString();
+                                        cell.insertBefore(input, btn);
+                                        btn.innerHTML = "✓"
+                                    }
+                                    
+                                });
+                                cell.appendChild(btn);
+                            }
                         }
                         tr.appendChild(cell);
                     }
@@ -75,7 +105,7 @@ function showPopup(name) {
                     let newKey = obj.key;
                     let username = obj.user;
                     let infoP = document.createElement("p");
-                    infoP.innerHTML = `You have created a new API key for ${username}: <code>${newKey}</code>. Send this to the user and ensure that they save it.`;
+                    infoP.innerHTML = `You have created a new API key for ${username}: <code onclick='navigator.clipboard.writeText(\"${newKey}\")'>${newKey}</code> (click to copy). Send this to the user and ensure that they save it.`;
                     container.appendChild(infoP);
                 });
             });

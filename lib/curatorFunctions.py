@@ -2918,4 +2918,5 @@ def recordApiDownload(key, datasetUid, filename):
     (conn, cur) = usap.connect_to_db(curator=True)
     queryTxt = cur.mogrify(query, (encodedKey, datasetUid, filename))
     cur.execute(queryTxt)
+    conn.commit()
 

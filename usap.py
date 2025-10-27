@@ -5683,17 +5683,25 @@ def getApiKeys(name):
 def takeActionOnApiKey(name, created, action):
     if not cf.isCurator():
         abort(401)
-    newLabel = {
-        "Disable": "disabled",
-        "Reinstate": "valid",
-        "Suspend": "suspended"
-    }[action]
     (conn, cur) = connect_to_db(curator=True)
-    query = "UPDATE api_key SET status=%s WHERE owner=%s AND created=%s RETURNING status"
-    queryTxt = cur.mogrify(query, (newLabel, name, created))
-    cur.execute(queryTxt)
+    column = "status"
+    if action in ["Disable", "Reinstate", "Suspend"]:
+        newLabel = {
+            "Disable": "disabled",
+            "Reinstate": "valid",
+            "Suspend": "suspended"
+        }[action]
+        query = "UPDATE api_key SET status=%s WHERE owner=%s AND created=%s RETURNING status"
+        queryTxt = cur.mogrify(query, (newLabel, name, created))
+        cur.execute(queryTxt)
+    elif action=="updateAlias":
+        column = "alias"
+        newAlias = request.args["newAlias"]
+        query = "UPDATE api_key SET alias=%s WHERE owner=%s AND created=%s RETURNING alias"
+        queryTxt = cur.mogrify(query, (newAlias, name, created))
+        cur.execute(queryTxt)
     conn.commit()
-    return cur.fetchall()[0]['status']
+    return cur.fetchall()[0][column]
 
 
 @app.route('/curator/manage_api_keys')

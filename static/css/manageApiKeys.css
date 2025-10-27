@@ -20,7 +20,7 @@
     padding: 0px 15px;
 }
 
-#popupCloseBtn, #popupReloadBtn {
+#popupCloseBtn, #popupReloadBtn, .updateAliasBtn {
     background: none;
     border: none;
 }
