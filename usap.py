@@ -5749,16 +5749,15 @@ def apiKeyPage():
     template_dict['fields'] = {}
     template_dict['dropdowns'] = {}
     template_dict['queryParams'] = request.args
-    for field in ['country', 'state', 'organization']:
-        template_dict['dropdowns'][field] = []
-        listQuery = "select distinct %s from person where %s is not null and not %s=''" % (field, field, field)
-        cur.execute(listQuery)
-        listResults = cur.fetchall()
-        for result in listResults:
-            template_dict['dropdowns'][field].append(result[field])
-    for result in results:
-        template_dict['fields'][result['column_name']] = result['data_type']
-
+    for field in ['first_name', 'middle_name', 'last_name', 'email', 'id_orcid', 'id', 'organization']:
+        template_dict['fields'][field] = 'text'
+        if 'organization'==field:
+            template_dict['dropdowns'][field] = []
+            listQuery = "select distinct %s from person where %s is not null and not %s=''" % (field, field, field)
+            cur.execute(listQuery)
+            listResults = cur.fetchall()
+            for result in listResults:
+                template_dict['dropdowns'][field].append(result[field])
     shouldSearch = False
     personsQuery = "SELECT id as \"Name\", organization as \"Organization\", email, id_orcid as \"OrcID\", email as \"Email\" FROM person"
     for (key, val) in request.args.items():
