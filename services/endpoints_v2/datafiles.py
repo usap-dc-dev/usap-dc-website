@@ -107,6 +107,7 @@ class DataFileItem(Resource):
     @ns.response(401, 'Missing or invalid API key')
     @ns.response(404, 'File not found')
     def get(self, dataset_uid, file_name):
+        """Downloads the designated file from the designated data set, if it exists and has permission"""
         # test API key
         apiKey = request.headers["X-Auth-Token"]
         if cf.isValidApiKey(apiKey):

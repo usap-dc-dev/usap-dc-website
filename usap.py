@@ -95,6 +95,10 @@ app.config['BUNDLE_ERRORS'] = rp_settings.RESTPLUS_BUNDLE_ERRORS
 def api():
     return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
+@app.route('/api2')
+def api2():
+    return render_template('api_swagger.html', api_url=url_for('api2.doc'))
+
 
 oauth = OAuth(app)
 
@@ -4671,6 +4675,7 @@ def stats():
             elif '/search_result' in page: continue
             elif '/news' in page: page = '/news'
             elif '/dataset_search' in page: page = '/dataset_search'
+            elif '/api2' in page: page = '/api2'
             elif '/api' in page: page = '/api'
             elif page in ['/home', '/index']: page = '/'
             elif page.startswith('/dataset/ldeo') or page.startswith('/dataset/usap-dc') or page.startswith('/dataset/nsidc'): page = '/dataset'
@@ -5691,12 +5696,34 @@ def takeActionOnApiKey(name, created, action):
             "Reinstate": "valid",
             "Suspend": "suspended"
         }[action]
-        query = "UPDATE api_key SET status=%s WHERE owner=%s AND created=%s RETURNING status"
-        queryTxt = cur.mogrify(query, (newLabel, name, created))
+        query = "SELECT encrypted_key FROM api_key WHERE owner=%s AND created=%s"
+        queryTxt = cur.mogrify(query, (name, created))
+        cur.execute(queryTxt)
+        results = cur.fetchall()
+        encryptedKey = results[0]['encrypted_key']
+        query = "INSERT INTO api_key_action (encrypted_key, action) VALUES (%s, %s)"
+        queryTxt = cur.mogrify(query, (encryptedKey, newLabel.replace("valid", "reinstated").title()))
+        cur.execute(queryTxt)
+        query = "UPDATE api_key SET status=%s WHERE encrypted_key=%s RETURNING status"
+        queryTxt = cur.mogrify(query, (newLabel, encryptedKey,))
         cur.execute(queryTxt)
     elif action=="updateAlias":
         column = "alias"
         newAlias = request.args["newAlias"]
+        query = "SELECT encrypted_key, alias FROM api_key WHERE owner=%s AND created=%s"
+        queryTxt = cur.mogrify(query, (name, created))
+        cur.execute(queryTxt)
+        results = cur.fetchall()
+        oldAlias = results[0]['alias']
+        encryptedKey = results[0]['encrypted_key']
+        query = "INSERT INTO api_key_action (encrypted_key, action) VALUES (%s, %s)"
+        descTxt = "Set alias to %s" % (newAlias,)
+        if len(oldAlias) > 0:
+            descTxt = "Changed alias from %s to %s" % (oldAlias, newAlias)
+        elif len(newAlias) == 0:
+            descTxt = "Removed alias %s" % (oldAlias,)
+        queryTxt = cur.mogrify(query, (encryptedKey, descTxt))
+        cur.execute(queryTxt)
         query = "UPDATE api_key SET alias=%s WHERE owner=%s AND created=%s RETURNING alias"
         queryTxt = cur.mogrify(query, (newAlias, name, created))
         cur.execute(queryTxt)

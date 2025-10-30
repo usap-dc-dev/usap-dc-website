@@ -105,7 +105,7 @@ function showPopup(name) {
                     let newKey = obj.key;
                     let username = obj.user;
                     let infoP = document.createElement("p");
-                    infoP.innerHTML = `You have created a new API key for ${username}: <code onclick='navigator.clipboard.writeText(\"${newKey}\")'>${newKey}</code> (click to copy). Send this to the user and ensure that they save it.`;
+                    infoP.innerHTML = `You have created a new API key for ${username}: <code class='copyable' onclick='navigator.clipboard.writeText(\"${newKey}\")'>${newKey}</code> (click to copy). Send this to the user and ensure that they save it.`;
                     container.appendChild(infoP);
                 });
             });

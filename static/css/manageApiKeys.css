@@ -25,3 +25,20 @@
     border: none;
 }
 
+#popupCloseBtn, #popupReloadBtn {
+    font-size: 1.5em;
+}
+
+.updateAliasBtn {
+    float: left;
+}
+
+.copyable {
+    color: inherit;
+}
+
+.copyable:hover {
+    cursor: pointer;
+    color: rgb(29, 65, 112);
+}
+

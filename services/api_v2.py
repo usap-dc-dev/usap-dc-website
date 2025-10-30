@@ -12,8 +12,8 @@ api = Api(blueprint, version='v2.0', title='USAP-DC API', ordered=True, doc='/do
           description='A Rest API service for accessing data from USAP-DC')
 
 api.add_namespace(awards_ns)
+api.add_namespace(datafiles_ns)
 api.add_namespace(datasets_ns)
 api.add_namespace(persons_ns)
 api.add_namespace(projects_ns)
-api.add_namespace(datafiles_ns)
 
