@@ -1,4 +1,4 @@
-#apiKeyPopup {
+#apiKeyPopup, #apiKeyHistoryPopup {
     display: none;
     max-height: 50%;
     padding-bottom: 10px;
@@ -10,22 +10,22 @@
     margin-right: auto;
     border-radius: 5px;
 }
-#popupHeader {
+#popupHeader, #historyHeader {
     display: block;
     width: 100%;
     text-align: right;
 }
 
-#popupBody > table td, th {
+#popupBody > table td, #popupBody > table th, #historyBody > table td, #historyBody > table th {
     padding: 0px 15px;
 }
 
-#popupCloseBtn, #popupReloadBtn, .updateAliasBtn {
+#popupCloseBtn, #popupReloadBtn, .updateAliasBtn, #historyCloseBtn, #historyReloadBtn {
     background: none;
     border: none;
 }
 
-#popupCloseBtn, #popupReloadBtn {
+#popupCloseBtn, #popupReloadBtn, #historyCloseBtn, #historyReloadBtn {
     font-size: 1.5em;
 }
 

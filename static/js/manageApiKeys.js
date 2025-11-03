@@ -156,3 +156,93 @@ function addEntries(table, ...entries) {
 function hidePopup() {
     document.getElementById("apiKeyPopup").style.display = "";
 }
+
+function makeHistoryTable() {
+    fetch(`/curator/manage_api_keys/history/${whichKeyForHistory}`).then(function(response) {
+        return response.json();
+    }).then(function(history) {
+        const tz = "UTC";
+        const columnNames = [`Date/Time (${tz})`, "Event"];
+        let container = document.getElementById("historyBody");
+        container.innerHTML = "";
+        let table = document.createElement("table");
+        let tbody = document.createElement("tbody");
+        table.appendChild(tbody);
+        //create the header row
+        let tr = document.createElement("tr");
+        for(let columnName of columnNames) {
+            let th = document.createElement("th");
+            th.innerHTML = columnName;
+            tr.appendChild(th);
+        }
+        tbody.appendChild(tr);
+        //populate the table with data
+        for(const event of history) {
+            tr = document.createElement("tr");
+            let td = document.createElement("td");
+            td.innerHTML = Intl.DateTimeFormat("en-US", {
+                dateStyle: "medium",
+                timeStyle: "long",
+                timeZone: tz
+            }).format(new Date(event.timestamp));
+            tr.appendChild(td);
+            td = document.createElement("td");
+            //if this shows something was downloaded
+            if(event["dataset_uid"]) {
+                td.innerHTML = `Downloaded ${event['filename']} from dataset <a target="_blank" href="/view/dataset/${event['dataset_uid']}">${event['dataset_uid']}</a>`;
+            }
+            else {
+                td.innerHTML = event["action"];
+            }
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        }
+        container.appendChild(table);
+        document.getElementById("apiKeyHistoryPopup").style.display = "block";
+    });
+}
+
+function reloadHistory() {
+    makeHistoryTable();
+}
+
+var whichKeyForHistory = null;
+
+function hideHistory() {
+    document.getElementById("apiKeyHistoryPopup").style.display = "";
+}
+
+function findRowContaining(element) {
+    var curEl = element;
+    while(curEl.tagName !== "TR") {
+        curEl = curEl.parentElement;
+        if(curEl.tagName === "BODY") return null;
+    }
+    return curEl;
+}
+
+function takeActionOnKey(button, key) {
+    let row = findRowContaining(button);
+    let table = row.parentElement.parentElement;
+    let headerRow = table.querySelector("tr");
+    let statusIndex = Array.from(headerRow.children).map((el, index) => "status" === el.toLowerCase() ? index : 0).reduce((acc, cur) => acc+cur, 0);
+    let aliasIndex = Array.from(headerRow.children).map((el, index) => "alias" === el.toLowerCase() ? index : 0).reduce((acc, cur) => acc+cur, 0);
+    let action = button.innerHTML;
+    if("View History" === action) {
+        whichKeyForHistory = key;
+        makeHistoryTable();
+    }
+    else {
+        fetch(`/curator/manage_api_keys/${key}/${action}`).then(function(response) {
+            return response.text();
+        }).then(function(txt) {
+            let whichCol = undefined;
+            if(["Suspend", "Reinstate", "Disable"].includes(action)) {
+                row.children[statusIndex].innerHTML = txt;
+            }
+            else {
+                row.children[aliasIndex].childNodes.find(node => node.nodeType === Node.TEXT_NODE).data = txt;
+            }
+        })
+    }
+}

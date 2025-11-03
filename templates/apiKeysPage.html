@@ -31,6 +31,14 @@
     <div id="popupBody">
     </div>
 </div>
+<div id="apiKeyHistoryPopup">
+    <div id="historyHeader">
+        <button id="historyReloadBtn" onclick="reloadHistory()">⟳</button>
+        <button id="historyCloseBtn" onclick="hideHistory()">×</button>
+    </div>
+    <div id="historyBody">
+    </div>
+</div>
 Fill in any of the fields below, then "Search" to find the person for whom you wish to generate an API key.
 {% if fields %}
 <form id="searchForm" name="searchForm">
@@ -57,9 +65,14 @@ Fill in any of the fields below, then "Search" to find the person for whom you w
         {% endif %}
     </div>
     {% endfor %}
-    <input type="submit" value="Search">
+    <input type="submit" value="Search By Person">
 </form>
 {% endif %}
+<form id="searchForm2" name="searchForm2">
+    <label for="encryptedKeyInput">Encrypted Key</label>
+    <input type="text" id="encryptedKeyInput" name="encrypted_key" size="70"{% if queryParams['encrypted_key'] %} value="{{queryParams['encrypted_key']}}"{% endif %}>
+    <input type="submit" value="Search By Encrypted Key">
+</form>
 {% if people and people|length > 0 %}
 <table id="searchResultsTable" style="width:100%">
     <tbody>
@@ -67,6 +80,27 @@ Fill in any of the fields below, then "Search" to find the person for whom you w
         {% for person in people %}
         {% set name=person['Name'] %}
         <tr><td>{{person["Name"]}}</td><td>{{person["Organization"]}}</td><td>{{person["email"]}}</td><td>{{person["OrcID"]}}</td><td><button onclick="showPopup('{{name}}')">Manage API Keys</button></td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% elif found_keys and found_keys|length > 0 %}
+<table id="foundKeysTable" style="width:100%">
+    <tbody>
+        <tr><th>Encrypted Key</th><th>Alias</th></th><th>Owner</th><th>Other Users</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+        {% for key in found_keys %}<tr>
+            <td>{{key['encrypted_key']|truncate(18, True)}}</td>
+            <td>{{key['alias']}}<button class="updateAliasBtn" onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">✎</button></td>
+            <td>{{key['owner']}}</td>
+            <td>{{key['other_users']|join('; ')}}</td>
+            <td>{{key['status']}}</td>
+            <td>{{key['created']}}</td>
+            <td>
+                {% if key['status'] != 'disabled' %}<button onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">{% if key['status']=="valid" %}Suspend{% else %}Reinstate{% endif %}</button>
+                <button onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">Disable</button>
+                {% endif %}<button onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">View History</button>
+
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

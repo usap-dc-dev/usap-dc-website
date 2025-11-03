@@ -5684,8 +5684,8 @@ def getApiKeys(name):
             result['created'] = str(result['created'])
         return json.dumps(results)
 
-@app.route('/curator/manage_api_keys/<name>/<created>/<action>')
-def takeActionOnApiKey(name, created, action):
+@app.route('/curator/manage_api_keys/<encrypted_key>/<action>')
+def takeActionOnEncryptedKey(encrypted_key, action, newAlias=None):
     if not cf.isCurator():
         abort(401)
     (conn, cur) = connect_to_db(curator=True)
@@ -5696,40 +5696,68 @@ def takeActionOnApiKey(name, created, action):
             "Reinstate": "valid",
             "Suspend": "suspended"
         }[action]
-        query = "SELECT encrypted_key FROM api_key WHERE owner=%s AND created=%s"
-        queryTxt = cur.mogrify(query, (name, created))
-        cur.execute(queryTxt)
-        results = cur.fetchall()
-        encryptedKey = results[0]['encrypted_key']
         query = "INSERT INTO api_key_action (encrypted_key, action) VALUES (%s, %s)"
-        queryTxt = cur.mogrify(query, (encryptedKey, newLabel.replace("valid", "reinstated").title()))
+        queryTxt = cur.mogrify(query, (encrypted_key, newLabel.replace("valid", "reinstated").title()))
         cur.execute(queryTxt)
         query = "UPDATE api_key SET status=%s WHERE encrypted_key=%s RETURNING status"
-        queryTxt = cur.mogrify(query, (newLabel, encryptedKey,))
+        queryTxt = cur.mogrify(query, (newLabel, encrypted_key,))
         cur.execute(queryTxt)
     elif action=="updateAlias":
+        if (not newAlias) and 'newAlias' in request.args:
+            newAlias = request.args['newAlias']
         column = "alias"
-        newAlias = request.args["newAlias"]
-        query = "SELECT encrypted_key, alias FROM api_key WHERE owner=%s AND created=%s"
-        queryTxt = cur.mogrify(query, (name, created))
+        query = "SELECT alias FROM api_key WHERE encrypted_key=%s"
+        queryTxt = cur.mogrify(query, (encrypted_key,))
         cur.execute(queryTxt)
         results = cur.fetchall()
         oldAlias = results[0]['alias']
-        encryptedKey = results[0]['encrypted_key']
+        descTxt = ("Removed alias %s" % oldAlias) if 0==len(newAlias) else (("Set alias to %s" % newAlias) if 0==len(oldAlias) else ("Changed alias from %s to %s" % (oldAlias, newAlias)))
         query = "INSERT INTO api_key_action (encrypted_key, action) VALUES (%s, %s)"
-        descTxt = "Set alias to %s" % (newAlias,)
-        if len(oldAlias) > 0:
-            descTxt = "Changed alias from %s to %s" % (oldAlias, newAlias)
-        elif len(newAlias) == 0:
-            descTxt = "Removed alias %s" % (oldAlias,)
-        queryTxt = cur.mogrify(query, (encryptedKey, descTxt))
+        queryTxt = cur.mogrify(query, (encrypted_key, descTxt))
         cur.execute(queryTxt)
-        query = "UPDATE api_key SET alias=%s WHERE owner=%s AND created=%s RETURNING alias"
-        queryTxt = cur.mogrify(query, (newAlias, name, created))
+        query = "UPDATE api_key SET alias=%s WHERE encrypted_key=%s RETURNING alias"
+        queryTxt = cur.mogrify(query, (newAlias, encrypted_key))
         cur.execute(queryTxt)
     conn.commit()
     return cur.fetchall()[0][column]
 
+        
+
+@app.route('/curator/manage_api_keys/<name>/<created>/<action>')
+def takeActionOnApiKey(name, created, action):
+    if not cf.isCurator():
+        abort(401)
+    (conn, cur) = connect_to_db(curator=True)
+    query = "SELECT encrypted_key FROM api_key WHERE owner=%s AND created=%s"
+    queryTxt = cur.mogrify(query, (name, created))
+    cur.execute(queryTxt)
+    results = cur.fetchall()
+    encryptedKey = results[0]['encrypted_key']
+    newAlias = request.args["newAlias"] if "newAlias" in request.args else None
+    return takeActionOnEncryptedKey(encryptedKey, action, newAlias)
+
+@app.route('/curator/manage_api_keys/history/<api_key>')
+def getApiKeyHistory(api_key):
+    query = "SELECT fields FROM api_key_full_history WHERE encrypted_key=%s"
+    fieldsToSelect = ""
+    if "whichActions" in request.args:
+        if request.args["whichActions"].upper() == "DOWNLOAD":
+            fieldsToSelect = "timestamp, dataset_uid, filename, file_size, file_size_uncompressed"
+            query += " AND dataset_uid IS NOT NULL"
+        elif request.args["whichActions"].upper() == "CURATOR":
+            fieldsToSelect = "timestamp, action"
+            query += " AND action IS NOT NULL"
+        else:
+            fieldsToSelect = "*"
+            query += " AND false"
+    else:
+        fieldsToSelect = "*"
+    query = query.replace("fields", fieldsToSelect)
+    (conn, cur) = connect_to_db()
+    queryTxt = cur.mogrify(query, (api_key,))
+    cur.execute(queryTxt)
+    results = list(map(lambda row: dict(row), list(cur.fetchall())))
+    return json.dumps(results, default=str)
 
 @app.route('/curator/manage_api_keys')
 def apiKeyPage():
@@ -5742,14 +5770,14 @@ def apiKeyPage():
         template_dict['need_login'] = True
     else:
         template_dict['need_login'] = False
-    query = "select column_name, data_type from information_schema.columns where table_name='person'"
     (conn, cur) = connect_to_db()
-    cur.execute(query)
-    results = cur.fetchall()
     template_dict['fields'] = {}
     template_dict['dropdowns'] = {}
     template_dict['queryParams'] = request.args
+    searchByPerson = False
     for field in ['first_name', 'middle_name', 'last_name', 'email', 'id_orcid', 'id', 'organization']:
+        if field in request.args:
+            searchByPerson = True
         template_dict['fields'][field] = 'text'
         if 'organization'==field:
             template_dict['dropdowns'][field] = []
@@ -5759,23 +5787,29 @@ def apiKeyPage():
             for result in listResults:
                 template_dict['dropdowns'][field].append(result[field])
     shouldSearch = False
-    personsQuery = "SELECT id as \"Name\", organization as \"Organization\", email, id_orcid as \"OrcID\", email as \"Email\" FROM person"
-    for (key, val) in request.args.items():
-        shouldSearch = shouldSearch or len(str(val).strip())>0
+    if searchByPerson:
+        personsQuery = "SELECT id as \"Name\", organization as \"Organization\", email, id_orcid as \"OrcID\", email as \"Email\" FROM person"
+        for (key, val) in request.args.items():
+            shouldSearch = shouldSearch or len(str(val).strip())>0
+            if shouldSearch:
+                personsQuery += " WHERE "
+                break
         if shouldSearch:
-            personsQuery += " WHERE "
-            break
-    if shouldSearch:
-        searchValues = []
-        searchTerms = filter((lambda entry: len(str(entry[1]))>0), request.args.items())
-        def addSearchTerm(entry):
-            searchValues.append(entry[1])
-            return entry[0] + "=%s"
-        personsQuery += " AND ".join(map(addSearchTerm, searchTerms))
-        personsQueryTxt = cur.mogrify(personsQuery, tuple(searchValues))
-        template_dict["query"] = str(personsQueryTxt)
-        cur.execute(personsQueryTxt)
-        template_dict['people'] = list(map(lambda row: dict(row), list(cur.fetchall())))
+            searchValues = []
+            searchTerms = filter((lambda entry: len(str(entry[1]))>0), request.args.items())
+            def addSearchTerm(entry):
+                searchValues.append(entry[1])
+                return entry[0] + "=%s"
+            personsQuery += " AND ".join(map(addSearchTerm, searchTerms))
+            personsQueryTxt = cur.mogrify(personsQuery, tuple(searchValues))
+            template_dict["query"] = str(personsQueryTxt)
+            cur.execute(personsQueryTxt)
+            template_dict['people'] = list(map(lambda row: dict(row), list(cur.fetchall())))
+    elif "encrypted_key" in request.args:
+        findOwnerQuery = "select * from api_key where encrypted_key=%s"
+        findOwnerQueryTxt = cur.mogrify(findOwnerQuery, (request.args["encrypted_key"],))
+        cur.execute(findOwnerQueryTxt)
+        template_dict['found_keys'] = list(map(lambda row: dict(row), list(cur.fetchall())))
     return render_template("apiKeysPage.html", **template_dict);
 
 @app.route('/curator/manage_api_keys/new/<name>')
