@@ -5736,6 +5736,18 @@ def takeActionOnApiKey(name, created, action):
     newAlias = request.args["newAlias"] if "newAlias" in request.args else None
     return takeActionOnEncryptedKey(encryptedKey, action, newAlias)
 
+@app.route('/curator/get_api_key/<name>/<created>')
+def getApiKey(name, created):
+    if not cf.isCurator():
+        abort(401)
+    (conn, cur) = connect_to_db(curator=True)
+    query = "SELECT encrypted_key FROM api_key WHERE owner=%s AND created=%s"
+    queryTxt = cur.mogrify(query, (name, created))
+    cur.execute(queryTxt)
+    results = cur.fetchall()
+    return results[0]["encrypted_key"]
+    
+
 @app.route('/curator/manage_api_keys/history/<api_key>')
 def getApiKeyHistory(api_key):
     query = "SELECT fields FROM api_key_full_history WHERE encrypted_key=%s"

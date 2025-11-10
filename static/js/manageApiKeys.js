@@ -91,6 +91,19 @@ function showPopup(name) {
                             })
                             actionsCell.appendChild(btn);
                         }
+                        let btn = document.createElement("button");
+                        btn.innerHTML = "View History";
+                        showKeys = true;
+                        btn.addEventListener("click", function() {
+                            let url = `/curator/get_api_key/${name}/${entry.created}`;
+                            fetch(url).then(function(rslt) {
+                                console.log(url);
+                                return rslt.text();
+                            }).then(function(text) {
+                                firstLoadHistory(text);
+                            });
+                        });
+                        actionsCell.appendChild(btn);
                     }
                     makeActionBtns();
                     tr.appendChild(actionsCell);
@@ -155,6 +168,22 @@ function addEntries(table, ...entries) {
 
 function hidePopup() {
     document.getElementById("apiKeyPopup").style.display = "";
+    showKeys = false;
+}
+
+function remakeButtons(cell, status) {
+    if("valid" === status) {
+        cell.querySelector("button").innerHTML = "Suspend";
+    }
+    else if("suspended" === status) {
+        cell.querySelector("button").innerHTML = "Reinstate";
+    }
+    else {
+        let toRemove = Array.from(cell.querySelectorAll("button")).slice(0, -1);
+        for(let btn of toRemove) {
+            cell.removeChild(btn);
+        }
+    }
 }
 
 function makeHistoryTable() {
@@ -201,15 +230,26 @@ function makeHistoryTable() {
         document.getElementById("apiKeyHistoryPopup").style.display = "block";
     });
 }
+function firstLoadHistory(encryptedKey) {
+    whichKeyForHistory = encryptedKey;
+    if(showKeys) {
+        document.getElementById("apiKeyPopup").style.display = "";
+    }
+    makeHistoryTable();
+}
 
 function reloadHistory() {
     makeHistoryTable();
 }
 
 var whichKeyForHistory = null;
+var showKeys = false;
 
 function hideHistory() {
     document.getElementById("apiKeyHistoryPopup").style.display = "";
+    if(showKeys) {
+        document.getElementById("apiKeyPopup").style.display = "block";
+    }
 }
 
 function findRowContaining(element) {
@@ -225,8 +265,8 @@ function takeActionOnKey(button, key) {
     let row = findRowContaining(button);
     let table = row.parentElement.parentElement;
     let headerRow = table.querySelector("tr");
-    let statusIndex = Array.from(headerRow.children).map((el, index) => "status" === el.toLowerCase() ? index : 0).reduce((acc, cur) => acc+cur, 0);
-    let aliasIndex = Array.from(headerRow.children).map((el, index) => "alias" === el.toLowerCase() ? index : 0).reduce((acc, cur) => acc+cur, 0);
+    let statusIndex = Array.from(headerRow.children).map((el, index) => "status" === el.innerHTML.toLowerCase() ? index : 0).reduce((acc, cur) => acc+cur, 0);
+    let aliasIndex = Array.from(headerRow.children).map((el, index) => "alias" === el.innerHTML.toLowerCase() ? index : 0).reduce((acc, cur) => acc+cur, 0);
     let action = button.innerHTML;
     if("View History" === action) {
         whichKeyForHistory = key;
@@ -239,6 +279,7 @@ function takeActionOnKey(button, key) {
             let whichCol = undefined;
             if(["Suspend", "Reinstate", "Disable"].includes(action)) {
                 row.children[statusIndex].innerHTML = txt;
+                remakeButtons(button.parentElement, row.children[statusIndex].innerHTML);
             }
             else {
                 row.children[aliasIndex].childNodes.find(node => node.nodeType === Node.TEXT_NODE).data = txt;
