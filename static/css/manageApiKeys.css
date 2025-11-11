@@ -10,6 +10,12 @@
     margin-right: auto;
     border-radius: 5px;
 }
+
+#popupContainer {
+    display: flex;
+    justify-content: center;
+}
+
 #popupHeader, #historyHeader {
     display: block;
     width: 100%;

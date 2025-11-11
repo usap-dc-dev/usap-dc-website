@@ -23,20 +23,22 @@
 
       
 {% else %}
-<div id="apiKeyPopup">
-    <div id="popupHeader">
-        <button id="popupReloadBtn" onclick="reloadPopup()">⟳</button>
-        <button id="popupCloseBtn" onclick="hidePopup()">×</button>
+<div id="popupContainer">
+    <div id="apiKeyPopup">
+        <div id="popupHeader">
+            <button id="popupReloadBtn" onclick="reloadPopup()">⟳</button>
+            <button id="popupCloseBtn" onclick="hidePopup()">×</button>
+        </div>
+        <div id="popupBody">
+        </div>
     </div>
-    <div id="popupBody">
-    </div>
-</div>
-<div id="apiKeyHistoryPopup">
-    <div id="historyHeader">
-        <button id="historyReloadBtn" onclick="reloadHistory()">⟳</button>
-        <button id="historyCloseBtn" onclick="hideHistory()">×</button>
-    </div>
-    <div id="historyBody">
+    <div id="apiKeyHistoryPopup">
+        <div id="historyHeader">
+            <button id="historyReloadBtn" onclick="reloadHistory()">⟳</button>
+            <button id="historyCloseBtn" onclick="hideHistory()">×</button>
+        </div>
+        <div id="historyBody">
+        </div>
     </div>
 </div>
 Fill in any of the fields below, then "Search" to find the person for whom you wish to generate an API key.
