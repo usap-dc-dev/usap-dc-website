@@ -2895,6 +2895,14 @@ def makeApiKey(username):
     query = cur.mogrify(queryTemplate, (encoded_key, username))
     cur.execute(query)
     conn.commit()
+    queryTemplate2 = "INSERT INTO api_key_action (encrypted_key, timestamp, action) VALUES (%s, %s, %s)"
+    queryTemplate3 = "SELECT created FROM api_key WHERE encrypted_key=%s"
+    query3 = cur.mogrify(queryTemplate3, (encoded_key,))
+    cur.execute(query3)
+    createTime = cur.fetchall()[0]['created']
+    query2 = cur.mogrify(queryTemplate2, (encoded_key, createTime, "Created"))
+    cur.execute(query2)
+    conn.commit()
     return {
         "user": username,
         "key": api_key
