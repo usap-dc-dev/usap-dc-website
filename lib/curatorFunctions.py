@@ -2906,8 +2906,7 @@ def isValidApiKey(key):
     (conn, cur) = usap.connect_to_db(curator=True)
     api_anchor = bytes(usap.app.config["API_KEY"], "UTF-8")
     encoded = hashlib.sha256(bytesKey).hexdigest()
-    query = "SELECT * FROM api_key WHERE encrypted_key=%s"
-    print(encoded)
+    query = "SELECT * FROM api_key WHERE encrypted_key=%s and status='valid'"
     queryTxt = cur.mogrify(query, (encoded,))
     cur.execute(queryTxt)
     return len(list(cur.fetchall()))>0
