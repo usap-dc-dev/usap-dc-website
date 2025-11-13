@@ -11,6 +11,7 @@ from io import BytesIO
 import psycopg2
 import psycopg2.extras
 import lib.curatorFunctions as cf
+from functools import reduce
 
 
 config = json.loads(open('config.json', 'r').read())
@@ -68,11 +69,26 @@ def getFilesWithName(rootDir, file_name):
     return fileList
 
 def getDirsWithMatchingFile(rootDir, fileName):
+    fullPath = fileName.split(os.sep)
+    parentDir = fullPath[:-1]
+    print("Parent directory:", parentDir)
+    realFileName = fullPath[-1]
+    print("File name:", realFileName)
     dirList = []
     for dir, subdirs, filenames in os.walk(rootDir):
-        for fn in filenames:
-            if fn == fileName:
-                dirList.append(dir)
+        if len(parentDir) == 0 or dir.split(os.sep)[-len(parentDir):] == parentDir:
+            for fn in filenames:
+                if fn == realFileName:
+                    dirList.append(dir)
+    print("Directory list:", dirList)
+    return dirList
+
+def findSubdir(rootDir, subDirName):
+    fullPath = subDirName.split(os.sep)
+    dirList = []
+    for dir, subdirs, filenames in os.walk(rootDir):
+        if dir.split(os.sep)[-len(fullPath)] == fullPath:
+            dirList.append(dir)
     return dirList
 
 def findDeepestCommonSubdir(paths):
@@ -101,13 +117,17 @@ def makeZip(dirs, filename):
             zip.writestr(path_within_zip, contents)
     return my_zip.getvalue(), {"Content-Type: application/zip"}
 
-@ns.route('/<dataset_uid>/<file_name>')
+base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
+examples = """Base URL: {0}\nExample:\n
+        {0}600030/2009-03-10/Carson%20map%20explanation%20May%2026%20%2704.doc""".format(base_url)
+
+@ns.route('/<dataset_uid>/<path:file_name>', doc={'description':"Pass in your API key with the X-Auth-Token header. To request your free API key, email us at info@usap-dc.org.\n"+examples})
 class DataFileItem(Resource):
     @ns.response(200, 'Success')
     @ns.response(401, 'Missing or invalid API key')
     @ns.response(404, 'File not found')
     def get(self, dataset_uid, file_name):
-        """Downloads the designated file from the designated data set, if it exists and has no proprietary hold.\nPass in your API key with the X-Auth-Token header. To request your free API key, email us at info@usap-dc.org."""
+        """Downloads the designated file from the designated data set, if it exists and has no proprietary hold."""
         # test API key
         apiKey = request.headers["X-Auth-Token"]
         if cf.isValidApiKey(apiKey):
@@ -129,7 +149,18 @@ class DataFileItem(Resource):
             print("Getting the file", file_name, "from", directory)
             parentDirs = getDirsWithMatchingFile(directory, file_name)
             if len(parentDirs) == 0:
-                return usap.not_found()
+                watchFile = os.path.join("watch", "dcxml", dataset_uid)
+                difId = None
+                for line in open(watchFile):
+                    if "dif_id" in line:
+                        startOfDifId = line.find(">", line.find("dif_id"))+1
+                        endOfDifId = line.find("<", startOfDifId)
+                        difId = line[startOfDifId:endOfDifId]
+                if difId:
+                    possibleLocations = findSubdir("dataset", difId)
+                    parentDirs = reduce(lambda acc, cur: [*acc, *cur], list(map(lambda loc: getDirsWithMatchingFile(loc, file_name), possibleLocations)), [])
+                if len(parentDirs) == 0:
+                    return usap.not_found()
             cf.recordApiDownload(apiKey, dataset_uid, file_name)
             if len(parentDirs) == 1:
                 return send_from_directory(parentDirs[0], file_name, as_attachment=True)
