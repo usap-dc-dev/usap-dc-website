@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+{% set cur="manageApiKeys" %}
+{% block body %}
+{% if need_login %}
+    
+<div class="container">
+      
+  <h4>Curator Login </h4>
+
+  <div id="container">
+    <h5>
+      Sign in using an authorized curator account
+    </h5>
+    <div id="buttons">
+      <a href="{{ url_for('login_google') }}" class="loginBtn loginBtn--google w3-btn w3-round w3-text-shadow">
+        Google
+      </a>
+      <a href="{{ url_for('login_orcid') }}" class="loginBtn loginBtn--orcid w3-btn w3-round w3-text-shadow">
+        <span style="color:gray; font-weight:bolder">ORC</span>iD
+      </a>
+    </div>
+  </div>
+
+      
+{% else %}
+<div id="popupContainer">
+    <div id="apiKeyPopup">
+        <div id="popupHeader">
+            <button id="popupReloadBtn" onclick="reloadPopup()">⟳</button>
+            <button id="popupCloseBtn" onclick="hidePopup()">×</button>
+        </div>
+        <div id="popupBody">
+        </div>
+    </div>
+    <div id="apiKeyHistoryPopup">
+        <div id="historyHeader">
+            <button id="historyReloadBtn" onclick="reloadHistory()">⟳</button>
+            <button id="historyCloseBtn" onclick="hideHistory()">×</button>
+        </div>
+        <div id="historyBody">
+        </div>
+    </div>
+</div>
+Fill in any of the fields below, then "Search" to find the person for whom you wish to generate an API key.
+{% if fields %}
+<form id="searchForm" name="searchForm">
+    {% for (fieldname, datatype) in fields.items() %}
+    {% set displayname=fieldname.replace("_", " ").title() %}
+    {% if fieldname=="id" %}
+    {% set displayname="ID" %}
+    {% elif fieldname=="id_orcid" %}
+    {% set displayname="OrcID" %}
+    {% elif fieldname=="id_geolink" %}
+    {% set displayname="GeoLink ID" %}
+    {% endif %}
+    <div style="display: inline-block">
+        <label for="{{fieldname}}_select">{{displayname}}</label>
+        {% if fieldname in dropdowns.keys() %}
+        <select id="{{fieldname}}_select" name="{{fieldname}}">
+            <option {% if not queryParams or queryParams[fieldname]|trim == '' %}selected{% endif %} value="">Any</option>
+            {% for option in dropdowns[fieldname] %}
+            <option value="{{option}}"{% if queryParams and queryParams[fieldname]==option %} selected{% endif %}>{{option}}</option>
+            {% endfor %}
+        </select>
+        {% else %}{% set inputType="text" %}{% if fieldname in ["phone", "fax"] %}{% set inputType="tel" %}{% elif datatype in ['integer', 'bigint', 'double precision', 'numeric', 'real', 'smallint', 'money'] %}{% set inputType="number" %}{% endif %}
+        <input type="{{inputType}}" id="{{fieldname}}_select" name="{{fieldname}}"{% if queryParams and queryParams[fieldname] %} value="{{queryParams[fieldname]}}"{% endif %}{% if fieldname=="id" %}placeholder="Lastname, Firstname"{% endif %}>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <input type="submit" value="Search By Person">
+</form>
+{% endif %}
+<form id="searchForm2" name="searchForm2">
+    <label for="encryptedKeyInput">Encrypted Key</label>
+    <input type="text" id="encryptedKeyInput" name="encrypted_key" size="70"{% if queryParams['encrypted_key'] %} value="{{queryParams['encrypted_key']}}"{% endif %}>
+    <input type="submit" value="Search By Encrypted Key">
+</form>
+{% if people and people|length > 0 %}
+<table id="searchResultsTable" style="width:100%">
+    <tbody>
+        <tr><th>Name</th><th>Organization</th><th>E-Mail Address</th><th>OrcID</th><th></th></tr>
+        {% for person in people %}
+        {% set name=person['Name'] %}
+        <tr><td>{{person["Name"]}}</td><td>{{person["Organization"]}}</td><td>{{person["email"]}}</td><td>{{person["OrcID"]}}</td><td><button onclick="showPopup('{{name}}')">Manage API Keys</button></td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% elif found_keys and found_keys|length > 0 %}
+<table id="foundKeysTable" style="width:100%">
+    <tbody>
+        <tr><th>Encrypted Key</th><th>Alias</th></th><th>Owner</th><th>Other Users</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+        {% for key in found_keys %}<tr>
+            <td>{{key['encrypted_key']|truncate(18, True)}}</td>
+            <td>{{key['alias']}}<button class="updateAliasBtn" onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">✎</button></td>
+            <td>{{key['owner']}}</td>
+            <td>{{key['other_users']|join('; ')}}</td>
+            <td>{{key['status']}}</td>
+            <td>{{key['created']}}</td>
+            <td>
+                {% if key['status'] != 'disabled' %}<button onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">{% if key['status']=="valid" %}Suspend{% else %}Reinstate{% endif %}</button>
+                <button onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">Disable</button>
+                {% endif %}<button onclick="takeActionOnKey(this, `{{key['encrypted_key']}}`)">View History</button>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock body %}

@@ -275,6 +275,17 @@
     });
   </script>
 
+{% if cur=="manageApiKeys" and not need_login %}
+<script type="text/javascript" src="{{url_for('static', filename='js/manageApiKeys.js')}}"></script>
+<link rel="stylesheet" href="/static/css/manageApiKeys.css"/>
+<script type="text/javascript">
+    {% if people and people|length>0 %}
+    let None = null;
+    const people = {{people|safe}};
+    {% endif %}
+</script>
+{% endif %}
+
 </head>
 
 <body>
