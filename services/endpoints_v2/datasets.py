@@ -57,6 +57,7 @@ dataset_model = ns.model('Dataset', OrderedDict([
     ('version', fields.String),
     ('date_created', fields.DateTime(dt_format='rfc822')),
     ('date_modified', fields.DateTime(dt_format='rfc822')),
+    ('file_names', fields.List(fields.String)),
 ]))
 
 
@@ -167,6 +168,7 @@ class DatasetsCollection(Resource):
             res['landing_page'] = "%sview/dataset/%s" % (config['USAP_DOMAIN'], res['id'])
 
         for res in results:
+            res['file_names'] = list(map(lambda file: file['file_name'], list(usap.get_files(dataset_id=res['id']))))
             try:
                 if res.get('projects'):
                     res['projects'] = json.loads(res['projects'])
@@ -218,4 +220,5 @@ class DatasetItem(Resource):
             print(str(e))
             return [], 404
 
+        res['file_names'] = list(map(lambda file: file['file_name'], list(usap.get_files(dataset_id=dataset_uid))))
         return res

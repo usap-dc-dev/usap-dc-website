@@ -119,7 +119,7 @@ def makeZip(dirs, filename):
 
 base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
 examples = """Base URL: {0}\nExample:\n
-        {0}600030/2009-03-10/Carson%20map%20explanation%20May%2026%20%2704.doc""".format(base_url)
+        wget --header="X-Auth-Token:YourApiKeyHere" {0}600030/2009-03-10/Carson%20map%20explanation%20May%2026%20%2704.doc""".format(base_url)
 
 @ns.route('/<dataset_uid>/<path:file_name>', doc={'description':"Pass in your API key with the X-Auth-Token header. To request your free API key, email us at info@usap-dc.org.\n"+examples})
 class DataFileItem(Resource):
