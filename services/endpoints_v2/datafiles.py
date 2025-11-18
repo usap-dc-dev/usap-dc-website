@@ -71,6 +71,7 @@ def getFilesWithName(rootDir, file_name):
 def getDirsWithMatchingFile(rootDir, fileName):
     fullPath = fileName.split(os.sep)
     parentDir = fullPath[:-1]
+    parentPath = os.sep.join(parentDir)
     print("Parent directory:", parentDir)
     realFileName = fullPath[-1]
     print("File name:", realFileName)
@@ -81,7 +82,22 @@ def getDirsWithMatchingFile(rootDir, fileName):
                 if fn == realFileName:
                     dirList.append(dir)
     print("Directory list:", dirList)
-    return dirList
+    return dirList if 0 == len(parentPath) else list(map(lambda dir: dir[:-len(parentPath)], dirList))
+
+def getPathToFile(dataset_uid, filename):
+    (conn, cur) = usap.connect_to_db()
+    queryTemplate = "SELECT dir_name, file_name FROM dataset_file WHERE dataset_id=%s AND file_name=%s"
+    query = cur.mogrify(queryTemplate, (dataset_uid, filename))
+    cur.execute(query)
+    results = list(cur.fetchall())
+    if 0 == len(results):
+        queryTemplate = "SELECT dir_name, file_name FROM dataset_file WHERE dir_name=%s OR dir_name like %%/%s"
+        query = cur.mogrify(queryTemplate, (filename, filename))
+        cur.execute(query)
+        results = list(cur.fetchall())
+        return list(map(lambda rslt: rslt[:-len(filename)], results))
+    return list(map(lambda rslt: (rslt['dir_name']+rslt['file_name'])[:-len(filename)], results))
+
 
 def findSubdir(rootDir, subDirName):
     fullPath = subDirName.split(os.sep)
@@ -92,7 +108,7 @@ def findSubdir(rootDir, subDirName):
     return dirList
 
 def findDeepestCommonSubdir(paths):
-    if not paths:
+    if not paths or len(paths)==0:
         return ""
     if len(paths) == 1:
         return paths[0]
@@ -115,7 +131,19 @@ def makeZip(dirs, filename):
             contents = file.read()
             path_within_zip = dir[pathPrefix.length+1:] + filename
             zip.writestr(path_within_zip, contents)
-    return my_zip.getvalue(), {"Content-Type: application/zip"}
+    return my_zip.getvalue(), {"Content-Type": "application/zip"}
+
+def zipDir(dir):
+    my_zip = BytesIO()
+    with ZipFile(my_zip, mode="w", compression=ZIP_DEFLATED) as zip:
+        for dir, subdirs, files in os.walk(dir):
+            pathPrefix = dir
+            for filename in files:
+                file = open(os.path.join(dir, filename))
+                contents = file.read()
+                pathWithinZip = os.path.join(dir, filename)
+                zip.writestr(pathWithinZip, contents)
+    return my_zip.getvalue(), {"Content-Type": "application/zip"}
 
 base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
 examples = """Base URL: {0}\nExample:\n
@@ -149,6 +177,8 @@ class DataFileItem(Resource):
             print("Getting the file", file_name, "from", directory)
             parentDirs = getDirsWithMatchingFile(directory, file_name)
             if len(parentDirs) == 0:
+                parentDirs = list(map(lambda path: "dataset"+path, getPathToFile(dataset_uid, file_name)))
+            if len(parentDirs) == 0:
                 watchFile = os.path.join("watch", "dcxml", dataset_uid)
                 difId = None
                 for line in open(watchFile):
@@ -159,10 +189,12 @@ class DataFileItem(Resource):
                 if difId:
                     possibleLocations = findSubdir("dataset", difId)
                     parentDirs = reduce(lambda acc, cur: [*acc, *cur], list(map(lambda loc: getDirsWithMatchingFile(loc, file_name), possibleLocations)), [])
-                if len(parentDirs) == 0:
+            if len(parentDirs) == 0:
                     return usap.not_found()
             cf.recordApiDownload(apiKey, dataset_uid, file_name)
             if len(parentDirs) == 1:
+                if os.path.isdir(parentDirs[0] + os.sep + file_name):
+                    return zipDir(parentDirs[0] + os.sep + file_name)
                 return send_from_directory(parentDirs[0], file_name, as_attachment=True)
             return makeZip(parentDirs, file_name)
         return Response("Missing or invalid API key", 401, {'WWW-Authenticate':'Basic realm="USAP-DC Download API"'})
