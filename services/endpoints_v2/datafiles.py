@@ -91,8 +91,8 @@ def getPathToFile(dataset_uid, filename):
     cur.execute(query)
     results = list(cur.fetchall())
     if 0 == len(results):
-        queryTemplate = "SELECT dir_name, file_name FROM dataset_file WHERE dir_name=%s OR dir_name like %%/%s"
-        query = cur.mogrify(queryTemplate, (filename, filename))
+        queryTemplate = "SELECT dir_name, file_name FROM dataset_file WHERE dir_name=%s OR dir_name like %s"
+        query = cur.mogrify(queryTemplate, (filename, "%s/"+filename))
         cur.execute(query)
         results = list(cur.fetchall())
         return list(map(lambda rslt: rslt[:-len(filename)], results))
@@ -180,6 +180,8 @@ class DataFileItem(Resource):
                 parentDirs = list(map(lambda path: "dataset"+path, getPathToFile(dataset_uid, file_name)))
             if len(parentDirs) == 0:
                 watchFile = os.path.join("watch", "dcxml", dataset_uid)
+                if not os.path.exists(watchFile):
+                    return Response("File not found", 404, {})
                 difId = None
                 for line in open(watchFile):
                     if "dif_id" in line:
@@ -190,7 +192,7 @@ class DataFileItem(Resource):
                     possibleLocations = findSubdir("dataset", difId)
                     parentDirs = reduce(lambda acc, cur: [*acc, *cur], list(map(lambda loc: getDirsWithMatchingFile(loc, file_name), possibleLocations)), [])
             if len(parentDirs) == 0:
-                    return usap.not_found()
+                    return Response("File not found", 404, {})
             cf.recordApiDownload(apiKey, dataset_uid, file_name)
             if len(parentDirs) == 1:
                 if os.path.isdir(parentDirs[0] + os.sep + file_name):
