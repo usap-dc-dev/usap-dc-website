@@ -194,6 +194,9 @@ class DataFileItem(Resource):
             if len(parentDirs) == 0:
                     return Response("File not found", 404, {})
             cf.recordApiDownload(apiKey, dataset_uid, file_name)
+            hasFile = reduce(lambda acc,cur: acc or os.path.exists(cur+os.sep+file_name), parentDirs, False)
+            if not hasFile:
+                return Response("File not found", 404, {})
             if len(parentDirs) == 1:
                 if os.path.isdir(parentDirs[0] + os.sep + file_name):
                     return zipDir(parentDirs[0] + os.sep + file_name)
