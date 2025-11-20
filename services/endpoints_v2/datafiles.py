@@ -183,7 +183,7 @@ class DataFileItem(Resource):
                 if not os.path.exists(watchFile):
                     return Response("File not found", 404, {})
                 difId = None
-                for line in open(watchFile):
+                for line in open(watchFile, encoding="UTF-8"):
                     if "dif_id" in line:
                         startOfDifId = line.find(">", line.find("dif_id"))+1
                         endOfDifId = line.find("<", startOfDifId)
