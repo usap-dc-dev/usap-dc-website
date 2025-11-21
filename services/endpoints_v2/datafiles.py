@@ -159,8 +159,11 @@ class DataFileItem(Resource):
         # test API key
         apiKey = request.headers["X-Auth-Token"]
         if cf.isValidApiKey(apiKey):
+            datasets = usap.get_datasets([dataset_uid])
+            if 0 == len(datasets):
+                return Response("Dataset " + str(dataset_uid) + " not found", 404, {})
             # test for proprietary hold
-            ds = usap.get_datasets([dataset_uid])[0]
+            ds = datasets[0]
             holdTime = ""
             # check for proprietary hold
             if len(ds['release_date']) == 4:
