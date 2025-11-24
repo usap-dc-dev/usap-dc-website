@@ -1505,6 +1505,15 @@ def updateNextProjectRef():
     with open(app.config['PROJECT_REF_FILE'], 'w') as refFile:
         refFile.write(str(newRef))
 
+# Read the next collection reference number from the file
+def getNextCollectionRef():
+    ref = open(app.config['COLLECTION_REF'], 'r').readline().strip()
+    return 'c%0*d' % (7, int(ref))
+
+def updateNextCollectionRef():
+    newRef = int(getNextCollectionRef().replace('c', '')) + 1
+    with open(app.config['COLLECTION_REF'], 'w') as refFile:
+        refFile.write(str(newRef))
 
 @app.route('/edit/project/<project_id>', methods=['GET', 'POST'])
 @app.route('/submit/project', methods=['GET', 'POST'])
@@ -4860,6 +4869,13 @@ def human_size(bytes, units=[' bytes','KB','MB','GB','TB', 'PB', 'EB']):
     """ Returns a human readable string representation of bytes """
     return str(bytes) + units[0] if bytes < 1024 else human_size(bytes>>10, units[1:])
 
+@app.route('/view/collection/<collection_id>')
+def collection_landing_page(collection_id):
+    collectionInfo = get_collection(collection_id)
+    if collectionInfo:
+        template_dict = {**collectionInfo}
+        # TODO get the project and dataset info into template_dict
+        return render_template("collection.html", **template_dict)
 
 @app.route('/view/project/<project_id>')
 def project_landing_page(project_id):
@@ -4942,6 +4958,18 @@ def validate_dmp_link(dmp_link):
         return True
     return False
     
+
+def get_collection(collectionId):
+    if not collectionId:
+        return None
+    (conn, cur) = connect_to_db()
+    query_template = "SELECT * FROM collection WHERE collection_id=%s"
+    query = cur.mogrify(query_template, (collectionId,))
+    cur.execute(query)
+    rslts = cur.fetchall()
+    if len(rslts) == 0:
+        return None
+    return rslts[0]
 
 def get_project(project_id):
     if project_id is None:
