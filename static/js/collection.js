@@ -1,4 +1,4 @@
-function createNewCollection(collectionId) {
+function createNewCollection(parentCollectionIds) {
 
 }
 

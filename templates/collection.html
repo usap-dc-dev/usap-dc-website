@@ -1,23 +1,35 @@
 {% extends "layout.html" %}
 {% set cur="collection" %}
 {% block body %}
-<h1>Collection {{collection_id}}{% if collection_name %}: {{collection_name}}{% endif %}</h1>{% if description %}
+<h1>Collection {{collection_id}}{% if err %}<br>ERROR: {{err}}</h1>{% else %}{% if collection_name %}: {{collection_name}}{% endif %}</h1>{% if description %}
 <p>{{description}}</p>{% endif %}
 <h2>Owner: {{owner}}</h2>{% if 0 < collaborators|length %}
-<h2>Collaborators:</h2>{% for clbr in collaborators %}
-<h2>{{clbr}}</h2>{% endfor %}{% endif %}
+<h2>Collaborators: {{collaborators|join(', ')}}</h2>{% endif %}
+{% if 0 < parents_html|length %}
+<h3>Inherits from: </h3>
+{% for parent in parents_html %}<p>{{parent}}</p>{% endfor %}
+{% endif %}
+
 <button onclick="createNewCollection('{{collection_id}}')">Create New Collection From This One</button>
 <h2>Projects</h2>
 <table id="projectTable">
     <tbody>
-        <tr><th>Title</th><th>Owner(s)</th><th>Collaborators</th></tr>
-    {% for prj in projects %}
-    {% endfor %}
+        <tr><th>Title</th><th>Description</th></tr>
+        {% for prj in projects %}
+        <tr><td><a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a></td><td>{{truncate(prj['description'])}}</td></tr>
+        {% endfor %}
     </tbody>
 </table>
 <button onclick="addProject('{{collection_id}}')">Add Project</button>
 <h2>Datasets</h2>
-{% for ds in datasets %}
-{% endfor %}
+<table id="dsTable">
+    <tbody>
+        <tr><th>Title</th><th>Abstract</th></tr>
+        {% for ds in datasets %}
+        <tr><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a></td><td>{{truncate(ds['abstract'])}}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 <button onclick="addDataset('{{collection_id}}')">Add Dataset</button>
+{% endif %}
 {% endblock body %}

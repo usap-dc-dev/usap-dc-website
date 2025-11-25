@@ -1507,8 +1507,18 @@ def updateNextProjectRef():
 
 # Read the next collection reference number from the file
 def getNextCollectionRef():
-    ref = open(app.config['COLLECTION_REF'], 'r').readline().strip()
-    return 'c%0*d' % (7, int(ref))
+    try:
+        ref = open(app.config['COLLECTION_REF'], 'r').readline().strip()
+        return 'c%0*d' % (7, int(ref))
+    except FileNotFoundError:
+        (conn, cur) = connect_to_db()
+        query = "SELECT collection_id FROM collection ORDER BY collection_id desc LIMIT 1"
+        cur.execute(cur.mogrify(query))
+        results = cur.fetchall()
+        prev = 0 if len(results)==0 else int(results[0]['collection_id'][1:])
+        with open(app.config['COLLECTION_REF'], 'w') as refFile:
+            refFile.write(str(prev+1))
+        return 'c%0*d' % (7, prev+1)
 
 def updateNextCollectionRef():
     newRef = int(getNextCollectionRef().replace('c', '')) + 1
@@ -4873,9 +4883,85 @@ def human_size(bytes, units=[' bytes','KB','MB','GB','TB', 'PB', 'EB']):
 def collection_landing_page(collection_id):
     collectionInfo = get_collection(collection_id)
     if collectionInfo:
+        (conn, cur) = connect_to_db()
         template_dict = {**collectionInfo}
-        # TODO get the project and dataset info into template_dict
-        return render_template("collection.html", **template_dict)
+        template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['inherit_from'])
+        # get all the projects in this collection
+        template_dict['projects'] = None
+        if len(collectionInfo['project_ids']) > 0:
+            template_dict['projects'] = []
+            queryTemplate = "SELECT proj_uid, title, description FROM project WHERE proj_uid=%s"
+            for prj_id in collectionInfo['project_ids']:
+                query = cur.mogrify(queryTemplate, (prj_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    template_dict['projects'].append(dict(result))
+        # get all the datasets in this collection
+        template_dict['datasets'] = None
+        if len(collectionInfo['dataset_ids']) > 0:
+            template_dict['datasets'] = []
+            queryTemplate = "SELECT id, title, abstract FROM dataset WHERE id=%s"
+            for ds_id in collectionInfo['dataset_ids']:
+                query = cur.mogrify(queryTemplate, (ds_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    template_dict['datasets'].append(dict(result))
+        return render_template("collection.html", **template_dict, truncate=truncateStr)
+    return render_template("collection.html", collection_id=collection_id, err="No such collection")
+
+def getParentCollectionsHTML(parentIds):
+    htmlList = []
+    (conn, cur) = connect_to_db()
+    queryTemplate = "SELECT collection_id, collection_name FROM collection WHERE collection_id=%s"
+    for pid in parentIds:
+        query = cur.mogrify(queryTemplate, (pid,))
+        cur.execute(query)
+        results = cur.fetchall()
+        if 0 < len(results):
+            url = "/view/collection/" + results[0]['collection_id']
+            name = results[0]['collection_name'] if results[0]['collection_name'] else "Untitled"
+            htmlList.append("<a href=\"" + url + "\">(" + name + ")</a>")
+    return htmlList
+
+def findInheritanceCycles(collectionId, parentIds):
+    if not collectionId:
+        raise Exception("No collection provided")
+    if not parentIds or len(parentIds)==0:
+        return None
+    (conn, cur) = connect_to_db()
+    findParentsQueryTemplate = "SELECT inherit_from FROM collection WHERE collection_id=%s"
+    def cycleFinderHelper(descendants, curParent):
+        newDescendants = [*descendants, curParent]
+        if curParent in descendants:
+            return [newDescendants]
+        findParentsQuery = cur.mogrify(findParentsQueryTemplate, (curParent,))
+        cur.execute(findParentsQuery)
+        entries = list(cur.fetchall())
+        if 0 == len(entries):
+            raise Exception("Could not find collection " + curParent)
+        newParents = list(entries[0]['inherit_from'])
+        cycles = []
+        for parent in newParents:
+            someCycles = cycleFinderHelper(newDescendants, parent)
+            for cycle in someCycles:
+                cycles.append(cycle)
+        return cycles
+    allCycles = []
+    for id in parentIds:
+        thisParentCycles = cycleFinderHelper([collectionId], id)
+        for cycle in thisParentCycles:
+            if cycle and len(cycle)>1:
+                allCycles.append(cycle)
+    return allCycles
+    
+def truncateStr(longStr, maxLen=50):
+    if len(longStr) <= maxLen:
+        return longStr
+    if maxLen < 1:
+        return ""
+    return longStr[0:maxLen-1] + "…"
 
 @app.route('/view/project/<project_id>')
 def project_landing_page(project_id):
