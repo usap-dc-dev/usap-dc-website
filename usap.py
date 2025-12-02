@@ -4879,6 +4879,80 @@ def human_size(bytes, units=[' bytes','KB','MB','GB','TB', 'PB', 'EB']):
     """ Returns a human readable string representation of bytes """
     return str(bytes) + units[0] if bytes < 1024 else human_size(bytes>>10, units[1:])
 
+def getAllFromTable(tableName, columns=[], order=None):
+    def getEntries():
+        nonlocal tableName, columns, order
+        (conn, cur) = connect_to_db()
+        if not tableName:
+            return None
+        
+        queryTemplate1 = "SELECT DISTINCT table_name FROM information_schema.columns WHERE table_name=%s"
+        query1 = cur.mogrify(queryTemplate1, (tableName,))
+        cur.execute(query1)
+        tableExists = len(cur.fetchall())>0
+        if tableExists:
+            queryTemplate2 = "SELECT * from "+tableName
+            if order:
+                queryTemplate2 = queryTemplate2 + " ORDER BY " + order
+            if type(columns) is str:
+                columns = list(map(lambda s: s.strip(), str.split(",")))
+            if len(columns)>0:
+                queryTemplate2 = queryTemplate2.replace("*", ", ".join(columns))
+            query2 = cur.mogrify(queryTemplate2)
+            cur.execute(query2)
+            results = cur.fetchall()
+            return list(map(lambda entry: dict(entry), list(results)))
+        else:
+            return None
+    return getEntries
+
+def formatHandler(obj):
+    if hasattr(obj, 'isoformat'):
+        return obj.isoformat()
+    elif isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.strftime("%Y/%m/%d %H:%M:%S")
+    raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
+
+@app.route('/submit/collection')
+@app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
+def make_collection(collection_id=None):
+    user_info = session.get('user_info')
+    if not user_info:
+        session['next'] = request.path
+        return redirect(url_for('login'))
+    if not collection_id:
+        collection_id=request.form.get('collection_id')
+    if collection_id:
+        # editing
+        return "Not yet implemented."
+    if not collection_id:
+        # at this point, we're definitely creating a new collection
+        # if it's a POST request, this was sent by the form
+        if request.method=="POST":
+            (conn, cur) = connect_to_db()
+            nextId = getNextCollectionRef()
+            name = request.form.get('collection_name')
+            description = request.form.get('description')
+            owner = user_info.get('name')
+            project_ids = request.form.get('projects')
+            if project_ids:
+                project_ids = project_ids.replace(", ", ",")
+            dataset_ids = request.form.get('datasets')
+            if dataset_ids:
+                dataset_ids = dataset_ids.replace(", ", ",")
+            parents = request.form.get('inherit_from')
+            queryTemplate = "INSERT INTO collection (collection_id, collection_name, owner, inherit_from, project_ids, dataset_ids) VALUES (%s, %s, %s, string_to_array(%s, ','), string_to_array(%s, ','))"
+            query = cur.mogrify(queryTemplate, (nextId, name, description, owner, parents, project_ids, dataset_ids))
+            cur.execute(query)
+            conn.commit()
+            updateNextCollectionRef()
+            return redirect('/view/collection/'+nextId)
+        # otherwise, view the webpage/form for creating a new collection
+        else:
+            return render_template("make_collection.html", json_dumps=json.dumps, defFormat=formatHandler, datasetsFn=getAllFromTable("dataset", ["id", "title", "creator", "abstract"], "id"),
+                                   projectsFn=getAllFromTable("project", order="proj_uid"), collectionsFn=getAllFromTable("collection", order="collection_id"))
+    return "Not yet implemented"
+
 @app.route('/view/collection/<collection_id>')
 def collection_landing_page(collection_id):
     collectionInfo = get_collection(collection_id)

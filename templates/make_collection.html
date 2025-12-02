@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% set cur="makeCollection" %}
+{% block body %}
+<form method="post" action="/submit/collection" enctype="multipart/form-data">
+    <label for="collection_name_input">Title: </label><input type="text" name="collection_name" id="collection_name_input" required><br>
+    <label for="description_input">Description: </label><textarea name="description" id="description_input" rows="4" cols="50"></textarea><br>
+    <label for="parent_collections_input" style="display:none">Inherit from: </label><select name="inherit_from" id="parent_collections_input" multiple style="display:none"></select><br>
+    <label for="projects_input">Projects: </label><select name="projects" id="projects_input" multiple></select><br>
+    <label for="datasets_input">Datasets: </label><select name="datasets" id="datasets_input" multiple></select><br>
+    <button type="submit" name="submit" id="submitBtn" value="Submit">Create Collection</button>
+</form>
+{% endblock body %}

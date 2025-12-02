@@ -285,9 +285,45 @@
     {% endif %}
 </script>
 {% endif %}
-{% if cur=="collection"}
+{% if cur=="collection" %}
 <script type="text/javascript" src="{{url_for('static', filename='js/collection.js')}}"></script>
 
+{% endif %}
+{% if cur=="makeCollection" %}
+<script type="text/javascript">
+    window.onload=function() {
+        const None = null;
+        const ds = {{json_dumps(datasetsFn(), default=defFormat)|safe}};
+        const ps = {{json_dumps(projectsFn(), default=defFormat)|safe}};
+        const cs = {{json_dumps(collectionsFn(), default=defFormat)|safe}};
+        const dsIn = document.getElementById("datasets_input");
+        for(const d of ds) {
+            let opt = document.createElement("option");
+            opt.value = d.id;
+            opt.innerHTML = `${d.id}: ${d.title}`;
+            dsIn.appendChild(opt);
+        }
+        const psIn = document.getElementById("projects_input");
+        for(const p of ps) {
+            let opt = document.createElement("option");
+            opt.value=p.proj_uid;
+            opt.innerHTML = `${p.proj_uid}: ${p.title}`;
+            psIn.appendChild(opt);
+        }
+        if(cs.length>0) {
+            const csIn = document.getElementById("parent_collections_input");
+            csIn.style.display="";
+            csIn.previousElementSibling.style.display="";
+            for(const c of cs) {
+                let opt = document.createElement("option");
+                opt.value = c.collection_id;
+                opt.innerHTML = `${c.collection_id}: ${c.collection_name}`;
+                csIn.appendChild(opt);
+            }
+        }
+        
+    }
+</script>
 {% endif %}
 
 </head>
