@@ -67,6 +67,7 @@ app.config.update(
     OLD_CROSSREF_FILE="inc/old_crossref_sql.txt",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
+    COLLECTION_REF="inc/collection_ref",
     GMAIL_PICKLE="inc/token.pickle",
     AWARD_WELCOME_EMAIL="static/letters/USAP_DCwelcomeletter.html",
     AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
@@ -4913,7 +4914,7 @@ def formatHandler(obj):
         return obj.strftime("%Y/%m/%d %H:%M:%S")
     raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
 
-@app.route('/submit/collection')
+@app.route('/submit/collection', methods=['GET', 'POST'])
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
 def make_collection(collection_id=None):
     user_info = session.get('user_info')
@@ -4941,16 +4942,45 @@ def make_collection(collection_id=None):
             if dataset_ids:
                 dataset_ids = dataset_ids.replace(", ", ",")
             parents = request.form.get('inherit_from')
-            queryTemplate = "INSERT INTO collection (collection_id, collection_name, owner, inherit_from, project_ids, dataset_ids) VALUES (%s, %s, %s, string_to_array(%s, ','), string_to_array(%s, ','))"
-            query = cur.mogrify(queryTemplate, (nextId, name, description, owner, parents, project_ids, dataset_ids))
+            if not parents:
+                parents = []
+            parents = parents.split(",")
+            # ensure uniqueness
+            parents = list(set(parents))
+            # queryTemplate = "INSERT INTO collection (collection_id, collection_name, owner, description, inherit_from, project_ids, dataset_ids) VALUES (%s, %s, %s, %s, %s, string_to_array(%s, ','), string_to_array(%s, ','))"
+            # query = cur.mogrify(queryTemplate, (nextId, name, owner, description, parents, project_ids, dataset_ids))
+            queryTemplate = "INSERT INTO collection (collection_id, collection_name, description) VALUES (%s, %s, %s)"
+            query = cur.mogrify(queryTemplate, (nextId, name, description))
             cur.execute(query)
+            queryTemplate2 = "INSERT INTO collection_person_map (collection_id, person, role) VALUES (%s, %s, %s)"
+            query2 = cur.mogrify(queryTemplate2, (nextId, owner, "owner"))
+            cur.execute(query2)
+            if project_ids:
+                projects_arr = list(set(project_ids.split(',')))
+                queryTemplate3 = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s)"
+                for prj in projects_arr:
+                    query3 = cur.mogrify(queryTemplate3, (nextId, prj))
+                    cur.execute(query3)
+            if dataset_ids:
+                datasets_arr = list(set(dataset_ids.split(',')))
+                queryTemplate4 = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s)"
+                for ds in datasets_arr:
+                    query4 = cur.mogrify(queryTemplate4, (nextId, ds))
+                    cur.execute(query4)
+            queryTemplate5 = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
+            query5 = cur.mogrify(queryTemplate5, (nextId, "Created", owner))
+            cur.execute(query5)
+            if len(parents)>0:
+                queryTemplate6 = "INSERT INTO collection_parent_map (collection_id, parent_collection_id) VALUES (%s, %s)"
+                for parent in parents:
+                    query6 = cur.mogrify(queryTemplate6, (nextId, parent))
+                    cur.execute(query6)
             conn.commit()
             updateNextCollectionRef()
             return redirect('/view/collection/'+nextId)
         # otherwise, view the webpage/form for creating a new collection
         else:
-            return render_template("make_collection.html", json_dumps=json.dumps, defFormat=formatHandler, datasetsFn=getAllFromTable("dataset", ["id", "title", "creator", "abstract"], "id"),
-                                   projectsFn=getAllFromTable("project", order="proj_uid"), collectionsFn=getAllFromTable("collection", order="collection_id"))
+            return render_template("make_collection.html")
     return "Not yet implemented"
 
 @app.route('/view/collection/<collection_id>')
@@ -4959,7 +4989,7 @@ def collection_landing_page(collection_id):
     if collectionInfo:
         (conn, cur) = connect_to_db()
         template_dict = {**collectionInfo}
-        template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['inherit_from'])
+        template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['parents'])
         # get all the projects in this collection
         template_dict['projects'] = None
         if len(collectionInfo['project_ids']) > 0:
@@ -4996,7 +5026,7 @@ def getParentCollectionsHTML(parentIds):
         if 0 < len(results):
             url = "/view/collection/" + results[0]['collection_id']
             name = results[0]['collection_name'] if results[0]['collection_name'] else "Untitled"
-            htmlList.append("<a href=\"" + url + "\">(" + name + ")</a>")
+            htmlList.append("<a href=\"" + url + "\">" + name + "</a>")
     return htmlList
 
 def findInheritanceCycles(collectionId, parentIds):
@@ -5123,7 +5153,7 @@ def get_collection(collectionId):
     if not collectionId:
         return None
     (conn, cur) = connect_to_db()
-    query_template = "SELECT * FROM collection WHERE collection_id=%s"
+    query_template = "SELECT * FROM collection_view WHERE collection_id=%s"
     query = cur.mogrify(query_template, (collectionId,))
     cur.execute(query)
     rslts = cur.fetchall()
@@ -5981,7 +6011,7 @@ def apiKeyPage():
         template_dict['fields'][field] = 'text'
         if 'organization'==field:
             template_dict['dropdowns'][field] = []
-            listQuery = "select distinct %s from person where %s is not null and not %s=''" % (field, field, field)
+            listQuery = "select distinct %s from person where %s is not null and not %s='' ORDER BY %s" % (field, field, field, field)
             cur.execute(listQuery)
             listResults = cur.fetchall()
             for result in listResults:
@@ -6093,7 +6123,7 @@ def internal_error(error):
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return redirect(url_for('not_found'))
+    return not_found()
 
 @app.errorhandler(401)
 def unauthorized_access(error):

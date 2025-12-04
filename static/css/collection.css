@@ -1,0 +1,19 @@
+.multiSelectDiv {
+    display: inline-block;
+}
+
+.infoDiv {
+    display: inline-block;
+    background-color: rgb(227, 236, 255);
+    border-radius: 5px;
+}
+.infoDiv > button {
+    display: inline-block;
+    background-color: transparent;
+    border: none;
+}
+
+.collectionTable {
+    width: 100%;
+    border-spacing: 5px 0;
+}

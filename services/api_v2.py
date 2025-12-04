@@ -6,6 +6,7 @@ from .endpoints_v2.projects import ns as projects_ns
 from .endpoints_v2.persons import ns as persons_ns
 from .endpoints_v2.awards import ns as awards_ns
 from .endpoints_v2.datafiles import ns as datafiles_ns
+from .endpoints_v2.collections import ns as collections_ns
 
 blueprint = Blueprint('api2', __name__, url_prefix='/api/v2.0')
 api = Api(blueprint, version='v2.0', title='USAP-DC API', ordered=True, doc='/doc',
@@ -16,4 +17,5 @@ api.add_namespace(datafiles_ns)
 api.add_namespace(datasets_ns)
 api.add_namespace(persons_ns)
 api.add_namespace(projects_ns)
+api.add_namespace(collections_ns)
 

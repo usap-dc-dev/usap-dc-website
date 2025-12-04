@@ -7,29 +7,33 @@
 <h2>Collaborators: {{collaborators|join(', ')}}</h2>{% endif %}
 {% if 0 < parents_html|length %}
 <h3>Inherits from: </h3>
-{% for parent in parents_html %}<p>{{parent}}</p>{% endfor %}
+{% for parent in parents_html %}<p>{{parent|safe}}</p>{% endfor %}
 {% endif %}
 
 <button onclick="createNewCollection('{{collection_id}}')">Create New Collection From This One</button>
 <h2>Projects</h2>
-<table id="projectTable">
+{% if projects %}
+<table id="projectTable" class="collectionTable">
     <tbody>
         <tr><th>Title</th><th>Description</th></tr>
         {% for prj in projects %}
-        <tr><td><a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a></td><td>{{truncate(prj['description'])}}</td></tr>
+        <tr><td><a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a></td><td>{{truncate(prj['description'], 100)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>
+{% endif %}
 <button onclick="addProject('{{collection_id}}')">Add Project</button>
 <h2>Datasets</h2>
-<table id="dsTable">
+{% if datasets %}
+<table id="dsTable" class="collectionTable">
     <tbody>
         <tr><th>Title</th><th>Abstract</th></tr>
         {% for ds in datasets %}
-        <tr><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a></td><td>{{truncate(ds['abstract'])}}</td></tr>
+        <tr><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a></td><td>{{truncate(ds['abstract'], 100)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>
+{% endif %}
 <button onclick="addDataset('{{collection_id}}')">Add Dataset</button>
 {% endif %}
 {% endblock body %}
