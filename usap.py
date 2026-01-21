@@ -93,11 +93,11 @@ app.config['BUNDLE_ERRORS'] = rp_settings.RESTPLUS_BUNDLE_ERRORS
 
 
 @app.route('/api1')
-def api():
+def api1():
     return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
 @app.route('/api')
-def api2():
+def api():
     return render_template('api_swagger.html', api_url=url_for('api2.doc'))
 
 
