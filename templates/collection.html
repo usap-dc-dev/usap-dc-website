@@ -3,8 +3,12 @@
 {% block body %}
 <h1>Collection {{collection_id}}{% if err %}<br>ERROR: {{err}}</h1>{% else %}{% if collection_name %}: {{collection_name}}{% endif %}</h1>{% if description %}
 <p>{{description}}</p>{% endif %}
-<h2>Owner: {{owner}}</h2>{% if 0 < collaborators|length %}
-<h2>Collaborators: {{collaborators|join(', ')}}</h2>{% endif %}
+<h2>Owner{% if 1 < owners|length %}s{% endif %}</h2>{% for owner in owners %}
+{% if owner['id_orcid'] %}<a href="https://orcid.org/{{owner['id_orcid']}}">{% else %}<p style="display:inline">{% endif %}{{getName(owner)}}{% if not owner['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if not loop.last %}, {% endif %}
+{% endfor %}{% if 0 < collaborators|length %}
+<h2>Collaborator{% if 1 < collaborators|length %}s{% endif %}</h2>{% for clbrtr in collaborators %}
+{% if clbrtr['id_orcid'] %}<a href="https://orcid.org/{{clbrtr['id_orcid']}}">{% else %}<p style="display:inline">{% endif %}{{getName(clbrtr)}}{% if not clbrtr['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if not loop.last %}, {% endif %}
+{% endfor %}{% endif %}
 {% if 0 < parents_html|length %}
 <h3>Inherits from: </h3>
 {% for parent in parents_html %}<p>{{parent|safe}}</p>{% endfor %}
@@ -17,7 +21,7 @@
     <tbody>
         <tr><th>Title</th><th>Description</th></tr>
         {% for prj in projects %}
-        <tr><td><a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a></td><td>{{truncate(prj['description'], 100)}}</td></tr>
+        <tr><td><a href="/view/project/{{prj['proj_uid']}}"{% if prj['inherited_from'] %}title="Inherited from {{prj['inherited_from']}}"{% endif %}>{{prj['title']}}</a></td><td>{{truncate(prj['description'], 100)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>
@@ -36,4 +40,5 @@
 {% endif %}
 <button onclick="addDataset('{{collection_id}}')">Add Dataset</button>
 {% endif %}
+<br>{{ inherited }}
 {% endblock body %}

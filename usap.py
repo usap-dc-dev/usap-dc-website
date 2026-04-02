@@ -19,7 +19,7 @@ import re
 import copy
 from datetime import datetime, timedelta, date as dt_date
 import csv
-from collections import namedtuple
+from collections import deque, namedtuple
 import humanize
 import lib.json2sql as json2sql
 import shutil
@@ -91,6 +91,7 @@ app.config['RESTPLUS_MASK_SWAGGER'] = rp_settings.RESTPLUS_MASK_SWAGGER
 app.config['ERROR_404_HELP'] = rp_settings.RESTPLUS_ERROR_404_HELP
 app.config['BUNDLE_ERRORS'] = rp_settings.RESTPLUS_BUNDLE_ERRORS
 
+inheritanceChainDelim = "->"
 
 @app.route('/api1')
 def api1():
@@ -421,6 +422,24 @@ def get_person(person_id):
         query += cur.mogrify(' WHERE id = %s', (person_id,)).decode()
     cur.execute(query)
     return cur.fetchone()
+
+def get_person_from_name(name):
+    (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM person WHERE concat_ws(\' \', first_name, middle_name, last_name)=%s'
+    mogrified = cur.mogrify(query, (name,))
+    cur.execute(mogrified)
+    rslt = cur.fetchall()
+    if 0 == len(rslt):
+        return None
+    return dict(rslt[0])
+
+def get_name_from_person(person):
+        fn = person['first_name']
+        mn = person['middle_name']
+        ln = person['last_name']
+        if mn:
+            return ' '.join([fn, mn, ln])
+        return ' '.join([fn, ln])
 
 
 def get_sensors(conn=None, cur=None, dataset_id=None):
@@ -4989,7 +5008,14 @@ def collection_landing_page(collection_id):
     if collectionInfo:
         (conn, cur) = connect_to_db()
         template_dict = {**collectionInfo}
+        template_dict['getName'] = get_name_from_person
+        template_dict['current_user'] = session.get('user_info')
         template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['parents'])
+        # get the IDs of people involved in making the collection
+        owners = list(map(get_person_from_name, template_dict['owners']))
+        template_dict['owners'] = owners
+        collaborators = list(map(get_person_from_name, template_dict['collaborators']))
+        template_dict['collaborators'] = collaborators
         # get all the projects in this collection
         template_dict['projects'] = None
         if len(collectionInfo['project_ids']) > 0:
@@ -5001,6 +5027,18 @@ def collection_landing_page(collection_id):
                 results = cur.fetchall()
                 for result in results:
                     template_dict['projects'].append(dict(result))
+        if len(collectionInfo['inherited']['projects']) > 0:
+            if not template_dict['projects']:
+                template_dict['projects'] = []
+            queryTemplate = "SELECT proj_uid, title, description FROM project WHERE proj_uid=%s"
+            for prj_id in collectionInfo['inherited']['projects'].keys():
+                query = cur.mogrify(queryTemplate, (prj_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    resultDict = dict(result)
+                    resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['projects'][prj_id])
+                    template_dict['projects'].append(resultDict)
         # get all the datasets in this collection
         template_dict['datasets'] = None
         if len(collectionInfo['dataset_ids']) > 0:
@@ -5012,6 +5050,18 @@ def collection_landing_page(collection_id):
                 results = cur.fetchall()
                 for result in results:
                     template_dict['datasets'].append(dict(result))
+        if len(collectionInfo['inherited']['datasets']) > 0:
+            if not template_dict['datasets']:
+                template_dict['datasets'] = []
+            queryTemplate = "SELECT id, title, abstract FROM dataset WHERE id=%s"
+            for ds_id in collectionInfo['inherited']['datasets'].keys():
+                query = cur.mogrify(queryTemplate, (ds_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    resultDict = dict(result)
+                    resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['datasets'][ds_id])
+                    template_dict['datasets'].append(resultDict)
         return render_template("collection.html", **template_dict, truncate=truncateStr)
     return render_template("collection.html", collection_id=collection_id, err="No such collection")
 
@@ -5148,6 +5198,68 @@ def validate_dmp_link(dmp_link):
         return True
     return False
     
+def get_inherited(parent_collections):
+    (conn, cur) = connect_to_db()
+    data = {
+        "projects": {},
+        "datasets": {}
+    }
+    query_template = "SELECT parents, project_ids, dataset_ids FROM collection_view WHERE collection_id=%s"
+    # breadth-first traversal of inheritance tree
+    checked = set()
+    checking = deque()
+    for parent in parent_collections:
+        checking.append(parent)
+    while len(checking)>0:
+        cur_path = checking.popleft()
+        cur_id = cur_path.split(inheritanceChainDelim)[-1]
+        # if we've already checked this ancestor collection, find the projects and datasets it includes and add this path
+        if cur_id in checked:
+            for prj_id in data["projects"].keys():
+                add_path = False
+                for path in data["projects"][prj_id]:
+                    if cur_path == path:
+                        add_path = False
+                        break
+                    if cur_id == path.split(inheritanceChainDelim)[-1]:
+                        add_path = True
+                if add_path:
+                    data["projects"][prj_id].append(path)
+            for ds_id in data["datasets"].keys():
+                add_path = False
+                for path in data["datasets"][ds_id]:
+                    if cur_path == path:
+                        add_path = False
+                        break
+                    if cur_id == path.split(inheritanceChainDelim)[-1]:
+                        add_path = True
+                if add_path:
+                    data["datasets"][ds_id].append(path)
+        # otherwise, query the database and add its projects and datasets to this one
+        else:
+            query = cur.mogrify(query_template, (cur_id,))
+            cur.execute(query)
+            results = cur.fetchall()
+            if results:
+                for result in results:
+                    pids = result['project_ids']
+                    dids = result['dataset_ids']
+                    prnts = result['parents']
+                    for pid in pids:
+                        if pid not in data["projects"]:
+                            data["projects"][pid] = [cur_path]
+                        else:
+                            data["projects"][pid].append(cur_path)
+                    for did in dids:
+                        if did not in data["datasets"]:
+                            data["datasets"][did] = [cur_path]
+                        else:
+                            data["datasets"][did].append(cur_path)
+                    for prnt in prnts:
+                        checking.append(cur_id + inheritanceChainDelim + prnt)
+            checked.add(cur_id)
+    return data
+
 
 def get_collection(collectionId):
     if not collectionId:
@@ -5159,7 +5271,9 @@ def get_collection(collectionId):
     rslts = cur.fetchall()
     if len(rslts) == 0:
         return None
-    return rslts[0]
+    rslt = dict(rslts[0])
+    rslt["inherited"] = get_inherited(rslt["parents"])
+    return rslt
 
 def get_project(project_id):
     if project_id is None:
