@@ -10,18 +10,18 @@
 {% if clbrtr['id_orcid'] %}<a href="https://orcid.org/{{clbrtr['id_orcid']}}">{% else %}<p style="display:inline">{% endif %}{{getName(clbrtr)}}{% if not clbrtr['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if not loop.last %}, {% endif %}
 {% endfor %}{% endif %}
 {% if 0 < parents_html|length %}
-<h3>Inherits from: </h3>
+<h3>Inherits from:</h3>
 {% for parent in parents_html %}<p>{{parent|safe}}</p>{% endfor %}
 {% endif %}
 
-<button onclick="createNewCollection('{{collection_id}}')">Create New Collection From This One</button>
+<button onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button>
 <h2>Projects</h2>
 {% if projects %}
 <table id="projectTable" class="collectionTable">
     <tbody>
         <tr><th>Title</th><th>Description</th></tr>
         {% for prj in projects %}
-        <tr><td><a href="/view/project/{{prj['proj_uid']}}"{% if prj['inherited_from'] %}title="Inherited from {{prj['inherited_from']}}"{% endif %}>{{prj['title']}}</a></td><td>{{truncate(prj['description'], 100)}}</td></tr>
+        <tr><td><a href="/view/project/{{prj['proj_uid']}}"{% if prj['inherited_from'] %}title="{% if prj['included'] %}Also i{% else %} I{% endif %}nherited from {{prj['inherited_from']}}"{% endif %}>{{prj['title']}}</a></td><td>{{truncate(prj['description'], 100)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>
@@ -33,7 +33,7 @@
     <tbody>
         <tr><th>Title</th><th>Abstract</th></tr>
         {% for ds in datasets %}
-        <tr><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a></td><td>{{truncate(ds['abstract'], 100)}}</td></tr>
+        <tr><td><a href="/view/dataset/{{ds['id']}}"{% if ds['inherited_from'] %}title="{% if ds['included'] %}Also i{% else %} I{% endif %}nherited from {{ds['inherited_from']}}"{% endif %}>{{ds['title']}}</a></td><td>{{truncate(ds['abstract'], 100)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>

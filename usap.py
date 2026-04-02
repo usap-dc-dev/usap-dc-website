@@ -4934,18 +4934,20 @@ def formatHandler(obj):
     raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
 
 @app.route('/submit/collection', methods=['GET', 'POST'])
+@app.route('/submit/collection/<collection_id>', methods=['GET', 'POST'])
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
 def make_collection(collection_id=None):
     user_info = session.get('user_info')
+    editing = request.path.startswith("/edit")
     if not user_info:
         session['next'] = request.path
         return redirect(url_for('login'))
     if not collection_id:
         collection_id=request.form.get('collection_id')
-    if collection_id:
+    if editing:
         # editing
         return "Not yet implemented."
-    if not collection_id:
+    else:
         # at this point, we're definitely creating a new collection
         # if it's a POST request, this was sent by the form
         if request.method=="POST":
@@ -4999,7 +5001,7 @@ def make_collection(collection_id=None):
             return redirect('/view/collection/'+nextId)
         # otherwise, view the webpage/form for creating a new collection
         else:
-            return render_template("make_collection.html")
+            return render_template("make_collection.html", parents=collection_id)
     return "Not yet implemented"
 
 @app.route('/view/collection/<collection_id>')
@@ -5037,6 +5039,7 @@ def collection_landing_page(collection_id):
                 results = cur.fetchall()
                 for result in results:
                     resultDict = dict(result)
+                    resultDict['included'] = resultDict in template_dict['projects']
                     resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['projects'][prj_id])
                     template_dict['projects'].append(resultDict)
         # get all the datasets in this collection
@@ -5060,6 +5063,7 @@ def collection_landing_page(collection_id):
                 results = cur.fetchall()
                 for result in results:
                     resultDict = dict(result)
+                    resultDict['included'] = resultDict in template_dict['datasets']
                     resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['datasets'][ds_id])
                     template_dict['datasets'].append(resultDict)
         return render_template("collection.html", **template_dict, truncate=truncateStr)

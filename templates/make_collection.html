@@ -4,7 +4,7 @@
 <form method="POST" action="/submit/collection" enctype="multipart/form-data" onsubmit="fixValues(this)">
     <label for="collection_name_input">Title: </label><input type="text" name="collection_name" id="collection_name_input" required><br>
     <label for="description_input">Description: </label><textarea name="description" id="description_input" rows="4" cols="50"></textarea><br>
-    <label for="parent_collections_input" style="display:none">Inherit from: </label><input type="text" name="inherit_from" id="parent_collections_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentCollectionsDiv"></div><br>
+    <label for="parent_collections_input" style="display:none">Inherit from: </label><input type="text" name="inherit_from" id="parent_collections_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentCollectionsDiv">{% if parents %}{% for parent in parents.split(',') %}<div class="infoDiv">{{parent}}<button type="button" onclick="this.parentElement.parentElement.removeChild(this.parentElement)">×</button></div>{% endfor %}{% endif %}</div><br>
     <label for="projects_input">Projects: </label><input name="projects" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div><br>
     <label for="datasets_input">Datasets: </label><input name="datasets" id="datasets_input" list="datasets_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="datasetsDiv"></div><br>
     <datalist id="collections_list"></datalist>

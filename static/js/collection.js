@@ -1,5 +1,5 @@
 function createNewCollection(parentCollectionIds) {
-    alert("not yet implemented");
+    window.location.href = "/submit/collection/" + parentCollectionIds.join(",");
 }
 
 function addProject(collectionId, projectId=null) {
