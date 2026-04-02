@@ -69,9 +69,9 @@ class CollectionsCollection(Resource):
         if query_parameters['collection_uid']:
             sqlParameters["collection_id=%s"] = query_parameters['collection_uid']
         if query_parameters['title']:
-            sqlParameters["collection_name"] = query_parameters['title']
+            sqlParameters["LOWER(collection_name) LIKE LOWER(%s)"] = "%%" + query_parameters['title'] + "%%"
         if query_parameters['description']:
-            sqlParameters['description'] = query_parameters['description']
+            sqlParameters['LOWER(description) LIKE LOWER(%s)'] = "%%" + query_parameters['description'] + "%%"
         if len(sqlParameters)>0:
             queryTemplate += " WHERE " + " AND ".join(list(sqlParameters.keys()))
         query = cur.mogrify(queryTemplate, tuple(sqlParameters.values()))
