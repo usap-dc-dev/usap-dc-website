@@ -21,7 +21,12 @@
     <tbody>
         <tr><th>Title</th><th>Description</th></tr>
         {% for prj in projects %}
-        <tr><td><a href="/view/project/{{prj['proj_uid']}}"{% if prj['inherited_from'] %}title="{% if prj['included'] %}Also i{% else %} I{% endif %}nherited from {{prj['inherited_from']}}"{% endif %}>{{prj['title']}}</a></td><td>{{truncate(prj['description'], 100)}}</td></tr>
+        <tr><td>
+            <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
+            {{ inheritance_tree(prj['inherited_from']) | safe}}
+        {% endif %}</td>
+            <td>{{truncate(prj['description'], 100)}}
+        </td></tr>
         {% endfor %}
     </tbody>
 </table>

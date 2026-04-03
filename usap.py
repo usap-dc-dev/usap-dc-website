@@ -4934,9 +4934,10 @@ def formatHandler(obj):
     raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
 
 @app.route('/submit/collection', methods=['GET', 'POST'])
-@app.route('/submit/collection/<collection_id>', methods=['GET', 'POST'])
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
 def make_collection(collection_id=None):
+    inheriting = False
+    duplicate = False
     user_info = session.get('user_info')
     editing = request.path.startswith("/edit")
     if not user_info:
@@ -4944,6 +4945,14 @@ def make_collection(collection_id=None):
         return redirect(url_for('login'))
     if not collection_id:
         collection_id=request.form.get('collection_id')
+    if not collection_id:
+        collection_id = request.args.get('parents')
+        if collection_id:
+            inheriting = True
+        else:
+            collection_id = request.args.get('source')
+            if collection_id:
+                duplicate = True
     if editing:
         # editing
         return "Not yet implemented."
@@ -5001,8 +5010,10 @@ def make_collection(collection_id=None):
             return redirect('/view/collection/'+nextId)
         # otherwise, view the webpage/form for creating a new collection
         else:
-            return render_template("make_collection.html", parents=collection_id)
-    return "Not yet implemented"
+            parentIds = collection_id.split(",")
+            uniqueParents = set(parentIds)
+            uniqueParentsStr = ",".join(uniqueParents)
+            return render_template("make_collection.html", parents=uniqueParentsStr)
 
 @app.route('/view/collection/<collection_id>')
 def collection_landing_page(collection_id):
@@ -5040,7 +5051,7 @@ def collection_landing_page(collection_id):
                 for result in results:
                     resultDict = dict(result)
                     resultDict['included'] = resultDict in template_dict['projects']
-                    resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['projects'][prj_id])
+                    resultDict['inherited_from'] = collectionInfo['inherited']['projects'][prj_id]
                     template_dict['projects'].append(resultDict)
         # get all the datasets in this collection
         template_dict['datasets'] = None
@@ -5066,6 +5077,27 @@ def collection_landing_page(collection_id):
                     resultDict['included'] = resultDict in template_dict['datasets']
                     resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['datasets'][ds_id])
                     template_dict['datasets'].append(resultDict)
+        ancestorTree = collectionInfo["inherited"]
+        ancestors = list(set(reduce(lambda acc, cur: acc+cur, map(lambda k: reduce(lambda acc, cur: acc+cur, map(lambda key: reduce(lambda acc, cur: acc+cur, map(lambda key: key.split(inheritanceChainDelim), ancestorTree[k][key]), []), ancestorTree[k].keys()), []), ancestorTree.keys()), [])))
+        ancestorNames = dict(zip(ancestors, list(map(get_collection_name, ancestors))))
+        def inheritance_html(path_list):
+            def getLink(collection_id):
+                return "<a href=\"/view/collection/" + collection_id + "\">" + ancestorNames[collection_id] + "</a>"
+            collectionTree = {}
+            for path in path_list:
+                ids_list = path.split(inheritanceChainDelim)
+                curNode = collectionTree
+                for i in range(len(ids_list)):
+                    curId = ids_list[i]
+                    if curId not in curNode:
+                        curNode[curId] = {}
+                    curNode = curNode[curId]
+            def makeDiv(collection_entry, depth=0):
+                divStart = "<div style=\"padding-left: " + str(10*depth) + "px\"" + ("hidden" if 0==depth else "") + ">↳&nbsp;"
+                subDivs = list(map(lambda entry: makeDiv(entry, depth+1), collection_entry[1].items()))
+                return divStart + getLink(collection_entry[0]) + "<br>".join(subDivs) + "</div>"
+            return "\n".join(map(makeDiv, collectionTree.items()))
+        template_dict['inheritance_tree'] = inheritance_html
         return render_template("collection.html", **template_dict, truncate=truncateStr)
     return render_template("collection.html", collection_id=collection_id, err="No such collection")
 
@@ -5222,23 +5254,23 @@ def get_inherited(parent_collections):
             for prj_id in data["projects"].keys():
                 add_path = False
                 for path in data["projects"][prj_id]:
-                    if cur_path == path:
+                    if str(cur_path) == str(path):
                         add_path = False
                         break
-                    if cur_id == path.split(inheritanceChainDelim)[-1]:
+                    elif cur_id == path.split(inheritanceChainDelim)[-1]:
                         add_path = True
                 if add_path:
-                    data["projects"][prj_id].append(path)
+                    data["projects"][prj_id].append(cur_path)
             for ds_id in data["datasets"].keys():
                 add_path = False
                 for path in data["datasets"][ds_id]:
                     if cur_path == path:
                         add_path = False
                         break
-                    if cur_id == path.split(inheritanceChainDelim)[-1]:
+                    elif cur_id == path.split(inheritanceChainDelim)[-1]:
                         add_path = True
                 if add_path:
-                    data["datasets"][ds_id].append(path)
+                    data["datasets"][ds_id].append(cur_path)
         # otherwise, query the database and add its projects and datasets to this one
         else:
             query = cur.mogrify(query_template, (cur_id,))
@@ -5252,18 +5284,29 @@ def get_inherited(parent_collections):
                     for pid in pids:
                         if pid not in data["projects"]:
                             data["projects"][pid] = [cur_path]
-                        else:
+                        elif cur_path not in data["projects"][pid]:
                             data["projects"][pid].append(cur_path)
                     for did in dids:
                         if did not in data["datasets"]:
                             data["datasets"][did] = [cur_path]
-                        else:
+                        elif cur_path not in data["datasets"][did]:
                             data["datasets"][did].append(cur_path)
                     for prnt in prnts:
                         checking.append(cur_id + inheritanceChainDelim + prnt)
             checked.add(cur_id)
     return data
 
+def get_collection_name(collectionId):
+    if not collectionId:
+        return None
+    (conn, cur) = connect_to_db()
+    query_template = "SELECT collection_name FROM collection WHERE collection_id=%s"
+    query = cur.mogrify(query_template, (collectionId,))
+    cur.execute(query)
+    rslt = cur.fetchall()
+    if len(rslt) > 0:
+        return rslt[0]["collection_name"]
+    return None
 
 def get_collection(collectionId):
     if not collectionId:

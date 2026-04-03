@@ -17,3 +17,8 @@
     width: 100%;
     border-spacing: 5px 0;
 }
+
+button.blend {
+    background-color: inherit;
+    border: none;
+}
