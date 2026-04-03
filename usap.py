@@ -5075,7 +5075,7 @@ def collection_landing_page(collection_id):
                 for result in results:
                     resultDict = dict(result)
                     resultDict['included'] = resultDict in template_dict['datasets']
-                    resultDict['inherited_from'] = ", ".join(collectionInfo['inherited']['datasets'][ds_id])
+                    resultDict['inherited_from'] = collectionInfo['inherited']['datasets'][ds_id]
                     template_dict['datasets'].append(resultDict)
         ancestorTree = collectionInfo["inherited"]
         ancestors = list(set(reduce(lambda acc, cur: acc+cur, map(lambda k: reduce(lambda acc, cur: acc+cur, map(lambda key: reduce(lambda acc, cur: acc+cur, map(lambda key: key.split(inheritanceChainDelim), ancestorTree[k][key]), []), ancestorTree[k].keys()), []), ancestorTree.keys()), [])))
