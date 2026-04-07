@@ -4933,6 +4933,11 @@ def formatHandler(obj):
         return obj.strftime("%Y/%m/%d %H:%M:%S")
     raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
 
+def canEditCollection(userInfo, collectionId):
+    if not userInfo:
+        return False
+    return userInfo['is_curator']
+
 @app.route('/submit/collection', methods=['GET', 'POST'])
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
 def make_collection(collection_id=None):
@@ -4954,8 +4959,23 @@ def make_collection(collection_id=None):
             if collection_id:
                 duplicate = True
     if editing:
-        # editing
-        return "Not yet implemented."
+        canEdit = canEditCollection(user_info, collection_id)
+        if canEdit:
+            (conn, cur) = connect_to_db()
+            add_prj_query_template = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s)"
+            add_ds_query_template = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s)"
+            prjs_to_add = request.form.get("projects_add").split(",")
+            ds_to_add = request.form.get("datasets_add").split(",")
+            for prj in prjs_to_add:
+                add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
+                cur.execute(add_prj_query)
+            for ds in ds_to_add:
+                add_ds_query = cur.mogrify(add_ds_query_template, (collection_id, ds))
+                cur.execute(add_ds_query)
+            conn.commit()
+            return redirect('/view/collection/'+collection_id)
+        session['next'] = request.path
+        return redirect(url_for('login'))
     else:
         # at this point, we're definitely creating a new collection
         # if it's a POST request, this was sent by the form
@@ -5025,7 +5045,7 @@ def collection_landing_page(collection_id):
         template_dict = {**collectionInfo}
         template_dict['getName'] = get_name_from_person
         template_dict['current_user'] = session.get('user_info')
-        template_dict['canEdit'] = cf.isCurator()
+        template_dict['canEdit'] = canEditCollection(template_dict['current_user'], collection_id)
         template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['parents'])
         # get the IDs of people involved in making the collection
         owners = list(map(get_person_from_name, template_dict['owners']))

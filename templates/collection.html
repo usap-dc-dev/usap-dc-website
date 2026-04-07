@@ -13,7 +13,7 @@
 <h3>Inherits from:</h3>
 {% for parent in parents_html %}<p>{{parent|safe}}</p>{% endfor %}
 {% endif %}
-<button class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;
+{% if canEdit %}<button class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
 
 <button onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button>
 <h2>Projects</h2>
@@ -32,7 +32,7 @@
     </tbody>
 </table>
 {% endif %}
-{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)"><div id="add_projects_div" hidden><label for="projects_input">Projects to add: </label><input name="projects" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>{% endif %}
+{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)"><div id="add_projects_div" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>{% endif %}
 <h2>Datasets</h2>
 {% if datasets %}
 <table id="dsTable" class="collectionTable">
@@ -46,7 +46,7 @@
     </tbody>
 </table>
 {% endif %}
-{% if canEdit %}<div id="add_datasets_div" hidden><label for="datasets_input">Datasets to add: </label><input name="datasets" id="datasets_input" list="datasets_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="datasetsDiv"></div><br></div>{% endif %}
+{% if canEdit %}<div id="add_datasets_div" hidden><label for="datasets_input">Datasets to add: </label><input name="datasets_add" id="datasets_input" list="datasets_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="datasetsDiv"></div><br></div>{% endif %}
 {% endif %}
 <br>
 <datalist id="projects_list"></datalist>
