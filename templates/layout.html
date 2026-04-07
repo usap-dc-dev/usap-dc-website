@@ -289,7 +289,7 @@
 {% if cur=="collection" %}
 <script type="text/javascript" src="{{url_for('static', filename='js/collection.js')}}"></script>
 {% endif %}
-{% if cur=="makeCollection" %}
+{% if cur=="makeCollection" or cur=="collection" %}
 <script type="text/javascript" src="{{url_for('static', filename='js/makeCollection.js')}}"></script>
 {% endif %}
 

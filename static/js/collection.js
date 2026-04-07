@@ -1,13 +1,33 @@
+var editing = false;
+
 function createNewCollection(parentCollectionIds) {
     window.location.href = "/submit/collection?parents=" + parentCollectionIds.join(",");
 }
 
 function addProject(collectionId, projectId=null) {
+    if(projectId) {
 
+    }
 }
 
 function addDataset(collectionId, datasetId=null) {
+    if(datasetId) {
 
+    }
+}
+
+function toggleEditing() {
+    document.getElementById("add_projects_div").hidden = editing;
+    document.getElementById("add_datasets_div").hidden = editing;
+    document.getElementById("submitBtn").hidden = editing;
+    editing = !editing;
+    if(editing) {
+        document.getElementById("editBtn").innerHTML = document.getElementById("submitBtn").innerHTML;
+    }
+    else {
+        document.getElementById("editBtn").innerHTML = "Edit";
+        document.getElementById("submitBtn").click();
+    }
 }
 
 function toggleAncestors(button) {

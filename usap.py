@@ -5010,9 +5010,11 @@ def make_collection(collection_id=None):
             return redirect('/view/collection/'+nextId)
         # otherwise, view the webpage/form for creating a new collection
         else:
-            parentIds = collection_id.split(",")
-            uniqueParents = set(parentIds)
-            uniqueParentsStr = ",".join(uniqueParents)
+            uniqueParentsStr = None
+            if collection_id:
+                parentIds = collection_id.split(",")
+                uniqueParents = set(parentIds)
+                uniqueParentsStr = ",".join(uniqueParents)
             return render_template("make_collection.html", parents=uniqueParentsStr)
 
 @app.route('/view/collection/<collection_id>')
@@ -5023,6 +5025,7 @@ def collection_landing_page(collection_id):
         template_dict = {**collectionInfo}
         template_dict['getName'] = get_name_from_person
         template_dict['current_user'] = session.get('user_info')
+        template_dict['canEdit'] = cf.isCurator()
         template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['parents'])
         # get the IDs of people involved in making the collection
         owners = list(map(get_person_from_name, template_dict['owners']))

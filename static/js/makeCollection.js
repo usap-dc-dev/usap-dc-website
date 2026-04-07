@@ -23,14 +23,16 @@ window.onload = function() {
     collectionsPromise.then(resp => resp.json()).then(function(collectionsList) {
         if(collectionsList.length > 0) {
             const csIn = document.getElementById("parent_collections_input")
-            csIn.style.display="";
-            csIn.previousElementSibling.style.display="";
-            const csList = document.getElementById("collections_list");
-            for(const c of collectionsList) {
-                let opt = document.createElement("option");
-                opt.value = c.collection_id;
-                opt.innerHTML = `${c.collection_id}: ${c.title}`;
-                csList.appendChild(opt);
+            if(csIn) {
+                csIn.style.display="";
+                csIn.previousElementSibling.style.display="";
+                const csList = document.getElementById("collections_list");
+                for(const c of collectionsList) {
+                    let opt = document.createElement("option");
+                    opt.value = c.collection_id;
+                    opt.innerHTML = `${c.collection_id}: ${c.title}`;
+                    csList.appendChild(opt);
+                }
             }
         }
     });
