@@ -17,9 +17,7 @@ function addDataset(collectionId, datasetId=null) {
 }
 
 function toggleEditing() {
-    document.getElementById("add_projects_div").hidden = editing;
-    document.getElementById("add_datasets_div").hidden = editing;
-    document.getElementById("submitBtn").hidden = editing;
+    Array.prototype.forEach.call(document.getElementsByClassName("show_when_editing"), e => e.hidden = editing);
     editing = !editing;
     if(editing) {
         document.getElementById("editBtn").innerHTML = document.getElementById("submitBtn").innerHTML;
@@ -42,4 +40,13 @@ function toggleAncestors(button) {
     for(const div of Array.prototype.filter.call(button.parentElement.children, x => x.tagName.toLowerCase() === "div")) {
         div.hidden = !div.hidden;
     }
+}
+
+function removeFromCollection(tableRow) {
+    let entryInfo = tableRow.id.split("_");
+    let entryType = entryInfo[0];
+    let entryId = entryInfo[1];
+    let inputBoxId = `rm_${entryType}s_input`;
+    document.getElementById(inputBoxId).value = `${entryId}`;
+    document.getElementById(inputBoxId).dispatchEvent(new Event('input', { bubbles: false}));
 }

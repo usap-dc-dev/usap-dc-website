@@ -19,39 +19,54 @@
 <h2>Projects</h2>
 {% if projects %}
 <table id="projectTable" class="collectionTable">
-    <tbody>
-        <tr><th>Title</th><th>Description</th></tr>
+    <tbody>{% if canEdit %}
+        <colgroup>
+            <col span="1" style="width: 49%"/>
+            <col span="1" style="width: 1%"/>
+            <col span="1" style="width: 50%"/>
+        </colgroup>{% endif %}
+        <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Description</th></tr>
         {% for prj in projects %}
-        <tr><td>
+        <tr id="project_{{prj['proj_uid']}}_row"><td>
             <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
             {{ inheritance_tree(prj['inherited_from']) | safe}}
-        {% endif %}</td>
+        {% endif %}</td>{% if canEdit %}
+            <td>{% if prj['removable'] %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
             <td>{{truncate(prj['description'], 100)}}
         </td></tr>
         {% endfor %}
     </tbody>
 </table>
 {% endif %}
-{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)"><div id="add_projects_div" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>{% endif %}
+{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)"><div id="add_projects_div" class="show_when_editing" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>
+<div class="show_when_editing" hidden><label for="rm_projects_input">Projects to remove:</label><input hidden readonly name="projects_rm" id="rm_projects_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmProjectsDiv"></div><br></div>{% endif %}
 <h2>Datasets</h2>
 {% if datasets %}
 <table id="dsTable" class="collectionTable">
-    <tbody>
-        <tr><th>Title</th><th>Abstract</th></tr>
+    <tbody>{% if canEdit %}
+        <colgroup>
+            <col span="1" style="width: 49%"/>
+            <col span="1" style="width: 1%"/>
+            <col span="1" style="width: 50%"/>
+        </colgroup>{% endif %}
+        <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Abstract</th></tr>
         {% for ds in datasets %}
-        <tr><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
+        <tr id="dataset_{{ds['id']}}_row"><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
             {{ inheritance_tree(ds['inherited_from']) | safe}}
-        {% endif %}</td><td>{{truncate(ds['abstract'], 100)}}</td></tr>
+        {% endif %}</td>{% if canEdit %}
+            <td>{% if ds['removable'] %}<button class="blend show_when_editing" type="button" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
+            <td>{{truncate(ds['abstract'], 100)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>
 {% endif %}
-{% if canEdit %}<div id="add_datasets_div" hidden><label for="datasets_input">Datasets to add: </label><input name="datasets_add" id="datasets_input" list="datasets_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="datasetsDiv"></div><br></div>{% endif %}
+{% if canEdit %}<div id="add_datasets_div" class="show_when_editing" hidden><label for="datasets_input">Datasets to add: </label><input name="datasets_add" id="datasets_input" list="datasets_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="datasetsDiv"></div><br></div>
+<div class="show_when_editing" hidden><label for="rm_datasets_input">Datasets to remove:</label><input hidden readonly name="datasets_rm" id="rm_datasets_input" oninput="onInputChange(this)"><div class="multiSelectDiv" id="rmDatasetsDiv"></div><br></div>{% endif %}
 {% endif %}
 <br>
 <datalist id="projects_list"></datalist>
 <datalist id="datasets_list"></datalist>
 <datalist id="collections_list"></datalist>{% if canEdit %}
-<button type="submit" name="submit" id="submitBtn" value="Submit" hidden>Save Changes and Stop Editing</button>
+<button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing" hidden>Save Changes and Stop Editing</button>
 {% endif %}
 {% endblock body %}
