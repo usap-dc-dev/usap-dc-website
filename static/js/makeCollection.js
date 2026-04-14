@@ -26,7 +26,9 @@ window.onload = function() {
             if(csIn) {
                 csIn.style.display="";
                 csIn.previousElementSibling.style.display="";
-                const csList = document.getElementById("collections_list");
+            }
+            const csList = document.getElementById("collections_list");
+            if(csList) {
                 for(const c of collectionsList) {
                     let opt = document.createElement("option");
                     opt.value = c.collection_id;

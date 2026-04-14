@@ -16,6 +16,12 @@ function addDataset(collectionId, datasetId=null) {
     }
 }
 
+function removeParent(parentCollectionId) {
+    let inputField = document.getElementById("rm_parents_input");
+    inputField.value = parentCollectionId;
+    inputField.dispatchEvent(new Event('input', { bubbles: false}));
+}
+
 function toggleEditing() {
     Array.prototype.forEach.call(document.getElementsByClassName("show_when_editing"), e => e.hidden = editing);
     editing = !editing;

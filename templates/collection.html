@@ -11,11 +11,14 @@
 {% endfor %}{% endif %}
 {% if 0 < parents_html|length %}
 <h3>Inherits from:</h3>
-{% for parent in parents_html %}<p>{{parent|safe}}</p>{% endfor %}
+{% for parent in parents_html %}<p>{{parent[1]|safe}}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeParent('{{parent[0]}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button></p>{% endfor %}
 {% endif %}
-{% if canEdit %}<button class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
-
-<button onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button>
+{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">
+<div id="add_parents_div" class="show_when_editing" hidden><label for="parents_input">Parents to add: </label><input name="parents_add" id="parents_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentsDiv"></div></div>
+<div class="show_when_editing" hidden><label for="rm_parents_input">Parents to remove:</label><input hidden readonly name="parents_rm" id="rm_parents_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmParentsDiv"></div><br></div>
+<br>
+<button type="button" class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
+<button type="button" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button>
 <h2>Projects</h2>
 {% if projects %}
 <table id="projectTable" class="collectionTable">
@@ -28,7 +31,7 @@
         <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Description</th></tr>
         {% for prj in projects %}
         <tr id="project_{{prj['proj_uid']}}_row"><td>
-            <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
+            <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
             {{ inheritance_tree(prj['inherited_from']) | safe}}
         {% endif %}</td>{% if canEdit %}
             <td>{% if prj['removable'] %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
@@ -38,7 +41,7 @@
     </tbody>
 </table>
 {% endif %}
-{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)"><div id="add_projects_div" class="show_when_editing" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>
+{% if canEdit %}<div id="add_projects_div" class="show_when_editing" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>
 <div class="show_when_editing" hidden><label for="rm_projects_input">Projects to remove:</label><input hidden readonly name="projects_rm" id="rm_projects_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmProjectsDiv"></div><br></div>{% endif %}
 <h2>Datasets</h2>
 {% if datasets %}
@@ -51,7 +54,7 @@
         </colgroup>{% endif %}
         <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Abstract</th></tr>
         {% for ds in datasets %}
-        <tr id="dataset_{{ds['id']}}_row"><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
+        <tr id="dataset_{{ds['id']}}_row"><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
             {{ inheritance_tree(ds['inherited_from']) | safe}}
         {% endif %}</td>{% if canEdit %}
             <td>{% if ds['removable'] %}<button class="blend show_when_editing" type="button" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}

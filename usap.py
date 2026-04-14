@@ -4963,42 +4963,55 @@ def make_collection(collection_id=None):
         canEdit = canEditCollection(user_info, collection_id)
         if canEdit:
             (conn, cur) = connect_to_db()
+            log_template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
             add_prj_query_template = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
             add_ds_query_template = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
             rm_prj_query_template = "DELETE FROM collection_project_map WHERE collection_id=%s AND project_id=%s"
             rm_ds_query_template = "DELETE FROM collection_dataset_map WHERE collection_id=%s AND dataset_id=%s"
+            add_prnt_query_template = "INSERT INTO collection_parent_map (collection_id, parent_collection_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
+            rm_prnt_query_template = "DELETE FROM collection_parent_map WHERE collection_id=%s AND parent_collection_id=%s"
             prjs_to_add = list(filter(lambda prj: len(prj)>0, request.form.get("projects_add").split(",")))
             ds_to_add = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_add").split(",")))
             prjs_to_rm = list(filter(lambda prj: len(prj)>0, request.form.get("projects_rm").split(",")))
             ds_to_rm = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_rm").split(",")))
+            prnts_to_add = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_add").split(",")))
+            prnts_to_rm = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_rm").split(",")))
             sleep_time = 1
             for prj in prjs_to_add:
                 add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
                 cur.execute(add_prj_query)
             if len(prjs_to_add) > 0:
-                template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
-                query = cur.mogrify(template, (collection_id, user_info['name'], "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)))
+                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)))
                 cur.execute(query)
             for ds in ds_to_add:
                 add_ds_query = cur.mogrify(add_ds_query_template, (collection_id, ds))
                 cur.execute(add_ds_query)
             if len(ds_to_add) > 0:
-                template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
-                query = cur.mogrify(template, (collection_id, user_info['name'], "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)))
+                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)))
                 cur.execute(query)
             for prj in prjs_to_rm:
                 rm_prj_query = cur.mogrify(rm_prj_query_template, (collection_id, prj))
                 cur.execute(rm_prj_query)
             if len(prjs_to_rm) > 0:
-                template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
-                query = cur.mogrify(template, (collection_id, user_info['name'], "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)))
+                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)))
                 cur.execute(query)
             for ds in ds_to_rm:
                 rm_ds_query = cur.mogrify(rm_ds_query_template, (collection_id, ds))
                 cur.execute(rm_ds_query)
             if len(ds_to_rm) > 0:
-                template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
-                query = cur.mogrify(template, (collection_id, user_info['name'], "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)))
+                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)))
+                cur.execute(query)
+            for prnt in prnts_to_add:
+                add_prnt_query = cur.mogrify(add_prnt_query_template, (collection_id, prnt))
+                cur.execute(add_prnt_query)
+            if len(prnts_to_add)>0:
+                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)))
+                cur.execute(query)
+            for prnt in prnts_to_rm:
+                rm_prnt_query = cur.mogrify(rm_prnt_query_template, (collection_id, prnt))
+                cur.execute(rm_prnt_query)
+            if len(prnts_to_rm)>0:
+                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Removed parent" + ("s" if len(prnts_to_rm)>1 else "") + ": " + ", ".join(prnts_to_rm)))
                 cur.execute(query)
             conn.commit()
             return redirect('/view/collection/'+collection_id)
@@ -5169,7 +5182,7 @@ def getParentCollectionsHTML(parentIds):
         if 0 < len(results):
             url = "/view/collection/" + results[0]['collection_id']
             name = results[0]['collection_name'] if results[0]['collection_name'] else "Untitled"
-            htmlList.append("<a href=\"" + url + "\">" + name + "</a>")
+            htmlList.append((pid, "<a href=\"" + url + "\">" + name + "</a>"))
     return htmlList
 
 def findInheritanceCycles(collectionId, parentIds):
