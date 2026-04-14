@@ -4,18 +4,6 @@ function createNewCollection(parentCollectionIds) {
     window.location.href = "/submit/collection?parents=" + parentCollectionIds.join(",");
 }
 
-function addProject(collectionId, projectId=null) {
-    if(projectId) {
-
-    }
-}
-
-function addDataset(collectionId, datasetId=null) {
-    if(datasetId) {
-
-    }
-}
-
 function removeParent(parentCollectionId) {
     let inputField = document.getElementById("rm_parents_input");
     inputField.value = parentCollectionId;
