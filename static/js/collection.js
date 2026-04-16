@@ -10,6 +10,18 @@ function removeParent(parentCollectionId) {
     inputField.dispatchEvent(new Event('input', { bubbles: false}));
 }
 
+function removeOwner(name) {
+    let inputField = document.getElementById("rm_owners_input");
+    inputField.value = name;
+    inputField.dispatchEvent(new Event('input', {bubbles: false}));
+}
+
+function removeCollaborator(name) {
+    let inputField = document.getElementById("rm_collaborators_input");
+    inputField.value = name;
+    inputField.dispatchEvent(new Event('input', {bubbles: false}));
+}
+
 function toggleEditing() {
     Array.prototype.forEach.call(document.getElementsByClassName("show_when_editing"), e => e.hidden = editing);
     editing = !editing;

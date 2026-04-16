@@ -424,6 +424,41 @@ def get_person(person_id):
     cur.execute(query)
     return cur.fetchone()
 
+def get_person_from_orcid(orcid):
+    if not orcid:
+        return None
+    (conn, cur) = connect_to_db()
+    template = 'SELECT * FROM person WHERE id_orcid=%s'
+    query = cur.mogrify(template, (orcid,))
+    cur.execute(query)
+    rslt = cur.fetchall()
+    if 0 == len(rslt):
+        return None
+    return dict(rslt[0])
+
+# could use get_person_from_orcid in map(fn, list) for this, but I figured it would be more efficient to just use one connection
+def getPeopleFromOrcids(orcids):
+    if not orcids:
+        return None
+    (conn, cur) = connect_to_db()
+    def getPersonFromOrcid(orcid):
+        template = "SELECT * FROM person WHERE id_orcid=%s"
+        query = cur.mogrify(template, (orcid,))
+        cur.execute(query)
+        rslt = cur.fetchall()
+        if len(rslt) == 0:
+            return None
+        return dict(rslt[0])
+    return list(map(getPersonFromOrcid, orcids))
+
+def getAllPeopleWithOrcids():
+    (conn, cur) = connect_to_db()
+    template = 'SELECT id, id_orcid FROM person WHERE id_orcid IS NOT NULL'
+    cur.execute(cur.mogrify(template))
+    people = cur.fetchall()
+    pplList = list(people)
+    return list(map(dict, pplList))
+
 def get_person_from_name(name):
     (conn, cur) = connect_to_db()
     query = 'SELECT * FROM person WHERE concat_ws(\' \', first_name, middle_name, last_name)=%s'
@@ -438,10 +473,21 @@ def get_name_from_person(person):
         fn = person['first_name']
         mn = person['middle_name']
         ln = person['last_name']
-        if mn:
+        if fn and mn and ln:
             return ' '.join([fn, mn, ln])
-        return ' '.join([fn, ln])
-
+        if fn and ln:
+            return ' '.join([fn, ln])
+        _id = person['id']
+        suffix = ""
+        exp = re.compile(r" [IVXLCDM]+$")
+        if _id.endswith(" Jr.") or _id.endswith(" Sr."):
+            suffix = _id[-4:]
+            _id = _id[0:-4]
+        elif exp.match(_id):
+            suffix = " " + _id.split(" ")[-1]
+            _id = " ".join(_id.split(" ")[0:-1])
+        names = _id.split(", ")
+        return " ".join(names[1:]) + " " + names[0] + suffix
 
 def get_sensors(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
@@ -4935,9 +4981,37 @@ def formatHandler(obj):
     raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
 
 def canEditCollection(userInfo, collectionId):
-    if not userInfo:
-        return False
-    return userInfo['is_curator']
+    # if not logged in, can't edit anything
+    if not userInfo or not userInfo['orcid']:
+        return 0
+    # if the user is a curator, they can do anything
+    if userInfo['is_curator']:
+        return 3
+    # otherwise, check the db to see if they're an owner or collaborator
+    (conn, cur) = connect_to_db()
+    template = "SELECT role FROM collection_person_map WHERE person_orcid=%s AND collection_id=%s"
+    query = cur.mogrify(template, (userInfo['orcid'], collectionId))
+    cur.execute(query)
+    results = cur.fetchall()
+    # if the user is not associated with this collection at all, they can't edit it
+    if 0 == len(results):
+        return 0
+    # the user is definitely either a collaborator or editor at this point
+    # just add an extra check just in case
+    canEdit = False
+    isOwner = False
+    for rslt in results:
+        if rslt['role'].lower() == 'owner':
+            canEdit = True
+            isOwner = True
+            break
+        elif rslt['role'].lower() == 'collaborator':
+            canEdit = True
+    # if the user is an owner, they can add new co-owners, add/remove collaborators, and edit anything else
+    if isOwner:
+        return 2
+    # if the user is a collaborator, they can edit anything except owners/collaborators
+    return 1 if canEdit else 0
 
 @app.route('/submit/collection', methods=['GET', 'POST'])
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
@@ -4949,6 +5023,8 @@ def make_collection(collection_id=None):
     if not user_info:
         session['next'] = request.path
         return redirect(url_for('login'))
+    if not user_info['orcid']:
+        return render_template('make_collection.html', err="Please log in with an account associated with an ORCID", path=request.path)
     if not collection_id:
         collection_id=request.form.get('collection_id')
     if not collection_id:
@@ -4962,7 +5038,7 @@ def make_collection(collection_id=None):
     if editing:
         canEdit = canEditCollection(user_info, collection_id)
         if canEdit:
-            (conn, cur) = connect_to_db()
+            (conn, cur) = connect_to_db(user_info['is_curator'])
             log_template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
             add_prj_query_template = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
             add_ds_query_template = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
@@ -4976,43 +5052,76 @@ def make_collection(collection_id=None):
             ds_to_rm = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_rm").split(",")))
             prnts_to_add = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_add").split(",")))
             prnts_to_rm = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_rm").split(",")))
-            sleep_time = 1
             for prj in prjs_to_add:
                 add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
                 cur.execute(add_prj_query)
             if len(prjs_to_add) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)))
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)))
                 cur.execute(query)
             for ds in ds_to_add:
                 add_ds_query = cur.mogrify(add_ds_query_template, (collection_id, ds))
                 cur.execute(add_ds_query)
             if len(ds_to_add) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)))
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)))
                 cur.execute(query)
             for prj in prjs_to_rm:
                 rm_prj_query = cur.mogrify(rm_prj_query_template, (collection_id, prj))
                 cur.execute(rm_prj_query)
             if len(prjs_to_rm) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)))
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)))
                 cur.execute(query)
             for ds in ds_to_rm:
                 rm_ds_query = cur.mogrify(rm_ds_query_template, (collection_id, ds))
                 cur.execute(rm_ds_query)
             if len(ds_to_rm) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)))
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)))
                 cur.execute(query)
             for prnt in prnts_to_add:
                 add_prnt_query = cur.mogrify(add_prnt_query_template, (collection_id, prnt))
                 cur.execute(add_prnt_query)
             if len(prnts_to_add)>0:
-                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)))
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)))
                 cur.execute(query)
             for prnt in prnts_to_rm:
                 rm_prnt_query = cur.mogrify(rm_prnt_query_template, (collection_id, prnt))
                 cur.execute(rm_prnt_query)
             if len(prnts_to_rm)>0:
-                query = cur.mogrify(log_template, (collection_id, user_info['name'], "Removed parent" + ("s" if len(prnts_to_rm)>1 else "") + ": " + ", ".join(prnts_to_rm)))
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed parent" + ("s" if len(prnts_to_rm)>1 else "") + ": " + ", ".join(prnts_to_rm)))
                 cur.execute(query)
+            # if the user is an owner or curator, allow them to add/remove collaborators or add co-owners
+            if 1 < canEdit:
+                add_template = "INSERT INTO collection_person_map (collection_id, person, person_orcid, role) VALUES (%s, %s, %s, %s)"
+                rm_template = "DELETE FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s AND role=%s"
+                owners_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("owners_add").split(",")))
+                for owner in owners_to_add:
+                    query = cur.mogrify(add_template, (collection_id, owner['id'], owner['id_orcid'], "owner"))
+                    cur.execute(query)
+                if 0 < len(owners_to_add):
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added co-owner" + ("s" if 1 < len(owners_to_add) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], owners_to_add))))
+                    cur.execute(query)
+                collabs_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("collaborators_add").split(",")))
+                for clbrtr in collabs_to_add:
+                    query = cur.mogrify(add_template, (collection_id, clbrtr['id'], clbrtr['id_orcid'], "collaborator"))
+                    cur.execute(query)
+                if 0 < len(collabs_to_add):
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added collaborator" + ("s" if 1 < len(collabs_to_add) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], collabs_to_add))))
+                    cur.execute(query)
+                collabs_to_rm = list(filter(lambda owner: len(owner)>0, request.form.get("collaborators_rm").split(",")))
+                for clbrtr in collabs_to_rm:
+                    query = cur.mogrify(rm_template, (collection_id, clbrtr, "collaborator"))
+                    cur.execute(query)
+                if 0 < len(collabs_to_rm):
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed collaborator" + ("s" if 1 < len(collabs_to_rm) else "") + ": " + ", ".join(collabs_to_rm)))
+                    cur.execute(query)
+                # if the user is a curator, allow them to also remove owners
+                if 2 < canEdit:
+                    owners_to_rm = list(filter(lambda owner: len(owner)>0, request.form.get("owners_rm").split(",")))
+                    for owner in owners_to_rm:
+                        query = cur.mogrify(rm_template, (collection_id, owner, "owner"))
+                        cur.execute(query)
+                    if 0 < len(owners_to_rm):
+                        query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed owner" + ("s" if 1 < len(owners_to_rm) else "") + ": " + ", ".join(owners_to_rm)))
+                        cur.execute(query)
             conn.commit()
             return redirect('/view/collection/'+collection_id)
         session['next'] = request.path
@@ -5026,6 +5135,9 @@ def make_collection(collection_id=None):
             name = request.form.get('collection_name')
             description = request.form.get('description')
             owner = user_info.get('name')
+            owner_orcid = user_info.get('orcid')
+            coowner_orcids = request.form.get("coowners")
+            collaborator_orcids = request.form.get("collaborators")
             project_ids = request.form.get('projects')
             if project_ids:
                 project_ids = project_ids.replace(", ", ",")
@@ -5043,8 +5155,8 @@ def make_collection(collection_id=None):
             queryTemplate = "INSERT INTO collection (collection_id, collection_name, description) VALUES (%s, %s, %s)"
             query = cur.mogrify(queryTemplate, (nextId, name, description))
             cur.execute(query)
-            queryTemplate2 = "INSERT INTO collection_person_map (collection_id, person, role) VALUES (%s, %s, %s)"
-            query2 = cur.mogrify(queryTemplate2, (nextId, owner, "owner"))
+            queryTemplate2 = "INSERT INTO collection_person_map (collection_id, person, role, person_orcid) VALUES (%s, %s, %s, %s)"
+            query2 = cur.mogrify(queryTemplate2, (nextId, owner, "owner", owner_orcid))
             cur.execute(query2)
             if project_ids:
                 projects_arr = list(set(project_ids.split(',')))
@@ -5059,13 +5171,23 @@ def make_collection(collection_id=None):
                     query4 = cur.mogrify(queryTemplate4, (nextId, ds))
                     cur.execute(query4)
             queryTemplate5 = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
-            query5 = cur.mogrify(queryTemplate5, (nextId, owner, "Created"))
+            query5 = cur.mogrify(queryTemplate5, (nextId, owner_orcid, "Created"))
             cur.execute(query5)
             if len(parents)>0:
                 queryTemplate6 = "INSERT INTO collection_parent_map (collection_id, parent_collection_id) VALUES (%s, %s)"
                 for parent in parents:
                     query6 = cur.mogrify(queryTemplate6, (nextId, parent))
                     cur.execute(query6)
+            if coowner_orcids and len(coowner_orcids) > 0:
+                coowners = getPeopleFromOrcids(coowner_orcids.split(","))
+                for coowner in coowners:
+                    query7 = cur.mogrify(queryTemplate2, (nextId, coowner['id'], "owner", coowner['id_orcid']))
+                    cur.execute(query7)
+            if collaborator_orcids and len(collaborator_orcids) > 0:
+                collaborators = getPeopleFromOrcids(collaborator_orcids.split(","))
+                for collaborator in collaborators:
+                    query8 = cur.mogrify(queryTemplate2, (nextId, collaborator['id'], "collaborator", collaborator['id_orcid']))
+                    cur.execute(query8)
             conn.commit()
             updateNextCollectionRef()
             return redirect('/view/collection/'+nextId)
@@ -5076,7 +5198,7 @@ def make_collection(collection_id=None):
                 parentIds = collection_id.split(",")
                 uniqueParents = set(parentIds)
                 uniqueParentsStr = ",".join(uniqueParents)
-            return render_template("make_collection.html", parents=uniqueParentsStr)
+            return render_template("make_collection.html", parents=uniqueParentsStr, people=getAllPeopleWithOrcids())
 
 @app.route('/view/collection/<collection_id>')
 def collection_landing_page(collection_id):
@@ -5088,10 +5210,11 @@ def collection_landing_page(collection_id):
         template_dict['current_user'] = session.get('user_info')
         template_dict['canEdit'] = canEditCollection(template_dict['current_user'], collection_id)
         template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['parents'])
+        template_dict['people'] = getAllPeopleWithOrcids()
         # get the IDs of people involved in making the collection
-        owners = list(map(get_person_from_name, template_dict['owners']))
+        owners = list(map(get_person_from_orcid, template_dict['owners']))
         template_dict['owners'] = owners
-        collaborators = list(map(get_person_from_name, template_dict['collaborators']))
+        collaborators = list(map(get_person_from_orcid, template_dict['collaborators']))
         template_dict['collaborators'] = collaborators
         # get all the projects in this collection
         template_dict['projects'] = None
@@ -5168,6 +5291,18 @@ def collection_landing_page(collection_id):
                 return divStart + getLink(collection_entry[0]) + "<br>".join(subDivs) + "</div>"
             return "\n".join(map(makeDiv, collectionTree.items()))
         template_dict['inheritance_tree'] = inheritance_html
+        def getNameFromPersonId(id_str):
+            suffix = ""
+            if id_str.endswith(" Jr.") or id_str.endswith(" Sr."):
+                suffix = id_str[-4:]
+                id_str = id_str[0:-4]
+            names = id_str.split(", ")
+            last_name = names[0]
+            other_names = " ".join(names[1:])
+            return other_names + " " + last_name + suffix
+        template_dict['getNameFromPersonId'] = getNameFromPersonId
+        template_dict['json_dumps'] = json.dumps
+        template_dict['json_loads'] = json.loads
         return render_template("collection.html", **template_dict, truncate=truncateStr)
     return render_template("collection.html", collection_id=collection_id, err="No such collection")
 

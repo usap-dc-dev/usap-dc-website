@@ -77,7 +77,7 @@ function onInputChange(inputBox) {
         let camelCase = tokens[0] + tokens.slice(1).map(x => x.length>0? (x[0].toUpperCase()+x.slice(1)) : "").join("");
         let divContainer = document.getElementById(camelCase.replace("Input", "Div"));
         if(divContainer) {
-            let existing = new Set(Array.from(divContainer.getElementsByTagName("div")).flatMap(e => Array.from(e.childNodes).filter(n => n.nodeType == Node.TEXT_NODE)).map(n => n.textContent))
+            let existing = new Set(Array.from(divContainer.getElementsByTagName("div")).flatMap(e => Array.from(e.childNodes).filter(n => n.nodeType == Node.TEXT_NODE)).map(n => n.textContent));
             tokens = Array.from(inputBox.value.matchAll(/[pc]?[0-9]{6,}/g));
             for(let token of tokens) {
                 if(!existing.has(token[0])) {
@@ -95,4 +95,47 @@ function onInputChange(inputBox) {
             inputBox.value = newValueArr.join(",");
         }
     }
+}
+
+//Only used for owners and collaborators
+function onInputChange2(inputBox) {
+    if(inputBox.id && !isFixing) {
+        let tokens = inputBox.id.split("_");
+        let camelCase = tokens[0] + tokens.slice(1).map(x => x.length>0? (x[0].toUpperCase()+x.slice(1)) : "").join("");
+        let divContainer = document.getElementById(camelCase.replace("Input", "Div"));
+        if(divContainer) {
+            let existing = new Set(Array.from(divContainer.getElementsByTagName("div")).flatMap(e => Array.from(e.childNodes).filter(n => n.nodeType == Node.TEXT_NODE)).map(n => n.textContent));
+            tokens = Array.from(inputBox.value.matchAll(/[A-Za-z]+(([ -])[A-Za-z]+)*,( [A-Za-z\-]+)(([ -])[A-Za-z]+(\.?))*/g)).map(x => x[0]);
+            for(let token of tokens) {
+                let option = document.getElementById("opt_"+token.trim());
+                if(option) {
+                    let val = option.value;
+                    let title = null;
+                    if(option.hasAttribute("realvalue")) {
+                        val = option.getAttribute("realvalue");
+                        title = option.value;
+                    }
+                    if(!existing.has(val)) {
+                        divContainer.appendChild(title ? makeInfoOf(val, title) : makeInfoOf(val));
+                    }
+                    inputBox.value = inputBox.value.replace(title ? title : val, "")
+                }
+                tokens = inputBox.value.split(";");
+                let newValueArr = [];
+                for(let token of tokens) {
+                    if(!!(token.trim())) {
+                        newValueArr.push(token);
+                    }
+                }
+                inputBox.value = newValueArr.join(";");
+            }
+        }
+    }
+}
+
+function redirectToLogin(nextUrl) {
+    setTimeout(function() {
+        sessionStorage.nextUrl = nextUrl;
+        window.location.replace("/login");
+    }, 5000);
 }
