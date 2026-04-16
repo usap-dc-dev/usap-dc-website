@@ -84,5 +84,27 @@
     </table>
   </div>
 {% endif %}
-
+{% if canDoCollections %}
+<h3>Collections</h3>
+{% if collections|length > 0 %}
+<div id="dif-browser-table">
+    <table class="sortable" preserve_style="row">
+        <tr>
+            <th style="width:30em">Collection Title</th>
+            <th style="width:30em">Your Role</th>
+            <th style="width:30em">Actions</th>
+        </tr>
+        {% for c in collections %}<tr>
+            <td>{{c['collection_name']}}</td>
+            <td>{% if user_info.orcid in c['owners'] %}{% if c['owners']|length > 1 %}Co-o{% else %}O{% endif %}wner{% else %}Collaborator{% endif %}</td>
+            <td><a href="/view/collection/{{c['collection_id']}}">View and Edit</a>&nbsp;/&nbsp;<a href="/submit/collection?parents={{c['collection_id']}}">Create New Collection From This One</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h4 style="padding-left: 10px"><a href="/submit/collection">Create a new collection</a></h4>
+</div>
+{% else %}
+<h4>Collections let you gather related datasets and projects into one entity. Create your first <a href="/submit/collection">here</a>.</a></h4>
+{% endif %}
+{% endif %}
 {% endblock body %}

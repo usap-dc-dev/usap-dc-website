@@ -6012,8 +6012,14 @@ def dashboard():
             fair_map[dataset_id] = [poorCount, fairCount, goodCount]
         else:
             fair_map[dataset_id] = None
-
-    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards, fair_eval=fair_map)
+    canDoCollections = not not user_info['orcid']
+    collections = None
+    if canDoCollections:
+        collectionsQueryTemplate = "SELECT * FROM collection_view WHERE %s=ANY(owners) OR %s=ANY(collaborators)"
+        collectionsQuery = cur.mogrify(collectionsQueryTemplate, (user_info['orcid'], user_info['orcid']))
+        cur.execute(collectionsQuery)
+        collections = list(map(lambda e: dict(e), cur.fetchall()))
+    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards, canDoCollections=canDoCollections, collections=collections, fair_eval=fair_map)
 
 
 @app.route('/curator/award_letters', methods=['GET', 'POST'])
