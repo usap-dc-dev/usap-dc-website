@@ -46,6 +46,7 @@ from zoneinfo import ZoneInfo as zi
 from io import BytesIO
 import mimetypes
 import time
+from queue import Queue
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -5013,9 +5014,12 @@ def canEditCollection(userInfo, collectionId):
     # if the user is a collaborator, they can edit anything except owners/collaborators
     return 1 if canEdit else 0
 
+inheritWarning = False
+
 @app.route('/submit/collection', methods=['GET', 'POST'])
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
 def make_collection(collection_id=None):
+    global inheritWarning
     inheriting = False
     duplicate = False
     user_info = session.get('user_info')
@@ -5050,7 +5054,9 @@ def make_collection(collection_id=None):
             ds_to_add = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_add").split(",")))
             prjs_to_rm = list(filter(lambda prj: len(prj)>0, request.form.get("projects_rm").split(",")))
             ds_to_rm = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_rm").split(",")))
-            prnts_to_add = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_add").split(",")))
+            prnts_requested_to_add = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_add").split(",")))
+            prnts_to_add = list(filter(lambda prnt: not wouldAddCycle(collection_id, prnt), prnts_requested_to_add))
+            prnts_not_added = [item for item in prnts_requested_to_add if item not in prnts_to_add]
             prnts_to_rm = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_rm").split(",")))
             for prj in prjs_to_add:
                 add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
@@ -5082,6 +5088,9 @@ def make_collection(collection_id=None):
             if len(prnts_to_add)>0:
                 query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)))
                 cur.execute(query)
+            if len(prnts_not_added) > 0:
+                inheritWarning = "You tried to add the following collection" + ("s" if len(prnts_not_added)>1 else "") + ", which would have introduced " + ("a cyclical dependency" if len(prnts_not_added)==1 else "cyclical dependencies") + ": " + ", ".join(prnts_not_added)
+                print(inheritWarning)
             for prnt in prnts_to_rm:
                 rm_prnt_query = cur.mogrify(rm_prnt_query_template, (collection_id, prnt))
                 cur.execute(rm_prnt_query)
@@ -5202,10 +5211,14 @@ def make_collection(collection_id=None):
 
 @app.route('/view/collection/<collection_id>')
 def collection_landing_page(collection_id):
+    global inheritWarning
     collectionInfo = get_collection(collection_id)
     if collectionInfo:
         (conn, cur) = connect_to_db()
         template_dict = {**collectionInfo}
+        if inheritWarning:
+            template_dict['inheritWarn'] = inheritWarning
+            inheritWarning = False
         template_dict['getName'] = get_name_from_person
         template_dict['current_user'] = session.get('user_info')
         template_dict['canEdit'] = canEditCollection(template_dict['current_user'], collection_id)
@@ -5319,6 +5332,32 @@ def getParentCollectionsHTML(parentIds):
             name = results[0]['collection_name'] if results[0]['collection_name'] else "Untitled"
             htmlList.append((pid, "<a href=\"" + url + "\">" + name + "</a>"))
     return htmlList
+
+# TODO need to make this actually do something
+def wouldAddCycle(child_id, prospective_parent_id):
+    if not child_id or not prospective_parent_id:
+        return False
+    if child_id == prospective_parent_id:
+        return True
+    (conn, cur) = connect_to_db()
+    visiting = Queue()
+    visiting.put(prospective_parent_id)
+    queryTemplate = "SELECT parents FROM collection_view WHERE collection_id=%s"
+    while not visiting.empty():
+        curId = visiting.get()
+        query = cur.mogrify(queryTemplate, (curId,))
+        cur.execute(query)
+        rslt = cur.fetchall()
+        for row in rslt:
+            print("Row:", row)
+            parents = row['parents']
+            print("Parents of", child_id)
+            for parent in parents:
+                print(parent)
+                if parent == child_id:
+                    return True
+                visiting.put(parent)
+    return False
 
 def findInheritanceCycles(collectionId, parentIds):
     if not collectionId:
