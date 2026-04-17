@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% set cur="collection" %}
 {% block body %}
-<h1>Collection {{collection_id}}{% if err %}<br>ERROR: {{err}}</h1>{% else %}{% if collection_name %}: {{collection_name}}{% endif %}</h1>{% if description %}
+{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}</td></tr></table>{% endif %}{% if description %}
 <p>{{description}}</p>{% endif %}
 {% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">{% endif %}
 <h2>Owner{% if 1 < owners|length %}s{% endif %}</h2>{% for owner in owners %}
