@@ -16,10 +16,10 @@
 {% endfor %}
 {% if 1 < canEdit %}<div id="add_collaborators_div" class="show_when_editing" hidden><label for="add_collaborators_input">Collaborators to add:</label><input name="collaborators_add" id="add_collaborators_input" list="people_list" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="addCollaboratorsDiv"></div></div>
 <div id="rm_collaborators_div" class="show_when_editing" hidden><label for="rm_collaborators_input">Collaborators to remove:</label><input hidden readonly name="collaborators_rm" id="rm_collaborators_input" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="rmCollaboratorsDiv"></div></div>{% endif %}
-{% if 0 < parents_html|length %}
+{% if inheritWarn or 0 < parents_html|length %}
 <h3>Inherits from:</h3>
 {% for parent in parents_html %}<p>{{parent[1]|safe}}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeParent('{{parent[0]}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button></p>{% endfor %}{% if inheritWarn %}
-<p>{{inheritWarn}}</p>{% endif %}
+<p><i class="material-icons" style="color: yellow; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" loading="eager">warning</i>&nbsp;&nbsp;{{inheritWarn|safe}}</p>{% endif %}
 {% endif %}
 {% if canEdit %}
 <div id="add_parents_div" class="show_when_editing" hidden><label for="parents_input">Parents to add: </label><input name="parents_add" id="parents_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentsDiv"></div></div>

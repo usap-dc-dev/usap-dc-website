@@ -5089,7 +5089,7 @@ def make_collection(collection_id=None):
                 query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)))
                 cur.execute(query)
             if len(prnts_not_added) > 0:
-                inheritWarning = "You tried to add the following collection" + ("s" if len(prnts_not_added)>1 else "") + ", which would have introduced " + ("a cyclical dependency" if len(prnts_not_added)==1 else "cyclical dependencies") + ": " + ", ".join(prnts_not_added)
+                inheritWarning = "You tried to add the following collection" + ("s" if len(prnts_not_added)>1 else "") + ", which would have introduced " + ("a cyclical dependency" if len(prnts_not_added)==1 else "cyclical dependencies") + ": " + ", ".join(map(lambda cid: "<a target=\"_blank\" href=\"/view/collection/"+cid + "\">" + cid + "</a>", prnts_not_added))
                 print(inheritWarning)
             for prnt in prnts_to_rm:
                 rm_prnt_query = cur.mogrify(rm_prnt_query_template, (collection_id, prnt))
