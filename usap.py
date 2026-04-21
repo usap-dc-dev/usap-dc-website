@@ -450,7 +450,7 @@ def getPeopleFromOrcids(orcids):
         if len(rslt) == 0:
             return None
         return dict(rslt[0])
-    return list(map(getPersonFromOrcid, orcids))
+    return list(map(getPersonFromOrcid, list(set(orcids))))
 
 def getAllPeopleWithOrcids():
     (conn, cur) = connect_to_db()
@@ -5020,9 +5020,12 @@ inheritWarning = False
 @app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
 def make_collection(collection_id=None):
     global inheritWarning
+    email_info = json.loads(open("inc/report_config.json", "r").read())
     inheriting = False
     duplicate = False
     user_info = session.get('user_info')
+    makeEmailBody = lambda body: """<html><head></head><body>%s</body></html>""" % body
+    emailBody = ""
     editing = request.path.startswith("/edit")
     if not user_info:
         session['next'] = request.path
@@ -5040,6 +5043,8 @@ def make_collection(collection_id=None):
             if collection_id:
                 duplicate = True
     if editing:
+        emailBody = "<h1>Collection Update</h1>\n<a href=\"https://orcid.org/" + user_info['orcid'] + "\">" + user_info['name'] + "</a> has edited collection <a href=\"" + url_for("collection_landing_page", collection_id=collection_id, _external=True) +"\">" + collection_id + "</a>"
+        changes = []
         canEdit = canEditCollection(user_info, collection_id)
         if canEdit:
             (conn, cur) = connect_to_db(user_info['is_curator'])
@@ -5062,31 +5067,41 @@ def make_collection(collection_id=None):
                 add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
                 cur.execute(add_prj_query)
             if len(prjs_to_add) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)))
+                logText = "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                 cur.execute(query)
             for ds in ds_to_add:
                 add_ds_query = cur.mogrify(add_ds_query_template, (collection_id, ds))
                 cur.execute(add_ds_query)
             if len(ds_to_add) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)))
+                logText = "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                 cur.execute(query)
             for prj in prjs_to_rm:
                 rm_prj_query = cur.mogrify(rm_prj_query_template, (collection_id, prj))
                 cur.execute(rm_prj_query)
             if len(prjs_to_rm) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)))
+                logText = "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                 cur.execute(query)
             for ds in ds_to_rm:
                 rm_ds_query = cur.mogrify(rm_ds_query_template, (collection_id, ds))
                 cur.execute(rm_ds_query)
             if len(ds_to_rm) > 0:
-                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)))
+                logText = "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                 cur.execute(query)
             for prnt in prnts_to_add:
                 add_prnt_query = cur.mogrify(add_prnt_query_template, (collection_id, prnt))
                 cur.execute(add_prnt_query)
             if len(prnts_to_add)>0:
-                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)))
+                logText = "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                 cur.execute(query)
             if len(prnts_not_added) > 0:
                 inheritWarning = "You tried to add the following collection" + ("s" if len(prnts_not_added)>1 else "") + ", which would have introduced " + ("a cyclical dependency" if len(prnts_not_added)==1 else "cyclical dependencies") + ": " + ", ".join(map(lambda cid: "<a target=\"_blank\" href=\"/view/collection/"+cid + "\">" + cid + "</a>", prnts_not_added))
@@ -5095,32 +5110,63 @@ def make_collection(collection_id=None):
                 rm_prnt_query = cur.mogrify(rm_prnt_query_template, (collection_id, prnt))
                 cur.execute(rm_prnt_query)
             if len(prnts_to_rm)>0:
-                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed parent" + ("s" if len(prnts_to_rm)>1 else "") + ": " + ", ".join(prnts_to_rm)))
+                logText = "Removed parent" + ("s" if len(prnts_to_rm)>1 else "") + ": " + ", ".join(prnts_to_rm)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                 cur.execute(query)
             # if the user is an owner or curator, allow them to add/remove collaborators or add co-owners
             if 1 < canEdit:
                 add_template = "INSERT INTO collection_person_map (collection_id, person, person_orcid, role) VALUES (%s, %s, %s, %s)"
                 rm_template = "DELETE FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s AND role=%s"
+                find_template = "SELECT role FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s"
                 owners_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("owners_add").split(",")))
+                owners_added = []
                 for owner in owners_to_add:
-                    query = cur.mogrify(add_template, (collection_id, owner['id'], owner['id_orcid'], "owner"))
-                    cur.execute(query)
-                if 0 < len(owners_to_add):
-                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added co-owner" + ("s" if 1 < len(owners_to_add) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], owners_to_add))))
+                    findQuery = cur.mogrify(find_template, (collection_id, owner['id_orcid']))
+                    cur.execute(findQuery)
+                    found = list(map(dict, cur.fetchall()))
+                    isAlreadyOwner = reduce(lambda acc, cur: acc or cur['role']=='owner', found, False)
+                    isAlreadyCollaborator = reduce(lambda acc, cur: acc or cur['role']=='collaborator', found, False)
+                    query = None
+                    if isAlreadyCollaborator:
+                        template = "UPDATE collection_person_map SET role=%s WHERE person_orcid=%s AND collection_id=%s"
+                        query = cur.mogrify(template, ("owner", owner['id_orcid'], collection_id))
+                    elif not isAlreadyOwner:
+                        query = cur.mogrify(add_template, (collection_id, owner['id'], owner['id_orcid'], "owner"))
+                    if query:
+                        owners_added.append(owner)
+                        cur.execute(query)
+                if 0 < len(owners_added):
+                    logText = "Added co-owner" + ("s" if 1 < len(owners_added) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], owners_added))
+                    changes.append(logText)
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                     cur.execute(query)
                 collabs_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("collaborators_add").split(",")))
+                collabs_added = []
                 for clbrtr in collabs_to_add:
-                    query = cur.mogrify(add_template, (collection_id, clbrtr['id'], clbrtr['id_orcid'], "collaborator"))
-                    cur.execute(query)
-                if 0 < len(collabs_to_add):
-                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Added collaborator" + ("s" if 1 < len(collabs_to_add) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], collabs_to_add))))
+                    findQuery = cur.mogrify(find_template, (collection_id, clbrtr['id_orcid']))
+                    cur.execute(findQuery)
+                    found = list(map(dict, cur.fetchall()))
+                    beingRemovedAsOwner = (2 < canEdit) and (clbrtr['id_orcid'] in map(lambda orcid: orcid.strip(), request.form.get("owners_rm").split(",")))
+                    isAlreadyOwner = (not beingRemovedAsOwner) and reduce(lambda acc, cur: acc or cur['role']=='owner', found, False)
+                    isAlreadyCollaborator = reduce(lambda acc, cur: acc or cur['role']=='collaborator', found, False)
+                    if not (isAlreadyOwner or isAlreadyCollaborator):
+                        collabs_added.append(clbrtr)
+                        query = cur.mogrify(add_template, (collection_id, clbrtr['id'], clbrtr['id_orcid'], "collaborator"))
+                        cur.execute(query)
+                if 0 < len(collabs_added):
+                    logText = "Added collaborator" + ("s" if 1 < len(collabs_added) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], collabs_added))
+                    changes.append(logText)
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                     cur.execute(query)
                 collabs_to_rm = list(filter(lambda owner: len(owner)>0, request.form.get("collaborators_rm").split(",")))
                 for clbrtr in collabs_to_rm:
                     query = cur.mogrify(rm_template, (collection_id, clbrtr, "collaborator"))
                     cur.execute(query)
                 if 0 < len(collabs_to_rm):
-                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed collaborator" + ("s" if 1 < len(collabs_to_rm) else "") + ": " + ", ".join(collabs_to_rm)))
+                    logText = "Removed collaborator" + ("s" if 1 < len(collabs_to_rm) else "") + ": " + ", ".join(collabs_to_rm)
+                    changes.append(logText)
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                     cur.execute(query)
                 # if the user is a curator, allow them to also remove owners
                 if 2 < canEdit:
@@ -5129,9 +5175,18 @@ def make_collection(collection_id=None):
                         query = cur.mogrify(rm_template, (collection_id, owner, "owner"))
                         cur.execute(query)
                     if 0 < len(owners_to_rm):
-                        query = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Removed owner" + ("s" if 1 < len(owners_to_rm) else "") + ": " + ", ".join(owners_to_rm)))
+                        logText = "Removed owner" + ("s" if 1 < len(owners_to_rm) else "") + ": " + ", ".join(owners_to_rm)
+                        changes.append(logText)
+                        query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                         cur.execute(query)
             conn.commit()
+            emailBody += "\n<ul>" + "\n".join(map(lambda change: "<li>" + change + "</li>", changes)) + "</ul>"
+            success, error = send_gmail_message("info@usap-dc.org", email_info["RECIPIENTS"], "Collection " + collection_id + " has been updated", makeEmailBody(emailBody), None, None)
+            if error:
+                print("Collection " + collection_id + " has been updated, but the email failed to send. See the database for details.")
+                print(error)
+            else:
+                print("Collection " + collection_id + " has been updated, and emails have been sent to the following address(es): " + ", ".join(email_info["RECIPIENTS"]) + ". See the database for details.")
             return redirect('/view/collection/'+collection_id)
         session['next'] = request.path
         return redirect(url_for('login'))
@@ -5139,11 +5194,15 @@ def make_collection(collection_id=None):
         # at this point, we're definitely creating a new collection
         # if it's a POST request, this was sent by the form
         if request.method=="POST":
+            details = {}
             (conn, cur) = connect_to_db()
             nextId = getNextCollectionRef()
             name = request.form.get('collection_name')
+            details['Title'] = "<h3>" + name + "</h3>"
             description = request.form.get('description')
             owner = user_info.get('name')
+            details['Creator'] = "<p>" + owner + "</p>"
+            details['Description'] = "<p>" + description + "</p>"
             owner_orcid = user_info.get('orcid')
             coowner_orcids = request.form.get("coowners")
             collaborator_orcids = request.form.get("collaborators")
@@ -5154,9 +5213,10 @@ def make_collection(collection_id=None):
             if dataset_ids:
                 dataset_ids = dataset_ids.replace(", ", ",")
             parents = request.form.get('inherit_from')
-            if not parents:
+            if parents:
+                parents = parents.split(",")
+            else:
                 parents = []
-            parents = parents.split(",")
             # ensure uniqueness
             parents = list(set(parents))
             # queryTemplate = "INSERT INTO collection (collection_id, collection_name, owner, description, inherit_from, project_ids, dataset_ids) VALUES (%s, %s, %s, %s, %s, string_to_array(%s, ','), string_to_array(%s, ','))"
@@ -5169,12 +5229,24 @@ def make_collection(collection_id=None):
             cur.execute(query2)
             if project_ids:
                 projects_arr = list(set(project_ids.split(',')))
-                queryTemplate3 = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s)"
+                if len(projects_arr)>0:
+                    queryTemplate3 = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s)"
+                    getPrjsQueryTemplate = "SELECT DISTINCT proj_uid, title FROM project WHERE proj_uid IN (" + ", ".join(["%s" for x in projects_arr]) + ")"
+                    getPrjsQuery = cur.mogrify(getPrjsQueryTemplate, tuple(projects_arr))
+                    cur.execute(getPrjsQuery)
+                    prjs = cur.fetchall()
+                    details['Projects'] = "<ul>" + "".join(map(lambda prj: "<li><a href=\"" + url_for("project_landing_page", project_id=prj['proj_uid'], _external=True) + "\">" + prj['title'] + "</a></li>", prjs)) + "</ul>"
                 for prj in projects_arr:
                     query3 = cur.mogrify(queryTemplate3, (nextId, prj))
                     cur.execute(query3)
             if dataset_ids:
                 datasets_arr = list(set(dataset_ids.split(',')))
+                if len(datasets_arr)>0:
+                    getDsQueryTemplate = "SELECT DISTINCT id, title FROM dataset WHERE id in (" + ", ".join(["%s" for x in datasets_arr]) + ")"
+                    getDsQuery = cur.mogrify(getDsQueryTemplate, tuple(datasets_arr))
+                    cur.execute(getDsQuery)
+                    dss = cur.fetchall()
+                    details['Datasets'] = "<ul>" + "".join(map(lambda ds: "<li><a href=\"" + url_for("landing_page", dataset_id=ds['id'], _external=True) + "\">" + ds['title'] + "</a></li>", dss)) + "</ul>"
                 queryTemplate4 = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s)"
                 for ds in datasets_arr:
                     query4 = cur.mogrify(queryTemplate4, (nextId, ds))
@@ -5189,16 +5261,27 @@ def make_collection(collection_id=None):
                     cur.execute(query6)
             if coowner_orcids and len(coowner_orcids) > 0:
                 coowners = getPeopleFromOrcids(coowner_orcids.split(","))
+                if len(coowners)>0:
+                    details['Co-owner' + ('s' if len(coowners)>1 else '')] = ("<ul%s>" % (" list-style-type: none" if 1==len(coowners) else "")) + "".join(map(lambda o: "<li><a href=\"https://orcid.org/" + o['id_orcid'] + "\">" + o['id'] + "</a></li>", coowners)) + "</ul>"
                 for coowner in coowners:
                     query7 = cur.mogrify(queryTemplate2, (nextId, coowner['id'], "owner", coowner['id_orcid']))
                     cur.execute(query7)
-            if collaborator_orcids and len(collaborator_orcids) > 0:
-                collaborators = getPeopleFromOrcids(collaborator_orcids.split(","))
-                for collaborator in collaborators:
-                    query8 = cur.mogrify(queryTemplate2, (nextId, collaborator['id'], "collaborator", collaborator['id_orcid']))
-                    cur.execute(query8)
+            if collaborator_orcids and len(collaborator_orcids) > 0:# make sure collaborators aren't already owners
+                collaborator_orcids_list = [c for c in collaborator_orcids.split(",") if c not in coowner_orcids and c != owner_orcid]
+                if len(collaborator_orcids_list) > 0:
+                    collaborators = getPeopleFromOrcids(collaborator_orcids_list)
+                    details['Collaborator' + ('s' if len(collaborators)>1 else '')] = ("<ul%s>" % (" list-style-type: none" if 1==len(collaborators) else "")) + "".join(map(lambda o: "<li><a href=\"https://orcid.org/" + o['id_orcid'] + "\">" + o['id'] + "</a></li>", collaborators)) + "</ul>"
+                    for collaborator in collaborators:
+                        query8 = cur.mogrify(queryTemplate2, (nextId, collaborator['id'], "collaborator", collaborator['id_orcid']))
+                        cur.execute(query8)
             conn.commit()
             updateNextCollectionRef()
+            emailBody = "<h1>New Collection: <a href=\"" + url_for("collection_landing_page", collection_id=nextId, _external=True) +"\">" + name + "</a></h1>\n"
+            emailSubject = "New collection created: " + name
+            for detail in details.keys():
+                emailBody += "<h2>" + detail + "</h2>"
+                emailBody += details[detail]
+            success, error = send_gmail_message("info@usap-dc.org", email_info["RECIPIENTS"], emailSubject, makeEmailBody(emailBody), None, None)
             return redirect('/view/collection/'+nextId)
         # otherwise, view the webpage/form for creating a new collection
         else:
