@@ -5198,12 +5198,11 @@ def make_collection(collection_id=None):
             (conn, cur) = connect_to_db()
             nextId = getNextCollectionRef()
             name = request.form.get('collection_name')
-            details['Title'] = "<h3>" + name + "</h3>"
             description = request.form.get('description')
             owner = user_info.get('name')
-            details['Creator'] = "<p>" + owner + "</p>"
-            details['Description'] = "<p>" + description + "</p>"
             owner_orcid = user_info.get('orcid')
+            details['Creator'] = "<a href=\"https://orcid.org/" + owner_orcid + "\">" + owner + "</a>"
+            details['Description'] = "<p>" + description + "</p>"
             coowner_orcids = request.form.get("coowners")
             collaborator_orcids = request.form.get("collaborators")
             project_ids = request.form.get('projects')
