@@ -25,6 +25,9 @@ function removeCollaborator(name) {
 function toggleEditing() {
     Array.prototype.forEach.call(document.getElementsByClassName("show_when_editing"), e => e.hidden = editing);
     editing = !editing;
+    Array.prototype.forEach.call(document.getElementsByClassName("editable"), function(element) {
+        element.contentEditable = editing ? "plaintext-only" : false;
+    });
     if(editing) {
         document.getElementById("editBtn").innerHTML = document.getElementById("submitBtn").innerHTML;
     }

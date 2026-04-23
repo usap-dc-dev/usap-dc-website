@@ -50,6 +50,18 @@ function fixValues(formElement) {
             inputField.value = Array.prototype.flatMap.call(div.getElementsByClassName("infoDiv"), x => Array.prototype.filter.call(x.childNodes, y => y.nodeType==Node.TEXT_NODE)).map(n=>n.textContent).join(",");
         }
     }
+    let editables = formElement.getElementsByClassName("editable");
+    let index = 0;
+    for(let e of editables) {
+        let value = e.innerHTML;
+        let name = e.hasAttribute("name") ? e.getAttribute("name") : "field${index}";
+        let ip = document.createElement("textarea");
+        ip.hidden = true;
+        ip.name = name;
+        ip.innerHTML = value;
+        formElement.appendChild(ip);
+        index++;
+    }
     isFixing = false;
 }
 function makeInfoOf(textInfo, title) {

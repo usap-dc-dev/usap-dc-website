@@ -5055,6 +5055,8 @@ def make_collection(collection_id=None):
             rm_ds_query_template = "DELETE FROM collection_dataset_map WHERE collection_id=%s AND dataset_id=%s"
             add_prnt_query_template = "INSERT INTO collection_parent_map (collection_id, parent_collection_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
             rm_prnt_query_template = "DELETE FROM collection_parent_map WHERE collection_id=%s AND parent_collection_id=%s"
+            update_description_template = "UPDATE collection SET description=%s WHERE collection_id=%s"
+            get_description_template = "SELECT description FROM collection WHERE collection_id=%s"
             prjs_to_add = list(filter(lambda prj: len(prj)>0, request.form.get("projects_add").split(",")))
             ds_to_add = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_add").split(",")))
             prjs_to_rm = list(filter(lambda prj: len(prj)>0, request.form.get("projects_rm").split(",")))
@@ -5063,6 +5065,20 @@ def make_collection(collection_id=None):
             prnts_to_add = list(filter(lambda prnt: not wouldAddCycle(collection_id, prnt), prnts_requested_to_add))
             prnts_not_added = [item for item in prnts_requested_to_add if item not in prnts_to_add]
             prnts_to_rm = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_rm").split(",")))
+            description = request.form.get("description")
+            getDescQuery = cur.mogrify(get_description_template, (collection_id,))
+            cur.execute(getDescQuery)
+            descriptions = cur.fetchall()
+            for d in descriptions:
+                desc = d['description']
+                if desc != description:
+                    updateDescQuery = cur.mogrify(update_description_template, (description, collection_id))
+                    cur.execute(updateDescQuery)
+                    logQuery = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Changed description to: %s" % description))
+                    cur.execute(logQuery)
+                    tableHTML = '<table style="width:100%%"><tbody><tr><th>Old Description</th><th>New Description</th></tr><tr><td>%s</td><td>%s</td></tr></tbody></table>' % (desc.replace("\n", "<br>"), description.replace("\n", "<br>"))
+                    changes.append(tableHTML)
+                    break
             for prj in prjs_to_add:
                 add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
                 cur.execute(add_prj_query)
@@ -5275,7 +5291,7 @@ def make_collection(collection_id=None):
                         cur.execute(query8)
             conn.commit()
             updateNextCollectionRef()
-            emailBody = "<h1>New Collection: <a href=\"" + url_for("collection_landing_page", collection_id=nextId, _external=True) +"\">" + name + "</a></h1>\n"
+            emailBody = "<h1>New Collection: <a href=\"" + url_for("collection_landing_page", collection_id=nextId, _external=True) +"\">" + (name if name and len(name)>0 else nextId) + "</a></h1>\n"
             emailSubject = "New collection created: " + name
             for detail in details.keys():
                 emailBody += "<h2>" + detail + "</h2>"
