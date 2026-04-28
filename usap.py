@@ -1161,7 +1161,7 @@ def general_error(e):
     print(traceback.format_exc())
     msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>.<br>" % app.config['USAP-DC_GMAIL_ACCT']
     if cf.isCurator():
-        msg += traceback.format_exc()
+        msg += "<pre>" + traceback.format_exc() + "</pre>"
     return render_template('error.html', error_message=msg)
 
 
@@ -5043,7 +5043,7 @@ def make_collection(collection_id=None):
             if collection_id:
                 duplicate = True
     if editing:
-        emailBody = "<h1>Collection Update</h1>\n<a href=\"https://orcid.org/" + user_info['orcid'] + "\">" + user_info['name'] + "</a> has edited collection <a href=\"" + url_for("collection_landing_page", collection_id=collection_id, _external=True) +"\">" + collection_id + "</a>"
+        emailBody = "<h1>Collection Update</h1>\n<a href=\"https://orcid.org/" + user_info['orcid'] + "\">" + user_info['name'] + "</a> has edited collection <a href=\"" + url_for("collection_landing_page", collection_id=collection_id, _external=True) +"\">" + collection_id + "</a>:"
         changes = []
         canEdit = canEditCollection(user_info, collection_id)
         if canEdit:
@@ -5057,6 +5057,8 @@ def make_collection(collection_id=None):
             rm_prnt_query_template = "DELETE FROM collection_parent_map WHERE collection_id=%s AND parent_collection_id=%s"
             update_description_template = "UPDATE collection SET description=%s WHERE collection_id=%s"
             get_description_template = "SELECT description FROM collection WHERE collection_id=%s"
+            update_title_template = "UPDATE collection SET collection_name=%s WHERE collection_id=%s"
+            get_title_template = "SELECT collection_name FROM collection WHERE collection_id=%s"
             prjs_to_add = list(filter(lambda prj: len(prj)>0, request.form.get("projects_add").split(",")))
             ds_to_add = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_add").split(",")))
             prjs_to_rm = list(filter(lambda prj: len(prj)>0, request.form.get("projects_rm").split(",")))
@@ -5066,6 +5068,19 @@ def make_collection(collection_id=None):
             prnts_not_added = [item for item in prnts_requested_to_add if item not in prnts_to_add]
             prnts_to_rm = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_rm").split(",")))
             description = request.form.get("description")
+            newTitle = request.form.get("title")
+            getTitleQuery = cur.mogrify(get_title_template, (collection_id,))
+            cur.execute(getTitleQuery)
+            titles = cur.fetchall()
+            for t in titles:
+                ttl = t['collection_name']
+                if ttl != newTitle:
+                    updateTitleQuery = cur.mogrify(update_title_template, (newTitle, collection_id))
+                    logText = "Changed title to " + newTitle
+                    cur.execute(updateTitleQuery)
+                    logQuery = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                    cur.execute(logQuery)
+                    changes.append(logText)
             getDescQuery = cur.mogrify(get_description_template, (collection_id,))
             cur.execute(getDescQuery)
             descriptions = cur.fetchall()
@@ -5196,13 +5211,14 @@ def make_collection(collection_id=None):
                         query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                         cur.execute(query)
             conn.commit()
-            emailBody += "\n<ul>" + "\n".join(map(lambda change: "<li>" + change + "</li>", changes)) + "</ul>"
-            success, error = send_gmail_message("info@usap-dc.org", email_info["RECIPIENTS"], "Collection " + collection_id + " has been updated", makeEmailBody(emailBody), None, None)
-            if error:
-                print("Collection " + collection_id + " has been updated, but the email failed to send. See the database for details.")
-                print(error)
-            else:
-                print("Collection " + collection_id + " has been updated, and emails have been sent to the following address(es): " + ", ".join(email_info["RECIPIENTS"]) + ". See the database for details.")
+            if len(changes)>0:
+                emailBody += "\n<ul>" + "\n".join(map(lambda change: "<li>" + change + "</li>", changes)) + "</ul>"
+                success, error = send_gmail_message("info@usap-dc.org", email_info["RECIPIENTS"], "Collection " + collection_id + " has been updated", makeEmailBody(emailBody), None, None)
+                if error:
+                    print("Collection " + collection_id + " has been updated, but the email failed to send. See the database for details.")
+                    print(error)
+                else:
+                    print("Collection " + collection_id + " has been updated, and emails have been sent to the following address(es): " + ", ".join(email_info["RECIPIENTS"]) + ". See the database for details.")
             return redirect('/view/collection/'+collection_id)
         session['next'] = request.path
         return redirect(url_for('login'))
@@ -5395,11 +5411,16 @@ def collection_landing_page(collection_id):
                     curId = ids_list[i]
                     if curId not in curNode:
                         curNode[curId] = {}
+                    if i+1 == len(ids_list):
+                        curNode[curId][curId] = {}
                     curNode = curNode[curId]
             def makeDiv(collection_entry, depth=0):
                 divStart = "<div style=\"padding-left: " + str(10*depth) + "px\"" + ("hidden" if 0==depth else "") + ">↳&nbsp;"
-                subDivs = list(map(lambda entry: makeDiv(entry, depth+1), collection_entry[1].items()))
-                return divStart + getLink(collection_entry[0]) + "<br>".join(subDivs) + "</div>"
+                finalPath=""
+                if (collection_entry[0], {}) in collection_entry[1].items() and len(collection_entry[1].items())>1:
+                    finalPath = makeDiv((collection_entry[0], {}), depth)
+                subDivs = list(map(lambda entry: makeDiv(entry, depth+1), filter(lambda x: x[0] != collection_entry[0], collection_entry[1].items())))
+                return finalPath + divStart + getLink(collection_entry[0]) + "".join(subDivs) + "</div>"                    
             return "\n".join(map(makeDiv, collectionTree.items()))
         template_dict['inheritance_tree'] = inheritance_html
         def getNameFromPersonId(id_str):
@@ -5596,9 +5617,11 @@ def get_inherited(parent_collections):
             for prj_id in data["projects"].keys():
                 add_path = False
                 for path in data["projects"][prj_id]:
+                    # if we've already checked this exact path, don't add it again
                     if str(cur_path) == str(path):
                         add_path = False
                         break
+                    # if the end of the path includes this project and it's a new path, add it
                     elif cur_id == path.split(inheritanceChainDelim)[-1]:
                         add_path = True
                 if add_path:
@@ -5634,7 +5657,7 @@ def get_inherited(parent_collections):
                         elif cur_path not in data["datasets"][did]:
                             data["datasets"][did].append(cur_path)
                     for prnt in prnts:
-                        checking.append(cur_id + inheritanceChainDelim + prnt)
+                        checking.append(cur_path + inheritanceChainDelim + prnt)
             checked.add(cur_id)
     return data
 

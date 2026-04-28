@@ -3,7 +3,7 @@
 {% block body %}
 {% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">{% endif %}
 {% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}</td></tr></table>{% endif %}{% if description %}
-{% if canEdit %}<input hidden class="show_when_editing" name="title" {% if collection_name %}value="{{collection_name}}"{% else %}placeholder="Name your collection"{% endif %}>{% endif %}
+{% if canEdit %}<label hidden class="show_when_editing" for="titleInput">New Title:</label><input hidden class="show_when_editing" id="titleInput" name="title" {% if collection_name %}value="{{collection_name}}"{% else %}placeholder="Name your collection"{% endif %}>{% endif %}
 <p{% if canEdit %} name="description" class="editable"{% endif %} style="white-space: pre-line">{{description}}</p>{% endif %}
 <h2>Owner{% if 1 < owners|length %}s{% endif %}</h2>{% for owner in owners %}
 {% if owner['id_orcid'] %}<a href="https://orcid.org/{{owner['id_orcid']}}">{% else %}<p style="display:inline">{% endif %}{{getName(owner)}}{% if not owner['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if 2 < canEdit %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeOwner('{{owner['id']}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}{% if not loop.last %}, {% endif %}
