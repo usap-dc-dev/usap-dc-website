@@ -36,14 +36,14 @@
             <col span="1" style="width: 50%"/>
         </colgroup>{% endif %}
         <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Description</th></tr>
-        {% for prj in projects %}
+        {% for prj in projects %}{% if not prj['hide'] %}
         <tr id="project_{{prj['proj_uid']}}_row"><td>
             <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
             {{ inheritance_tree(prj['inherited_from']) | safe}}
         {% endif %}</td>{% if canEdit %}
             <td>{% if prj['removable'] %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
             <td>{{truncate(prj['description'], 100)}}
-        </td></tr>
+        </td></tr>{% endif %}
         {% endfor %}
     </tbody>
 </table>

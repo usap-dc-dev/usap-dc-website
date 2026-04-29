@@ -5321,7 +5321,7 @@ def make_collection(collection_id=None):
                 parentIds = collection_id.split(",")
                 uniqueParents = set(parentIds)
                 uniqueParentsStr = ",".join(uniqueParents)
-            return render_template("make_collection.html", parents=uniqueParentsStr, people=getAllPeopleWithOrcids())
+            return render_template("make_collection.html", parents=uniqueParentsStr, people=getAllPeopleWithOrcids(), cols=50)
 
 @app.route('/view/collection/<collection_id>')
 def collection_landing_page(collection_id):
@@ -5367,7 +5367,11 @@ def collection_landing_page(collection_id):
                 for result in results:
                     resultDict = dict(result)
                     resultDict['removable'] = True
+                    matchingIndices = [x for x in range(len(template_dict['projects'])) if template_dict['projects'][x] == resultDict]
                     resultDict['removable'] = resultDict in template_dict['projects']
+                    if resultDict['removable']:
+                        for index in matchingIndices:
+                            template_dict['projects'][index]['hide'] = True
                     resultDict['inherited_from'] = collectionInfo['inherited']['projects'][prj_id]
                     template_dict['projects'].append(resultDict)
         # get all the datasets in this collection
@@ -5394,7 +5398,11 @@ def collection_landing_page(collection_id):
                 for result in results:
                     resultDict = dict(result)
                     resultDict['removable'] = True
+                    matchingIndices = [x for x in range(len(template_dict['datasets'])) if template_dict['datasets'][x] == resultDict]
                     resultDict['removable'] = resultDict in template_dict['datasets']
+                    if resultDict['removable']:
+                        for index in matchingIndices:
+                            template_dict['datasets'][index]['hide'] = True
                     resultDict['inherited_from'] = collectionInfo['inherited']['datasets'][ds_id]
                     template_dict['datasets'].append(resultDict)
         ancestorTree = collectionInfo["inherited"]
