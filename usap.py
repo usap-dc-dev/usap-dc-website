@@ -5510,6 +5510,8 @@ def findInheritanceCycles(collectionId, parentIds):
     return allCycles
     
 def truncateStr(longStr, maxLen=50):
+    if not longStr:
+        return ""
     if len(longStr) <= maxLen:
         return longStr
     if maxLen < 1:

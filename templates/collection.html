@@ -2,7 +2,9 @@
 {% set cur="collection" %}
 {% block body %}
 {% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">{% endif %}
-{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}</td></tr></table>{% endif %}{% if description %}
+{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}<br>{% if canEdit %}
+<button type="button" class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
+<button type="button" class="download" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button></td></tr></table>{% endif %}{% if description %}
 {% if canEdit %}<label hidden class="show_when_editing" for="titleInput">New Title:</label><input hidden class="show_when_editing" id="titleInput" name="title" {% if collection_name %}value="{{collection_name}}"{% else %}placeholder="Name your collection"{% endif %}>{% endif %}
 <p{% if canEdit %} name="description" class="editable"{% endif %} style="white-space: pre-line">{{description}}</p>{% endif %}
 <h2>Owner{% if 1 < owners|length %}s{% endif %}</h2>{% for owner in owners %}
@@ -23,9 +25,7 @@
 {% if canEdit %}
 <div id="add_parents_div" class="show_when_editing" hidden><label for="parents_input">Parents to add: </label><input name="parents_add" id="parents_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentsDiv"></div></div>
 <div class="show_when_editing" hidden><label for="rm_parents_input">Parents to remove:</label><input hidden readonly name="parents_rm" id="rm_parents_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmParentsDiv"></div><br></div>
-{% endif %}<br>{% if canEdit %}
-<button type="button" class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
-<button type="button" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button>
+{% endif %}<br>
 <h2>Projects</h2>
 {% if projects %}
 <table id="projectTable" class="collectionTable">
@@ -80,6 +80,6 @@
 <datalist id="people_list">{% for person in people %}
     <option realvalue="{{person['id_orcid']}}" value="{{person['id']}}" id="opt_{{person['id']}}">{{person['id']}}</option>{% endfor %}
 </datalist>{% endif %}
-<button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing" hidden>Save Changes and Stop Editing</button>
+<button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing download" hidden>Save Changes and Stop Editing</button>
 {% endif %}
 {% endblock body %}

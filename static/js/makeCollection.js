@@ -47,7 +47,15 @@ function fixValues(formElement) {
         let inputFieldId = Array.from(div.id.matchAll(/(?:^|[A-Z])[a-z]*/g)).map(x => x[0].toLowerCase()).map(x => "div"===x ? "input" : x).join("_");
         let inputField = document.getElementById(inputFieldId);
         if(inputField) {
-            inputField.value = Array.prototype.flatMap.call(div.getElementsByClassName("infoDiv"), x => Array.prototype.filter.call(x.childNodes, y => y.nodeType==Node.TEXT_NODE)).map(n=>n.textContent).join(",");
+            function getValueFrom(infoDiv) {
+                if(infoDiv.hasAttribute("realvalue")) {
+                    return infoDiv.getAttribute("realvalue");
+                }
+                else {
+                    return Array.prototype.filter.call(infoDiv.childNodes, cn => cn.nodeType === Node.TEXT_NODE).map(node => node.textContent).join(",");
+                }
+            }
+            inputField.value = Array.prototype.map.call(div.getElementsByClassName("infoDiv"), getValueFrom).join(",");//Array.prototype.flatMap.call(div.getElementsByClassName("infoDiv"), x => Array.prototype.filter.call(x.childNodes, y => y.nodeType==Node.TEXT_NODE)).map(n=>n.textContent).join(",");
         }
     }
     let editables = formElement.getElementsByClassName("editable");
@@ -64,7 +72,7 @@ function fixValues(formElement) {
     }
     isFixing = false;
 }
-function makeInfoOf(textInfo, title) {
+function makeInfoOf(textInfo, realVal) {
     let e = document.createElement("div");
     e.classList.add("infoDiv");
     e.innerHTML = textInfo;
@@ -77,8 +85,9 @@ function makeInfoOf(textInfo, title) {
             par.removeChild(e);
         }
     });
-    if(title) {
-        e.title = title;
+    if(realVal) {
+        e.setAttribute("realvalue", realVal);
+        e.title = realVal;
     }
     e.appendChild(btn);
     return e;
@@ -128,7 +137,7 @@ function onInputChange2(inputBox) {
                         title = option.value;
                     }
                     if(!existing.has(val)) {
-                        divContainer.appendChild(title ? makeInfoOf(val, title) : makeInfoOf(val));
+                        divContainer.appendChild(title ? makeInfoOf(title, val) : makeInfoOf(val));
                     }
                     inputBox.value = inputBox.value.replace(title ? title : val, "")
                 }

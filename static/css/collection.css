@@ -41,3 +41,15 @@ button.blend {
     background-color: inherit;
     border: none;
 }
+
+.download {
+background-color: white;
+color: #245484;
+font-weight: 200;
+padding: 0.21em 0.72em 0.21em 0.72em;
+font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+font-size: 0.7em;
+border-radius: 0.72em;
+border: 0.2em solid #245484 !important;
+cursor: pointer;
+}
