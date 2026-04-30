@@ -40,11 +40,11 @@ function toggleEditing() {
 function toggleAncestors(button) {
     if(button.title.includes("Show")) {
         button.title = button.title.replace("Show", "Hide");
-        button.innerHTML = "–";
+        button.innerHTML = "&#9652;";
     }
     else {
         button.title = button.title.replace("Hide", "Show");
-        button.innerHTML = "+";
+        button.innerHTML = "&#9662;";
     }
     for(const div of Array.prototype.filter.call(button.parentElement.children, x => x.tagName.toLowerCase() === "div")) {
         div.hidden = !div.hidden;

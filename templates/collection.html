@@ -2,9 +2,9 @@
 {% set cur="collection" %}
 {% block body %}
 {% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">{% endif %}
-{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}<br>{% if canEdit %}
+{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}<br><h3>{% if canEdit %}
 <button type="button" class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
-<button type="button" class="download" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button></td></tr></table>{% endif %}{% if description %}
+<button type="button" class="download" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button></h3></td></tr></table>{% endif %}{% if description %}
 {% if canEdit %}<label hidden class="show_when_editing" for="titleInput">New Title:</label><input hidden class="show_when_editing" id="titleInput" name="title" {% if collection_name %}value="{{collection_name}}"{% else %}placeholder="Name your collection"{% endif %}>{% endif %}
 <p{% if canEdit %} name="description" class="editable"{% endif %} style="white-space: pre-line">{{description}}</p>{% endif %}
 <h2>Owner{% if 1 < owners|length %}s{% endif %}</h2>{% for owner in owners %}
@@ -38,11 +38,11 @@
         <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Description</th></tr>
         {% for prj in projects %}{% if not prj['hide'] %}
         <tr id="project_{{prj['proj_uid']}}_row"><td>
-            <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
+            <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">&#9662;</button><br>
             {{ inheritance_tree(prj['inherited_from']) | safe}}
         {% endif %}</td>{% if canEdit %}
-            <td>{% if prj['removable'] %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
-            <td>{{truncate(prj['description'], 100)}}
+            <td>{% if prj['removable'] %}<button type="button" class="blend show_when_editing" style="height: 1em" title="Remove from collection{% if prj['inherited_from']%} (will still be inherited){% endif %}" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
+            <td>{{truncate(prj['description'], 120)}}
         </td></tr>{% endif %}
         {% endfor %}
     </tbody>
@@ -61,11 +61,11 @@
         </colgroup>{% endif %}
         <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Abstract</th></tr>
         {% for ds in datasets %}
-        <tr id="dataset_{{ds['id']}}_row"><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">+</button><br>
+        <tr id="dataset_{{ds['id']}}_row"><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">&#9662;</button><br>
             {{ inheritance_tree(ds['inherited_from']) | safe}}
         {% endif %}</td>{% if canEdit %}
-            <td>{% if ds['removable'] %}<button class="blend show_when_editing" type="button" style="height: 1em" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
-            <td>{{truncate(ds['abstract'], 100)}}</td></tr>
+            <td>{% if ds['removable'] %}<button class="blend show_when_editing" type="button" style="height: 1em" title="Remove from collection{% if ds['inherited_from']%} (will still be inherited){% endif %}" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
+            <td>{{truncate(ds['abstract'], 120)}}</td></tr>
         {% endfor %}
     </tbody>
 </table>
@@ -80,6 +80,6 @@
 <datalist id="people_list">{% for person in people %}
     <option realvalue="{{person['id_orcid']}}" value="{{person['id']}}" id="opt_{{person['id']}}">{{person['id']}}</option>{% endfor %}
 </datalist>{% endif %}
-<button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing download" hidden>Save Changes and Stop Editing</button>
+<h3><button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing download" hidden>Save Changes and Stop Editing</button></h3>
 {% endif %}
 {% endblock body %}
