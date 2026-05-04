@@ -2,31 +2,31 @@
 {% set cur="collection" %}
 {% block body %}
 {% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">{% endif %}
-{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<h1>{% if err %}Error loading collection {{collection_id}}: {{err}}</h1>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</h1>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}<br><h3>{% if canEdit %}
+{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<div class="header">{% if err %}Error loading collection {{collection_id}}: {{err}}</div>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</div>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}<br><h3>{% if canEdit %}
 <button type="button" class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
 <button type="button" class="download" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button></h3></td></tr></table>{% endif %}{% if description %}
 {% if canEdit %}<label hidden class="show_when_editing" for="titleInput">New Title:</label><input hidden class="show_when_editing" id="titleInput" name="title" {% if collection_name %}value="{{collection_name}}"{% else %}placeholder="Name your collection"{% endif %}>{% endif %}
 <p{% if canEdit %} name="description" class="editable"{% endif %} style="white-space: pre-line">{{description}}</p>{% endif %}
-<h2>Owner{% if 1 < owners|length %}s{% endif %}</h2>{% for owner in owners %}
+<div class="header small">Owner{% if 1 < owners|length %}s{% endif %}</div>{% for owner in owners %}
 {% if owner['id_orcid'] %}<a href="https://orcid.org/{{owner['id_orcid']}}">{% else %}<p style="display:inline">{% endif %}{{getName(owner)}}{% if not owner['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if 2 < canEdit %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeOwner('{{owner['id']}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}{% if not loop.last %}, {% endif %}
 {% endfor %}
 {% if 1 < canEdit %}
 <div id="add_owners_div" class="show_when_editing" hidden><label for="add_owners_input">Co-owners to add:</label><input name="owners_add" id="add_owners_input" list="people_list" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="addOwnersDiv"></div></div>
 {% if 2 < canEdit %}<div id="rm_owners_div" class="show_when_editing" hidden><label for="rm_owners_input">Owners to remove:</label><input hidden readonly name="owners_rm" id="rm_owners_input" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="rmOwnersDiv"></div></div>{% endif %}
 {% endif %}
-<h2{% if 0 == collaborators|length %} class="show_when_editing" hidden{% endif %}>Collaborator{% if 1 != collaborators|length %}s{% endif %}</h2>{% for clbrtr in collaborators %}
+<div class="header small"{% if 0 == collaborators|length %} class="show_when_editing" hidden{% endif %}>Collaborator{% if 1 != collaborators|length %}s{% endif %}</div>{% for clbrtr in collaborators %}
 {% if clbrtr['id_orcid'] %}<a href="https://orcid.org/{{clbrtr['id_orcid']}}">{% else %}<p style="display:inline">{% endif %}{{getName(clbrtr)}}{% if not clbrtr['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if 1 < canEdit %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeCollaborator('{{clbrtr['id']}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}{% if not loop.last %}, {% endif %}
 {% endfor %}
 {% if 1 < canEdit %}<div id="add_collaborators_div" class="show_when_editing" hidden><label for="add_collaborators_input">Collaborators to add:</label><input name="collaborators_add" id="add_collaborators_input" list="people_list" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="addCollaboratorsDiv"></div></div>
 <div id="rm_collaborators_div" class="show_when_editing" hidden><label for="rm_collaborators_input">Collaborators to remove:</label><input hidden readonly name="collaborators_rm" id="rm_collaborators_input" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="rmCollaboratorsDiv"></div></div>{% endif %}
-<h3{% if not inheritWarn and 0==parents_html|length %} hidden class="show_when_editing"{% endif %}>Inherits from:</h3>
+<div class="header small"{% if not inheritWarn and 0==parents_html|length %} hidden class="show_when_editing"{% endif %}>Inherits from</div>
 {% for parent in parents_html %}<p>{{parent[1]|safe}}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeParent('{{parent[0]}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button></p>{% endfor %}{% if inheritWarn %}
 <p><i class="material-icons" style="color: yellow; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" loading="eager">warning</i>&nbsp;&nbsp;{{inheritWarn|safe}}</p>{% endif %}
 {% if canEdit %}
 <div id="add_parents_div" class="show_when_editing" hidden><label for="parents_input">Parents to add: </label><input name="parents_add" id="parents_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentsDiv"></div></div>
 <div class="show_when_editing" hidden><label for="rm_parents_input">Parents to remove:</label><input hidden readonly name="parents_rm" id="rm_parents_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmParentsDiv"></div><br></div>
 {% endif %}<br>
-<h2>Projects</h2>
+<div class="header">Projects</div>
 {% if projects %}
 <table id="projectTable" class="collectionTable">
     <tbody>{% if canEdit %}
@@ -50,7 +50,7 @@
 {% endif %}
 {% if canEdit %}<div id="add_projects_div" class="show_when_editing" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>
 <div class="show_when_editing" hidden><label for="rm_projects_input">Projects to remove:</label><input hidden readonly name="projects_rm" id="rm_projects_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmProjectsDiv"></div><br></div>{% endif %}
-<h2>Datasets</h2>
+<div class="header">Datasets</div>
 {% if datasets %}
 <table id="dsTable" class="collectionTable">
     <tbody>{% if canEdit %}
@@ -81,5 +81,8 @@
     <option realvalue="{{person['id_orcid']}}" value="{{person['id']}}" id="opt_{{person['id']}}">{{person['id']}}</option>{% endfor %}
 </datalist>{% endif %}
 <h3><button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing download" hidden>Save Changes and Stop Editing</button></h3>
+<input name="unregisteredOwners" id="unregisteredOwners">
+<input name="unregisteredCollaborators" id="unregisteredCollaborators">
+</form>
 {% endif %}
 {% endblock body %}

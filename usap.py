@@ -5237,6 +5237,8 @@ def make_collection(collection_id=None):
             details['Description'] = "<p>" + description + "</p>"
             coowner_orcids = request.form.get("coowners")
             collaborator_orcids = request.form.get("collaborators")
+            unregisteredCollaborators = json.loads(request.form.get("unregisteredCollaborators"))
+            unregisteredOwners = json.loads(request.form.get("unregisteredOwners"))
             project_ids = request.form.get('projects')
             if project_ids:
                 project_ids = project_ids.replace(", ", ",")
@@ -5291,7 +5293,15 @@ def make_collection(collection_id=None):
                     query6 = cur.mogrify(queryTemplate6, (nextId, parent))
                     cur.execute(query6)
             if coowner_orcids and len(coowner_orcids) > 0:
-                coowners = getPeopleFromOrcids(coowner_orcids.split(","))
+                coowner_orcids_list = coowner_orcids.split(",")
+                coowners = getPeopleFromOrcids(coowner_orcids_list)
+                for i in range(len(coowners)):
+                    if not coowners[i]:
+                        theOwner = unregisteredOwners[coowner_orcids_list[i]]
+                        coowners[i] = {
+                            'id_orcid': coowner_orcids_list[i],
+                            'id': theOwner
+                        }
                 if len(coowners)>0:
                     details['Co-owner' + ('s' if len(coowners)>1 else '')] = ("<ul%s>" % (" list-style-type: none" if 1==len(coowners) else "")) + "".join(map(lambda o: "<li><a href=\"https://orcid.org/" + o['id_orcid'] + "\">" + o['id'] + "</a></li>", coowners)) + "</ul>"
                 for coowner in coowners:
@@ -5301,6 +5311,13 @@ def make_collection(collection_id=None):
                 collaborator_orcids_list = [c for c in collaborator_orcids.split(",") if c not in coowner_orcids and c != owner_orcid]
                 if len(collaborator_orcids_list) > 0:
                     collaborators = getPeopleFromOrcids(collaborator_orcids_list)
+                    for i in range(len(collaborators)):
+                        if not collaborators[i]:
+                            theCollaborator = unregisteredCollaborators[collaborator_orcids_list[i]]
+                            collaborators[i] = {
+                                'id_orcid': collaborator_orcids_list[i],
+                                'id': theCollaborator
+                            }
                     details['Collaborator' + ('s' if len(collaborators)>1 else '')] = ("<ul%s>" % (" list-style-type: none" if 1==len(collaborators) else "")) + "".join(map(lambda o: "<li><a href=\"https://orcid.org/" + o['id_orcid'] + "\">" + o['id'] + "</a></li>", collaborators)) + "</ul>"
                     for collaborator in collaborators:
                         query8 = cur.mogrify(queryTemplate2, (nextId, collaborator['id'], "collaborator", collaborator['id_orcid']))
@@ -5340,8 +5357,45 @@ def collection_landing_page(collection_id):
         template_dict['people'] = getAllPeopleWithOrcids()
         # get the IDs of people involved in making the collection
         owners = list(map(get_person_from_orcid, template_dict['owners']))
+        queryTemplate = "SELECT person FROM collection_person_map WHERE person_orcid=%s AND collection_id=%s AND role=%s"
+        for i in range(len(owners)):
+            if not owners[i]:
+                query = cur.mogrify(queryTemplate, (template_dict['owners'][i], collection_id, 'owner'))
+                cur.execute(query)
+                ppl = cur.fetchall()
+                if len(ppl)>0:
+                    names = ppl[0]['person'].split(", ")
+                    ln = names[0]
+                    others = names[1].split(" ")
+                    mi = others[-1] if (len(others)>1 and others[-1].endswith(".") and len(others[-1])==2) else None
+                    fn = " ".join(others[0:-1])
+                    owners[i] = {
+                        "id": ppl[0]['person'],
+                        "last_name": ln,
+                        "first_name": fn,
+                        "middle_name": mi,
+                        "id_orcid": template_dict['owners'][i]
+                    }
         template_dict['owners'] = owners
         collaborators = list(map(get_person_from_orcid, template_dict['collaborators']))
+        for i in range(len(collaborators)):
+            if not collaborators[i]:
+                query = cur.mogrify(queryTemplate, (template_dict['collaborators'][i], collection_id, 'collaborator'))
+                cur.execute(query)
+                ppl = cur.fetchall()
+                if len(ppl)>0:
+                    names = ppl[0]['person'].split(", ")
+                    ln = names[0]
+                    others = names[1].split(" ")
+                    mi = others[-1] if (len(others)>1 and others[-1].endswith(".") and len(others[-1])==2) else None
+                    fn = " ".join(others[0:-1])
+                    collaborators[i] = {
+                        "id": ppl[0]['person'],
+                        "last_name": ln,
+                        "first_name": fn,
+                        "middle_name": mi,
+                        "id_orcid": template_dict['collaborators'][i]
+                    }
         template_dict['collaborators'] = collaborators
         # get all the projects in this collection
         template_dict['projects'] = None
