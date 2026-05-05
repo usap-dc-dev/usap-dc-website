@@ -136,7 +136,7 @@ function onInputChange2(inputBox) {
         let camelCase = tokens[0] + tokens.slice(1).map(x => x.length>0? (x[0].toUpperCase()+x.slice(1)) : "").join("");
         let divContainer = document.getElementById(camelCase.replace("Input", "Div"));
         if(divContainer) {
-            let existing = new Set(Array.from(divContainer.getElementsByTagName("div")).flatMap(e => Array.from(e.childNodes).filter(n => n.nodeType == Node.TEXT_NODE)).map(n => n.textContent));
+            let existing = new Set(Array.from(divContainer.getElementsByTagName("div")).flatMap(e => Array.from(e.childNodes).filter(n => n.nodeType == Node.TEXT_NODE)).map(n => n.title || n.textContent));
             tokens = Array.from(inputBox.value.matchAll(/[A-Za-z]+(([ -])[A-Za-z]+)*,( [A-Za-z\-]+)(([ -])[A-Za-z]+(\.?))*/g)).map(x => x[0]);
             for(let token of tokens) {
                 let option = document.getElementById("opt_"+token.trim());
@@ -151,6 +151,13 @@ function onInputChange2(inputBox) {
                         divContainer.appendChild(title ? makeInfoOf(title, val) : makeInfoOf(val));
                     }
                     inputBox.value = inputBox.value.replace(title ? title : val, "")
+                }
+                else {
+                    let link = document.getElementById(`${inputBox.id.split("_")[1].slice(0,-1)}_${token}`);
+                    let orcid = link.href.split("/").slice(-1)[0];
+                    if(!existing.has(orcid) && !existing.has(token)) {
+                        divContainer.appendChild(makeInfoOf(token, orcid));
+                    }
                 }
                 tokens = inputBox.value.split(";");
                 let newValueArr = [];

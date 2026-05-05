@@ -5070,6 +5070,8 @@ def make_collection(collection_id=None):
             description = request.form.get("description")
             newTitle = request.form.get("title")
             getTitleQuery = cur.mogrify(get_title_template, (collection_id,))
+            unregisteredCollaborators = json.loads(request.form.get("unregisteredCollaborators"))
+            unregisteredOwners = json.loads(request.form.get("unregisteredOwners"))
             cur.execute(getTitleQuery)
             titles = cur.fetchall()
             for t in titles:
@@ -5151,6 +5153,13 @@ def make_collection(collection_id=None):
                 rm_template = "DELETE FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s AND role=%s"
                 find_template = "SELECT role FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s"
                 owners_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("owners_add").split(",")))
+                for i in range(len(owners_to_add)):
+                    if not owners_to_add[i]:
+                        theOwner = unregisteredOwners[request.form.get("owners_add").split(",")[i]]
+                        owners_to_add[i] = {
+                            'id_orcid': request.form.get("owners_add").split(",")[i],
+                            'id': theOwner
+                        }
                 owners_added = []
                 for owner in owners_to_add:
                     findQuery = cur.mogrify(find_template, (collection_id, owner['id_orcid']))
@@ -5173,6 +5182,13 @@ def make_collection(collection_id=None):
                     query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
                     cur.execute(query)
                 collabs_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("collaborators_add").split(",")))
+                for i in range(len(collabs_to_add)):
+                    if not collabs_to_add[i]:
+                        theCollab = unregisteredCollaborators[request.form.get("collaborators_add").split(",")[i]]
+                        collabs_to_add[i] = {
+                            'id_orcid': request.form.get("collaborators_add").split(",")[i],
+                            'id': theCollab
+                        }
                 collabs_added = []
                 for clbrtr in collabs_to_add:
                     findQuery = cur.mogrify(find_template, (collection_id, clbrtr['id_orcid']))
