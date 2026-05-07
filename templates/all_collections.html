@@ -5,18 +5,27 @@
 {% if collections|length == 0 %}<h2>No collections!</h2>{% else %}<h2>Collections</h2>
 <table id="collections_table" class="collectionTable">
     <tbody>
-        <tr><th>Name/ID</th><th>Created</th><th>Owner(s)</th><th>Collaborator(s)</th><th>Parent Collections</th><th>Projects</th><th>Datasets</th><th>Last Modification</th></tr>
+        <tr>
+            <th>Name/ID&nbsp;<button title="Click to sort by name/ID" class="blend" onclick="sortTable('collections_table', 0)">&#x21F3;</button></th>
+            <th>Created&nbsp;<button title="Click to sort by creation time" class="blend" onclick="sortTable('collections_table', 1)">&#x21F3;</button></th>
+            <th>Owner(s)&nbsp;<button title="Click to sort by owner ORCiDs" class="blend" onclick="sortTable('collections_table', 2)">&#x21F3;</button></th>
+            <th>Collaborator(s)&nbsp;<button title="Click to sort by collaborator ORCiDs" class="blend" onclick="sortTable('collections_table', 3)">&#x21F3;</button></th>
+            <th>Parent Collections&nbsp;<button title="Click to sort by parent collection IDs" class="blend" onclick="sortTable('collections_table', 4)">&#x21F3;</button></th>
+            <th>Projects&nbsp;<button title="Click to sort by included project IDs" class="blend" onclick="sortTable('collections_table', 5)">&#x21F3;</button></th>
+            <th>Datasets&nbsp;<button title="Click to sort by included dataset IDs" class="blend" onclick="sortTable('collections_table', 6)">&#x21F3;</button></th>
+            <th>Last Modification&nbsp;<button title="Click to sort by the last modification time" class="blend" onclick="sortTable('collections_table', 7)">&#x21F3;</button></th>
+        </tr>
         {% for collection in collections %}
         {% set last_modified = lastModified(collection['collection_id']) %}
         <tr>
-            <td><a href="/view/collection/{{collection['collection_id']}}">{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}</a></td>
-            <td title="{{collection['created_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{collection['created_time'].strftime('%-m/%-d/%Y')}} by <a href="https://orcid.org/{{collection['creator']}}" target="_blank">{{getNames([collection['creator']])[0]}}</a></td>
-            <td>{{"<br>".join(getOrcidLinks(collection['owners']))|safe}}</td>
-            <td>{{"<br>".join(getOrcidLinks(collection['collaborators']))|safe}}</td>
-            <td>{{"<br>".join(getCollectionLinks(collection['parents']))|safe}}</td>
-            <td>{{"<br>".join(getPrjDsLinks(collection['project_ids'], 'project'))|safe}}</td>
-            <td>{{"<br>".join(getPrjDsLinks(collection['dataset_ids'], 'dataset'))|safe}}</td>
-            <td><p style="margin:0" title="{{last_modified['act_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{last_modified['act_time'].strftime('%-m/%-d/%Y')}}</p>{{"<br>".join(getOrcidLinks([last_modified['actor']]))|safe}} {{ ";<br>".join(map(reformatMod, last_modified['actions'])) | safe}}</td>
+            <td sortval="{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}"><a href="/view/collection/{{collection['collection_id']}}">{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}</a></td>
+            <td sortval="{{collection['created_time'].strftime('%Y%m%d%H%M%S%f')}}" title="{{collection['created_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{collection['created_time'].strftime('%-m/%-d/%Y')}} by <a href="https://orcid.org/{{collection['creator']}}" target="_blank">{{getNames([collection['creator']])[0]}}</a></td>
+            <td sortval="{{','.join(collection['owners'])}}">{{"<br>".join(getOrcidLinks(collection['owners']))|safe}}</td>
+            <td sortval="{{','.join(collection['collaborators'])}}">{{"<br>".join(getOrcidLinks(collection['collaborators']))|safe}}</td>
+            <td sortval="{{','.join(collection['parents'])}}">{{"<br>".join(getCollectionLinks(collection['parents']))|safe}}</td>
+            <td sortval="{{','.join(collection['project_ids'])}}">{{"<br>".join(getPrjDsLinks(collection['project_ids'], 'project'))|safe}}</td>
+            <td sortval="{{','.join(collection['dataset_ids'])}}">{{"<br>".join(getPrjDsLinks(collection['dataset_ids'], 'dataset'))|safe}}</td>
+            <td sortval="{{last_modified['act_time'].strftime('%Y%m%d%H%M%S%f')}}"><p style="margin:0" title="{{last_modified['act_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{last_modified['act_time'].strftime('%-m/%-d/%Y')}}</p>{{"<br>".join(getOrcidLinks([last_modified['actor']]))|safe}} {{ ";<br>".join(map(reformatMod, last_modified['actions'])) | safe}}</td>
         </tr>
         {% endfor %}
     </tbody>

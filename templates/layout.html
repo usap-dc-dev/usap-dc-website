@@ -294,6 +294,9 @@
 {% if cur=="makeCollection" or cur=="collection" %}
 <script type="text/javascript" src="{{url_for('static', filename='js/makeCollection.js')}}"></script>
 {% endif %}
+{% if cur=="collections" %}
+<script type="text/javascript" src="{{url_for('static', filename='js/sorttable2.js')}}"></script>
+{% endif %}
 
 </head>
 
