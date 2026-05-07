@@ -29,7 +29,7 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/jquery-ui/themes/base/jquery-ui.css')}}"/>
   {% endif %}
-  {% if cur=="collection" or cur=="makeCollection" %}<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/collection.css')}}"/>{% endif %}
+  {% if cur=="collection" or cur=="makeCollection" or cur=="collections" %}<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/collection.css')}}"/>{% endif %}
   
 
   <!-- InstanceEndEditable -->
@@ -266,7 +266,7 @@
   {% if cur =="search_old" %}
   <link rel="stylesheet" type="text/css" href="/static/css/search_old.css" media="screen, projection" />
   {% endif %}
-  {% if cur =="curator" or cur=="emails" %}
+  {% if cur =="curator" or cur=="emails" or cur=="collections"%}
   <link rel="stylesheet" type="text/css" href="/static/css/curator.css" media="screen, projection" />
   {% endif %}
 

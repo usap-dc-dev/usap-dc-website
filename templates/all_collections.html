@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% set cur="collections" %}
+{% block body %}
+<h2><button class="btn btn-primary" onclick="window.location.href='/curator'">Return to Main Curator Page</button></h2>
+{% if collections|length == 0 %}<h2>No collections!</h2>{% else %}<h2>Collections</h2>
+<table id="collections_table" class="collectionTable">
+    <tbody>
+        <tr><th>Name/ID</th><th>Created</th><th>Owner(s)</th><th>Collaborator(s)</th><th>Parent Collections</th><th>Projects</th><th>Datasets</th><th>Last Modification</th></tr>
+        {% for collection in collections %}
+        {% set last_modified = lastModified(collection['collection_id']) %}
+        <tr>
+            <td><a href="/view/collection/{{collection['collection_id']}}">{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}</a></td>
+            <td title="{{collection['created_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{collection['created_time'].strftime('%-m/%-d/%Y')}} by <a href="https://orcid.org/{{collection['creator']}}" target="_blank">{{getNames([collection['creator']])[0]}}</a></td>
+            <td>{{"<br>".join(getOrcidLinks(collection['owners']))|safe}}</td>
+            <td>{{"<br>".join(getOrcidLinks(collection['collaborators']))|safe}}</td>
+            <td>{{"<br>".join(getCollectionLinks(collection['parents']))|safe}}</td>
+            <td>{{"<br>".join(getPrjDsLinks(collection['project_ids'], 'project'))|safe}}</td>
+            <td>{{"<br>".join(getPrjDsLinks(collection['dataset_ids'], 'dataset'))|safe}}</td>
+            <td><p style="margin:0" title="{{last_modified['act_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{last_modified['act_time'].strftime('%-m/%-d/%Y')}}</p>{{"<br>".join(getOrcidLinks([last_modified['actor']]))|safe}} {{ ";<br>".join(map(reformatMod, last_modified['actions'])) | safe}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock body %}

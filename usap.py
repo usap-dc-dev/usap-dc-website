@@ -437,6 +437,36 @@ def get_person_from_orcid(orcid):
         return None
     return dict(rslt[0])
 
+def getNamesFromOrcids(orcids):
+    if not orcids:
+        return []
+    (conn, cur) = connect_to_db()
+    template = 'SELECT id, first_name, middle_name, last_name FROM person WHERE id_orcid=%s'
+    names = []
+    for orcid in orcids:
+        query = cur.mogrify(template, (orcid,))
+        cur.execute(query)
+        ppl = cur.fetchall()
+        for person in ppl:
+            fn = person['first_name']
+            mn = person['middle_name']
+            ln = person['last_name']
+            name = None
+            if mn:
+                name = " ".join([fn, mn, ln])
+            elif fn and ln:
+                name = " ".join([fn, ln])
+            else:
+                splitId = re.split(r',\s', person['id'])
+                ln = splitId[0]
+                if re.search(r' ([JS]r\.|[IVXLCDM]+)$', person['id']):
+                    lastSpace = splitId[1].rfind(' ')+1
+                    name = splitId[1][0:lastSpace] + ln + " " + splitId[lastSpace:]
+                else:
+                    name = splitId[1] + " " + ln
+            names.append(name)
+    return names
+
 # could use get_person_from_orcid in map(fn, list) for this, but I figured it would be more efficient to just use one connection
 def getPeopleFromOrcids(orcids):
     if not orcids:
@@ -474,10 +504,11 @@ def get_name_from_person(person):
         fn = person['first_name']
         mn = person['middle_name']
         ln = person['last_name']
+        name = None
         if fn and mn and ln:
-            return ' '.join([fn, mn, ln])
-        if fn and ln:
-            return ' '.join([fn, ln])
+            name = ' '.join([fn, mn, ln])
+        elif fn and ln:
+            name = ' '.join([fn, ln])
         _id = person['id']
         suffix = ""
         exp = re.compile(r" [IVXLCDM]+$")
@@ -488,6 +519,8 @@ def get_name_from_person(person):
             suffix = " " + _id.split(" ")[-1]
             _id = " ".join(_id.split(" ")[0:-1])
         names = _id.split(", ")
+        if name:
+            return name + " " + suffix
         return " ".join(names[1:]) + " " + names[0] + suffix
 
 def get_sensors(conn=None, cur=None, dataset_id=None):
@@ -6659,6 +6692,135 @@ def makeNewKey(name):
     if not cf.isCurator():
         abort(401)
     return json.dumps(cf.makeApiKey(name))
+
+def getLastCollectionChange(collection_id):
+    (conn, cur) = connect_to_db()
+    template = "SELECT act_time, actor, ARRAY_AGG(action) AS actions from collection_log WHERE collection_id=%s GROUP BY act_time, actor ORDER BY act_time desc"
+    query = cur.mogrify(template, (collection_id,))
+    cur.execute(query)
+    rslts = cur.fetchall()
+    if len(rslts)>0:
+        latest = rslts[0]
+        return dict(latest)
+    return None
+
+def replaceWithLinks(actionStr):
+    (conn, cur) = connect_to_db()
+    orcidTemplate = "SELECT * FROM person WHERE lower(id_orcid)=lower(%s)"
+    orcid_regex = '(([0-9]{4}-){3}[0-9]{3}[0-9Xx])'
+    collectionTemplate = "SELECT collection_name FROM collection WHERE collection_id=%s"
+    collection_regex='c[0-9]{7}'
+    projectTemplate = "SELECT title FROM project WHERE proj_uid=%s"
+    project_regex = 'p[0-9]{7}'
+    datasetTemplate = "SELECT title FROM dataset WHERE id=%s"
+    dataset_regex=r'([0-9]{6})'
+    if actionStr.lower().startswith("added project") or actionStr.lower().startswith("removed project"):
+        matches = re.findall(project_regex, actionStr)
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(projectTemplate, (matches[i],))
+            cur.execute(query)
+            titles = cur.fetchall()
+            if titles and len(titles)>0:
+                title = titles[0]['title']
+                links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\">" + title + "</a>")
+            else:
+                links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
+        for i in range(len(matches)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    elif actionStr.lower().startswith("added dataset") or actionStr.lower().startswith("removed dataset"):
+        matches = re.findall(dataset_regex, actionStr)
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(datasetTemplate, (matches[i],))
+            cur.execute(query)
+            titles = cur.fetchall()
+            if titles and len(titles)>0:
+                title = titles[0]['title']
+                links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\">" + title + "</a>")
+            else:
+                links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
+        for i in range(len(matches)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    elif actionStr.lower().startswith("added owner") or actionStr.lower().startswith("added co") or actionStr.lower().startswith("removed owner") or actionStr.lower().startswith("removed co"):
+        _matches = re.findall(orcid_regex, actionStr)
+        matches = list(map(lambda match: match[0], _matches))
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(orcidTemplate, (matches[i],))
+            cur.execute(query)
+            ppl = cur.fetchall()
+            if ppl and len(ppl)>0:
+                person = ppl[0]
+                innerhtml = get_name_from_person(person) if person else matches[i]
+                links.append("<a href=\"https://orcid.org/"+matches[i]+"\" target=\"_blank\"" + ("" if person else " title=\"Probably not a registered USAP-DC user\"") + ">" + innerhtml + "</a>")
+            else:
+                links.append("<a href=\"https://orcid.org/"+matches[i]+"\" target=\"_blank\" title=\"Not a registered USAP-DC user\">" + matches[i] + "</a>")
+        for i in range(len(matches)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    elif actionStr.lower().startswith("changed title"):
+        prefix = "Changed title to "
+        prefix = actionStr[0:len(prefix)]
+        actionStr = prefix + "<u>" + actionStr[len(prefix):] + "</u>"
+    elif actionStr.lower().startswith("added parent") or actionStr.lower().startswith("removed parent"):
+        matches = re.findall(collection_regex, actionStr)
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(collectionTemplate, (matches[i],))
+            cur.execute(query)
+            names = cur.fetchall()
+            if names and len(names)>0:
+                name = names[0]['collection_name']
+                links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\">" + (name if name and len(name)>0 else matches[i]) + "</a>")
+            else:
+                links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
+        for i in range(len(links)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    return actionStr[0].lower() + actionStr[1:]
+
+@app.route('/curator/collections')
+def showAllCollections():
+    if not cf.isCurator():
+        session['next'] = request.path
+        return redirect(url_for('login'))
+    (conn, cur) = connect_to_db()
+    queryTemplate = "SELECT * FROM collection_view"
+    query = cur.mogrify(queryTemplate)
+    cur.execute(query)
+    entries = cur.fetchall()
+    _pythonic = list(map(dict, entries))
+    def get_orcid_links(orcids):
+        if not orcids or len(orcids)==0:
+            return []
+        names = getNamesFromOrcids(orcids)
+        return list(map(lambda i: "<a href=\"https://orcid.org/%s\" target=\"_blank\">%s</a>" % (orcids[i], names[i]), range(len(names))))
+    def get_collection_links(collection_ids):
+        links = []
+        for collection_id in collection_ids:
+            url = "/view/collection/" + collection_id
+            name = None
+            for entry in _pythonic:
+                if entry['collection_id'] == collection_id:
+                    name = entry['collection_name']
+                    break
+            innerhtml = name if name else collection_id
+            links.append("<a href=\"%s\" target=\"_blank\">%s</a>" % (url, innerhtml))
+        return links
+    def get_prj_ds_links(prj_ds_ids, type):
+        type = type.lower()
+        if type != 'project' and type != 'dataset':
+            return None
+        links = []
+        for id in prj_ds_ids:
+            url = "/view/%s/%s" % (type, id)
+            queryTemplate = "SELECT title FROM " + type + " WHERE " + ("proj_uid" if type=="project" else "id") + "=%s"
+            query = cur.mogrify(queryTemplate, (id,))
+            cur.execute(query)
+            rslts = cur.fetchall()
+            for rslt in rslts:
+                links.append("<a href=\"%s\" target=\"_blank\">%s</a>" % (url, rslt['title']))
+        return links
+    return render_template("all_collections.html", collections=_pythonic, getNames=getNamesFromOrcids, getOrcidLinks=get_orcid_links, getCollectionLinks=get_collection_links, getPrjDsLinks=get_prj_ds_links, lastModified=getLastCollectionChange, reformatMod=replaceWithLinks)
 
 @app.route('/view/dataset/sitemap.xml', methods=['GET'])
 def sitemap():
