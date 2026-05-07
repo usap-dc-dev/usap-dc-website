@@ -6752,7 +6752,7 @@ def replaceWithLinks(actionStr):
             ppl = cur.fetchall()
             if ppl and len(ppl)>0:
                 person = ppl[0]
-                innerhtml = get_name_from_person(person) if person else matches[i]
+                innerhtml = (get_name_from_person(person) if person else matches[i]).strip()
                 links.append("<a href=\"https://orcid.org/"+matches[i]+"\" target=\"_blank\"" + ("" if person else " title=\"Probably not a registered USAP-DC user\"") + ">" + innerhtml + "</a>")
             else:
                 links.append("<a href=\"https://orcid.org/"+matches[i]+"\" target=\"_blank\" title=\"Not a registered USAP-DC user\">" + matches[i] + "</a>")
@@ -6798,13 +6798,7 @@ def showAllCollections():
         links = []
         for collection_id in collection_ids:
             url = "/view/collection/" + collection_id
-            name = None
-            for entry in _pythonic:
-                if entry['collection_id'] == collection_id:
-                    name = entry['collection_name']
-                    break
-            innerhtml = name if name else collection_id
-            links.append("<a href=\"%s\" target=\"_blank\">%s</a>" % (url, innerhtml))
+            links.append("<a href=\"%s\" target=\"_blank\">%s</a>" % (url, collection_id))
         return links
     def get_prj_ds_links(prj_ds_ids, type):
         type = type.lower()
