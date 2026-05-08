@@ -6723,7 +6723,7 @@ def replaceWithLinks(actionStr):
             titles = cur.fetchall()
             if titles and len(titles)>0:
                 title = titles[0]['title']
-                links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\">" + title + "</a>")
+                links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\""+ ((" title=\""+title+"\"") if title and len(title)>0 else "") + ">" + matches[i] + "</a>")
             else:
                 links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
         for i in range(len(matches)):
@@ -6737,7 +6737,7 @@ def replaceWithLinks(actionStr):
             titles = cur.fetchall()
             if titles and len(titles)>0:
                 title = titles[0]['title']
-                links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\">" + title + "</a>")
+                links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\""+ ((" title=\""+title+"\"") if title and len(title)>0 else "") +">" + matches[i] + "</a>")
             else:
                 links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
         for i in range(len(matches)):
@@ -6771,7 +6771,7 @@ def replaceWithLinks(actionStr):
             names = cur.fetchall()
             if names and len(names)>0:
                 name = names[0]['collection_name']
-                links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\">" + (name if name and len(name)>0 else matches[i]) + "</a>")
+                links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\"" + ((" title=\""+name+"\"") if name and len(name)>0 else "") + ">" + matches[i] + "</a>")
             else:
                 links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
         for i in range(len(links)):
@@ -6798,7 +6798,12 @@ def showAllCollections():
         links = []
         for collection_id in collection_ids:
             url = "/view/collection/" + collection_id
-            links.append("<a href=\"%s\" target=\"_blank\">%s</a>" % (url, collection_id))
+            name = None
+            for entry in _pythonic:
+                if entry['collection_id'] == collection_id:
+                    name = entry['collection_name']
+                    break
+            links.append("<a href=\"%s\" target=\"_blank\"%s>%s</a>" % (url, ((" title=\"" + name + "\"") if name else ""), collection_id))
         return links
     def get_prj_ds_links(prj_ds_ids, type):
         type = type.lower()
@@ -6812,7 +6817,7 @@ def showAllCollections():
             cur.execute(query)
             rslts = cur.fetchall()
             for rslt in rslts:
-                links.append("<a href=\"%s\" target=\"_blank\">%s</a>" % (url, rslt['title']))
+                links.append("<a href=\"%s\" target=\"_blank\" title=\"%s\">%s</a>" % (url, rslt['title'], id))
         return links
     return render_template("all_collections.html", collections=_pythonic, getNames=getNamesFromOrcids, getOrcidLinks=get_orcid_links, getCollectionLinks=get_collection_links, getPrjDsLinks=get_prj_ds_links, lastModified=getLastCollectionChange, reformatMod=replaceWithLinks)
 

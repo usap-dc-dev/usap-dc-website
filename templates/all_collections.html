@@ -18,7 +18,7 @@
         {% for collection in collections %}
         {% set last_modified = lastModified(collection['collection_id']) %}
         <tr>
-            <td sortval="{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}"><a href="/view/collection/{{collection['collection_id']}}">{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}</a></td>
+            <td sortval="{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}"><a title="{{collection['description']}}" href="/view/collection/{{collection['collection_id']}}">{% if collection['collection_name'] %}{{collection['collection_name']}}{% else %}{{collection['collection_id']}}{% endif %}</a></td>
             <td sortval="{{collection['created_time'].strftime('%Y%m%d%H%M%S%f')}}" title="{{collection['created_time'].strftime('%m/%d/%Y %H:%M:%S.%f%z')}}">{{collection['created_time'].strftime('%-m/%-d/%Y')}} by <a href="https://orcid.org/{{collection['creator']}}" target="_blank">{{getNames([collection['creator']])[0]}}</a></td>
             <td sortval="{{','.join(collection['owners'])}}">{{"<br>".join(getOrcidLinks(collection['owners']))|safe}}</td>
             <td sortval="{{','.join(collection['collaborators'])}}">{{"<br>".join(getOrcidLinks(collection['collaborators']))|safe}}</td>
