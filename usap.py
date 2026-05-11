@@ -19,7 +19,7 @@ import re
 import copy
 from datetime import datetime, timedelta, date as dt_date
 import csv
-from collections import namedtuple
+from collections import deque, namedtuple
 import humanize
 import lib.json2sql as json2sql
 import shutil
@@ -45,6 +45,8 @@ import zipfile as zf
 from zoneinfo import ZoneInfo as zi
 from io import BytesIO
 import mimetypes
+import time
+from queue import Queue
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -67,6 +69,7 @@ app.config.update(
     OLD_CROSSREF_FILE="inc/old_crossref_sql.txt",
     DOI_REF_FILE="inc/doi_ref",
     PROJECT_REF_FILE="inc/project_ref",
+    COLLECTION_REF="inc/collection_ref",
     GMAIL_PICKLE="inc/token.pickle",
     AWARD_WELCOME_EMAIL="static/letters/USAP_DCwelcomeletter.html",
     AWARD_FINAL_EMAIL="static/letters/USAP_DCcloseoutletter.html",
@@ -90,13 +93,14 @@ app.config['RESTPLUS_MASK_SWAGGER'] = rp_settings.RESTPLUS_MASK_SWAGGER
 app.config['ERROR_404_HELP'] = rp_settings.RESTPLUS_ERROR_404_HELP
 app.config['BUNDLE_ERRORS'] = rp_settings.RESTPLUS_BUNDLE_ERRORS
 
+inheritanceChainDelim = "->"
 
 @app.route('/api1')
-def api():
+def api1():
     return render_template('api_swagger.html', api_url=url_for('api.doc'))
 
 @app.route('/api')
-def api2():
+def api():
     return render_template('api_swagger.html', api_url=url_for('api2.doc'))
 
 
@@ -421,6 +425,103 @@ def get_person(person_id):
     cur.execute(query)
     return cur.fetchone()
 
+def get_person_from_orcid(orcid):
+    if not orcid:
+        return None
+    (conn, cur) = connect_to_db()
+    template = 'SELECT * FROM person WHERE id_orcid=%s'
+    query = cur.mogrify(template, (orcid,))
+    cur.execute(query)
+    rslt = cur.fetchall()
+    if 0 == len(rslt):
+        return None
+    return dict(rslt[0])
+
+def getNamesFromOrcids(orcids):
+    if not orcids:
+        return []
+    (conn, cur) = connect_to_db()
+    template = 'SELECT id, first_name, middle_name, last_name FROM person WHERE id_orcid=%s'
+    names = []
+    for orcid in orcids:
+        query = cur.mogrify(template, (orcid,))
+        cur.execute(query)
+        ppl = cur.fetchall()
+        for person in ppl:
+            fn = person['first_name']
+            mn = person['middle_name']
+            ln = person['last_name']
+            name = None
+            if mn:
+                name = " ".join([fn, mn, ln])
+            elif fn and ln:
+                name = " ".join([fn, ln])
+            else:
+                splitId = re.split(r',\s', person['id'])
+                ln = splitId[0]
+                if re.search(r' ([JS]r\.|[IVXLCDM]+)$', person['id']):
+                    lastSpace = splitId[1].rfind(' ')+1
+                    name = splitId[1][0:lastSpace] + ln + " " + splitId[lastSpace:]
+                else:
+                    name = splitId[1] + " " + ln
+            names.append(name)
+    return names
+
+# could use get_person_from_orcid in map(fn, list) for this, but I figured it would be more efficient to just use one connection
+def getPeopleFromOrcids(orcids):
+    if not orcids:
+        return None
+    (conn, cur) = connect_to_db()
+    def getPersonFromOrcid(orcid):
+        template = "SELECT * FROM person WHERE id_orcid=%s"
+        query = cur.mogrify(template, (orcid,))
+        cur.execute(query)
+        rslt = cur.fetchall()
+        if len(rslt) == 0:
+            return None
+        return dict(rslt[0])
+    return list(map(getPersonFromOrcid, list(set(orcids))))
+
+def getAllPeopleWithOrcids():
+    (conn, cur) = connect_to_db()
+    template = 'SELECT id, id_orcid FROM person WHERE id_orcid IS NOT NULL'
+    cur.execute(cur.mogrify(template))
+    people = cur.fetchall()
+    pplList = list(people)
+    return list(map(dict, pplList))
+
+def get_person_from_name(name):
+    (conn, cur) = connect_to_db()
+    query = 'SELECT * FROM person WHERE concat_ws(\' \', first_name, middle_name, last_name)=%s'
+    mogrified = cur.mogrify(query, (name,))
+    cur.execute(mogrified)
+    rslt = cur.fetchall()
+    if 0 == len(rslt):
+        return None
+    return dict(rslt[0])
+
+def get_name_from_person(person):
+        fn = person['first_name']
+        mn = person['middle_name']
+        ln = person['last_name']
+        name = None
+        if fn and mn and ln:
+            name = ' '.join([fn, mn, ln])
+        elif fn and ln:
+            name = ' '.join([fn, ln])
+        _id = person['id']
+        suffix = ""
+        exp = re.compile(r" [IVXLCDM]+$")
+        if _id.endswith(" Jr.") or _id.endswith(" Sr."):
+            suffix = _id[-4:]
+            _id = _id[0:-4]
+        elif exp.match(_id):
+            suffix = " " + _id.split(" ")[-1]
+            _id = " ".join(_id.split(" ")[0:-1])
+        names = _id.split(", ")
+        if name:
+            return name + " " + suffix
+        return " ".join(names[1:]) + " " + names[0] + suffix
 
 def get_sensors(conn=None, cur=None, dataset_id=None):
     if not (conn and cur):
@@ -1093,7 +1194,7 @@ def general_error(e):
     print(traceback.format_exc())
     msg = "Oops, there is an error on this page.  Please <a href='mailto:%s'>contact us</a>.<br>" % app.config['USAP-DC_GMAIL_ACCT']
     if cf.isCurator():
-        msg += traceback.format_exc()
+        msg += "<pre>" + traceback.format_exc() + "</pre>"
     return render_template('error.html', error_message=msg)
 
 
@@ -1505,6 +1606,25 @@ def updateNextProjectRef():
     with open(app.config['PROJECT_REF_FILE'], 'w') as refFile:
         refFile.write(str(newRef))
 
+# Read the next collection reference number from the file
+def getNextCollectionRef():
+    try:
+        ref = open(app.config['COLLECTION_REF'], 'r').readline().strip()
+        return 'c%0*d' % (7, int(ref))
+    except FileNotFoundError:
+        (conn, cur) = connect_to_db()
+        query = "SELECT collection_id FROM collection ORDER BY collection_id desc LIMIT 1"
+        cur.execute(cur.mogrify(query))
+        results = cur.fetchall()
+        prev = 0 if len(results)==0 else int(results[0]['collection_id'][1:])
+        with open(app.config['COLLECTION_REF'], 'w') as refFile:
+            refFile.write(str(prev+1))
+        return 'c%0*d' % (7, prev+1)
+
+def updateNextCollectionRef():
+    newRef = int(getNextCollectionRef().replace('c', '')) + 1
+    with open(app.config['COLLECTION_REF'], 'w') as refFile:
+        refFile.write(str(newRef))
 
 @app.route('/edit/project/<project_id>', methods=['GET', 'POST'])
 @app.route('/submit/project', methods=['GET', 'POST'])
@@ -4860,6 +4980,654 @@ def human_size(bytes, units=[' bytes','KB','MB','GB','TB', 'PB', 'EB']):
     """ Returns a human readable string representation of bytes """
     return str(bytes) + units[0] if bytes < 1024 else human_size(bytes>>10, units[1:])
 
+def getAllFromTable(tableName, columns=[], order=None):
+    def getEntries():
+        nonlocal tableName, columns, order
+        (conn, cur) = connect_to_db()
+        if not tableName:
+            return None
+        
+        queryTemplate1 = "SELECT DISTINCT table_name FROM information_schema.columns WHERE table_name=%s"
+        query1 = cur.mogrify(queryTemplate1, (tableName,))
+        cur.execute(query1)
+        tableExists = len(cur.fetchall())>0
+        if tableExists:
+            queryTemplate2 = "SELECT * from "+tableName
+            if order:
+                queryTemplate2 = queryTemplate2 + " ORDER BY " + order
+            if type(columns) is str:
+                columns = list(map(lambda s: s.strip(), str.split(",")))
+            if len(columns)>0:
+                queryTemplate2 = queryTemplate2.replace("*", ", ".join(columns))
+            query2 = cur.mogrify(queryTemplate2)
+            cur.execute(query2)
+            results = cur.fetchall()
+            return list(map(lambda entry: dict(entry), list(results)))
+        else:
+            return None
+    return getEntries
+
+def formatHandler(obj):
+    if hasattr(obj, 'isoformat'):
+        return obj.isoformat()
+    elif isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.strftime("%Y/%m/%d %H:%M:%S")
+    raise TypeError("Unknown object type %s is not JSON serializable" % (type(obj),))
+
+def canEditCollection(userInfo, collectionId):
+    # if not logged in, can't edit anything
+    if not userInfo or not userInfo['orcid']:
+        return 0
+    # if the user is a curator, they can do anything
+    if userInfo['is_curator']:
+        return 3
+    # otherwise, check the db to see if they're an owner or collaborator
+    (conn, cur) = connect_to_db()
+    template = "SELECT role FROM collection_person_map WHERE person_orcid=%s AND collection_id=%s"
+    query = cur.mogrify(template, (userInfo['orcid'], collectionId))
+    cur.execute(query)
+    results = cur.fetchall()
+    # if the user is not associated with this collection at all, they can't edit it
+    if 0 == len(results):
+        return 0
+    # the user is definitely either a collaborator or editor at this point
+    # just add an extra check just in case
+    canEdit = False
+    isOwner = False
+    for rslt in results:
+        if rslt['role'].lower() == 'owner':
+            canEdit = True
+            isOwner = True
+            break
+        elif rslt['role'].lower() == 'collaborator':
+            canEdit = True
+    # if the user is an owner, they can add new co-owners, add/remove collaborators, and edit anything else
+    if isOwner:
+        return 2
+    # if the user is a collaborator, they can edit anything except owners/collaborators
+    return 1 if canEdit else 0
+
+inheritWarning = False
+
+@app.route('/submit/collection', methods=['GET', 'POST'])
+@app.route('/edit/collection/<collection_id>', methods=['GET', 'POST'])
+def make_collection(collection_id=None):
+    global inheritWarning
+    email_info = json.loads(open("inc/report_config.json", "r").read())
+    inheriting = False
+    duplicate = False
+    user_info = session.get('user_info')
+    makeEmailBody = lambda body: """<html><head></head><body>%s</body></html>""" % body
+    emailBody = ""
+    editing = request.path.startswith("/edit")
+    if not user_info:
+        session['next'] = request.path
+        return redirect(url_for('login'))
+    if not user_info['orcid']:
+        return render_template('make_collection.html', err="Please log in with an account associated with an ORCID", path=request.path)
+    if not collection_id:
+        collection_id=request.form.get('collection_id')
+    if not collection_id:
+        collection_id = request.args.get('parents')
+        if collection_id:
+            inheriting = True
+        else:
+            collection_id = request.args.get('source')
+            if collection_id:
+                duplicate = True
+    if editing:
+        emailBody = "<h1>Collection Update</h1>\n<a href=\"https://orcid.org/" + user_info['orcid'] + "\">" + user_info['name'] + "</a> has edited collection <a href=\"" + url_for("collection_landing_page", collection_id=collection_id, _external=True) +"\">" + collection_id + "</a>:"
+        changes = []
+        canEdit = canEditCollection(user_info, collection_id)
+        if canEdit:
+            (conn, cur) = connect_to_db(user_info['is_curator'])
+            log_template = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
+            add_prj_query_template = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
+            add_ds_query_template = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
+            rm_prj_query_template = "DELETE FROM collection_project_map WHERE collection_id=%s AND project_id=%s"
+            rm_ds_query_template = "DELETE FROM collection_dataset_map WHERE collection_id=%s AND dataset_id=%s"
+            add_prnt_query_template = "INSERT INTO collection_parent_map (collection_id, parent_collection_id) VALUES (%s, %s) ON CONFLICT DO NOTHING"
+            rm_prnt_query_template = "DELETE FROM collection_parent_map WHERE collection_id=%s AND parent_collection_id=%s"
+            update_description_template = "UPDATE collection SET description=%s WHERE collection_id=%s"
+            get_description_template = "SELECT description FROM collection WHERE collection_id=%s"
+            update_title_template = "UPDATE collection SET collection_name=%s WHERE collection_id=%s"
+            get_title_template = "SELECT collection_name FROM collection WHERE collection_id=%s"
+            prjs_to_add = list(filter(lambda prj: len(prj)>0, request.form.get("projects_add").split(",")))
+            ds_to_add = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_add").split(",")))
+            prjs_to_rm = list(filter(lambda prj: len(prj)>0, request.form.get("projects_rm").split(",")))
+            ds_to_rm = list(filter(lambda ds: len(ds)>0, request.form.get("datasets_rm").split(",")))
+            prnts_requested_to_add = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_add").split(",")))
+            prnts_to_add = list(filter(lambda prnt: not wouldAddCycle(collection_id, prnt), prnts_requested_to_add))
+            prnts_not_added = [item for item in prnts_requested_to_add if item not in prnts_to_add]
+            prnts_to_rm = list(filter(lambda prnt: len(prnt)>0, request.form.get("parents_rm").split(",")))
+            description = request.form.get("description")
+            newTitle = request.form.get("title")
+            getTitleQuery = cur.mogrify(get_title_template, (collection_id,))
+            unregisteredCollaborators = json.loads(request.form.get("unregisteredCollaborators"))
+            unregisteredOwners = json.loads(request.form.get("unregisteredOwners"))
+            cur.execute(getTitleQuery)
+            titles = cur.fetchall()
+            for t in titles:
+                ttl = t['collection_name']
+                if ttl != newTitle:
+                    updateTitleQuery = cur.mogrify(update_title_template, (newTitle, collection_id))
+                    logText = "Changed title to " + newTitle
+                    cur.execute(updateTitleQuery)
+                    logQuery = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                    cur.execute(logQuery)
+                    changes.append(logText)
+            getDescQuery = cur.mogrify(get_description_template, (collection_id,))
+            cur.execute(getDescQuery)
+            descriptions = cur.fetchall()
+            for d in descriptions:
+                desc = d['description']
+                if desc != description:
+                    updateDescQuery = cur.mogrify(update_description_template, (description, collection_id))
+                    cur.execute(updateDescQuery)
+                    logQuery = cur.mogrify(log_template, (collection_id, user_info['orcid'], "Changed description to: %s" % description))
+                    cur.execute(logQuery)
+                    tableHTML = '<table style="width:100%%"><tbody><tr><th>Old Description</th><th>New Description</th></tr><tr><td>%s</td><td>%s</td></tr></tbody></table>' % (desc.replace("\n", "<br>"), description.replace("\n", "<br>"))
+                    changes.append(tableHTML)
+                    break
+            for prj in prjs_to_add:
+                add_prj_query = cur.mogrify(add_prj_query_template, (collection_id, prj))
+                cur.execute(add_prj_query)
+            if len(prjs_to_add) > 0:
+                logText = "Added project" + ("s" if len(prjs_to_add)>1 else "") + ": " + ", ".join(prjs_to_add)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                cur.execute(query)
+            for ds in ds_to_add:
+                add_ds_query = cur.mogrify(add_ds_query_template, (collection_id, ds))
+                cur.execute(add_ds_query)
+            if len(ds_to_add) > 0:
+                logText = "Added dataset" + ("s" if len(ds_to_add)>1 else "") + ": " + ", ".join(ds_to_add)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                cur.execute(query)
+            for prj in prjs_to_rm:
+                rm_prj_query = cur.mogrify(rm_prj_query_template, (collection_id, prj))
+                cur.execute(rm_prj_query)
+            if len(prjs_to_rm) > 0:
+                logText = "Removed project" + ("s" if len(prjs_to_rm)>1 else "") + ": " + ", ".join(prjs_to_rm)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                cur.execute(query)
+            for ds in ds_to_rm:
+                rm_ds_query = cur.mogrify(rm_ds_query_template, (collection_id, ds))
+                cur.execute(rm_ds_query)
+            if len(ds_to_rm) > 0:
+                logText = "Removed dataset" + ("s" if len(ds_to_rm)>1 else "") + ": " + ", ".join(ds_to_rm)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                cur.execute(query)
+            for prnt in prnts_to_add:
+                add_prnt_query = cur.mogrify(add_prnt_query_template, (collection_id, prnt))
+                cur.execute(add_prnt_query)
+            if len(prnts_to_add)>0:
+                logText = "Added parent" + ("s" if len(prnts_to_add)>1 else "") + ": " + ", ".join(prnts_to_add)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                cur.execute(query)
+            if len(prnts_not_added) > 0:
+                inheritWarning = "You tried to add the following collection" + ("s" if len(prnts_not_added)>1 else "") + ", which would have introduced " + ("a cyclical dependency" if len(prnts_not_added)==1 else "cyclical dependencies") + ": " + ", ".join(map(lambda cid: "<a target=\"_blank\" href=\"/view/collection/"+cid + "\">" + cid + "</a>", prnts_not_added))
+                print(inheritWarning)
+            for prnt in prnts_to_rm:
+                rm_prnt_query = cur.mogrify(rm_prnt_query_template, (collection_id, prnt))
+                cur.execute(rm_prnt_query)
+            if len(prnts_to_rm)>0:
+                logText = "Removed parent" + ("s" if len(prnts_to_rm)>1 else "") + ": " + ", ".join(prnts_to_rm)
+                changes.append(logText)
+                query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                cur.execute(query)
+            # if the user is an owner or curator, allow them to add/remove collaborators or add co-owners
+            if 1 < canEdit:
+                add_template = "INSERT INTO collection_person_map (collection_id, person, person_orcid, role) VALUES (%s, %s, %s, %s)"
+                rm_template = "DELETE FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s AND role=%s"
+                find_template = "SELECT role FROM collection_person_map WHERE collection_id=%s AND person_orcid=%s"
+                owners_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("owners_add").split(",")))
+                for i in range(len(owners_to_add)):
+                    if not owners_to_add[i]:
+                        theOwner = unregisteredOwners[request.form.get("owners_add").split(",")[i]]
+                        owners_to_add[i] = {
+                            'id_orcid': request.form.get("owners_add").split(",")[i],
+                            'id': theOwner
+                        }
+                owners_added = []
+                for owner in owners_to_add:
+                    findQuery = cur.mogrify(find_template, (collection_id, owner['id_orcid']))
+                    cur.execute(findQuery)
+                    found = list(map(dict, cur.fetchall()))
+                    isAlreadyOwner = reduce(lambda acc, cur: acc or cur['role']=='owner', found, False)
+                    isAlreadyCollaborator = reduce(lambda acc, cur: acc or cur['role']=='collaborator', found, False)
+                    query = None
+                    if isAlreadyCollaborator:
+                        template = "UPDATE collection_person_map SET role=%s WHERE person_orcid=%s AND collection_id=%s"
+                        query = cur.mogrify(template, ("owner", owner['id_orcid'], collection_id))
+                    elif not isAlreadyOwner:
+                        query = cur.mogrify(add_template, (collection_id, owner['id'], owner['id_orcid'], "owner"))
+                    if query:
+                        owners_added.append(owner)
+                        cur.execute(query)
+                if 0 < len(owners_added):
+                    logText = "Added co-owner" + ("s" if 1 < len(owners_added) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], owners_added))
+                    changes.append(logText)
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                    cur.execute(query)
+                collabs_to_add = getPeopleFromOrcids(filter(lambda owner: len(owner)>0, request.form.get("collaborators_add").split(",")))
+                for i in range(len(collabs_to_add)):
+                    if not collabs_to_add[i]:
+                        theCollab = unregisteredCollaborators[request.form.get("collaborators_add").split(",")[i]]
+                        collabs_to_add[i] = {
+                            'id_orcid': request.form.get("collaborators_add").split(",")[i],
+                            'id': theCollab
+                        }
+                collabs_added = []
+                for clbrtr in collabs_to_add:
+                    findQuery = cur.mogrify(find_template, (collection_id, clbrtr['id_orcid']))
+                    cur.execute(findQuery)
+                    found = list(map(dict, cur.fetchall()))
+                    beingRemovedAsOwner = (2 < canEdit) and (clbrtr['id_orcid'] in map(lambda orcid: orcid.strip(), request.form.get("owners_rm").split(",")))
+                    isAlreadyOwner = (not beingRemovedAsOwner) and reduce(lambda acc, cur: acc or cur['role']=='owner', found, False)
+                    isAlreadyCollaborator = reduce(lambda acc, cur: acc or cur['role']=='collaborator', found, False)
+                    if not (isAlreadyOwner or isAlreadyCollaborator):
+                        collabs_added.append(clbrtr)
+                        query = cur.mogrify(add_template, (collection_id, clbrtr['id'], clbrtr['id_orcid'], "collaborator"))
+                        cur.execute(query)
+                if 0 < len(collabs_added):
+                    logText = "Added collaborator" + ("s" if 1 < len(collabs_added) else "") + ": " + ", ".join(map(lambda o: o['id_orcid'], collabs_added))
+                    changes.append(logText)
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                    cur.execute(query)
+                collabs_to_rm = list(filter(lambda owner: len(owner)>0, request.form.get("collaborators_rm").split(",")))
+                for clbrtr in collabs_to_rm:
+                    query = cur.mogrify(rm_template, (collection_id, clbrtr, "collaborator"))
+                    cur.execute(query)
+                if 0 < len(collabs_to_rm):
+                    logText = "Removed collaborator" + ("s" if 1 < len(collabs_to_rm) else "") + ": " + ", ".join(collabs_to_rm)
+                    changes.append(logText)
+                    query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                    cur.execute(query)
+                # if the user is a curator, allow them to also remove owners
+                if 2 < canEdit:
+                    owners_to_rm = list(filter(lambda owner: len(owner)>0, request.form.get("owners_rm").split(",")))
+                    for owner in owners_to_rm:
+                        query = cur.mogrify(rm_template, (collection_id, owner, "owner"))
+                        cur.execute(query)
+                    if 0 < len(owners_to_rm):
+                        logText = "Removed owner" + ("s" if 1 < len(owners_to_rm) else "") + ": " + ", ".join(owners_to_rm)
+                        changes.append(logText)
+                        query = cur.mogrify(log_template, (collection_id, user_info['orcid'], logText))
+                        cur.execute(query)
+            conn.commit()
+            if len(changes)>0:
+                emailBody += "\n<ul>" + "\n".join(map(lambda change: "<li>" + change + "</li>", changes)) + "</ul>"
+                success, error = send_gmail_message("info@usap-dc.org", email_info["RECIPIENTS"], "Collection " + collection_id + " has been updated", makeEmailBody(emailBody), None, None)
+                if error:
+                    print("Collection " + collection_id + " has been updated, but the email failed to send. See the database for details.")
+                    print(error)
+                else:
+                    print("Collection " + collection_id + " has been updated, and emails have been sent to the following address(es): " + ", ".join(email_info["RECIPIENTS"]) + ". See the database for details.")
+            return redirect('/view/collection/'+collection_id)
+        session['next'] = request.path
+        return redirect(url_for('login'))
+    else:
+        # at this point, we're definitely creating a new collection
+        # if it's a POST request, this was sent by the form
+        if request.method=="POST":
+            details = {}
+            (conn, cur) = connect_to_db()
+            nextId = getNextCollectionRef()
+            name = request.form.get('collection_name')
+            description = request.form.get('description')
+            owner = user_info.get('name')
+            owner_orcid = user_info.get('orcid')
+            details['Creator'] = "<a href=\"https://orcid.org/" + owner_orcid + "\">" + owner + "</a>"
+            details['Description'] = "<p>" + description + "</p>"
+            coowner_orcids = request.form.get("coowners")
+            collaborator_orcids = request.form.get("collaborators")
+            unregisteredCollaborators = json.loads(request.form.get("unregisteredCollaborators"))
+            unregisteredOwners = json.loads(request.form.get("unregisteredOwners"))
+            project_ids = request.form.get('projects')
+            if project_ids:
+                project_ids = project_ids.replace(", ", ",")
+            dataset_ids = request.form.get('datasets')
+            if dataset_ids:
+                dataset_ids = dataset_ids.replace(", ", ",")
+            parents = request.form.get('inherit_from')
+            if parents:
+                parents = parents.split(",")
+            else:
+                parents = []
+            # ensure uniqueness
+            parents = list(set(parents))
+            # queryTemplate = "INSERT INTO collection (collection_id, collection_name, owner, description, inherit_from, project_ids, dataset_ids) VALUES (%s, %s, %s, %s, %s, string_to_array(%s, ','), string_to_array(%s, ','))"
+            # query = cur.mogrify(queryTemplate, (nextId, name, owner, description, parents, project_ids, dataset_ids))
+            queryTemplate = "INSERT INTO collection (collection_id, collection_name, description) VALUES (%s, %s, %s)"
+            query = cur.mogrify(queryTemplate, (nextId, name, description))
+            cur.execute(query)
+            queryTemplate2 = "INSERT INTO collection_person_map (collection_id, person, role, person_orcid) VALUES (%s, %s, %s, %s)"
+            query2 = cur.mogrify(queryTemplate2, (nextId, owner, "owner", owner_orcid))
+            cur.execute(query2)
+            if project_ids:
+                projects_arr = list(set(project_ids.split(',')))
+                if len(projects_arr)>0:
+                    queryTemplate3 = "INSERT INTO collection_project_map (collection_id, project_id) VALUES (%s, %s)"
+                    getPrjsQueryTemplate = "SELECT DISTINCT proj_uid, title FROM project WHERE proj_uid IN (" + ", ".join(["%s" for x in projects_arr]) + ")"
+                    getPrjsQuery = cur.mogrify(getPrjsQueryTemplate, tuple(projects_arr))
+                    cur.execute(getPrjsQuery)
+                    prjs = cur.fetchall()
+                    details['Projects'] = "<ul>" + "".join(map(lambda prj: "<li><a href=\"" + url_for("project_landing_page", project_id=prj['proj_uid'], _external=True) + "\">" + prj['title'] + "</a></li>", prjs)) + "</ul>"
+                for prj in projects_arr:
+                    query3 = cur.mogrify(queryTemplate3, (nextId, prj))
+                    cur.execute(query3)
+            if dataset_ids:
+                datasets_arr = list(set(dataset_ids.split(',')))
+                if len(datasets_arr)>0:
+                    getDsQueryTemplate = "SELECT DISTINCT id, title FROM dataset WHERE id in (" + ", ".join(["%s" for x in datasets_arr]) + ")"
+                    getDsQuery = cur.mogrify(getDsQueryTemplate, tuple(datasets_arr))
+                    cur.execute(getDsQuery)
+                    dss = cur.fetchall()
+                    details['Datasets'] = "<ul>" + "".join(map(lambda ds: "<li><a href=\"" + url_for("landing_page", dataset_id=ds['id'], _external=True) + "\">" + ds['title'] + "</a></li>", dss)) + "</ul>"
+                queryTemplate4 = "INSERT INTO collection_dataset_map (collection_id, dataset_id) VALUES (%s, %s)"
+                for ds in datasets_arr:
+                    query4 = cur.mogrify(queryTemplate4, (nextId, ds))
+                    cur.execute(query4)
+            queryTemplate5 = "INSERT INTO collection_log (collection_id, actor, action) VALUES (%s, %s, %s)"
+            query5 = cur.mogrify(queryTemplate5, (nextId, owner_orcid, "Created"))
+            cur.execute(query5)
+            if len(parents)>0:
+                queryTemplate6 = "INSERT INTO collection_parent_map (collection_id, parent_collection_id) VALUES (%s, %s)"
+                for parent in parents:
+                    query6 = cur.mogrify(queryTemplate6, (nextId, parent))
+                    cur.execute(query6)
+            if coowner_orcids and len(coowner_orcids) > 0:
+                coowner_orcids_list = coowner_orcids.split(",")
+                coowners = getPeopleFromOrcids(coowner_orcids_list)
+                for i in range(len(coowners)):
+                    if not coowners[i]:
+                        theOwner = unregisteredOwners[coowner_orcids_list[i]]
+                        coowners[i] = {
+                            'id_orcid': coowner_orcids_list[i],
+                            'id': theOwner
+                        }
+                if len(coowners)>0:
+                    details['Co-owner' + ('s' if len(coowners)>1 else '')] = ("<ul%s>" % (" list-style-type: none" if 1==len(coowners) else "")) + "".join(map(lambda o: "<li><a href=\"https://orcid.org/" + o['id_orcid'] + "\">" + o['id'] + "</a></li>", coowners)) + "</ul>"
+                for coowner in coowners:
+                    query7 = cur.mogrify(queryTemplate2, (nextId, coowner['id'], "owner", coowner['id_orcid']))
+                    cur.execute(query7)
+            if collaborator_orcids and len(collaborator_orcids) > 0:# make sure collaborators aren't already owners
+                collaborator_orcids_list = [c for c in collaborator_orcids.split(",") if c not in coowner_orcids and c != owner_orcid]
+                if len(collaborator_orcids_list) > 0:
+                    collaborators = getPeopleFromOrcids(collaborator_orcids_list)
+                    for i in range(len(collaborators)):
+                        if not collaborators[i]:
+                            theCollaborator = unregisteredCollaborators[collaborator_orcids_list[i]]
+                            collaborators[i] = {
+                                'id_orcid': collaborator_orcids_list[i],
+                                'id': theCollaborator
+                            }
+                    details['Collaborator' + ('s' if len(collaborators)>1 else '')] = ("<ul%s>" % (" list-style-type: none" if 1==len(collaborators) else "")) + "".join(map(lambda o: "<li><a href=\"https://orcid.org/" + o['id_orcid'] + "\">" + o['id'] + "</a></li>", collaborators)) + "</ul>"
+                    for collaborator in collaborators:
+                        query8 = cur.mogrify(queryTemplate2, (nextId, collaborator['id'], "collaborator", collaborator['id_orcid']))
+                        cur.execute(query8)
+            conn.commit()
+            updateNextCollectionRef()
+            emailBody = "<h1>New Collection: <a href=\"" + url_for("collection_landing_page", collection_id=nextId, _external=True) +"\">" + (name if name and len(name)>0 else nextId) + "</a></h1>\n"
+            emailSubject = "New collection created: " + name
+            for detail in details.keys():
+                emailBody += "<h2>" + detail + "</h2>"
+                emailBody += details[detail]
+            success, error = send_gmail_message("info@usap-dc.org", email_info["RECIPIENTS"], emailSubject, makeEmailBody(emailBody), None, None)
+            return redirect('/view/collection/'+nextId)
+        # otherwise, view the webpage/form for creating a new collection
+        else:
+            uniqueParentsStr = None
+            if collection_id:
+                parentIds = collection_id.split(",")
+                uniqueParents = set(parentIds)
+                uniqueParentsStr = ",".join(uniqueParents)
+            return render_template("make_collection.html", parents=uniqueParentsStr, people=getAllPeopleWithOrcids(), cols=50)
+
+@app.route('/view/collection/<collection_id>')
+def collection_landing_page(collection_id):
+    global inheritWarning
+    collectionInfo = get_collection(collection_id)
+    if collectionInfo:
+        (conn, cur) = connect_to_db()
+        template_dict = {**collectionInfo}
+        if inheritWarning:
+            template_dict['inheritWarn'] = inheritWarning
+            inheritWarning = False
+        template_dict['getName'] = get_name_from_person
+        template_dict['current_user'] = session.get('user_info')
+        template_dict['canEdit'] = canEditCollection(template_dict['current_user'], collection_id)
+        template_dict['parents_html'] = getParentCollectionsHTML(collectionInfo['parents'])
+        template_dict['people'] = getAllPeopleWithOrcids()
+        # get the IDs of people involved in making the collection
+        owners = list(map(get_person_from_orcid, template_dict['owners']))
+        queryTemplate = "SELECT person FROM collection_person_map WHERE person_orcid=%s AND collection_id=%s AND role=%s"
+        for i in range(len(owners)):
+            if not owners[i]:
+                query = cur.mogrify(queryTemplate, (template_dict['owners'][i], collection_id, 'owner'))
+                cur.execute(query)
+                ppl = cur.fetchall()
+                if len(ppl)>0:
+                    names = ppl[0]['person'].split(", ")
+                    ln = names[0]
+                    others = names[1].split(" ")
+                    mi = others[-1] if (len(others)>1 and others[-1].endswith(".") and len(others[-1])==2) else None
+                    fn = " ".join(others[0:-1])
+                    owners[i] = {
+                        "id": ppl[0]['person'],
+                        "last_name": ln,
+                        "first_name": fn,
+                        "middle_name": mi,
+                        "id_orcid": template_dict['owners'][i]
+                    }
+        template_dict['owners'] = owners
+        collaborators = list(map(get_person_from_orcid, template_dict['collaborators']))
+        for i in range(len(collaborators)):
+            if not collaborators[i]:
+                query = cur.mogrify(queryTemplate, (template_dict['collaborators'][i], collection_id, 'collaborator'))
+                cur.execute(query)
+                ppl = cur.fetchall()
+                if len(ppl)>0:
+                    names = ppl[0]['person'].split(", ")
+                    ln = names[0]
+                    others = names[1].split(" ")
+                    mi = others[-1] if (len(others)>1 and others[-1].endswith(".") and len(others[-1])==2) else None
+                    fn = " ".join(others[0:-1])
+                    collaborators[i] = {
+                        "id": ppl[0]['person'],
+                        "last_name": ln,
+                        "first_name": fn,
+                        "middle_name": mi,
+                        "id_orcid": template_dict['collaborators'][i]
+                    }
+        template_dict['collaborators'] = collaborators
+        # get all the projects in this collection
+        template_dict['projects'] = None
+        if len(collectionInfo['project_ids']) > 0:
+            template_dict['projects'] = []
+            queryTemplate = "SELECT proj_uid, title, description FROM project WHERE proj_uid=%s"
+            for prj_id in collectionInfo['project_ids']:
+                query = cur.mogrify(queryTemplate, (prj_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    rsltDict = dict(result)
+                    rsltDict['removable'] = True
+                    template_dict['projects'].append(rsltDict)
+        if len(collectionInfo['inherited']['projects']) > 0:
+            if not template_dict['projects']:
+                template_dict['projects'] = []
+            queryTemplate = "SELECT proj_uid, title, description FROM project WHERE proj_uid=%s"
+            for prj_id in collectionInfo['inherited']['projects'].keys():
+                query = cur.mogrify(queryTemplate, (prj_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    resultDict = dict(result)
+                    resultDict['removable'] = True
+                    matchingIndices = [x for x in range(len(template_dict['projects'])) if template_dict['projects'][x] == resultDict]
+                    resultDict['removable'] = resultDict in template_dict['projects']
+                    if resultDict['removable']:
+                        for index in matchingIndices:
+                            template_dict['projects'][index]['hide'] = True
+                    resultDict['inherited_from'] = collectionInfo['inherited']['projects'][prj_id]
+                    template_dict['projects'].append(resultDict)
+        # get all the datasets in this collection
+        template_dict['datasets'] = None
+        if len(collectionInfo['dataset_ids']) > 0:
+            template_dict['datasets'] = []
+            queryTemplate = "SELECT id, title, abstract FROM dataset WHERE id=%s"
+            for ds_id in collectionInfo['dataset_ids']:
+                query = cur.mogrify(queryTemplate, (ds_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    resultDict = dict(result)
+                    resultDict['removable'] = True
+                    template_dict['datasets'].append(resultDict)
+        if len(collectionInfo['inherited']['datasets']) > 0:
+            if not template_dict['datasets']:
+                template_dict['datasets'] = []
+            queryTemplate = "SELECT id, title, abstract FROM dataset WHERE id=%s"
+            for ds_id in collectionInfo['inherited']['datasets'].keys():
+                query = cur.mogrify(queryTemplate, (ds_id,))
+                cur.execute(query)
+                results = cur.fetchall()
+                for result in results:
+                    resultDict = dict(result)
+                    resultDict['removable'] = True
+                    matchingIndices = [x for x in range(len(template_dict['datasets'])) if template_dict['datasets'][x] == resultDict]
+                    resultDict['removable'] = resultDict in template_dict['datasets']
+                    if resultDict['removable']:
+                        for index in matchingIndices:
+                            template_dict['datasets'][index]['hide'] = True
+                    resultDict['inherited_from'] = collectionInfo['inherited']['datasets'][ds_id]
+                    template_dict['datasets'].append(resultDict)
+        ancestorTree = collectionInfo["inherited"]
+        ancestors = list(set(reduce(lambda acc, cur: acc+cur, map(lambda k: reduce(lambda acc, cur: acc+cur, map(lambda key: reduce(lambda acc, cur: acc+cur, map(lambda key: key.split(inheritanceChainDelim), ancestorTree[k][key]), []), ancestorTree[k].keys()), []), ancestorTree.keys()), [])))
+        ancestorNames = dict(zip(ancestors, list(map(get_collection_name, ancestors))))
+        def inheritance_html(path_list):
+            def getLink(collection_id):
+                return "<a href=\"/view/collection/" + collection_id + "\">" + ancestorNames[collection_id] + "</a>"
+            collectionTree = {}
+            for path in path_list:
+                ids_list = path.split(inheritanceChainDelim)
+                curNode = collectionTree
+                for i in range(len(ids_list)):
+                    curId = ids_list[i]
+                    if curId not in curNode:
+                        curNode[curId] = {}
+                    if i+1 == len(ids_list):
+                        curNode[curId][curId] = {}
+                    curNode = curNode[curId]
+            def makeDiv(collection_entry, depth=0):
+                divStart = "<div style=\"padding-left: " + str(10*depth) + "px\"" + ("hidden" if 0==depth else "") + ">↳&nbsp;"
+                finalPath=""
+                if (collection_entry[0], {}) in collection_entry[1].items() and len(collection_entry[1].items())>1:
+                    finalPath = makeDiv((collection_entry[0], {}), depth)
+                subDivs = list(map(lambda entry: makeDiv(entry, depth+1), filter(lambda x: x[0] != collection_entry[0], collection_entry[1].items())))
+                return finalPath + divStart + getLink(collection_entry[0]) + "".join(subDivs) + "</div>"                    
+            return "\n".join(map(makeDiv, collectionTree.items()))
+        template_dict['inheritance_tree'] = inheritance_html
+        def getNameFromPersonId(id_str):
+            suffix = ""
+            if id_str.endswith(" Jr.") or id_str.endswith(" Sr."):
+                suffix = id_str[-4:]
+                id_str = id_str[0:-4]
+            names = id_str.split(", ")
+            last_name = names[0]
+            other_names = " ".join(names[1:])
+            return other_names + " " + last_name + suffix
+        template_dict['getNameFromPersonId'] = getNameFromPersonId
+        template_dict['json_dumps'] = json.dumps
+        template_dict['json_loads'] = json.loads
+        return render_template("collection.html", **template_dict, truncate=truncateStr)
+    return render_template("collection.html", collection_id=collection_id, err="No such collection")
+
+def getParentCollectionsHTML(parentIds):
+    htmlList = []
+    (conn, cur) = connect_to_db()
+    queryTemplate = "SELECT collection_id, collection_name FROM collection WHERE collection_id=%s"
+    for pid in parentIds:
+        query = cur.mogrify(queryTemplate, (pid,))
+        cur.execute(query)
+        results = cur.fetchall()
+        if 0 < len(results):
+            url = "/view/collection/" + results[0]['collection_id']
+            name = results[0]['collection_name'] if results[0]['collection_name'] else "Untitled"
+            htmlList.append((pid, "<a href=\"" + url + "\">" + name + "</a>"))
+    return htmlList
+
+# TODO need to make this actually do something
+def wouldAddCycle(child_id, prospective_parent_id):
+    if not child_id or not prospective_parent_id:
+        return False
+    if child_id == prospective_parent_id:
+        return True
+    (conn, cur) = connect_to_db()
+    visiting = Queue()
+    visiting.put(prospective_parent_id)
+    queryTemplate = "SELECT parents FROM collection_view WHERE collection_id=%s"
+    while not visiting.empty():
+        curId = visiting.get()
+        query = cur.mogrify(queryTemplate, (curId,))
+        cur.execute(query)
+        rslt = cur.fetchall()
+        for row in rslt:
+            print("Row:", row)
+            parents = row['parents']
+            print("Parents of", child_id)
+            for parent in parents:
+                print(parent)
+                if parent == child_id:
+                    return True
+                visiting.put(parent)
+    return False
+
+def findInheritanceCycles(collectionId, parentIds):
+    if not collectionId:
+        raise Exception("No collection provided")
+    if not parentIds or len(parentIds)==0:
+        return None
+    (conn, cur) = connect_to_db()
+    findParentsQueryTemplate = "SELECT inherit_from FROM collection WHERE collection_id=%s"
+    def cycleFinderHelper(descendants, curParent):
+        newDescendants = [*descendants, curParent]
+        if curParent in descendants:
+            return [newDescendants]
+        findParentsQuery = cur.mogrify(findParentsQueryTemplate, (curParent,))
+        cur.execute(findParentsQuery)
+        entries = list(cur.fetchall())
+        if 0 == len(entries):
+            raise Exception("Could not find collection " + curParent)
+        newParents = list(entries[0]['inherit_from'])
+        cycles = []
+        for parent in newParents:
+            someCycles = cycleFinderHelper(newDescendants, parent)
+            for cycle in someCycles:
+                cycles.append(cycle)
+        return cycles
+    allCycles = []
+    for id in parentIds:
+        thisParentCycles = cycleFinderHelper([collectionId], id)
+        for cycle in thisParentCycles:
+            if cycle and len(cycle)>1:
+                allCycles.append(cycle)
+    return allCycles
+    
+def truncateStr(longStr, maxLen=50):
+    if not longStr:
+        return ""
+    if len(longStr) <= maxLen:
+        return longStr
+    if maxLen < 1:
+        return ""
+    return longStr[0:maxLen-1] + "…"
 
 @app.route('/view/project/<project_id>')
 def project_landing_page(project_id):
@@ -4942,6 +5710,95 @@ def validate_dmp_link(dmp_link):
         return True
     return False
     
+def get_inherited(parent_collections):
+    (conn, cur) = connect_to_db()
+    data = {
+        "projects": {},
+        "datasets": {}
+    }
+    query_template = "SELECT parents, project_ids, dataset_ids FROM collection_view WHERE collection_id=%s"
+    # breadth-first traversal of inheritance tree
+    checked = set()
+    checking = deque()
+    for parent in parent_collections:
+        checking.append(parent)
+    while len(checking)>0:
+        cur_path = checking.popleft()
+        cur_id = cur_path.split(inheritanceChainDelim)[-1]
+        # if we've already checked this ancestor collection, find the projects and datasets it includes and add this path
+        if cur_id in checked:
+            for prj_id in data["projects"].keys():
+                add_path = False
+                for path in data["projects"][prj_id]:
+                    # if we've already checked this exact path, don't add it again
+                    if str(cur_path) == str(path):
+                        add_path = False
+                        break
+                    # if the end of the path includes this project and it's a new path, add it
+                    elif cur_id == path.split(inheritanceChainDelim)[-1]:
+                        add_path = True
+                if add_path:
+                    data["projects"][prj_id].append(cur_path)
+            for ds_id in data["datasets"].keys():
+                add_path = False
+                for path in data["datasets"][ds_id]:
+                    if cur_path == path:
+                        add_path = False
+                        break
+                    elif cur_id == path.split(inheritanceChainDelim)[-1]:
+                        add_path = True
+                if add_path:
+                    data["datasets"][ds_id].append(cur_path)
+        # otherwise, query the database and add its projects and datasets to this one
+        else:
+            query = cur.mogrify(query_template, (cur_id,))
+            cur.execute(query)
+            results = cur.fetchall()
+            if results:
+                for result in results:
+                    pids = result['project_ids']
+                    dids = result['dataset_ids']
+                    prnts = result['parents']
+                    for pid in pids:
+                        if pid not in data["projects"]:
+                            data["projects"][pid] = [cur_path]
+                        elif cur_path not in data["projects"][pid]:
+                            data["projects"][pid].append(cur_path)
+                    for did in dids:
+                        if did not in data["datasets"]:
+                            data["datasets"][did] = [cur_path]
+                        elif cur_path not in data["datasets"][did]:
+                            data["datasets"][did].append(cur_path)
+                    for prnt in prnts:
+                        checking.append(cur_path + inheritanceChainDelim + prnt)
+            checked.add(cur_id)
+    return data
+
+def get_collection_name(collectionId):
+    if not collectionId:
+        return None
+    (conn, cur) = connect_to_db()
+    query_template = "SELECT collection_name FROM collection WHERE collection_id=%s"
+    query = cur.mogrify(query_template, (collectionId,))
+    cur.execute(query)
+    rslt = cur.fetchall()
+    if len(rslt) > 0:
+        return rslt[0]["collection_name"]
+    return None
+
+def get_collection(collectionId):
+    if not collectionId:
+        return None
+    (conn, cur) = connect_to_db()
+    query_template = "SELECT * FROM collection_view WHERE collection_id=%s"
+    query = cur.mogrify(query_template, (collectionId,))
+    cur.execute(query)
+    rslts = cur.fetchall()
+    if len(rslts) == 0:
+        return None
+    rslt = dict(rslts[0])
+    rslt["inherited"] = get_inherited(rslt["parents"])
+    return rslt
 
 def get_project(project_id):
     if project_id is None:
@@ -5428,8 +6285,14 @@ def dashboard():
             fair_map[dataset_id] = [poorCount, fairCount, goodCount]
         else:
             fair_map[dataset_id] = None
-
-    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards, fair_eval=fair_map)
+    canDoCollections = not not user_info['orcid']
+    collections = None
+    if canDoCollections:
+        collectionsQueryTemplate = "SELECT * FROM collection_view WHERE %s=ANY(owners) OR %s=ANY(collaborators)"
+        collectionsQuery = cur.mogrify(collectionsQueryTemplate, (user_info['orcid'], user_info['orcid']))
+        cur.execute(collectionsQuery)
+        collections = list(map(lambda e: dict(e), cur.fetchall()))
+    return render_template('dashboard.html', user_info=user_info, datasets=datasets, projects=projects, awards=awards, canDoCollections=canDoCollections, collections=collections, fair_eval=fair_map)
 
 
 @app.route('/curator/award_letters', methods=['GET', 'POST'])
@@ -5793,7 +6656,7 @@ def apiKeyPage():
         template_dict['fields'][field] = 'text'
         if 'organization'==field:
             template_dict['dropdowns'][field] = []
-            listQuery = "select distinct %s from person where %s is not null and not %s=''" % (field, field, field)
+            listQuery = "select distinct %s from person where %s is not null and not %s='' ORDER BY %s" % (field, field, field, field)
             cur.execute(listQuery)
             listResults = cur.fetchall()
             for result in listResults:
@@ -5829,6 +6692,134 @@ def makeNewKey(name):
     if not cf.isCurator():
         abort(401)
     return json.dumps(cf.makeApiKey(name))
+
+def getLastCollectionChange(collection_id):
+    (conn, cur) = connect_to_db()
+    template = "SELECT act_time, actor, ARRAY_AGG(action) AS actions from collection_log WHERE collection_id=%s GROUP BY act_time, actor ORDER BY act_time desc"
+    query = cur.mogrify(template, (collection_id,))
+    cur.execute(query)
+    rslts = cur.fetchall()
+    if len(rslts)>0:
+        latest = rslts[0]
+        return dict(latest)
+    return None
+
+def replaceWithLinks(actionStr):
+    (conn, cur) = connect_to_db()
+    orcidTemplate = "SELECT * FROM person WHERE lower(id_orcid)=lower(%s)"
+    orcid_regex = '(([0-9]{4}-){3}[0-9]{3}[0-9Xx])'
+    collectionTemplate = "SELECT collection_name FROM collection WHERE collection_id=%s"
+    collection_regex='c[0-9]{7}'
+    projectTemplate = "SELECT title FROM project WHERE proj_uid=%s"
+    project_regex = 'p[0-9]{7}'
+    datasetTemplate = "SELECT title FROM dataset WHERE id=%s"
+    dataset_regex=r'([0-9]{6})'
+    if actionStr.lower().startswith("added project") or actionStr.lower().startswith("removed project"):
+        matches = re.findall(project_regex, actionStr)
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(projectTemplate, (matches[i],))
+            cur.execute(query)
+            titles = cur.fetchall()
+            if titles and len(titles)>0:
+                title = titles[0]['title']
+                links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\""+ ((" title=\""+title+"\"") if title and len(title)>0 else "") + ">" + matches[i] + "</a>")
+            else:
+                links.append("<a href=\"/view/project/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
+        for i in range(len(matches)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    elif actionStr.lower().startswith("added dataset") or actionStr.lower().startswith("removed dataset"):
+        matches = re.findall(dataset_regex, actionStr)
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(datasetTemplate, (matches[i],))
+            cur.execute(query)
+            titles = cur.fetchall()
+            if titles and len(titles)>0:
+                title = titles[0]['title']
+                links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\""+ ((" title=\""+title+"\"") if title and len(title)>0 else "") +">" + matches[i] + "</a>")
+            else:
+                links.append("<a href=\"/view/dataset/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
+        for i in range(len(matches)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    elif actionStr.lower().startswith("added owner") or actionStr.lower().startswith("added co") or actionStr.lower().startswith("removed owner") or actionStr.lower().startswith("removed co"):
+        _matches = re.findall(orcid_regex, actionStr)
+        matches = list(map(lambda match: match[0], _matches))
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(orcidTemplate, (matches[i],))
+            cur.execute(query)
+            ppl = cur.fetchall()
+            if ppl and len(ppl)>0:
+                person = ppl[0]
+                innerhtml = (get_name_from_person(person) if person else matches[i]).strip()
+                links.append("<a href=\"https://orcid.org/"+matches[i]+"\" target=\"_blank\"" + ("" if person else " title=\"Probably not a registered USAP-DC user\"") + ">" + innerhtml + "</a>")
+            else:
+                links.append("<a href=\"https://orcid.org/"+matches[i]+"\" target=\"_blank\" title=\"Not a registered USAP-DC user\">" + matches[i] + "</a>")
+        for i in range(len(matches)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    elif actionStr.lower().startswith("changed title"):
+        prefix = "Changed title to "
+        prefix = actionStr[0:len(prefix)]
+        actionStr = prefix + "<u>" + actionStr[len(prefix):] + "</u>"
+    elif actionStr.lower().startswith("added parent") or actionStr.lower().startswith("removed parent"):
+        matches = re.findall(collection_regex, actionStr)
+        links = []
+        for i in range(len(matches)):
+            query = cur.mogrify(collectionTemplate, (matches[i],))
+            cur.execute(query)
+            names = cur.fetchall()
+            if names and len(names)>0:
+                name = names[0]['collection_name']
+                links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\"" + ((" title=\""+name+"\"") if name and len(name)>0 else "") + ">" + matches[i] + "</a>")
+            else:
+                links.append("<a href=\"/view/collection/" + matches[i] + "\" target=\"_blank\">" + matches[i] + "</a>")
+        for i in range(len(links)):
+            actionStr = actionStr.replace(matches[i], links[i])
+    return actionStr[0].lower() + actionStr[1:]
+
+@app.route('/curator/collections')
+def showAllCollections():
+    if not cf.isCurator():
+        session['next'] = request.path
+        return redirect(url_for('login'))
+    (conn, cur) = connect_to_db()
+    queryTemplate = "SELECT * FROM collection_view"
+    query = cur.mogrify(queryTemplate)
+    cur.execute(query)
+    entries = cur.fetchall()
+    _pythonic = list(map(dict, entries))
+    def get_orcid_links(orcids):
+        if not orcids or len(orcids)==0:
+            return []
+        names = getNamesFromOrcids(orcids)
+        return list(map(lambda i: "<a href=\"https://orcid.org/%s\" target=\"_blank\">%s</a>" % (orcids[i], names[i]), range(len(names))))
+    def get_collection_links(collection_ids):
+        links = []
+        for collection_id in collection_ids:
+            url = "/view/collection/" + collection_id
+            name = None
+            for entry in _pythonic:
+                if entry['collection_id'] == collection_id:
+                    name = entry['collection_name']
+                    break
+            links.append("<a href=\"%s\" target=\"_blank\"%s>%s</a>" % (url, ((" title=\"" + name + "\"") if name else ""), collection_id))
+        return links
+    def get_prj_ds_links(prj_ds_ids, type):
+        type = type.lower()
+        if type != 'project' and type != 'dataset':
+            return None
+        links = []
+        for id in prj_ds_ids:
+            url = "/view/%s/%s" % (type, id)
+            queryTemplate = "SELECT title FROM " + type + " WHERE " + ("proj_uid" if type=="project" else "id") + "=%s"
+            query = cur.mogrify(queryTemplate, (id,))
+            cur.execute(query)
+            rslts = cur.fetchall()
+            for rslt in rslts:
+                links.append("<a href=\"%s\" target=\"_blank\" title=\"%s\">%s</a>" % (url, rslt['title'], id))
+        return links
+    return render_template("all_collections.html", collections=_pythonic, getNames=getNamesFromOrcids, getOrcidLinks=get_orcid_links, getCollectionLinks=get_collection_links, getPrjDsLinks=get_prj_ds_links, lastModified=getLastCollectionChange, reformatMod=replaceWithLinks)
 
 @app.route('/view/dataset/sitemap.xml', methods=['GET'])
 def sitemap():
@@ -5905,7 +6896,7 @@ def internal_error(error):
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return redirect(url_for('not_found'))
+    return not_found()
 
 @app.errorhandler(401)
 def unauthorized_access(error):

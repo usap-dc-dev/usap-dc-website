@@ -461,7 +461,7 @@ content area & common elements
 
 /* table theming */
 
-#dif-browser-table table {
+.dif-browser-table table {
   width:100%;
   border:0.144em solid #024161;
   border-collapse: separate;
@@ -470,7 +470,7 @@ content area & common elements
   table-layout: fixed;
 }
 
-#dif-browser-table table th {
+.dif-browser-table table th {
   background-color:rgb(171, 193, 216);
   color: rgb(36, 84, 148);
   text-align: left;
@@ -481,17 +481,17 @@ content area & common elements
   word-wrap: break-word;
 }
 
-#dif-browser-table table tr {
+.dif-browser-table table tr {
   padding: 0.14em 0.36em;
   line-height:1.5em;
    
 }
 
-#dif-browser-table table tr:nth-child(even) {
+.dif-browser-table table tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
-#dif-browser-table table td {
+.dif-browser-table table td {
   padding:0.14em;
   border:1px solid white;
   word-wrap: break-word;

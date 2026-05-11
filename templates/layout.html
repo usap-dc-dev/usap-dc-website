@@ -16,6 +16,8 @@
   <meta name="google-site-verification" content="Y3conOQPHcauhmSbYswJ6Cj8i8in8PtPPn1UWYHFyNo" />
   <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon"/>
   <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=help" />
   <link rel="stylesheet" href="https://www.w3schools.com/lib/w3.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.24/datatables.min.css"/> 
@@ -27,6 +29,7 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/ol3-popup/src/ol3-popup.css')}}"/>
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bower_components/jquery-ui/themes/base/jquery-ui.css')}}"/>
   {% endif %}
+  {% if cur=="collection" or cur=="makeCollection" or cur=="collections" %}<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/collection.css')}}"/>{% endif %}
   
 
   <!-- InstanceEndEditable -->
@@ -263,7 +266,7 @@
   {% if cur =="search_old" %}
   <link rel="stylesheet" type="text/css" href="/static/css/search_old.css" media="screen, projection" />
   {% endif %}
-  {% if cur =="curator" or cur=="emails" %}
+  {% if cur =="curator" or cur=="emails" or cur=="collections"%}
   <link rel="stylesheet" type="text/css" href="/static/css/curator.css" media="screen, projection" />
   {% endif %}
 
@@ -277,13 +280,22 @@
 
 {% if cur=="manageApiKeys" and not need_login %}
 <script type="text/javascript" src="{{url_for('static', filename='js/manageApiKeys.js')}}"></script>
-<link rel="stylesheet" href="/static/css/manageApiKeys.css"/>
+<link rel="stylesheet" href="/static/css/manageApiKeys.css">
 <script type="text/javascript">
     {% if people and people|length>0 %}
     let None = null;
     const people = {{people|safe}};
     {% endif %}
 </script>
+{% endif %}
+{% if cur=="collection" %}
+<script type="text/javascript" src="{{url_for('static', filename='js/collection.js')}}"></script>
+{% endif %}
+{% if cur=="makeCollection" or cur=="collection" %}
+<script type="text/javascript" src="{{url_for('static', filename='js/makeCollection.js')}}"></script>
+{% endif %}
+{% if cur=="collections" %}
+<script type="text/javascript" src="{{url_for('static', filename='js/sorttable2.js')}}"></script>
 {% endif %}
 
 </head>
@@ -321,6 +333,7 @@
             <li><a href="{{url_for('project')}}">Project Registration</a></li>
             <li><a href="{{url_for('submit_dataset_help')}}">Dataset Submission Help</a></li>
             <li><a href="{{url_for('submit_project_help')}}">Project Registration Help</a></li>
+            <li><a href="{{url_for('make_collection')}}">Create a Collection</a></li>
           </ul>
         </li>
         <li><a class="top_link" href="{{url_for('search')}}">Search</a>

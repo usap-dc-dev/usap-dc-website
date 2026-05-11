@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+{% set cur="collection" %}
+{% block body %}
+{% if canEdit %}<form method="POST" action="/edit/collection/{{collection_id}}" enctype="multipart/form-data" onsubmit="fixValues(this)">{% endif %}
+{% if collection_name %}<table style="width:100%"><tr><td>{% endif %}<div class="header">{% if err %}Error loading collection {{collection_id}}: {{err}}</div>{% else %}Collection{% if collection_name %}: {{collection_name}}{% else %} {{collection_id}}{% endif %}</div>{% if collection_name %}</td><td style="text-align: right">ID: {{collection_id}}<br><h3>{% if canEdit %}
+<button type="button" class="download" onclick="toggleEditing()" id="editBtn">Edit</button>&nbsp;&nbsp;{% endif %}
+<button type="button" class="download" onclick="createNewCollection(['{{collection_id}}'])">Create New Collection From This One</button></h3></td></tr></table>{% endif %}
+{% if canEdit %}<label hidden class="show_when_editing" for="titleInput">New Title:</label><input hidden class="show_when_editing" id="titleInput" name="title" {% if collection_name %}value="{{collection_name}}"{% else %}placeholder="Name your collection"{% endif %}>{% endif %}
+<div{% if (not description) or (description|length == 0) %} hidden class="show_when_editing"{% endif %}><b><i>Description</i></b></div>
+{% if canEdit %}<label for="description" hidden class="show_when_editing">(click to edit):&nbsp;&nbsp;</label>{% endif %}<p id="descriptionP"{% if canEdit %} name="description" class="editable"{% endif %} style="white-space: pre-line; display: inline"{% if not description %} title="Input a description here"{% endif %}>{% if description %}{{description}}{% endif %}</p>
+<div><b><i>Owner{% if 1 < owners|length %}s{% endif %}</i></b></div>{% for owner in owners %}
+{% if owner['id_orcid'] %}<a href="https://orcid.org/{{owner['id_orcid']}}" id="owner_{{owner['id']}}">{% else %}<p style="display:inline">{% endif %}{{getName(owner)}}{% if not owner['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if 2 < canEdit %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeOwner('{{owner['id']}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}{% if not loop.last %}, {% endif %}
+{% endfor %}
+{% if 1 < canEdit %}
+<div id="add_owners_div" class="show_when_editing" hidden><label for="add_owners_input">Co-owners to add:</label><input name="owners_add" id="add_owners_input" list="people_list" oninput="onInputChange2(this)"><button class="blend" type="button" onclick="addPerson('owner')" title="Not seeing the person you want to add?">+</button><div class="multiSelectDiv" id="addOwnersDiv"></div></div>
+{% if 2 < canEdit %}<div id="rm_owners_div" class="show_when_editing" hidden><label for="rm_owners_input">Owners to remove:</label><input hidden readonly name="owners_rm" id="rm_owners_input" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="rmOwnersDiv"></div></div>{% endif %}
+{% endif %}
+<div{% if 0 == collaborators|length %} class="show_when_editing" hidden{% endif %}><b><i>Collaborator{% if 1 != collaborators|length %}s{% endif %}</i></b></div>{% for clbrtr in collaborators %}
+{% if clbrtr['id_orcid'] %}<a href="https://orcid.org/{{clbrtr['id_orcid']}}" id="collaborator_{{clbrtr['id']}}">{% else %}<p style="display:inline">{% endif %}{{getName(clbrtr)}}{% if not clbrtr['id_orcid'] %}</p>{% else %}</a>{% endif %}{% if 1 < canEdit %}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeCollaborator('{{clbrtr['id']}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}{% if not loop.last %}, {% endif %}
+{% endfor %}
+{% if 1 < canEdit %}<div id="add_collaborators_div" class="show_when_editing" hidden><label for="add_collaborators_input">Collaborators to add:</label><input name="collaborators_add" id="add_collaborators_input" list="people_list" oninput="onInputChange2(this)"><button class="blend" type="button" onclick="addPerson('collaborator')" title="Not seeing the person you want to add?">+</button><div class="multiSelectDiv" id="addCollaboratorsDiv"></div></div>
+<div id="rm_collaborators_div" class="show_when_editing" hidden><label for="rm_collaborators_input">Collaborators to remove:</label><input hidden readonly name="collaborators_rm" id="rm_collaborators_input" oninput="onInputChange2(this)"><div class="multiSelectDiv" id="rmCollaboratorsDiv"></div></div>{% endif %}
+<div{% if not inheritWarn and 0==parents_html|length %} hidden class="show_when_editing"{% endif %}><b><i>Inherits from</i></b></div>
+{% for parent in parents_html %}<p>{{parent[1]|safe}}<button type="button" class="blend show_when_editing" style="height: 1em" onclick="removeParent('{{parent[0]}}')" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button></p>{% endfor %}{% if inheritWarn %}
+<p><i class="material-icons" style="color: yellow; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" loading="eager">warning</i>&nbsp;&nbsp;{{inheritWarn|safe}}</p>{% endif %}
+{% if canEdit %}
+<div id="add_parents_div" class="show_when_editing" hidden><label for="parents_input">Parents to add: </label><input name="parents_add" id="parents_input" list="collections_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="parentsDiv"></div></div>
+<div class="show_when_editing" hidden><label for="rm_parents_input">Parents to remove:</label><input hidden readonly name="parents_rm" id="rm_parents_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmParentsDiv"></div><br></div>
+{% endif %}<br>
+<div class="header">Projects</div>
+{% if projects %}
+<table id="projectTable" class="collectionTable">
+    <tbody>{% if canEdit %}
+        <colgroup>
+            <col span="1" style="width: 49%"/>
+            <col span="1" style="width: 1%"/>
+            <col span="1" style="width: 50%"/>
+        </colgroup>{% endif %}
+        <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Description</th></tr>
+        {% for prj in projects %}{% if not prj['hide'] %}
+        <tr id="project_{{prj['proj_uid']}}_row"><td>
+            <a href="/view/project/{{prj['proj_uid']}}">{{prj['title']}}</a>{% if prj['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">&#9662;</button><br>
+            {{ inheritance_tree(prj['inherited_from']) | safe}}
+        {% endif %}</td>{% if canEdit %}
+            <td>{% if prj['removable'] %}<button type="button" class="blend show_when_editing" style="height: 1em" title="Remove from collection{% if prj['inherited_from']%} (will still be inherited){% endif %}" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
+            <td>{{truncate(prj['description'], 120)}}
+        </td></tr>{% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% if canEdit %}<div id="add_projects_div" class="show_when_editing" hidden><label for="projects_input">Projects to add: </label><input name="projects_add" id="projects_input" list="projects_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="projectsDiv"></div></div>
+<div class="show_when_editing" hidden><label for="rm_projects_input">Projects to remove:</label><input hidden readonly name="projects_rm" id="rm_projects_input" oninput="onInputChange(this)" style="border:none; background-color: transparent"><div class="multiSelectDiv" id="rmProjectsDiv"></div><br></div>{% endif %}
+<br>
+<div class="header">Datasets</div>
+{% if datasets %}
+<table id="dsTable" class="collectionTable">
+    <tbody>{% if canEdit %}
+        <colgroup>
+            <col span="1" style="width: 49%"/>
+            <col span="1" style="width: 1%"/>
+            <col span="1" style="width: 50%"/>
+        </colgroup>{% endif %}
+        <tr><th>Title</th>{% if canEdit %}<th></th>{% endif %}<th>Abstract</th></tr>
+        {% for ds in datasets %}
+        <tr id="dataset_{{ds['id']}}_row"><td><a href="/view/dataset/{{ds['id']}}">{{ds['title']}}</a>{% if ds['inherited_from'] %}<button class="blend" type="button" onclick="toggleAncestors(this)" title="Show inheritance hierarchy">&#9662;</button><br>
+            {{ inheritance_tree(ds['inherited_from']) | safe}}
+        {% endif %}</td>{% if canEdit %}
+            <td>{% if ds['removable'] %}<button class="blend show_when_editing" type="button" style="height: 1em" title="Remove from collection{% if ds['inherited_from']%} (will still be inherited){% endif %}" onclick="removeFromCollection(this.parentElement.parentElement)" hidden><i class="material-icons" style="font-size: 1.5em" loading="eager">delete</i></button>{% endif %}</td>{% endif %}
+            <td>{{truncate(ds['abstract'], 120)}}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% if canEdit %}<div id="add_datasets_div" class="show_when_editing" hidden><label for="datasets_input">Datasets to add: </label><input name="datasets_add" id="datasets_input" list="datasets_list" oninput="onInputChange(this)"><div class="multiSelectDiv" id="datasetsDiv"></div><br></div>
+<div class="show_when_editing" hidden><label for="rm_datasets_input">Datasets to remove:</label><input hidden readonly name="datasets_rm" id="rm_datasets_input" oninput="onInputChange(this)"><div class="multiSelectDiv" id="rmDatasetsDiv"></div><br></div>{% endif %}
+{% endif %}
+<br>
+<datalist id="projects_list"></datalist>
+<datalist id="datasets_list"></datalist>
+<datalist id="collections_list"></datalist>{% if canEdit %}{% if 0 < canEdit %}
+<datalist id="people_list">{% for person in people %}
+    <option realvalue="{{person['id_orcid']}}" value="{{person['id']}}" id="opt_{{person['id']}}">{{person['id']}}</option>{% endfor %}
+</datalist>{% endif %}
+<h3><button type="submit" name="submit" id="submitBtn" value="Submit" class="show_when_editing download" hidden>Save Changes and Stop Editing</button></h3>
+<input name="unregisteredOwners" id="unregisteredOwners">
+<input name="unregisteredCollaborators" id="unregisteredCollaborators">
+</form>
+{% endif %}
+{% endblock body %}

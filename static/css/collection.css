@@ -1,0 +1,77 @@
+.multiSelectDiv {
+    display: inline-block;
+}
+
+.infoDiv {
+    display: inline-block;
+    background-color: rgb(227, 236, 255);
+    border-radius: 5px;
+}
+.infoDiv > button {
+    display: inline-block;
+    background-color: transparent;
+    border: none;
+}
+
+.collectionTable {
+    width: 100%;
+    border:0.144em solid #024161;
+    border-collapse: separate;
+}
+
+.collectionTable > tbody > tr:first-child {
+    background-color:rgb(171, 193, 216);
+}
+
+.collectionTable > tbody > tr:first-child > th {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.collectionTable > tbody > tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.collectionTable > tbody > tr > td:not(:empty) {
+  padding:0.14em;
+  word-wrap: break-word;
+}
+
+button.blend {
+    background-color: inherit;
+    border: none;
+}
+
+
+/*Copied from landing_page.css, maybe with very minor modifications*/
+.download {
+background-color: white;
+color: #245484;
+font-weight: 200;
+padding: 0.21em 0.72em 0.21em 0.72em;
+font-family: "Open Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+font-size: 0.7em;
+border-radius: 0.72em;
+border: 0.2em solid #245484 !important;
+cursor: pointer;
+}
+
+.header {
+color: #245484;
+font-size: 1.8em;
+letter-spacing: -1px;
+line-height: normal;
+font-weight: bold;
+padding-top: 0.36em;
+padding-bottom: 0.36em;
+background-color: inherit;
+position: relative;
+}
+
+.header.small {
+font-size: 1.3em;
+}
+
+#unregisteredCollaborators, #unregisteredOwners {
+    display: none;
+}

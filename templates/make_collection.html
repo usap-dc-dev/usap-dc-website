@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% set cur="makeCollection" %}
+{% block body %}
+{% if err %}
+<h1 onload="redirectToLogin('{{path}}')">{{err}}</h1>
+{% else %}
+<h1>Create A New Collection</h1>
+<p>Group related projects and datasets together within a cohesive Collection that transcends NSF Award numbers.</p>
+<p>Anyone with the link can view a given collection, but only designated collaborators and co-owners can edit it.<br>Name collaborators and co-owners associated with this Collection as if it were a funded project page.</p>
+<p>USAP-DC Curators would like you to keep in mind that these Collections are public and are intended to support the scientific community.</p>
+<form method="POST" action="/submit/collection" enctype="multipart/form-data" onsubmit="fixValues(this)">
+    <label style="width: 120px" for="collection_name_input">Title: </label><input type="text" name="collection_name" id="collection_name_input" required placeholder="Name your new collection (required)" size="{{cols}}"><br>
+    <label style="width: 120px" for="description_input">Description: </label><textarea name="description" id="description_input" rows="4" cols="{{cols}}" style="vertical-align: top" placeholder="Describe your collection. What is the common thread between the included projects and datasets?"></textarea><br>
+    <label style="width: 120px" for="owners_input">Co-owners: <span style="vertical-align:center; font-size: 1em" class="material-symbols-outlined" title="Owners can add other owners, add or remove collaborators, or change the projects and datasets included in the collection and which other collections it inherits from. Every co-owner must have an ORCID registered with USAP-DC.">help</span></label><input type="text" name="coowners" id="owners_input" list="people_list" oninput="onInputChange2(this)" size="{{cols}}"><button class="blend" type="button" onclick="addPerson('owner')" title="Not seeing the person you want to add?">+</button><div class="multiSelectDiv" id="ownersDiv"></div><br>
+    <label style="width: 120px" for="collaborators_input">Collaborators: <span style="vertical-align:center; font-size: 1em" class="material-symbols-outlined" title="Collaborators can change the projects and datasets included in the collection and which other collections it inherits from. Every collaborator must have an ORCID registered with USAP-DC.">help</span></label><input type="text" name="collaborators" id="collaborators_input" list="people_list" oninput="onInputChange2(this)" size="{{cols}}"><button class="blend" type="button" onclick="addPerson('collaborator')" title="Not seeing the person you want to add?">+</button><div class="multiSelectDiv" id="collaboratorsDiv"></div><br>
+    <label style="width: 120px" for="parent_collections_input">Inherits from: <span style="vertical-align:center; font-size: 1em" class="material-symbols-outlined" title="This collection will include every project and dataset in the collections (&quot;parents&quot;) listed here. Changes to a parent collection are reflected in this one.">help</span></label><input type="text" name="inherit_from" id="parent_collections_input" list="collections_list" oninput="onInputChange(this)" size="{{cols}}" placeholder="Type to search for other collections to inherit from"><div class="multiSelectDiv" id="parentCollectionsDiv">{% if parents %}{% for parent in parents.split(',') %}<div class="infoDiv">{{parent}}<button type="button" onclick="this.parentElement.parentElement.removeChild(this.parentElement)">×</button></div>{% endfor %}{% endif %}</div><br>
+    <label style="width: 120px" for="projects_input">Projects: </label><input name="projects" id="projects_input" list="projects_list" oninput="onInputChange(this)" size="{{cols}}" placeholder="Type to search for projects to include"><div class="multiSelectDiv" id="projectsDiv"></div><br>
+    <label style="width: 120px" for="datasets_input">Datasets: </label><input name="datasets" id="datasets_input" list="datasets_list" oninput="onInputChange(this)" size="{{cols}}" placeholder="Type to search for datasets to include"><div class="multiSelectDiv" id="datasetsDiv"></div><br>
+    <input name="unregisteredOwners" id="unregisteredOwners">
+    <input name="unregisteredCollaborators" id="unregisteredCollaborators">
+    <datalist id="collections_list"></datalist>
+    <datalist id="projects_list"></datalist>
+    <datalist id="datasets_list"></datalist>
+    <datalist id="people_list">{% for person in people %}
+        <option realvalue="{{person['id_orcid']}}" value="{{person['id']}}" id="opt_{{person['id']}}">{{person['id']}}</option>{% endfor %}
+    </datalist>
+    <h3><button type="submit" name="submit" id="submitBtn" value="Submit" class="download">Create Collection</button></h3>
+</form>
+{% endif %}
+{% endblock body %}
