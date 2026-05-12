@@ -3344,7 +3344,7 @@ def curator():
                     template_dict['status_options'] = ['Pending', 'Not yet registered with DataCite', 'ISO XML file missing', 
                                                        'Completed', 'Rejected', 'No Action Required', 'To Be Archived'] 
                 else:
-                    template_dict['status_options'] = ['Pending', 'Edit Completed', 'Rejected', 'No Action Required', 'To Be Archived']
+                    template_dict['status_options'] = ['Pending', 'Edit completed', 'Rejected', 'No Action Required', 'To Be Archived']
                 template_dict['weekly_report_options'] = cf.getWeeklyReportOptions(uid)
         
             submission_file = os.path.join(submitted_dir, filename + ".json")
@@ -3773,7 +3773,7 @@ def curator():
 
                         # Update submission table
                         if edit:
-                            update_status('e' + uid, 'Edit Completed')
+                            update_status('e' + uid, 'Edit completed')
                         else:
                             update_status(uid, 'DIF XML file missing')
 
