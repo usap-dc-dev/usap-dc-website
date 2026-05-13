@@ -170,7 +170,7 @@
                 <option value="{{kw}}"></option>
                 {% endfor %}
             </datalist>
-            <button onclick="addKeyword('keyword_input')">Add keyword to search</button>
+            <button type="button" onclick="addKeyword('keyword_input')">Add keyword to search</button>
             <ul class="oval_list" id="keywordList">
                 {% for kw in keywordsArray %}
                 <li>{{kw}}<button style="minHeight:1px; minWidth:1px" onclick="removeKeyword('{{kw}}')">✖</button></li>
