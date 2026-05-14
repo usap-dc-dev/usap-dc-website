@@ -1518,8 +1518,8 @@ def dataset2(dataset_id=None):
             else:
                 submission_type = 'dataset submission'
                 uid = next_id
-            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update, submitter) VALUES ('%s', '%s', 'Pending', '%s', '%s', %s)" \
-                    % (uid, submission_type, timestamp, timestamp[0:10], submitterName)
+            template = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update, submitter) VALUES (%s, %s, %s, %s, %s, %s)"
+            query = cur.mogrify(template, (uid, submission_type, "Pending", timestamp, timestamp[0:10], submitterName))
 
             cur.execute(query)
             cur.execute('COMMIT')    
@@ -1757,8 +1757,8 @@ def project(project_id=None):
             else:
                 submission_type = 'project submission'
                 uid = next_id
-            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update, submitter) VALUES ('%s', '%s', 'Pending', '%s', '%s', %s)" \
-                    % (uid, submission_type, timestamp, timestamp[0:10], submitterName)
+            template = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update, submitter) VALUES (%s, %s, %s, %s, %s, %s)"
+            query = cur.mogrify(template, (uid, submission_type, "Pending", timestamp, timestamp[0:10], submitterName))
             
             cur.execute(query)
             cur.execute('COMMIT')   
