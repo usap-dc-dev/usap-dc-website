@@ -1471,8 +1471,10 @@ def dataset2(dataset_id=None):
                 submitter = msg_data.get('submitter_email')
             else:
                 submitter = msg_data.get('email')
+            submitterName = None
             if msg_data.get('submitter_name'):
                 submitter = "%s <%s>" % (msg_data['submitter_name'], submitter)
+                submitterName = msg_data['submitter_name']
 
             if edit:
                 message = "Dataset Edit.<br><br>Dataset JSON: <a href='%scurator?uid=e%s'>%scurator?uid=e%s</a><br>" \
@@ -1516,8 +1518,8 @@ def dataset2(dataset_id=None):
             else:
                 submission_type = 'dataset submission'
                 uid = next_id
-            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update) VALUES ('%s', '%s', 'Pending', '%s', '%s')" \
-                    % (uid, submission_type, timestamp, timestamp[0:10])
+            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update, submitter) VALUES ('%s', '%s', 'Pending', '%s', '%s', %s)" \
+                    % (uid, submission_type, timestamp, timestamp[0:10], submitterName)
 
             cur.execute(query)
             cur.execute('COMMIT')    
@@ -1708,8 +1710,10 @@ def project(project_id=None):
             submitter = msg_data.get('submitter_email')
             if not submitter: 
                 submitter = msg_data.get('email')
+            submitterName = None
             if msg_data.get('submitter_name'):
                 submitter = "%s <%s>" % (msg_data['submitter_name'], submitter)
+                submitterName = msg_data['submitter_name']
 
             if edit:
                 message = "Project Edit.<br><br>Project JSON: <a href='%scurator?uid=e%s'>%scurator?uid=e%s</a><br>" \
@@ -1753,8 +1757,8 @@ def project(project_id=None):
             else:
                 submission_type = 'project submission'
                 uid = next_id
-            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update) VALUES ('%s', '%s', 'Pending', '%s', '%s')" \
-                    % (uid, submission_type, timestamp, timestamp[0:10])
+            query = "INSERT INTO submission (uid, submission_type, status, submitted_date, last_update, submitter) VALUES ('%s', '%s', 'Pending', '%s', '%s', %s)" \
+                    % (uid, submission_type, timestamp, timestamp[0:10], submitterName)
             
             cur.execute(query)
             cur.execute('COMMIT')   
