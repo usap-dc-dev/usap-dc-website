@@ -563,6 +563,7 @@
              <thead class="w3-striped w3-bordered w3-hoverable">
               <tr>
                 <th>Submission</th>
+                <th>Submitter</th>
                 <th>Submitted Date</th>
                 <th>Last Update</th>
                 <th>Status</th>
@@ -577,6 +578,7 @@
             {% for sub in submissions %}
                 <tr {% if sub['status'] not in no_action_status %} style="font-weight: bold" {% endif %}>
                     <td><a onclick="waitCursor()" href="{{url_for('curator',uid=sub['id'])}}">{{sub.id}} </a></td>
+                    <td>{{sub.submitter}}</td>
                     <td>{{sub.date}}</td>
                     <td>{{sub.last_update}}</td>
                     <td>{{sub.status}}</td>

@@ -3261,7 +3261,7 @@ def curator():
                             if str(fairRes['reviewed_time']) < str(sub['submitted_date']):
                                 fairStatus = "<span style='color:red'>Needs update</span>"
                     landing_page = cf.getLandingPage(uid, cur)
-                    submissions.append({'id': uid, 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
+                    submissions.append({'id': uid, 'submitter': sub['submitter'], 'date': sub['submitted_date'].strftime('%Y-%m-%d'), 'status': sub['status'], 
                                         'landing_page': landing_page, 'comments': sub['comments'], 'last_update': sub['last_update'],
                                         'fairStatus': fairStatus, 'fairScore': fairScore})
 
