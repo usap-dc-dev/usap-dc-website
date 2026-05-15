@@ -266,7 +266,8 @@ def make_sql(data, id, curatorId=None):
                 if len(res) > 0:
                     sql_out += "--NOTE: Linking dataset to project via award.  Comment out any lines you don't wish to add to DB\n"
                     for project in res:
-                        sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), id)    
+                        sql_out += "INSERT INTO project_dataset_map (proj_uid, dataset_id) VALUES ('%s', '%s');\n" % (project.get('proj_uid'), id)
+                        sql_out += "UPDATE submission SET status='%s' WHERE uid='%s' AND status in ('Completed', 'Edit completed', 'Edit Completed', 'No Action Required');\n" % ("Update DIF XML", project.get('proj_uid'))
      
     # sql_out += "\n--NOTE: reviewer is Bauer for Glaciology-funded dataset, else Nitsche\n"
     sql_out += "\nUPDATE dataset SET review_person='{}' WHERE id='{}';\n".format(curator, id)
