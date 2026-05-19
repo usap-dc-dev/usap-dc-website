@@ -6,6 +6,7 @@ $(document).ready(function() {
     });
     
     extents = JSON.parse($("#div_extents").text());
+    points = $("#div_geom").text();
 
     new MapClient();
 
@@ -504,6 +505,32 @@ $(document).ready(function() {
 
 			map.addLayer(layer);
 		}
+
+        if(points) {
+            const format = new ol.format.WKT();
+            const feature = format.readFeature(points, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3031'
+            });
+            
+            const vector = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [feature]
+                }),
+                style: [
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: 'rgba(0, 255, 0, 0.8)',
+                            width: 20
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(0, 255, 0, 0.3)'
+                        })
+                        })
+                ]
+            });
+            map.addLayer(vector);
+        }
 
 		var mousePosition = new ol.control.MousePosition({
 	        coordinateFormat: ol.coordinate.createStringXY(2),
