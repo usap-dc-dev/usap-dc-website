@@ -512,6 +512,9 @@ $(document).ready(function() {
                 dataProjection: 'EPSG:4326',
                 featureProjection: 'EPSG:3031'
             });
+
+            const ptColor = 'rgb(70, 183, 196)';
+            const borderColor = 'rgb(29, 64, 130)';
             
             const vector = new ol.layer.Vector({
                 source: new ol.source.Vector({
@@ -519,14 +522,17 @@ $(document).ready(function() {
                 }),
                 style: [
                     new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: 'rgba(0, 255, 0, 0.8)',
-                            width: 20
+                        image: new ol.style.Circle({
+                            radius: 3, // Size of the point
+                            fill: new ol.style.Fill({
+                            color: ptColor, // Fill color
+                            }),
+                            stroke: new ol.style.Stroke({
+                            color: borderColor, // Border color
+                            width: 0.5, // Border width
+                            }),
                         }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(0, 255, 0, 0.3)'
-                        })
-                        })
+                    })
                 ]
             });
             map.addLayer(vector);

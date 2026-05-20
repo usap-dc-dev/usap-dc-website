@@ -248,7 +248,7 @@ def get_datasets(dataset_ids):
                              CASE WHEN sen.sensors IS NULL THEN '[]'::json ELSE sen.sensors END,
                              CASE WHEN ref.references IS NULL THEN '[]'::json ELSE ref.references END,
                              CASE WHEN sp.spatial_extents IS NULL THEN '[]'::json ELSE sp.spatial_extents END,
-                             st_astext(dst.geom) as geom,
+                             st_astext(dsd.geom) as geom,
                              CASE WHEN tem.temporal_extents IS NULL THEN '[]'::json ELSE tem.temporal_extents END,
                              CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
                              CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END,
@@ -332,7 +332,7 @@ def get_datasets(dataset_ids):
                             GROUP BY pdm.dataset_id
                         ) rel_proj ON (d.id = rel_proj.dataset_id)
                         LEFT JOIN license ON (d.license = license.id)
-                        FULL OUTER JOIN dataset_spatial_test dst ON d.id=dst.dataset
+                        FULL OUTER JOIN dataset_spatial_details dsd ON d.id=dsd.dataset
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)

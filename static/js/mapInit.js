@@ -572,6 +572,15 @@ function MapClient(zoom) {
                                 }
                             }
                         }
+                        if(document.getElementById("div_geom")) {
+                            const wkt = document.getElementById("div_geom").textContent;
+                            const format = new ol.format.WKT();
+                            const feature = format.readFeature(wkt, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3031'
+                            });
+                            features.push(feature);
+                        }
                         geometries = new ol.layer.Vector({
                             visible: true,
                             source: new ol.source.Vector({
