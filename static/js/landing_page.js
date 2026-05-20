@@ -532,6 +532,14 @@ $(document).ready(function() {
                             width: 0.5, // Border width
                             }),
                         }),
+                    }),
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: borderColor,
+                            width: 1,
+                            lineJoin: 'round',
+                            lineCap: 'round'
+                        })
                     })
                 ]
             });
