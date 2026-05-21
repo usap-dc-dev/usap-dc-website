@@ -6,7 +6,7 @@ $(document).ready(function() {
     });
     
     extents = JSON.parse($("#div_extents").text());
-    points = $("#div_geom").text();
+    points = $("#div_geom").text().replaceAll("'", '"');
 
     new MapClient();
 
@@ -507,43 +507,46 @@ $(document).ready(function() {
 		}
 
         if(points) {
-            const format = new ol.format.WKT();
-            const feature = format.readFeature(points, {
-                dataProjection: 'EPSG:4326',
-                featureProjection: 'EPSG:3031'
-            });
+            pointsArr = JSON.parse(points);
+            for(const pts of pointsArr) {
+                const format = new ol.format.WKT();
+                const feature = format.readFeature(pts, {
+                    dataProjection: 'EPSG:4326',
+                    featureProjection: 'EPSG:3031'
+                });
 
-            const ptColor = 'rgb(70, 183, 196)';
-            const borderColor = 'rgb(29, 64, 130)';
-            
-            const vector = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    features: [feature]
-                }),
-                style: [
-                    new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 3, // Size of the point
-                            fill: new ol.style.Fill({
-                            color: ptColor, // Fill color
-                            }),
-                            stroke: new ol.style.Stroke({
-                            color: borderColor, // Border color
-                            width: 0.5, // Border width
+                const ptColor = 'rgb(70, 183, 196)';
+                const borderColor = 'rgb(29, 64, 130)';
+                
+                const vector = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [feature]
+                    }),
+                    style: [
+                        new ol.style.Style({
+                            image: new ol.style.Circle({
+                                radius: 3, // Size of the point
+                                fill: new ol.style.Fill({
+                                color: ptColor, // Fill color
+                                }),
+                                stroke: new ol.style.Stroke({
+                                color: borderColor, // Border color
+                                width: 0.5, // Border width
+                                }),
                             }),
                         }),
-                    }),
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: borderColor,
-                            width: 1,
-                            lineJoin: 'round',
-                            lineCap: 'round'
+                        new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: borderColor,
+                                width: 1,
+                                lineJoin: 'round',
+                                lineCap: 'round'
+                            })
                         })
-                    })
-                ]
-            });
-            map.addLayer(vector);
+                    ]
+                });
+                map.addLayer(vector);
+            }
         }
 
 		var mousePosition = new ol.control.MousePosition({

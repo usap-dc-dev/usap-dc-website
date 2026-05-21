@@ -248,7 +248,7 @@ def get_datasets(dataset_ids):
                              CASE WHEN sen.sensors IS NULL THEN '[]'::json ELSE sen.sensors END,
                              CASE WHEN ref.references IS NULL THEN '[]'::json ELSE ref.references END,
                              CASE WHEN sp.spatial_extents IS NULL THEN '[]'::json ELSE sp.spatial_extents END,
-                             st_astext(dsd.geom) as geom,
+                             dsd.geoms as geoms,
                              CASE WHEN tem.temporal_extents IS NULL THEN '[]'::json ELSE tem.temporal_extents END,
                              CASE WHEN prog.programs IS NULL THEN '[]'::json ELSE prog.programs END,
                              CASE WHEN proj.projects IS NULL THEN '[]'::json ELSE proj.projects END,
@@ -332,7 +332,7 @@ def get_datasets(dataset_ids):
                             GROUP BY pdm.dataset_id
                         ) rel_proj ON (d.id = rel_proj.dataset_id)
                         LEFT JOIN license ON (d.license = license.id)
-                        FULL OUTER JOIN dataset_spatial_details dsd ON d.id=dsd.dataset
+                        FULL OUTER JOIN (select dataset, array_agg(st_astext(geom)) as geoms from dataset_spatial_details group by dataset) dsd ON d.id=dsd.dataset
                         WHERE d.id IN %s ORDER BY d.title''',
                        (tuple(dataset_ids),))
         cur.execute(query_string)
@@ -2661,8 +2661,8 @@ def landing_page(dataset_id):
     metadata['downloads'] = getDownloadsCount(dataset_id)
 
     # check for null geometry
-    if not metadata['geom']:
-        metadata['geom'] = ''
+    if not metadata['geoms']:
+        metadata['geoms'] = ''
 
     # get CMR/GCMD URLs for dif records
     getCMRUrls(metadata['dif_records'])
