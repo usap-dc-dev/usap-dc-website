@@ -5690,9 +5690,10 @@ def project_landing_page(project_id):
     metadata['views'] = getProjectViews(project_id)
 
     # make sure the URLs are correct
-    for dataset in metadata['datasets']:
-        if dataset['url']:
-            dataset['url'] = re.sub(r'http(s)?://www(-dev)?.usap-dc.org', '', dataset['url'])
+    if metadata['datasets']:
+        for dataset in metadata['datasets']:
+            if dataset['url']:
+                dataset['url'] = re.sub(r'http(s)?://www(-dev)?.usap-dc.org', '', dataset['url'])
 
     return render_template('project_landing_page.html', data=metadata, contact_email=app.config['USAP-DC_GMAIL_ACCT'])
 
