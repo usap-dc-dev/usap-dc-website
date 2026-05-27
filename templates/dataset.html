@@ -168,34 +168,48 @@
     }
   });
 
-  var awdSearchTerm = "";
-  var justInput = 0;
+  const searchTerms = {
+    "award": "",
+    "location": ""
+  };
+  const inputTimes = {
+    "award": 0,
+    "location": 0
+  };
+  var justInputAwdNum = 0;
 
- searchInAwdList = function(event) {
-    let theList = event.target.parentElement.querySelector("ul");
-    let secs = 3;
-    if(event.key.length === 1) {
-        awdSearchTerm += event.key;
-        let candidates = Array.prototype.filter.call(theList.children, x => x.tagName.toUpperCase() === "LI").filter(x => x.textContent.trim().includes(awdSearchTerm));
-        if(candidates.length > 0) {
-            theList.scrollTop = candidates[0].offsetTop;
-        }
-        justInput = secs;
-        for(let i = 0; i < secs; i++) {
-            setTimeout(function() {
-                if(justInput === secs-i) {
-                    justInput = secs-i-1;
-                    if(!justInput) {
-                        console.log(awdSearchTerm);
-                        awdSearchTerm = "";
-                    }
-                }
-            }, i*1000);
-        }
+  getSearchFn = function(searchTerm) {
+    if(!(searchTerm in searchTerms)) {
+        searchTerms[searchTerm] = "";
+        inputTimes[searchTerm] = 0;
     }
+    return function(event) {
+        let theList = event.target.parentElement.querySelector("ul") || event.target.parentElement.querySelector("ol");
+        let secs = 3;
+        if(1 === event.key.length) {
+            searchTerms[searchTerm] += event.key;
+            let candidates = Array.prototype.filter.call(theList.children, x => x.tagName.toUpperCase() === "LI").filter(x => x.textContent.trim().toUpperCase().includes(searchTerms[searchTerm].toUpperCase()));
+            if(0 < candidates.length) {
+                theList.scrollTop = candidates[0].offsetTop;
+            }
+            inputTimes[searchTerm] = secs;
+            for(let i = 0; i < secs; i++) {
+                setTimeout(function() {
+                    if(secs-i === inputTimes[searchTerm]) {
+                        inputTimes[searchTerm]--;
+                        if(!inputTimes[searchTerm]) {
+                            console.log(searchTerms[searchTerm]);
+                            searchTerms[searchTerm] = "";
+                        }
+                    }
+                }, i*1000)
+            }
+        }
+    };
   }
 
-  $('.awardTemplate').on('keydown', searchInAwdList);
+  $('.awardTemplate').on('keydown', getSearchFn("award"));
+  $('.locationTemplate').on('keydown', getSearchFn("location"));
 
   function addAwardRow(award) {
     var extraAward = $('.awardTemplate').clone();
@@ -225,7 +239,7 @@
           }
       });
       $('.extraAward').off('keydown');
-      $('.extraAward').on('keydown', searchInAwdList);
+      $('.extraAward').on('keydown', getSearchFn("award"));
     }
 
 
@@ -283,6 +297,8 @@
             $(this).parent('div').find('.user_location_input').attr('type','hidden');
           }
       });
+      $('.extraLocation').off('keydown');
+      $('.extraLocation').on('keydown', getSearchFn("location"));
     }
 
 
@@ -488,7 +504,7 @@
 
           <!-- Locations -->
           <div class="form-group">
-            <label for="location">Location</label>
+            <label for="location">Location</label> (With list open, start typing the name of a location to search)
             <div class="locationTemplate">
               <div id='extraLocationLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
               <div class="dropdown" id="location-dropdown" style="width:240px;">
@@ -512,7 +528,7 @@
               </div>
             </div>
             <div id="more_locations"></div>
-            <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another locations</span></a>
+            <a href="#locationsForm" id="addLocationRow"><i class="fa fa-plus">&nbsp;</i><span id="add_another_location">Add another location</span></a>
           </div>
 
           <div>
