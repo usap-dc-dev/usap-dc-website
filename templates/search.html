@@ -318,9 +318,10 @@
             {% if val.awards != "" and val.awards != None and val.awards.find('XXXXXXX') == -1 %}
             <td>
               {% for a in val.awards.split('; ') %}
-              {% set award = a.split(' ')[0] %}
+              {% set award = a.split(' ')[0] %}{% if award and "None" != award %}
               {% set award_url = "https://www.nsf.gov/awardsearch/showAward.do?AwardNumber=" + award %}
-              <a target='_blank' href='{{award_url}}' rel="noopener noreferrer">{{award}}</a><br />
+              <a target='_blank' href='{{award_url}}' rel="noopener noreferrer">{{award}}</a><br />{% else %}
+              <p>None</p>{% endif %}
               {% endfor %}
             </td>
             {% else %}
@@ -341,9 +342,9 @@
                       {% if ds['url'] == '' %}
                       No project link provided
                       {% elif ds['title'] == '' %}
-                      <a target='_blank' href="{{ds.url}}">Access to data</a><br />
+                      <a target='_blank' href="{{ds.url.replace('https://www.usap-dc.org', '').replace('http://www.usap-dc.org', '')}}">Access to data</a><br />
                       {% else %}
-                      <a target='_blank' href="{{ds.url}}">{{ds.title}}</a><br />
+                      <a target='_blank' href="{{ds.url.replace('https://www.usap-dc.org', '').replace('http://www.usap-dc.org', '')}}">{{ds.title}}</a><br />
                       {% endif %}
                     </td>
                     <td width="20%" align="center">

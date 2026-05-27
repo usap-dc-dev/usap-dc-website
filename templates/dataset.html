@@ -168,6 +168,35 @@
     }
   });
 
+  var awdSearchTerm = "";
+  var justInput = 0;
+
+ searchInAwdList = function(event) {
+    let theList = event.target.parentElement.querySelector("ul");
+    let secs = 3;
+    if(event.key.length === 1) {
+        awdSearchTerm += event.key;
+        let candidates = Array.prototype.filter.call(theList.children, x => x.tagName.toUpperCase() === "LI").filter(x => x.textContent.trim().includes(awdSearchTerm));
+        if(candidates.length > 0) {
+            theList.scrollTop = candidates[0].offsetTop;
+        }
+        justInput = secs;
+        for(let i = 0; i < secs; i++) {
+            setTimeout(function() {
+                if(justInput === secs-i) {
+                    justInput = secs-i-1;
+                    if(!justInput) {
+                        console.log(awdSearchTerm);
+                        awdSearchTerm = "";
+                    }
+                }
+            }, i*1000);
+        }
+    }
+  }
+
+  $('.awardTemplate').on('keydown', searchInAwdList);
+
   function addAwardRow(award) {
     var extraAward = $('.awardTemplate').clone();
       //increment the element ids
@@ -195,6 +224,8 @@
             $("#crossref_btn").show();
           }
       });
+      $('.extraAward').off('keydown');
+      $('.extraAward').on('keydown', searchInAwdList);
     }
 
 
@@ -377,6 +408,7 @@
           <!-- Awards -->
           <div class="form-group">
             <label for="award">Award</label>
+                (Once list is open, start typing an award number to search)
             <div class="awardTemplate">
               <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
               <div class="dropdown" id="award-dropdown">
