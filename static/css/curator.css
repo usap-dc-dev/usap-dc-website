@@ -178,6 +178,7 @@ html.wait, html.wait * { cursor: wait !important; }
   height: 82%;
   overflow: auto; 
   padding: 10px;
+  white-space: pre-wrap;
 }
 
 .close_btn {
