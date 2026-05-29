@@ -150,7 +150,9 @@
                 <span class="assigned_kw_db">{{kw.keyword_label}}</span>
               {% endfor %}  
             </div>
-            <br/>
+            <br>
+            <label for="kw_search">Search for keyword(s):&nbsp;</label><input type="text" list="keywords_list" id="kw_search" oninput="checkForKeyword(this)">
+            <br>
             <button type="submit" name="submit" value="assign_keywords" onclick="waitCursor()">Add to Database</button>
           </div>
           {% for kw_type in keywords %}
@@ -600,6 +602,14 @@
 </div>
 </div>
 
+<datalist id="keywords_list">
+    {% for kw_type in keywords %}
+    {% for kw in kw_type.keywords if kw.keyword_id not in dataset_keywords|safe %}
+    <option value="{{ kw.keyword_id }}">{{kw_type.keyword_type_label}} / {{ kw.keyword_label }}</option>
+    {% endfor %}
+    {% endfor %}
+</datalist>
+
 <script>
 
   $(document).ready(function(){
@@ -994,6 +1004,23 @@
         div.innerHTML = `What? I don't understand ${val}.`;
     }
     div.style.color = eval_colors[val];
+  }
+
+  function checkForKeyword(inputBox) {
+    if(!inputBox) {
+        inputBox = document.getElementById("kw_search");
+    }
+    if(inputBox) {
+        let checkboxes = Array.prototype.filter.call(document.getElementsByClassName("kw-btn"), btn => btn.id === inputBox.value.trim());
+        if(checkboxes) {
+            for(let cbx of checkboxes) {
+                cbx.click();
+            }
+            if(checkboxes.length > 0) {
+                inputBox.value = "";
+            }
+        }
+    }
   }
 </script>
 {% endblock body %}
