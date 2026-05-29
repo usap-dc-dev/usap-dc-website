@@ -168,49 +168,6 @@
     }
   });
 
-  const searchTerms = {
-    "award": "",
-    "location": ""
-  };
-  const inputTimes = {
-    "award": 0,
-    "location": 0
-  };
-  var justInputAwdNum = 0;
-
-  getSearchFn = function(searchTerm) {
-    if(!(searchTerm in searchTerms)) {
-        searchTerms[searchTerm] = "";
-        inputTimes[searchTerm] = 0;
-    }
-    return function(event) {
-        let theList = event.target.parentElement.querySelector("ul") || event.target.parentElement.querySelector("ol");
-        let secs = 3;
-        if(1 === event.key.length) {
-            searchTerms[searchTerm] += event.key;
-            let candidates = Array.prototype.filter.call(theList.children, x => x.tagName.toUpperCase() === "LI").filter(x => x.textContent.trim().toUpperCase().includes(searchTerms[searchTerm].toUpperCase()));
-            if(0 < candidates.length) {
-                theList.scrollTop = candidates[0].offsetTop;
-            }
-            inputTimes[searchTerm] = secs;
-            for(let i = 0; i < secs; i++) {
-                setTimeout(function() {
-                    if(secs-i === inputTimes[searchTerm]) {
-                        inputTimes[searchTerm]--;
-                        if(!inputTimes[searchTerm]) {
-                            console.log(searchTerms[searchTerm]);
-                            searchTerms[searchTerm] = "";
-                        }
-                    }
-                }, i*1000)
-            }
-        }
-    };
-  }
-
-  $('.awardTemplate').on('keydown', getSearchFn("award"));
-  $('.locationTemplate').on('keydown', getSearchFn("location"));
-
   function addAwardRow(award) {
     var extraAward = $('.awardTemplate').clone();
       //increment the element ids
@@ -238,8 +195,6 @@
             $("#crossref_btn").show();
           }
       });
-      $('.extraAward').off('keydown');
-      $('.extraAward').on('keydown', getSearchFn("award"));
     }
 
 
@@ -424,7 +379,6 @@
           <!-- Awards -->
           <div class="form-group">
             <label for="award">Award</label>
-                (Once list is open, start typing an award number to search)
             <div class="awardTemplate">
               <div id='extraAwardLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
               <div class="dropdown" id="award-dropdown">
@@ -434,8 +388,9 @@
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
-                  <li><a data-toggle="tooltip" data-placement="right">None</li></li>
-                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your NSF Award in this list" data-placement="right">Not In This List</li></li>
+                  <li><a data-toggle="tooltip" data-placement="right">None</a></li>
+                  <li><a data-toggle="tooltip" title="Select this option if you cannot find your NSF Award in this list" data-placement="right">Not In This List</a></li>
+                  <li><input data-toggle="" type="text" placeholder="Search awards…" oninput="filterList(this.parentElement.parentElement.querySelectorAll('li:nth-of-type(n+4)'), this)"></li>
                   {% for grant in nsf_grants %}
                   {% set s = grant['award'] + " " + grant['name'] %}
                   <li><a data-toggle="tooltip" title="{{grant['title']}}" data-placement="right">{{s}}</a></li>
@@ -504,7 +459,7 @@
 
           <!-- Locations -->
           <div class="form-group">
-            <label for="location">Location</label> (With list open, start typing the name of a location to search)
+            <label for="location">Location</label>
             <div class="locationTemplate">
               <div id='extraLocationLine' style="height:5px;font-size:5px;display:none;">&nbsp;</div>
               <div class="dropdown" id="location-dropdown" style="width:240px;">
@@ -516,6 +471,7 @@
                 <ul class="dropdown-menu">
                   <li><a data-toggle="tooltip" data-placement="right">None</a></li>
                   <li><a data-toggle="tooltip" title="Select this option if you cannot find your location in this list" data-placement="right">Not In This List</a></li>
+                  <li><input data-toggle="" type="text" placeholder="Search locations…" oninput="filterList(this.parentElement.parentElement.querySelectorAll('li:nth-of-type(n+4)'), this)"></li>
                   {% for location in locations %}
                     {% set loc = location.keyword_label %}
                     <li><a {% if location.keyword_description %} data-toggle="tooltip" title="{{location.keyword_description}}" data-placement="right" {% endif %}>{{loc}}</a></li>
