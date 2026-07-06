@@ -220,7 +220,7 @@ def get_email_template(editing, submissionType, uid, data, hasId, doi=None):
 
 def get_nsf_grants(columns, award=None, only_inhabited=True):
     (conn, cur) = connect_to_db()
-    query_string = """SELECT %s FROM award a WHERE a.award != 'XXXXXXX' and a.award != 'None' and a.award ~ '^[0-9]' 
+    query_string = """SELECT %s FROM award a WHERE a.award != 'XXXXXXX' and a.award != 'None' and a.award ~ '^[0-9]+$' 
                       and a.award::integer<8000000 and a.award::integer>0400000""" % ','.join(columns) 
     
     if only_inhabited:
