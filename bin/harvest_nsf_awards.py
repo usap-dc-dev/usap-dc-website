@@ -197,7 +197,16 @@ def update_award(awards):
 
         pi = escapeQuotes(item['piLastName'] + ', ' + item['piFirstName'])
         if item.get('coPDPI'):
-            copi = '; '.join(item['coPDPI'])
+            copis = item['coPDPI']
+            def get_copi(copi_str):
+                split = copi_str.split(" ")
+                realNames = list(filter(lambda x: "@" not in x, split))
+                email_list = list(filter(lambda x: "@" in x, split))
+                email = None if 0 == len(email_list) else email_list[0]
+                realName = " ".join(realNames)
+                return {"name": realName, "email": email}
+            copi_info = list(map(get_copi, copis))
+            copi = '; '.join(list(map(lambda x: x["name"], copi_info)))
             copi = ' '.join(copi.split())
             copi = escapeQuotes(copi)
         else:
