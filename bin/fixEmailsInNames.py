@@ -30,7 +30,7 @@ def fixMistakesInfo(row):
     namesWithoutEmails = list(map(removeEmail, names))
     if namesWithoutEmails != names:
         print("Fixing award", award + ":", "copi(s):", copi)
-    return {"award": award, "copi": "; ".join(namesWithoutEmails)}
+    return {"award": award, "copi": "; ".join(namesWithoutEmails).replace("(Former)","").strip()}
     
 
 (conn, cur) = connect_to_db()
