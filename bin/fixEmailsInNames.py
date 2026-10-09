@@ -18,7 +18,7 @@ def connect_to_db():
 
 def removeEmail(nameWithEmail):
     words = nameWithEmail.strip().split(" ")
-    nameWords = list(filter(lambda word: "@" not in word, words))
+    nameWords = list(filter(lambda word: "@" not in word and "(Former)" != word, words))
     return " ".join(nameWords)
 
 getMistakesQuery = "SELECT award, copi FROM award WHERE copi LIKE '%@%' OR copi LIKE '(Former)'"
