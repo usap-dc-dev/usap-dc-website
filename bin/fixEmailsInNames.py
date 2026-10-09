@@ -21,7 +21,7 @@ def removeEmail(nameWithEmail):
     nameWords = list(filter(lambda word: "@" not in word, words))
     return " ".join(nameWords)
 
-getMistakesQuery = "SELECT award, copi FROM award WHERE copi LIKE '%@%'"
+getMistakesQuery = "SELECT award, copi FROM award WHERE copi LIKE '%@%' OR copi LIKE '(Former)'"
 fixMistakesTemplate = "UPDATE award SET copi=%s WHERE award=%s"
 def fixMistakesInfo(row):
     award = row["award"]
