@@ -1690,6 +1690,8 @@ def isXmlValid(xml):
     url = "https://cmr.earthdata.nasa.gov/ingest/providers/SCIOPS/validate/collection/test_usap_1"
     header = {"Content-Type" : "application/dif10+xml"}
     response = requests.post(url, data=xml, headers=header)
+    if not response.ok:
+        print(response.text)
     return (response.ok, response.text)
 
 
@@ -1781,14 +1783,14 @@ def getDifXML(data, uid):
             xml_platform_sname = ET.SubElement(xml_platform, "Short_Name")
             xml_platform_sname.text = platform['short_name']
             xml_platform_sname = ET.SubElement(xml_platform, "Long_Name")
-            xml_platform_sname.text = platform['long_name']
+            xml_platform_sname.text = platform['long_name'] or (platform['id'] and platform['id'].split('>')[-1].strip())
             if platform.get('gcmd_instruments'):
                 for instrument in platform['gcmd_instruments']:
                     xml_instrument = ET.SubElement(xml_platform, "Instrument")
                     xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")
                     xml_instrument_sname.text = instrument['short_name']
                     xml_instrument_sname = ET.SubElement(xml_instrument, "Long_Name")
-                    xml_instrument_sname.text = instrument['long_name']
+                    xml_instrument_sname.text = instrument['long_name'] or (instrument['id'] and instrument['id'].split('>')[-1].strip())
             else:
                 xml_instrument = ET.SubElement(xml_platform, "Instrument")
                 xml_instrument_sname = ET.SubElement(xml_instrument, "Short_Name")

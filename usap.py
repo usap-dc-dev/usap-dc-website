@@ -3160,6 +3160,26 @@ def get_crossref_sql():
         sql = "No Crossref SQL file to be ingested"
     return sql
 
+def parseErrorXml(root):
+    if "errors" == root.tag:
+        return reduce(lambda a,b: a+b, list(map(parseErrorXml, list(root))))
+    elif "error" == root.tag:
+        if 0 == len(root):
+            return [(None, root.text)]
+        path = []
+        errors = []
+        for child in root:
+            if "path" == child.tag:
+                path.append(child.text + ": ")
+            else:
+                errors += parseErrorXml(child)
+        if len(path)==0:
+            return [(None, errors)]
+        return [(path, errors)]
+    elif "warnings" == root.tag:
+        return list(map(lambda a: (None, a), root.itertext()))
+    return None
+
 
 @app.route('/curator', methods=['GET', 'POST'])
 def curator():
@@ -3894,23 +3914,27 @@ def curator():
                         template_dict['validation_symbol'] = valid_mark
                     else:
                         template_dict['validation_symbol'] = invalid_mark
+                        print(validation[1])
                     root = ET.fromstring(validation[1])
                     has_errors = False
                     has_warnings = False
                     for child in root:
                         if child.tag == "errors":
                             for error in child:
+                                print("Error:", error)
                                 has_errors = True
+                                print(error)
                                 if 'xml_validation_errors' in template_dict:
                                     template_dict['xml_validation_errors'] += "<br>" + error.text
                                 else:
-                                    template_dict['xml_validation_errors'] = "Errors:<br>" + error.text
+                                    template_dict['xml_validation_errors'] = "Errors:<br>" + (error.text if error.text else json.dumps(error.attrib))
                         elif child.tag == "error":
                             has_errors = True
+                            print("ERROR:", child, child.attrib)
                             if 'xml_validation_errors' in template_dict:
                                 template_dict['xml_validation_errors'] += "<br>" + child.text
                             else:
-                                template_dict['xml_validation_errors'] = "Errors:<br>" + child.text
+                                template_dict['xml_validation_errors'] = "Errors:<br>" + (child.text if child.text else json.dumps(child.attrib))
                         elif child.tag == "warnings":
                             has_warnings = True
                             template_dict['xml_validation_warnings'] = "Warnings:<br>" + child.text
