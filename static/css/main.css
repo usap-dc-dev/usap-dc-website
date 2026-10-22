@@ -923,3 +923,7 @@ element.style {
     width: 500px;
     margin-top: 0px;
 }
+
+#platform_tree .glyphicon-plus ~ .glyphicon-unchecked, #platform_tree .glyphicon-minus ~ .glyphicon-unchecked {
+    display: none;
+}
