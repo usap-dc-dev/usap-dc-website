@@ -493,6 +493,7 @@
                             
                             <ul class="dropdown-menu">
                                 <li><a data-toggle="tooltip" data-placement="right">Not Provided</a></li>
+                                <li><input data-toggle="" type="text" placeholder="Search data formats…" oninput="filterList(this.parentElement.parentElement.querySelectorAll('li:nth-of-type(n+3)'), this)"></li>
                                 {% for f in formats %}
                                     <li><a data-toggle="tooltip" title="{{f.long_name}}" data-placement="right">{{f.short_name}}</a></li>
                                 {% endfor %}
