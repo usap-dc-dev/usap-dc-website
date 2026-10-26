@@ -664,7 +664,7 @@ def get_gcmd_data_types():
 
 def get_gcmd_data_formats():
     (conn, cur) = connect_to_db()
-    query = "SELECT * FROM gcmd_data_format WHERE short_name != 'Not Provided'"
+    query = "SELECT * FROM gcmd_data_format WHERE short_name != 'Not Provided' ORDER BY short_name"
     cur.execute(query)
     return cur.fetchall()  
 
