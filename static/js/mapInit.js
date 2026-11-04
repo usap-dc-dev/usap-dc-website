@@ -98,19 +98,51 @@ function MapClient(zoom) {
     map.addLayer(tracks);
 
 
-    var arffsu_core = new ol.layer.Tile({
-        title: 'Former FSU sediment core map',
-        visible: false,
-        source: new ol.source.TileWMS({
-          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
-        //   crossOrigin: 'anonymous',
-          projection: 'EPSG:3031',
-          params: {
-              layers: "ARFFSU"
-          }
-        })
+    // var arffsu_core = new ol.layer.Tile({
+    //     title: 'Former FSU sediment core map',
+    //     visible: false,
+    //     source: new ol.source.TileWMS({
+    //       url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+    //     //   crossOrigin: 'anonymous',
+    //       projection: 'EPSG:3031',
+    //       params: {
+    //           layers: "ARFFSU"
+    //       }
+    //     })
+    // });
+    // map.addLayer(arffsu_core);
+
+    var osuSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function() {
+            $.get({
+                url: '/static/data/osu_antarctic_sediment_cores.geojson',
+                dataType: 'json'
+            }).done(function(data) {
+                osuSource.addFeatures(osuSource.getFormat().readFeatures(data, {dataProjection: 'EPSG:4326', featureProjection:'EPSG:3031'}))
+            });
+        }
     });
-    map.addLayer(arffsu_core);
+    var osuSedimentCores = new ol.layer.Vector({
+        visible: false,
+        source: osuSource,
+        style: [
+            new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 5,
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(0, 0, 0, 0.6)',
+                        width: 1
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(169, 102, 2, 0.6)'
+                    })
+                })
+            })
+        ],
+        title: "OSU - Antarctic Sediment Cores"
+    });
+    map.addLayer(osuSedimentCores);
 
     var bpcrr_core = new ol.layer.Tile({
         title: 'BPC Rock Repository - samples',
@@ -276,6 +308,8 @@ function MapClient(zoom) {
         title: 'Antarctic Coast',
     });  
     map.addLayer(coastline)
+
+    
 
 
     var names = new ol.layer.Tile({
@@ -627,6 +661,7 @@ function MapClient(zoom) {
         var icecore_features = [];
         var amrc_features = [];
         var iodp_drillsites = [];
+        var osu_sediment_cores = [];
         if (evt.pixel) {
             map.forEachFeatureAtPixel(evt.pixel, 
                 function(feature, layer) {
@@ -639,6 +674,9 @@ function MapClient(zoom) {
                         }
                         else if(layer.getProperties().title === 'IODP Drill Sites') {
                             iodp_drillsites.push(feature);
+                        }
+                        else if(layer.getProperties().title === 'OSU - Antarctic Sediment Cores') {
+                            osu_sediment_cores.push(feature);
                         }
                     }
                 }, {"hitTolerance":1});
@@ -689,6 +727,28 @@ function MapClient(zoom) {
                 msg += "<b>Link to Core Data:</b> " + '<a href="' + props['url_core'] + '" target="_blank">' + "URL core" + '</a><br>'
                 if(props["arrival"] && props["arrival"].length>0) {
                     msg += "<b>Arrival:</b> " + props["arrival"] + "<br>"
+                }
+                msg += "===========<br>"
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+        }
+        if(osu_sediment_cores.length > 0) {
+            var msg = "<h6>Number of sediment core locations: " + osu_sediment_cores.length + "</h6>";
+            for(let core of osu_sediment_cores) {
+                var props = core.getProperties();
+                msg += '<p style="font-size: 0.8em; max-height: 500px">';
+                if(props["CORE NAME"]) {
+                    msg += "<b>Core Name:</b> " + props["CORE NAME"] + "<br>";
+                }
+                if(props["Cruise Name or Program Name"]) {
+                    msg += "<b>Cruise/Program Name:</b> " + props["Cruise Name or Program Name"] + "<br>";
+                }
+                if(props["Date Collected"]) {
+                    msg += "<b>Date Collected:</b> " + props["Date Collected"] + "<br>"
+                }
+                if(props["URL"]) {
+                    msg += "<b>URL:</b> <a target=\"_blank\" href=\"" + props["URL"] + "\">" + props["URL"] + "</a><br>"
                 }
                 msg += "===========<br>"
             }
