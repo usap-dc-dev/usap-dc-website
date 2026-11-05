@@ -144,18 +144,48 @@ function MapClient(zoom) {
     });
     map.addLayer(osuSedimentCores);
 
-    var bpcrr_core = new ol.layer.Tile({
-        title: 'BPC Rock Repository - samples',
-        visible: false,
-        source: new ol.source.TileWMS({
-          url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
-        //   crossOrigin: 'anonymous',
-          projection: 'EPSG:3031',
-          params: {
-              layers: "BPCRR"
-          }
-        })
+    var bpc_source = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        loader: function() {
+            $.get({
+                url: '/static/data/PRR_samples.geojson',
+                dataType: 'json'
+            }).done(function(data) {
+                bpc_source.addFeatures(bpc_source.getFormat().readFeatures(data, {dataProjection: 'EPSG:3031', featureProjection:'EPSG:3031'}))
+            });
+        }
     });
+    var bpcrr_core = new ol.layer.Vector({
+        visible: false,
+        source: bpc_source,
+        style: [
+            new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 5,
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(0, 0, 0, 0.6)',
+                        width: 1
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(130, 130, 130, 0.6)'
+                    })
+                })
+            })
+        ],
+        title: "BPC Rock Repository - samples"
+    });
+    // var bpcrr_core = new ol.layer.Tile({
+    //     title: 'BPC Rock Repository - samples',
+    //     visible: false,
+    //     source: new ol.source.TileWMS({
+    //       url: 'https://gis.ngdc.noaa.gov/arcgis/services/Sample_Index/MapServer/WMSServer?',
+    //     //   crossOrigin: 'anonymous',
+    //       projection: 'EPSG:3031',
+    //       params: {
+    //           layers: "BPCRR"
+    //       }
+    //     })
+    // });
     map.addLayer(bpcrr_core);
 
     var asdl = new ol.layer.Tile({
@@ -662,6 +692,7 @@ function MapClient(zoom) {
         var amrc_features = [];
         var iodp_drillsites = [];
         var osu_sediment_cores = [];
+        var bpc_prr_samples = [];
         if (evt.pixel) {
             map.forEachFeatureAtPixel(evt.pixel, 
                 function(feature, layer) {
@@ -677,6 +708,9 @@ function MapClient(zoom) {
                         }
                         else if(layer.getProperties().title === 'OSU - Antarctic Sediment Cores') {
                             osu_sediment_cores.push(feature);
+                        }
+                        else if(layer.getProperties().title === 'BPC Rock Repository - samples') {
+                            bpc_prr_samples.push(feature);
                         }
                     }
                 }, {"hitTolerance":1});
@@ -728,7 +762,7 @@ function MapClient(zoom) {
                 if(props["arrival"] && props["arrival"].length>0) {
                     msg += "<b>Arrival:</b> " + props["arrival"] + "<br>"
                 }
-                msg += "===========<br>"
+                msg += "===========<br></p>"
             }
             var $msg = $('<div>' + msg + '</div>');
             popup.show(evt.coordinate, $msg.prop('innerHTML'));
@@ -750,7 +784,29 @@ function MapClient(zoom) {
                 if(props["URL"]) {
                     msg += "<b>URL:</b> <a target=\"_blank\" href=\"" + props["URL"] + "\">" + props["URL"] + "</a><br>"
                 }
-                msg += "===========<br>"
+                msg += "===========<br></p>"
+            }
+            var $msg = $('<div>' + msg + '</div>');
+            popup.show(evt.coordinate, $msg.prop('innerHTML'));
+        }
+        if(bpc_prr_samples.length > 0) {
+            var msg = "<h6>Number of BPC Polar Rock Repository samples: " + bpc_prr_samples.length + "</h6>";
+            for(let sample of bpc_prr_samples) {
+                var props = sample.getProperties();
+                msg += '<p style="font-size: 0.8em; max-height: 500px">'
+                if(props["IGSN"]) {
+                    msg += "<b>IGSN:</b> " + props["IGSN"] + "<br>";
+                }
+                if(props["RockType"]) {
+                    msg += "<b>Rock Type:</b> " + props["RockType"] + "<br>";
+                }
+                if(props["RockName"]) {
+                    msg += "<b>Rock Name:</b> " + props["RockName"] + "<br>";
+                }
+                if(props["URL"]) {
+                    msg += "<b>URL:</b> <a href=\"" + props["URL"] + "\">" + props["URL"] + "</a><br>";
+                }
+                msg += "===========<br></p>";
             }
             var $msg = $('<div>' + msg + '</div>');
             popup.show(evt.coordinate, $msg.prop('innerHTML'));
