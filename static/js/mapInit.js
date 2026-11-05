@@ -804,7 +804,7 @@ function MapClient(zoom) {
                     msg += "<b>Rock Name:</b> " + props["RockName"] + "<br>";
                 }
                 if(props["URL"]) {
-                    msg += "<b>URL:</b> <a href=\"" + props["URL"] + "\">" + props["URL"] + "</a><br>";
+                    msg += "<b>URL:</b> <a target=\"_blank\" href=\"" + props["URL"] + "\">" + props["URL"] + "</a><br>";
                 }
                 msg += "===========<br></p>";
             }
