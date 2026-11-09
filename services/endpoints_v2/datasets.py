@@ -3,6 +3,7 @@ import usap
 from collections import OrderedDict
 from services.lib.flask_restplus import Resource, reqparse, fields, inputs, Namespace
 import services.models as models
+from datetime import datetime
 
 
 config = json.loads(open('config.json', 'r').read())
@@ -39,7 +40,7 @@ dataset_model = ns.model('Dataset', OrderedDict([
     ('title', fields.String),
     ('creator', fields.String),
     ('abstract', fields.String),
-    ('release_date', fields.DateTime(dt_format='rfc822')),
+    ('release_date', fields.Date(dt_format='rfc822')),
     ('keywords', fields.String),
     ('locations', fields.String),
     ('persons', fields.String(attribute='persons', description="(All PIs and Co-PIs)")),
@@ -55,8 +56,8 @@ dataset_model = ns.model('Dataset', OrderedDict([
     ('replaced_by', fields.String),
     ('language_id', fields.String),
     ('version', fields.String),
-    ('date_created', fields.DateTime(dt_format='rfc822')),
-    ('date_modified', fields.DateTime(dt_format='rfc822')),
+    ('date_created', fields.Date(dt_format='rfc822')),
+    ('date_modified', fields.Date(dt_format='rfc822')),
     ('file_names', fields.List(fields.String)),
 ]))
 
@@ -65,7 +66,7 @@ dataset_model = ns.model('Dataset', OrderedDict([
 def getQuery():
     return """SELECT *
                    FROM dataset d 
-                   JOIN dataset_view dv ON dv.uid = d.id
+                   LEFT JOIN dataset_view dv ON dv.uid = d.id
                    WHERE TRUE"""
 
 base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
@@ -176,7 +177,7 @@ class DatasetsCollection(Resource):
                         p['landing_page'] = "%sview/project/%s" % (config['USAP_DOMAIN'], p['proj_uid'])   
                 if res.get('release_date'):
                     try:
-                        res['release_date'] = datetime.strptime(res['release_date'], '%Y-%m-%d')
+                        res['release_date'] = datetime.strptime(res['release_date'], '%Y-%m-%d').date()
                     except:
                         res['release_date'] = None
             except Exception as e:
@@ -209,10 +210,10 @@ class DatasetItem(Resource):
             if res.get('projects'):
                 res['projects'] = json.loads(res['projects'])
                 for p in res.get('projects'):
-                    p['landing_page'] = "%sview/project/%s" % (config['USAP_DOMAIN'], p['proj_uid']) 
+                    p['landing_page'] = "%sview/project/%s" % (config['USAP_DOMAIN'], p['proj_uid'])
             if res.get('release_date'):
                 try:
-                    res['release_date'] = datetime.strptime(res['release_date'], '%Y-%m-%d')
+                    res['release_date'] = datetime.strptime(res['release_date'], '%Y-%m-%d').date()
                 except:
                     res['release_date'] = None
         except Exception as e:

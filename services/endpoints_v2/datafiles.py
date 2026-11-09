@@ -149,7 +149,7 @@ base_url = "{0}{1}/".format(config['API_BASE'], ns.path)
 examples = """Base URL: {0}\nExample:\n
         wget --header="X-Auth-Token:YourApiKeyHere" {0}600030/2009-03-10/Carson%20map%20explanation%20May%2026%20%2704.doc""".format(base_url)
 
-@ns.route('/<dataset_uid>/<path:file_name>', doc={'description':"Pass in your API key with the X-Auth-Token header. To request your free API key, email us at info@usap-dc.org.\n"+examples})
+@ns.route('/<dataset_uid>/<path:file_name>', doc={'description':"Pass in your API key with the X-Auth-Token header. To request your free API key, email us at info@usap-dc.org.\n"+examples + "\n<br>When a file is updated or added to an already existing dataset, a whole new dataset is created, so to make sure you have the latest version of the file, it suffices to check that the dataset has not been replaced. To do this, use the <code>datasets</code> API endpoint and check the <code>replaced_by</code> field, which is <code>null</code> if the dataset in question is the latest version, or the ID of the dataset that replaced it otherwise."})
 class DataFileItem(Resource):
     @ns.response(200, 'Success')
     @ns.response(401, 'Missing or invalid API key')
