@@ -6216,6 +6216,7 @@ def escapeChars(string) :
     for c in chars:
         string = string.replace(c, "\\"+c)
     string = string.replace("'","''")
+    string = string.replace("%", "%%")
     return string 
 
 
