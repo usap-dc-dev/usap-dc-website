@@ -47,6 +47,7 @@ from io import BytesIO
 import mimetypes
 import time
 from queue import Queue
+import inspect
 
 app = Flask(__name__)
 jsglue = JSGlue(app)
@@ -5989,7 +5990,16 @@ def search():
     else:
         template_dict['keywordsArray'] = []
 
-    rows = filter_datasets_projects(**params)
+    filtered_params = {}
+    badKeys = []
+    for key in inspect.getfullargspec(filter_datasets_projects).args:
+        if key in params:
+            filtered_params[key] = params[key]
+        else:
+            badKeys.append(key)
+    if len(badKeys)>0:
+        print("Suspicious request to %s has the following key%s, which will be ignored: %s" % (request.url, "s" if len(badKeys)>1 else "", ", ".join(badKeys)))
+    rows = filter_datasets_projects(**filtered_params)
     session['search_params'] = params
 
     for row in rows:
@@ -6032,7 +6042,16 @@ def dataset_search():
     params.pop('name', None)
 
     params['dp_type'] = 'Dataset'
-    rows = filter_datasets_projects(**params)
+    filtered_params = {}
+    badKeys = []
+    for key in inspect.getfullargspec(filter_datasets_projects).args:
+        if key in params:
+            filtered_params[key] = params[key]
+        else:
+            badKeys.append(key)
+    if len(badKeys)>0:
+        print("Suspicious request to %s has the following key%s, which will be ignored: %s" % (request.url, "s" if len(badKeys)>1 else "", ", ".join(badKeys)))
+    rows = filter_datasets_projects(**filtered_params)
     session['search_params'] = params
 
     for row in rows:
