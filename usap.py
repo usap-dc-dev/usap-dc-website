@@ -3030,8 +3030,12 @@ def file_display(filename):
         show_full_file = file_size <= max_bytes
         lines = []
         if show_full_file:
-            with open(full_path, "r", encoding="utf-8") as txtFile:
-                lines = [line for line in txtFile]
+            try:
+                with open(full_path, "r", encoding="utf-8") as txtFile:
+                    lines = [line for line in txtFile]
+            except:
+                with open(full_path, "r", encoding="latin-1") as txtFile:
+                    lines = [line for line in txtFile]
         else:
             with open(full_path, "r", encoding="utf8") as txtFile:
                 contents = txtFile.read(max_bytes-1) + "…"
@@ -3047,13 +3051,22 @@ def file_display(filename):
         rows = []
         th = None
         maxRows = 100
-        with open(filename, "r", newline='', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile, delimiter=delim)
-            for row in reader:
-                if th == None:
-                    th = row
-                else:
-                    rows.append(row)
+        try:
+            with open(filename, "r", newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile, delimiter=delim)
+                for row in reader:
+                    if th == None:
+                        th = row
+                    else:
+                        rows.append(row)
+        except:
+            with open(filename, "r", newline='', encoding='latin-1') as csvfile:
+                            reader = csv.reader(csvfile, delimiter=delim)
+                            for row in reader:
+                                if th == None:
+                                    th = row
+                                else:
+                                    rows.append(row)
         return render_template("preview.html", mimetype=mime_type, header=th, data=rows[0:maxRows], numHiddenRows=len(rows)-maxRows, tooManyRows=len(rows)>maxRows, plural=len(rows)!=1, delimiter=delim)
     if mime_type == "application/zip":
         with zf.ZipFile(current_app.root_path + "/" + filename) as archive:
