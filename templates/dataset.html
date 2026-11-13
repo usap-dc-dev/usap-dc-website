@@ -98,6 +98,7 @@
   if (authors.length > 0) {
     $('#author_name_last').attr('value', authors[0].last_name);
     $('#author_name_first').attr('value', authors[0].first_name);
+    autofillOrcid(document.getElementById("author_orcid"));
   }
   for (var i=1; i < authors.length; i++ ) {
     var author = authors[i];
@@ -585,7 +586,10 @@
                 var selected = this.getElementsByTagName("input")[0].value.split(',');
                 inp.value = selected[0].trim();
                 inp2.value = selected[1].trim();
-
+                let temp = Array.prototype.filter.call(inp.parentElement.children, e => e.name?.startsWith("author_orcid"))
+                if(0 !== temp.length) {
+                    autofillOrcid(temp[0]);
+                }
                 /*close the list of autocompleted values,
                 (or any other open lists of autocompleted values:*/
                 closeAllLists();
@@ -692,9 +696,11 @@ autocomplete(document.getElementById("author_name_last"), document.getElementByI
         let theDiv = orcid_element.parentElement;
         let firstNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_first"))[0],
             lastNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_last"))[0];
-        let names = getNames(orcid_element.value);
-        firstNameField.value = names.firstName;
-        lastNameField.value = names.lastName;
+        if(orcid_element?.value) {
+            let names = getNames(orcid_element.value);
+            firstNameField.value = names.firstName;
+            lastNameField.value = names.lastName;
+        }
     }
 </script>
 {% for person in persons %}
