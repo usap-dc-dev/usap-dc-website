@@ -128,7 +128,7 @@
       if (typeof author != 'undefined') {
        $(extraAuthor).find('#author_name_last'+author_counter).attr('value', author.last_name);
        $(extraAuthor).find('#author_name_first'+author_counter).attr('value', author.first_name);
-       $(extraAuthor).find('#author_orcid'+author_counter).attr('value', getOrcid(author.first_name, author_last_name));
+       $(extraAuthor).find('#author_orcid'+author_counter).attr('value', getOrcid(author.first_name, author.last_name));
      }
      $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
      autocomplete(document.getElementById("author_name_last"+author_counter), document.getElementById("author_name_first"+author_counter), persons);
