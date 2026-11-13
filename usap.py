@@ -406,7 +406,7 @@ def get_persons(conn=None, cur=None, dataset_id=None, order=True):
     if order:
         query += ' ORDER BY id'
     cur.execute(query)
-    return cur.fetchall()
+    return list(map(dict, cur.fetchall()))
 
 
 def get_project_persons(conn=None, cur=None, project_id=None):

@@ -121,11 +121,13 @@
       //increment the element ids
       $(extraAuthor).find('#author_name_last').attr({'id': 'author_name_last'+author_counter, 'name': 'author_name_last'+author_counter, 'value': ''});
       $(extraAuthor).find('#author_name_first').attr({'id': 'author_name_first'+author_counter, 'name': 'author_name_first'+author_counter, 'value': ''});
+      $(extraAuthor).find('#author_orcid').attr({'id': 'author_orcid'+author_counter, 'name': 'author_orcid'+author_counter, 'value': ''});
       $(extraAuthor).find('#removeAuthorRow').show();
       $(extraAuthor).find('#extraAuthorLine').show();
       if (typeof author != 'undefined') {
        $(extraAuthor).find('#author_name_last'+author_counter).attr('value', author.last_name);
        $(extraAuthor).find('#author_name_first'+author_counter).attr('value', author.first_name);
+       $(extraAuthor).find('#author_orcid'+author_counter).attr('value', getOrcid(author.first_name, author_last_name));
      }
      $(author_wrapper).append($('<div/>', {'class' : 'extraAuthor', html: extraAuthor.html()}));
      autocomplete(document.getElementById("author_name_last"+author_counter), document.getElementById("author_name_first"+author_counter), persons);
@@ -360,6 +362,8 @@
                 <input class="input-sm form-control" type="text" size=10 id="author_name_last" name="author_name_last" value="" placeholder="Last Name" /> 
                 <span  class="input-group-addon">,</span>
                 <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="" placeholder="First Name" />
+                <span class="input-group-addon"></span>
+                <input class="input-sm form-control" type="text" size="10" id="author_orcid" name="author_orcid" value="" placeholder="ORCID" onfocus="autofillOrcid(this)"/>
               </div>
               <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
               <div style="clear:both"></div>
@@ -653,4 +657,46 @@
 autocomplete(document.getElementById("author_name_last"), document.getElementById("author_name_first"), persons);
 
 </script>
+<script>
+    const None = null;
+    const people = {{persons | safe}};
+    function getOrcid(firstName, lastName) {
+        let filtered = people.filter(p => !!p.id_orcid && p.first_name && p.last_name && p.first_name.toLowerCase().startsWith(firstName.toLowerCase()) && p.last_name.toLowerCase().startsWith(lastName.toLowerCase()));
+        let exactMatch = filtered.filter(p => p.first_name.toLowerCase() === firstName.toLowerCase() && p.last_name.toLowerCase() === lastName.toLowerCase());
+        if(exactMatch.length > 0) {
+            return exactMatch[0].id_orcid;
+        }
+        if(filtered.length == 1) {
+            return filtered[0].id_orcid;
+        }
+        return "";
+    }
+    function autofillOrcid(element) {
+        let theDiv = element.parentElement;
+        let firstNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_first"))[0],
+            lastNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_last"))[0];
+        element.value = getOrcid(firstNameField.value, lastNameField.value);
+        autofillNames(element)
+    }
+    function getNames(orcid) {
+        for(let person of people) {
+            if(person.id_orcid === orcid) {
+                return {lastName: person.last_name, firstName: person.first_name};
+            }
+        }
+        return null;
+    }
+    function autofillNames(orcid_element) {
+        let theDiv = orcid_element.parentElement;
+        let firstNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_first"))[0],
+            lastNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_last"))[0];
+        let names = getNames(orcid_element.value);
+        firstNameField.value = names.firstName;
+        lastNameField.value = names.lastName;
+    }
+</script>
+{% for person in persons %}
+{{person['id']}}; {{person['first_name']}} {{person['last_name']}}; {{person['id_orcid']}}<br>
+{% endfor %}
+{{persons}}
 {% endblock body %}
