@@ -364,7 +364,7 @@
                 <span  class="input-group-addon">,</span>
                 <input class="input-sm form-control" type="text" size=10 id="author_name_first" name="author_name_first" value="" placeholder="First Name" />
                 <span class="input-group-addon"></span>
-                <input class="input-sm form-control" type="text" size="10" id="author_orcid" name="author_orcid" value="" placeholder="ORCID" onfocus="autofillOrcid(this)"/>
+                <input class="input-sm form-control" type="text" size="10" id="author_orcid" name="author_orcid" value="" placeholder="ORCID" onfocus="autofillOrcid(this)" onblur="autofillNames(this)"/>
               </div>
               <a href="#authorsForm" id="removeAuthorRow" class="remover"><i class="fa fa-remove"></i></a>
               <div style="clear:both"></div>
@@ -679,9 +679,13 @@ autocomplete(document.getElementById("author_name_last"), document.getElementByI
     }
     function autofillOrcid(element) {
         let theDiv = element.parentElement;
-        let firstNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_first"))[0],
-            lastNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_last"))[0];
-        element.value = getOrcid(firstNameField.value, lastNameField.value);
+        if(theDiv) {
+            let firstNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_first"))[0],
+                lastNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_last"))[0];
+        }
+        if((firstNameField.value || firstNameField.value==="") && (lastNameField.value || lastNameField.value==="")) {
+            element.value = getOrcid(firstNameField.value, lastNameField.value);
+        }
         autofillNames(element)
     }
     function getNames(orcid) {
