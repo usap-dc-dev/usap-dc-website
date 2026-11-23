@@ -667,8 +667,11 @@ autocomplete(document.getElementById("author_name_last"), document.getElementByI
     const None = null;
     const people = {{persons | safe}};
     function getOrcid(firstName, lastName) {
-        let filtered = people.filter(p => !!p.id_orcid && p.first_name && p.last_name && p.first_name.toLowerCase().startsWith(firstName.toLowerCase()) && p.last_name.toLowerCase().startsWith(lastName.toLowerCase()));
-        let exactMatch = filtered.filter(p => p.first_name.toLowerCase() === firstName.toLowerCase() && p.last_name.toLowerCase() === lastName.toLowerCase());
+        function getFirstAndMiddle(person) {
+            return [person.first_name, person.middle_name].filter(x=>x).join(" ");
+        }
+        let filtered = people.filter(p => !!p.id_orcid && p.first_name && p.last_name && getFirstAndMiddle(p).toLowerCase().startsWith(firstName.toLowerCase()) && p.last_name.toLowerCase().startsWith(lastName.toLowerCase()));
+        let exactMatch = filtered.filter(p => getFirstAndMiddle(p).toLowerCase() === firstName.toLowerCase() && p.last_name.toLowerCase() === lastName.toLowerCase());
         if(exactMatch.length > 0) {
             return exactMatch[0].id_orcid;
         }
@@ -682,16 +685,16 @@ autocomplete(document.getElementById("author_name_last"), document.getElementByI
         if(theDiv) {
             let firstNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_first"))[0],
                 lastNameField = Array.prototype.filter.call(theDiv.children, e => e.name?.startsWith("author_name_last"))[0];
+            if((firstNameField.value || firstNameField.value==="") && (lastNameField.value || lastNameField.value==="")) {
+                element.value = getOrcid(firstNameField.value, lastNameField.value);
+            }
+            autofillNames(element)
         }
-        if((firstNameField.value || firstNameField.value==="") && (lastNameField.value || lastNameField.value==="")) {
-            element.value = getOrcid(firstNameField.value, lastNameField.value);
-        }
-        autofillNames(element)
     }
     function getNames(orcid) {
         for(let person of people) {
             if(person.id_orcid === orcid) {
-                return {lastName: person.last_name, firstName: person.first_name};
+                return {lastName: person.last_name, firstName: [person.first_name, person.middle_name].filter(x=>x).join(" ")};
             }
         }
         return null;
@@ -707,8 +710,4 @@ autocomplete(document.getElementById("author_name_last"), document.getElementByI
         }
     }
 </script>
-{% for person in persons %}
-{{person['id']}}; {{person['first_name']}} {{person['last_name']}}; {{person['id_orcid']}}<br>
-{% endfor %}
-{{persons}}
 {% endblock body %}

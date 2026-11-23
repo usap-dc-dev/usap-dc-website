@@ -1529,7 +1529,7 @@ def dataset2(dataset_id=None):
             cur.execute('COMMIT')    
 
             return redirect('/thank_you/dataset')
-        elif request.form['action'] == 'Previous Page':
+        elif request.form.get("action") == 'Previous Page':
             # post the form back to dataset
             if edit:
                 return redirect('/edit/dataset/' + dataset_id, code=307)
