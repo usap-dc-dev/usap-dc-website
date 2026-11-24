@@ -113,21 +113,33 @@ def make_sql(data, id, curatorId=None):
     for author in data["authors"]:
         first_name = author.get("first_name") 
         last_name = author.get("last_name")
+        orcid = author.get("orcid")
         person_id = "%s, %s" % (last_name, first_name)
         person_ids.append(person_id)
 
         query = "SELECT  * FROM person WHERE id = '%s'" % usap.escapeQuotes(person_id)
         cur.execute(query)
         res = cur.fetchone()
+
+        if res and orcid and not res['id_orcid']:
+            line = "UPDATE person SET id_orcid='{}' WHERE id='{}';\n".format(orcid, usap.escapeQuotes(person_id))
+            sql_out += line
+            sql_out += "-- " + str(dict(res))
+
+        if not res and orcid:
+            cur.fetchall() # just to be safe
+            cur.execute(cur.mogrify("SELECT * FROM person WHERE id_orcid=%s", orcid))
+            res = cur.fetchone()
+            cur.fetchall()
   
         if not res and person_id != "":
             # look for other possible person IDs that could belong to this person (maybe with/without middle initial)
             sql_out += checkAltIds(person_id, first_name, last_name, 'AUTHOR')
  
             if author == data["authors"][0]:
-                line = "INSERT INTO person(id,first_name, last_name, email) VALUES ('{}','{}','{}','{}');\n".format(usap.escapeQuotes(person_id), usap.escapeQuotes(first_name), usap.escapeQuotes(last_name), data["email"])
+                line = "INSERT INTO person(id,first_name, last_name, email, orcid) VALUES ('{}','{}','{}','{}', '{}');\n".format(usap.escapeQuotes(person_id), usap.escapeQuotes(first_name), usap.escapeQuotes(last_name), data["email"], orcid if orcid else "")
             else:
-                line = "INSERT INTO person(id,first_name, last_name) VALUES ('{}','{}','{}');\n".format(usap.escapeQuotes(person_id), usap.escapeQuotes(first_name), usap.escapeQuotes(last_name))
+                line = "INSERT INTO person(id,first_name, last_name, orcid) VALUES ('{}','{}','{}', '{}');\n".format(usap.escapeQuotes(person_id), usap.escapeQuotes(first_name), usap.escapeQuotes(last_name), orcid if orcid else "")
 
             sql_out += line
 
@@ -140,7 +152,7 @@ def make_sql(data, id, curatorId=None):
                 sql_out += line  
             if person_id == data.get('submitter_name') and data.get('submitter_email') and data['submitter_email'] != res['email'] and data['submitter_email'] != '':
                 line = "UPDATE person SET email = '{}'  WHERE id = '{}';\n".format(data['submitter_email'], usap.escapeQuotes(person_id))
-                sql_out += line  
+                sql_out += line
 
     if data["submitter_name"] not in person_ids and data["submitter_name"] != '':
         query = "SELECT * FROM person WHERE id = '%s'" % usap.escapeQuotes(data["submitter_name"])

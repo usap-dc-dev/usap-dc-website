@@ -406,7 +406,7 @@ def get_persons(conn=None, cur=None, dataset_id=None, order=True):
     if order:
         query += ' ORDER BY id'
     cur.execute(query)
-    return cur.fetchall()
+    return list(map(dict, cur.fetchall()))
 
 
 def get_project_persons(conn=None, cur=None, project_id=None):
@@ -938,7 +938,8 @@ def groupPage1Fields(page1):
             if page1[key] != "":
                 last_name = page1.get(key)
                 first_name = page1.get(key.replace('last', 'first'))
-                author = {'first_name': first_name, 'last_name': last_name}
+                orcid = page1.get(key.replace("name_last", "orcid"))
+                author = {'first_name': first_name, 'last_name': last_name, 'orcid': orcid}
                 page1['authors'].append(author) 
             del page1[key]
             del page1[key.replace('last', 'first')]
@@ -1528,7 +1529,7 @@ def dataset2(dataset_id=None):
             cur.execute('COMMIT')    
 
             return redirect('/thank_you/dataset')
-        elif request.form['action'] == 'Previous Page':
+        elif request.form.get("action") == 'Previous Page':
             # post the form back to dataset
             if edit:
                 return redirect('/edit/dataset/' + dataset_id, code=307)
